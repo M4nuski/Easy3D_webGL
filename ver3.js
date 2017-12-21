@@ -4,7 +4,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 "use strict"
 
-
+const _PId2 = Math.PI / 2;
+const _PIx2 = Math.PI * 2;
 
 // global config
 const _pinchHysteresis = 10;
@@ -18,8 +19,8 @@ const _zFar = 100.0;
 const _moveSpeed = 50; // units per sec
 const _rotateSpeed = 3.14; // rad per sec
 
-const _mouseXFactor = 0.005;
-const _mouseYFactor = 0.005;
+const _mouseXFactor = 0.0025;
+const _mouseYFactor = 0.0025;
 const _mouseZFactor = 0.001;
 
 const _keyUP = " ";
@@ -229,12 +230,16 @@ function mouseMove(event) {
     
     pinx = mx;
     piny = my;
+
 }
 
 function mouseLockedMove(x, y) {
     // de facto rotating
-    rx += x * _mouseXFactor * _rotateSpeed;
-    ry += y * _mouseYFactor * _rotateSpeed;
+    if (pLockActive) {
+        rx += x * _mouseXFactor * _rotateSpeed;
+        ry += y * _mouseYFactor * _rotateSpeed;
+        addLine( x + " " + y);
+        }
 }
 
 function mouseWheel(event) {
@@ -562,8 +567,12 @@ function setView() {
     sumRX += rx;
     sumRY += ry;  
     
-    if (sumRY < -1.5708) {sumRY = -1.5708;}
-    if (sumRY > 1.5708) {sumRY = 1.5708;}
+    // some clamping and warping        
+    if (sumRY < -_PId2) { sumRY = -_PId2; }
+    if (sumRY >  _PId2) { sumRY =  _PId2; }
+
+    if (sumRX < 0) { sumRX += _PIx2; }
+    if (sumRX > _PIx2) { sumRX -= _PIx2; }
 
     if (vmode == "model") { // rotate around object
 

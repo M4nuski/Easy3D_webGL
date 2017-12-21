@@ -5,6 +5,7 @@ var pLockSupported = 'pointerLockElement' in document ||  'mozPointerLockElement
 var pLockMoveEvent;
 var pLockActive = false;
 var pLockElement;
+const _pLockJitterLimit = 100;
 
 function pLockRequest(element) {
     element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock; 
@@ -50,7 +51,10 @@ function pLockInternalCallback(event) {
     var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
     if (pLockMoveEvent) {
-        pLockMoveEvent(movementX, movementY);
+        if ((movementX < _pLockJitterLimit) && (movementX > -_pLockJitterLimit) && 
+            (movementY < _pLockJitterLimit) && (movementY > -_pLockJitterLimit)) {
+            pLockMoveEvent(movementX, movementY);
+        }
     }
 }
 
