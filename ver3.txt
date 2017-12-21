@@ -1,0 +1,89 @@
+
+engine
+    input
+        mouse
+        keyboard
+        touch
+    
+    timing
+        time scaling/adjust
+        smoothing        
+        perf counter
+
+    scene
+        camera
+            view mode
+            projection matrix
+
+        entities
+            id
+            position
+            rotation
+            scale
+            mesh
+                filename
+                vertex
+                uv
+                indices // todo for perf upgrade
+                texture id
+            animation
+                function (this, data, method (START, RESTART, PAUSE, RESET))
+                state 
+                    (STOP, RUN)
+                    data
+
+        sprites
+            id
+            position
+            rotation
+            scale //all 1.0x1.0 base size
+            source location // topleft, bottomright in texture 
+            color
+            blend function
+            texture id
+            vertex
+            uv
+            indice // todo for perf
+             animation
+                function (this, data, method (START, RESTART, PAUSE, RESET))
+                state 
+                    (STOP, RUN)
+                    data
+
+        textures
+            id
+                filename
+                size
+                data
+
+        lighting
+            global
+                color                
+            spot                
+                color
+                direction
+                spread
+                intensity
+            directionnal0 
+                color
+                direction
+                lock to camera
+            directionnal1
+                color
+                direction
+
+        program
+            compiled program
+            vertex shader
+                filename
+                compiled data
+            fragment shader
+                filename
+                compiled data
+
+gl
+    context
+    data handling
+
+gl-matrix
+pLock
