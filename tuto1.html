@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+
+<head>
+    <style>
+        #mainDiv {
+            position: absolute;
+            top : 0px;
+            left : 0px;
+            width : 1280px;
+            height : 720px;
+        } 
+        #dataDiv {
+            position: absolute;
+            top:0px;
+            left:650px;
+            width:600px;         
+        }
+        #logDiv {
+            height : 300px;
+            overflow-x: wrap;
+            overflow-y: scroll;
+        }
+        #controlDiv {
+            position: absolute;
+            top: 370px;
+            left : 10px;
+            width : 640px;
+            
+        }
+        td {
+            width : 85px;
+            height : 40px;
+            text-align: center;
+            background-color: lightgray;
+        }
+    </style>
+    <script type="text/javascript" src="gl-matrix.js"></script>
+    <script type="text/javascript" src="tuto1.js"></script>
+</head>
+
+<body>
+    <div id="mainDiv">
+            <canvas id="GLCanvas" width="640" height="360">Erreur - Canvas non supporté</canvas>
+    </div>
+    <div id="dataDiv">
+        <div id="statusDiv">Status</div><br />
+        <div id="logDiv"></div>
+    </div>
+    <div id="controlDiv">LMB(touch) rotate, MouseWheel(pinch) zoom/pan<br />
+        <table id="inputTable">
+            <tr><td>&nbsp;</td><td>W</td><td>&nbsp;</td>  <td>&nbsp;</td><td>M Wh Up</td> <td>&nbsp;</td><td>Space</td>  </tr>
+            <tr><td>A</td><td>S</td><td>D</td>            <td>&nbsp;</td><td>M Wh Dn </td> <td>&nbsp;</td><td>Ctrl</td>  </tr>
+        </table>
+        TODO<br />
+        joystick1 btns joystick2
+    </div>
+</body>
+
+</html>
