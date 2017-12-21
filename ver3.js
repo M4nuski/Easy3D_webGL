@@ -31,14 +31,14 @@ const _keyFD = "w";
 const _keyBD = "s";
 
 
+const timer = new E3D_timing(true, 25, timerTick);
+//const _tickInterval = 25;
 
-const _tickInterval = 25;
-
-const _timer = setInterval(timerTick, _tickInterval);
-var   sceneDelta = _tickInterval / 1000;
-var   lastScene = 0;
+//const _timer = setInterval(timerTick, _tickInterval);
+//var   timer.delta = _tickInterval / 1000;
+//var   lastScene = 0;
 var sceneStatus = "SCENE_CREATED";
-var sessionStart = new Date().getTime();
+//var sessionStart = new Date().getTime();
 
 
 // global state var
@@ -119,7 +119,7 @@ inputForm.addEventListener("touchcancel", formTouchEnd);
 
 function updateStatus() {
     status.innerHTML = "pX:" + Math.floor(current_pos[0]) + "pY:" + Math.floor(current_pos[1]) + "pZ:" + Math.floor(current_pos[2])+ "<br />"+
-    "rX: " + Math.floor(sumRY * 57.3) + " rY:"+ Math.floor(sumRX * 57.3) + " delta:" + sceneDelta + "s";
+    "rX: " + Math.floor(sumRY * 57.3) + " rY:"+ Math.floor(sumRX * 57.3) + " delta:" + timer.delta + "s";
 }
 
 function winResize() {
@@ -129,16 +129,8 @@ function winResize() {
     prepView();
 }
 
-function timerTick(){
-  
-    {
-        const ts = (new Date()).getTime(); 
-        sceneDelta = (ts - lastScene) / 1000;
-        lastScene = ts;
-    }
-    
+function timerTick(){  
     processKeyInputs();
-
     updateStatus();
     drawScene(gl, programInfo, buffers);
 }
@@ -162,22 +154,22 @@ function keyUp(event) {
 
 function processKeyInputs() {
     if (inputTable[_keyUP]) {
-        dy += _moveSpeed * sceneDelta;
+        dy += _moveSpeed * timer.delta;
     }
     if (inputTable[_keyDN]) {
-        dy -= _moveSpeed * sceneDelta;
+        dy -= _moveSpeed * timer.delta;
     }
     if (inputTable[_keyLT]) {
-        dx += _moveSpeed * sceneDelta;
+        dx += _moveSpeed * timer.delta;
     }
     if (inputTable[_keyRT]) {
-        dx -= _moveSpeed * sceneDelta;
+        dx -= _moveSpeed * timer.delta;
     }
     if (inputTable[_keyFD]) {
-        dz += _moveSpeed * sceneDelta;
+        dz += _moveSpeed * timer.delta;
     }
     if (inputTable[_keyBD]) {
-        dz -= _moveSpeed * sceneDelta;
+        dz -= _moveSpeed * timer.delta;
     }
 
 }
@@ -265,7 +257,7 @@ function touchStart(event) {
     var touches = event.changedTouches;
 
     for (var i = 0; i < touches.length; i++) {
-    //    addLine("new touch: " + touches[i].identifier);
+
         ongoingTouches.push(copyTouch(touches[i]));
     }
 
@@ -313,15 +305,12 @@ function touchEnd(event) {
         var idx = ongoingTouchIndexById(touches[i].identifier);
         if (idx >= 0) {
             ongoingTouches.splice(idx, 1);
-        } else {
-            addLine("can't figure out which touch to end");
-        }
+        } 
     }
 }
 function touchCancel(event) {
 
     event.preventDefault();
-    addLine("touchcancel.");
 
     if (ongoingTouches.length == 1) {
         ongoingTouches[0].button = _rotateMouseButton;
@@ -350,8 +339,6 @@ function touchMove(event) {
         var idx = ongoingTouchIndexById(touches[i].identifier);
         if (idx >= 0) {
             ongoingTouches.splice(idx, 1, copyTouch(touches[i]));  // swap in the new touch record
-        } else {
-            addLine("can't figure out which touch to continue");
         }
     }
 
@@ -869,7 +856,7 @@ function loadShader(gl, type, source) {
 }
 
 function addLine(text) {
-    log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
+    log.innerHTML += "[" + ((new Date()).getTime() - timer.start) + "] " + text + "<br />";
 }
 
 

@@ -10,10 +10,28 @@ engine
         smoothing        
         perf counter
 
+    textures
+        id
+        filename
+        size
+        data
+
+    sounds
+        id
+        filename
+        size
+        data
+
     scene
         camera
             view mode
             projection matrix
+            animation
+                function (this, data, method (START, RESTART, PAUSE, RESET))
+                state 
+                    (STOP, RUN)
+                    data
+
 
         entities
             id
@@ -49,12 +67,6 @@ engine
                 state 
                     (STOP, RUN)
                     data
-
-        textures
-            id
-                filename
-                size
-                data
 
         lighting
             global
