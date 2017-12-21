@@ -560,7 +560,10 @@ function setView() {
     const origin = [0, 0, 0];
 
     sumRX += rx;
-    sumRY += ry;    
+    sumRY += ry;  
+    
+    if (sumRY < -1.5708) {sumRY = -1.5708;}
+    if (sumRY > 1.5708) {sumRY = 1.5708;}
 
     if (vmode == "model") { // rotate around object
 
