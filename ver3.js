@@ -30,17 +30,11 @@ const _keyRT = "d";
 const _keyFD = "w";
 const _keyBD = "s";
 
+const _smooth = 0.01;
 
 let timer; // E3D_timing class
 
-//const _tickInterval = 25;
-
-//const _timer = setInterval(timerTick, _tickInterval);
-//var   timer.delta = _tickInterval / 1000;
-//var   lastScene = 0;
 var sceneStatus = "SCENE_CREATED";
-//var sessionStart = new Date().getTime();
-
 
 // global state var
 
@@ -54,7 +48,6 @@ var mx, pinx, dx = 0, rx = 0, sumRX = 0;
 var my, piny, dy = 0, ry = 0, sumRY = 0;
 var dz = 0;
 var tadx = dx, tady =dy, tadz = dz, tarx = sumRX, tary = sumRY;
-const _smooth = 0.01;
 
 var touchDist = 0;
 var ongoingTouches = [];
@@ -62,7 +55,6 @@ var ongoingTouches = [];
 var inputTable = {};
 
 
-//var odz = dz, ody = dy, odx = dx;
 
 var winWidth = 10, winHeight = 10;
 var projectionMatrix = mat4.create();
@@ -75,12 +67,11 @@ var _light0 = vec3.clone(light_direction);
 var current_pos = vec3.fromValues(0, 0, -16.0);
 var current_rot = mat4.create();
 
-var gl, programInfo, buffers;
 
-var rawModelData = [];
-var numFloats = 0;
+var gl, programInfo;
 
 
+var entities = []; // of E3D_entity
 
 
 // elements
@@ -135,7 +126,7 @@ function winResize() {
 function timerTick(){  
     processKeyInputs();
     updateStatus();
-    drawScene(gl, programInfo, buffers);
+    drawScene(gl, programInfo);
 }
 
 
@@ -427,13 +418,13 @@ function formTouchEnd(event) {
 function reqListener() {
     addLine("Parsing Response Text");
     var data = this.responseText.split("\n");
-    rawModelData = [];
+    let rawModelData = [];
     for (var i = 0; i < data.length; i++) {
         if ((data[i] != "") && (data[i].split(" ").length != 1)) {
             rawModelData.push(data[i]);
         }
     }
-    buffers = initBuffers(gl);
+    initBuffers(gl, rawModelData);
     sceneStatus = "SCENE_ACTIVE";
 }
 
@@ -614,147 +605,60 @@ function setView() {
 }
 
 
-function drawScene(gl, programInfo, buffers) {
-
-    setView();
-    // Clear the canvas before we start drawing on it.
-
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-
-
-
-if (sceneStatus == "SCENE_ACTIVE") {
-
-
-    // Set the drawing position to the "identity" point, which is
-    // the center of the scene.
-    const modelViewMatrix = mat4.create();
-
-   // mat4.translate(modelViewMatrix,     // destination matrix
-  //      modelViewMatrix,     // matrix to translate
-   //     [dx / 50, -dy / 50, dz]);  // amount to translate
-
-    //mat4.rotate(modelViewMatrix, modelViewMatrix, rx / 100, [0, 1, 0]);
-    //mat4.rotate(modelViewMatrix, modelViewMatrix, ry / 100, [1, 0, 0]);
-
-    const modelNormalMatrix = mat4.create();
-
-  //  mat4.rotate(modelNormalMatrix, modelNormalMatrix, rx / 100, [0, 1, 0]);
-//    mat4.rotate(modelNormalMatrix, modelNormalMatrix, ry / 100, [1, 0, 0]);
-
-
-
-
-    {
-        const numComponents = 3;  // pull out 3 values per iteration
-        const type = gl.FLOAT;    // the data in the buffer is 32bit floats
-        const normalize = false;  // don't normalize
-        const stride = 0;         // how many bytes to get from one set of values to the next
-        // 0 = use type and numComponents above
-        const offset = 0;         // how many bytes inside the buffer to start from
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexPosition,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexPosition);
-    }
-
-    // Tell WebGL how to pull out the colors from the color buffer
-    // into the vertexColor attribute.
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexColor,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexColor);
-    }
-
-
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normal);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexNormal,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexNormal);
-    }
-
-
-
-
-
-    // Tell WebGL to use our program when drawing
-
-    gl.useProgram(programInfo.program);
-
-    // Set the shader uniforms
-
-    gl.uniformMatrix4fv(
-        programInfo.uniformLocations.projectionMatrix,
-        false,
-        viewMatrix);
-
-    gl.uniformMatrix4fv(
-        programInfo.uniformLocations.modelViewMatrix,
-        false,
-        modelViewMatrix);
-
-    gl.uniformMatrix4fv(
-        programInfo.uniformLocations.modelNormalMatrix,
-        false,
-        modelNormalMatrix);
-
-    gl.uniform3fv(programInfo.uniformLocations.light, light_direction);
-
-    {
-        const offset = 0;
-        const vertexCount = numFloats / 3;// 4;
-
-        gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
-    }
-
+function bind3FloatBufferToLocation(buffer, location) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(location);
 }
 
+function drawScene(gl, programInfo) {
+
+    if (sceneStatus == "SCENE_ACTIVE") {
+
+        setView();
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // todo move to scene properties
+
+        // scence uniforms
+        gl.useProgram(programInfo.program);
+        gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, viewMatrix);
+        gl.uniform3fv(programInfo.uniformLocations.light, light_direction);
+
+        for (let i = 0; i < entities.length; ++i) {
+            if ((entities[i].visible) && (entities[i].numElements > 0)) {
+
+                // Entity Attributes
+                bind3FloatBufferToLocation(entities[i].vertexBuffer, programInfo.attribLocations.vertexPosition);
+                bind3FloatBufferToLocation(entities[i].normalBuffer, programInfo.attribLocations.vertexNormal)
+                bind3FloatBufferToLocation(entities[i].colorBuffer,  programInfo.attribLocations.vertexColor)
+
+                // Entity Uniforms
+                gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, entities[i].modelMatrix);
+                gl.uniformMatrix4fv(programInfo.uniformLocations.modelNormalMatrix, false, entities[i].normalMatrix);
+                
+                // Draw
+                gl.drawArrays(gl.TRIANGLES, 0, entities[i].numElements);
+            }
+        }
+    }
 }
 
 
-function initBuffers(gl) {
+function initBuffers(gl, rawModelData) {
+
+    entities.push( new E3D_entity("map", "") );
+
     addLine("Creating buffers");
 
+    let numFloats = 0;
 
     const colorSweep = [
         1.0, 0.5, 0.5,
         0.5, 1.0, 0.5,
         0.5, 0.5, 1.0
     ];
-    var colors = [];
-    var positions = [];
-    var normals = [];
+    let colors = [];
+    let positions = [];
+    let normals = [];
 
 
     for (var i = 0; i < rawModelData.length; i++) {
@@ -813,13 +717,12 @@ function initBuffers(gl) {
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 
+    entities[0].vertexBuffer = positionBuffer;
+    entities[0].colorBuffer = colorBuffer;
+    entities[0].normalBuffer = normalBuffer;
+    entities[0].numElements = numFloats / 3;
 
-
-    return {
-        position: positionBuffer,
-        color: colorBuffer,
-        normal: normalBuffer
-    };
+    entities[0].visible = true;
 }
 
 //
