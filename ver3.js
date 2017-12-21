@@ -53,6 +53,8 @@ var rotating = false;
 var mx, pinx, dx = 0, rx = 0, sumRX = 0;
 var my, piny, dy = 0, ry = 0, sumRY = 0;
 var dz = 0;
+var tadx = dx, tady =dy, tadz = dz, tarx = sumRX, tary = sumRY;
+const _smooth = 0.01;
 
 var touchDist = 0;
 var ongoingTouches = [];
@@ -560,33 +562,46 @@ function setView() {
     if (sumRY < -_PId2) { sumRY = -_PId2; }
     if (sumRY >  _PId2) { sumRY =  _PId2; }
 
-    if (sumRX < 0) { sumRX += _PIx2; }
-    if (sumRX > _PIx2) { sumRX -= _PIx2; }
+    if (sumRX < 0) { 
+        sumRX += _PIx2;
+        tarx += _PIx2;
+     }
+    if (sumRX > _PIx2) { 
+        sumRX -= _PIx2; 
+        tarx -= _PIx2; 
+    }
+
+    tarx = timer.smooth(tarx, sumRX, _smooth);
+    tary = timer.smooth(tary, sumRY, _smooth);
+
+    tadx = timer.smooth(tadx, dx, _smooth);
+    tady = timer.smooth(tady, dy, _smooth);
+    tadz = timer.smooth(tadz, dz, _smooth);
 
     if (vmode == "model") { // rotate around object
 
-        vec3.add(current_pos, current_pos, [dx, -dy, dz]);
+        vec3.add(current_pos, current_pos, [tadx, -tady, tadz]);
         mat4.translate(viewMatrix, projectionMatrix, current_pos); 
 
-        mat4.rotateY(current_rot, mat4.create(), sumRX);
-        mat4.rotateX(current_rot, current_rot, sumRY);
+        mat4.rotateY(current_rot, mat4.create(), tarx);
+        mat4.rotateX(current_rot, current_rot, tary);
         mat4.multiply(viewMatrix, viewMatrix, current_rot);
 
         // adjust light direction to follow camera
-        vec3.rotateY(light_direction, _light0, origin, -sumRX); 
-        vec3.rotateX(light_direction, light_direction, origin, -sumRY); 
+        vec3.rotateY(light_direction, _light0, origin, -tarx); 
+        vec3.rotateX(light_direction, light_direction, origin, -tary); 
         
     } else if (vmode == "free") { // move freely around world             
 
-        mat4.rotateX(current_rot, mat4.create(), sumRY);
-        mat4.rotateY(current_rot, current_rot, sumRX);
+        mat4.rotateX(current_rot, mat4.create(), tary);
+        mat4.rotateY(current_rot, current_rot, tarx);
 
         mat4.multiply(viewMatrix, projectionMatrix, current_rot);
 
-        const newTranslation = vec3.fromValues(dx , -dy, dz);
+        const newTranslation = vec3.fromValues(tadx , -tady, tadz);
 
-        vec3.rotateX(newTranslation, newTranslation, origin, -sumRY);
-        vec3.rotateY(newTranslation, newTranslation, origin, -sumRX);
+        vec3.rotateX(newTranslation, newTranslation, origin, -tary);
+        vec3.rotateY(newTranslation, newTranslation, origin, -tarx);
 
         vec3.add(current_pos, current_pos, newTranslation);
         mat4.translate(viewMatrix, viewMatrix, current_pos ); 

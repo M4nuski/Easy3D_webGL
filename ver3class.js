@@ -16,10 +16,10 @@ class E3D_timing {
         }
     }
     smooth(val, target, fact) { // TODO upgrade for time independant smoothing
-        //return (target * fact) + (val * (1.0 - fact));
+        return (val * fact) + (target * (1.0 - fact));
         // target Fact + val - val fact
         // target + (target - val) * fact
-        return target + ((target - val) * fact);  
+        //return target + ((target - val) * fact);  
     }
 
     run() {
@@ -43,6 +43,13 @@ class E3D_timing {
 
     }
 
-    
+}
+
+
+class E3D_object {
+    constructor(id) {
+        this.id = id; // to find object in list
+
+    } 
 
 }
