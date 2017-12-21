@@ -31,7 +31,8 @@ const _keyFD = "w";
 const _keyBD = "s";
 
 
-const timer = new E3D_timing(true, 25, timerTick);
+let timer; // E3D_timing class
+
 //const _tickInterval = 25;
 
 //const _timer = setInterval(timerTick, _tickInterval);
@@ -496,6 +497,7 @@ void main(void) {
 }
 `;
 
+timer = new E3D_timing(true, 25, timerTick);
 addLine("Session Start");
 
 main();

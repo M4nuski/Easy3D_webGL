@@ -12,7 +12,7 @@ class E3D_timing {
         this.lastTick = this.start;
 
         if (run) {
-            this.timer = setInterval(this.tickEvent, interval);
+            this.timer = setInterval( () => {this.tickEvent() }, interval);
         }
     }
     smooth(val, target, fact) { // TODO upgrade for time independant smoothing
@@ -24,7 +24,7 @@ class E3D_timing {
 
     run() {
         this.lastTick = new Date().getTime();
-        this.timer = setInterval(this.tickEvent, this.tickInterval);
+        this.timer = setInterval( () => {this.tickEvent() }, this.tickInterval);
     }
     pause() {
         clearInterval(this.timer);
@@ -38,7 +38,7 @@ class E3D_timing {
         this.lastTick = ts;
 
         if (this.onTick) {             
-            onTick(); 
+            this.onTick(); 
         }
 
     }
