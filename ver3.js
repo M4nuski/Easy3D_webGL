@@ -68,7 +68,7 @@ var current_pos = vec3.fromValues(0, 0, -16.0);
 var current_rot = mat4.create();
 
 
-var gl, programInfo;
+var gl, programInfo, cam;
 
 
 var entities = []; // of E3D_entity
@@ -110,9 +110,10 @@ inputForm.addEventListener("touchstart", formTouchStart);
 inputForm.addEventListener("touchend", formTouchEnd);
 inputForm.addEventListener("touchcancel", formTouchEnd);
 
+document.forms["moveTypeForm"].addEventListener("change", prepView);
 
 function updateStatus() {
-    status.innerHTML = "pX:" + Math.floor(current_pos[0]) + "pY:" + Math.floor(current_pos[1]) + "pZ:" + Math.floor(current_pos[2])+ "<br />"+
+    status.innerHTML = "pX:" + Math.floor(cam.position[0]) + "pY:" + Math.floor(cam.position[1]) + "pZ:" + Math.floor(cam.position[2])+ "<br />"+
     "rX: " + Math.floor(sumRY * 57.3) + " rY:"+ Math.floor(sumRX * 57.3) + " delta:" + timer.delta + "s";
 }
 
@@ -438,16 +439,19 @@ function getModel() {
     oReq.send();
 }
 
-function prepView() {
 
-    // Projection matrix with current values
-    const fieldOfView = _fieldOfView * Math.PI / 180;   // in radians
-    const aspect = winWidth / winHeight;
-    mat4.perspective(projectionMatrix,
-        fieldOfView,
-        aspect,
-        _zNear,
-        _zFar);
+function prepView() {
+    let vmode = document.forms["moveTypeForm"].moveType.value; 
+    if (vmode == "model") {
+        cam = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+    } 
+    else  if (vmode == "free") {
+        cam = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+    } else {
+        cam = new E3D_camera("cam1o", winWidth, winHeight);
+        cam.resize(winWidth, winHeight);
+        cam.updateInternal();
+    }
 
 }
 
@@ -527,7 +531,7 @@ function main() {
     };
 
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
+    gl.clearColor(0.0, 0.0, 0.2, 1.0);
     gl.clearDepth(1.0);                 // Clear everything
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
@@ -536,16 +540,13 @@ function main() {
 
     winResize();
 
-    prepView();
+    //prepView();
 
     getModel();
 
 }
 
 function setView() {
-   
-    var vmode = document.forms["moveTypeForm"].moveType.value;
-
     const origin = [0, 0, 0];
 
     sumRX += rx;
@@ -564,6 +565,7 @@ function setView() {
         tarx -= _PIx2; 
     }
 
+    // smooth controls
     tarx = timer.smooth(tarx, sumRX, _smooth);
     tary = timer.smooth(tary, sumRY, _smooth);
 
@@ -571,35 +573,11 @@ function setView() {
     tady = timer.smooth(tady, dy, _smooth);
     tadz = timer.smooth(tadz, dz, _smooth);
 
-    if (vmode == "model") { // rotate around object
+    cam.move(tadx, -tady, tadz, tary, tarx, 0);
 
-        vec3.add(current_pos, current_pos, [tadx, -tady, tadz]);
-        mat4.translate(viewMatrix, projectionMatrix, current_pos); 
-
-        mat4.rotateY(current_rot, mat4.create(), tarx);
-        mat4.rotateX(current_rot, current_rot, tary);
-        mat4.multiply(viewMatrix, viewMatrix, current_rot);
-
-        // adjust light direction to follow camera
-        vec3.rotateY(light_direction, _light0, origin, -tarx); 
-        vec3.rotateX(light_direction, light_direction, origin, -tary); 
-        
-    } else if (vmode == "free") { // move freely around world             
-
-        mat4.rotateX(current_rot, mat4.create(), tary);
-        mat4.rotateY(current_rot, current_rot, tarx);
-
-        mat4.multiply(viewMatrix, projectionMatrix, current_rot);
-
-        const newTranslation = vec3.fromValues(tadx , -tady, tadz);
-
-        vec3.rotateX(newTranslation, newTranslation, origin, -tary);
-        vec3.rotateY(newTranslation, newTranslation, origin, -tarx);
-
-        vec3.add(current_pos, current_pos, newTranslation);
-        mat4.translate(viewMatrix, viewMatrix, current_pos ); 
-    }
-
+    if (cam.id == "cam1m") { // rotate around object
+        light_direction = cam.adjustToCamera(_light0);
+    } 
 
     // clean up state changes
     dx = 0; dy = 0; dz = 0;
@@ -621,8 +599,8 @@ function drawScene(gl, programInfo) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // todo move to scene properties
 
         // scence uniforms
-        gl.useProgram(programInfo.program);
-        gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, viewMatrix);
+        gl.useProgram(programInfo.program);       
+        gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, cam.getViewMatrix());        
         gl.uniform3fv(programInfo.uniformLocations.light, light_direction);
 
         for (let i = 0; i < entities.length; ++i) {

@@ -103,7 +103,7 @@ class E3D_entity {
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
 
-        mat4.scale(this.modelMatrix, this.modelMatrix, [this.scale, this.scale, this.scale]);
+        mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
 
         mat4.translate(this.modelMatrix, this.modelMatrix, this.position);
     }
@@ -151,7 +151,7 @@ class E3D_scene {
 
         this.camera = new E3D_camera();
         this.camera.resize(width, height);
-        this.camera.update(); // finalize view matrix
+        this.camera.updateInternal(); // finalize view matrix
 
         this.entities = [];
     }
@@ -159,11 +159,13 @@ class E3D_scene {
 
 
 class E3D_camera { // base camera, orthogonal
-    constructor(id) {
+
+    constructor(id) {        
         this.id = id;
         this.rotation = vec3.create();
-        this.matrix;
-        this.baseMatrix; 
+        this.position = vec3.create();
+        this.matrix = mat4.create();
+        this.baseMatrix = mat4.create(); 
     }
 
     resize(width, height) {
@@ -179,22 +181,48 @@ class E3D_camera { // base camera, orthogonal
         mat4.ortho(this.baseMatrix, -wd2, wd2, hd2, -hd2, -dd2, dd2);  
     }
 
-    update() {
+    updateInternal() {
         // create matrix per position and rotation
-        mat4.rotateZ(this.matrix, this.baseMatrix, this.rotation[2] );
+        mat4.translate(this.matrix, this.baseMatrix, this.position);
+
+        mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
     }
 
-    viewMatrix() {
+    update(px, py, pz, rx, ry, rz) {
+        // update internal data then matrix
+        this.position[0] = px;
+        this.position[1] = py;
+        this.position[2] = pz;
+        
+        this.rotation[0] = rx;
+        this.rotation[1] = ry;
+        this.rotation[2] = rz;
+        this.updateInternal();
+    }
+
+    move(tx, ty, tz, rx, ry, rz) {
+        this.update(this.position[0]+tx, this.position[1]+ty, this.position[2]+tz, rx, ry, rz);
+    }
+
+    getViewMatrix() {
         return this.matrix;
     }
+
+    adjustToCamera(vect) {
+        let result = vec3.create();
+        vec3.rotateY(result, vect, [0, 0, 0], -this.rotation.x); 
+        vec3.rotateX(result, result, [0, 0, 0], -this.rotation.y); 
+        return result;
+    }  
+
 }
 
 class E3D_camera_persp extends E3D_camera { // basic perspective based matrix view (free move)
     constructor(id, width, height, fov, near, far) {
         super(id);
-        this.position = vec3.create();
+
         this.fov = fov;
         this.near = near;
         this.far = far;
@@ -208,25 +236,23 @@ class E3D_camera_persp extends E3D_camera { // basic perspective based matrix vi
         this.baseMatrix = mat4.perspective(mat4.create(), fov, width / height, near, far);
     }
 
-    update() {
-        // update matrix per internal data
-        mat4.translate(this.matrix, this.baseMatrix, this.position);
-
-        mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
+    updateInternal() {
+        // update matrix per internal data        
+        mat4.rotateZ(this.matrix, this.baseMatrix, this.rotation[2] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
+
+        mat4.translate(this.matrix, this.matrix, this.position);
     }
 
-    update(px, py, pz, rx, ry, rz=0) {
-        // update internal data then matrix
-        this.position[0] = px;
-        this.position[1] = py;
-        this.position[2] = pz;
-        
-        this.rotation[0] = rx;
-        this.rotation[1] = ry;
-        this.rotation[2] = rz;
-        this.update();
+    move(tx, ty, tz, rx, ry, rz) {
+        // adjust translation to current rotation
+        const t = vec3.fromValues(tx , ty, tz);
+        vec3.rotateZ(t, t, [0,0,0], -rz);
+        vec3.rotateX(t, t, [0,0,0], -rx);
+        vec3.rotateY(t, t, [0,0,0], -ry);
+        // update
+        this.update(this.position[0]+t[0], this.position[1]+t[1], this.position[2]+t[2], rx, ry, rz);
     }
 
 }
@@ -235,13 +261,17 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
     constructor(id, width, height, fov, near, far) {
         super(id, width, height, fov, near, far);
     }
-    update() {
+    updateInternal() {
         // update matrix per internal data
-        mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
+        mat4.translate(this.matrix, this.matrix, this.position);
+
+        mat4.rotateY(this.matrix, this.baseMatrix, this.rotation[1] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
-        mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
-        
-        mat4.translate(this.matrix, this.baseMatrix, this.position);
+        mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );        
+    }
+
+    move(tx, ty, tz, rx, ry, rz) {
+        this.update(this.position[0] + tx, this.position[1] + ty, this.position[2] + tz, rx, ry, rz);
     }
 }
 
