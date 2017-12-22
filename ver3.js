@@ -12,7 +12,7 @@ const _pinchHysteresis = 10;
 const _rotateMouseButton = 0;
 const _panMouseButton = 1;
 
-const _fieldOfView = 45;
+const _fieldOfView = 45 * Math.PI / 180; // 45deg in radians
 const _zNear = 0.1;
 const _zFar = 100.0;
 
@@ -34,7 +34,7 @@ const _smooth = 0.01;
 
 let timer; // E3D_timing class
 
-var sceneStatus = "SCENE_CREATED";
+var sceneStatus = E3D_CREATED;
 
 // global state var
 
@@ -425,7 +425,9 @@ function reqListener() {
         }
     }
     initBuffers(gl, rawModelData);
-    sceneStatus = "SCENE_ACTIVE";
+
+    sceneStatus = E3D_ACTIVE;
+
 }
 
 function getModel() {
@@ -613,7 +615,7 @@ function bind3FloatBufferToLocation(buffer, location) {
 
 function drawScene(gl, programInfo) {
 
-    if (sceneStatus == "SCENE_ACTIVE") {
+    if (sceneStatus == E3D_ACTIVE) {
 
         setView();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // todo move to scene properties
