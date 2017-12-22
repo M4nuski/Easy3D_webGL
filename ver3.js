@@ -1,8 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
+log("DOMContentLoaded");
 
 
 
 "use strict"
+
+
 
 const _PId2 = Math.PI / 2;
 const _PIx2 = Math.PI * 2;
@@ -73,13 +76,15 @@ var gl, programInfo, cam;
 var entities = []; // of E3D_entity
 
 
+log("Get DOM Elements");
 // elements
 const can = document.getElementById("GLCanvas");
-const log = document.getElementById("logDiv");
+const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 
 const inputForm = document.getElementById("inputTable");
 
+log("Set DOM Events");
 // events
 can.addEventListener("mousedown", mouseDown);
 can.addEventListener("mouseup", mouseUp);
@@ -111,6 +116,14 @@ inputForm.addEventListener("touchcancel", formTouchEnd);
 
 document.forms["moveTypeForm"].addEventListener("change", prepView);
 
+
+
+
+
+
+
+
+
 function updateStatus() {
     status.innerHTML = "pX:" + Math.floor(cam.position[0]) + "pY:" + Math.floor(cam.position[1]) + "pZ:" + Math.floor(cam.position[2])+ "<br />"+
     "rX: " + Math.floor(sumRY * 57.3) + " rY:"+ Math.floor(sumRX * 57.3) + " delta:" + timer.delta + "s";
@@ -123,11 +136,16 @@ function winResize() {
     prepView();
 }
 
-function timerTick(){  
+function timerTick(){  // "game" loop
     processKeyInputs();
     updateStatus();
     drawScene(gl, programInfo);
 }
+
+
+
+
+
 
 
 function keyDown(event) {
@@ -224,7 +242,7 @@ function mouseLockedMove(x, y) {
     if (pLockActive) {
         rx += x * _mouseSpeed * _rotateSpeed;
         ry += y * _mouseSpeed * _rotateSpeed;
-      //  addLine( x + " " + y);
+      //  log( x + " " + y, false);
         }
 }
 
@@ -300,6 +318,7 @@ function touchEnd(event) {
         if (idx >= 0) {
             ongoingTouches.splice(idx, 1);
         } 
+        else log("(touchEnd) Touch Id not found");
     }
 }
 function touchCancel(event) {
@@ -321,7 +340,7 @@ function touchCancel(event) {
     for (var i = 0; i < touches.length; i++) {
         var idx = ongoingTouchIndexById(touches[i].identifier);
         ongoingTouches.splice(idx, 1);
-    }
+    } 
 }
 
 function touchMove(event) {
@@ -333,7 +352,7 @@ function touchMove(event) {
         var idx = ongoingTouchIndexById(touches[i].identifier);
         if (idx >= 0) {
             ongoingTouches.splice(idx, 1, copyTouch(touches[i]));  // swap in the new touch record
-        }
+        } else log("(touchMove) Touch Id not found");
     }
 
 
@@ -415,8 +434,12 @@ function formTouchEnd(event) {
 }
 
 
+
+
+
+// async file loader
 function reqListener() {
-    addLine("Parsing Response Text");
+    log("Parsing Response Text", false);
     var data = this.responseText.split("\n");
     let rawModelData = [];
     for (var i = 0; i < data.length; i++) {
@@ -434,9 +457,14 @@ function getModel() {
     var oReq = new XMLHttpRequest();
     oReq.addEventListener("load", reqListener);
     oReq.open("GET", "AXIS.raw");//CM ST.raw");
-    addLine("Loading Model Async");
+    log("Loading Model Async", false);
     oReq.send();
 }
+
+
+
+
+
 
 
 function prepView() {
@@ -456,23 +484,23 @@ function prepView() {
 
 var shdr;
 timer = new E3D_timing(true, 25, timerTick);
-addLine("Session Start");
+log("Session Start", true);
 
 main();
 
 function main() {
-    addLine("Context Initialization");
+    log("Context Initialization", false);
     // Initialize the GL context
     gl = can.getContext("webgl");
 
     // Only continue if WebGL is available and working
     if (!gl) {
-        addLine("Unable to initialize WebGL. Your browser or machine may not support it.");
+        log("Unable to initialize WebGL. Your browser or machine may not support it.", false);
         timer.pause();
         return;
     }
 
-    addLine("Shader Program Initialization");
+    log("Shader Program Initialization", false);
 
     shdr = new E3D_program("mainProgram", gl);
     shdr.compile(vertShader00, fragShader00);
@@ -572,7 +600,7 @@ function initBuffers(gl, rawModelData) {
 
     entities.push( new E3D_entity("map", "") );
 
-    addLine("Creating buffers");
+    log("Creating buffers");
 
     let numFloats = 0;
 
@@ -626,9 +654,9 @@ function initBuffers(gl, rawModelData) {
 
     }
 
-    addLine("Loaded " + numFloats + " float locations");
-    addLine((numFloats / 3) + " vertices");
-    addLine((numFloats / 9) + " triangles");
+    log("Loaded " + numFloats + " float locations", true);
+    log((numFloats / 3) + " vertices", true);
+    log((numFloats / 9) + " triangles", false);
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -652,8 +680,18 @@ function initBuffers(gl, rawModelData) {
 
 
 
-function addLine(text) {
-    log.innerHTML += "[" + ((new Date()).getTime() - timer.start) + "] " + text + "<br />";
+function log(text, silent = true) {
+    let ts = 0;
+    try {
+        ts = new Date().getTime() - timer.start;
+    } catch (e) {
+        // timer was not yet defined
+    } 
+
+    console.log("E3D[" + ts + "] " + text);
+    if (!silent) {
+        logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+    }
 }
 
 
