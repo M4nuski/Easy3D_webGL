@@ -14,13 +14,17 @@ engine
         id
         filename
         size
-        data
+        data        
 
     sounds
         id
         filename
         size
         data
+
+    overlay / HUD / canvas over viewport
+        layout
+        databindings
 
     scene
         camera

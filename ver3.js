@@ -14,7 +14,7 @@ const _panMouseButton = 1;
 
 const _fieldOfView = 45 * Math.PI / 180; // 45deg in radians
 const _zNear = 0.1;
-const _zFar = 100.0;
+const _zFar = 200.0;
 
 const _moveSpeed = 50; // units per sec
 const _rotateSpeed = 3.14; // rad per sec
@@ -29,7 +29,7 @@ const _keyRT = "d";
 const _keyFD = "w";
 const _keyBD = "s";
 
-const _smooth = 0.01;
+const _smooth = 0.1;
 
 let timer; // E3D_timing class
 
@@ -454,47 +454,7 @@ function prepView() {
 
 }
 
-const vsSource = `
-//from model
-attribute vec4 aVertexPosition;
-attribute vec4 aVertexColor;
-attribute vec3 aVertexNormal;
-
-uniform mat4 uModelViewMatrix;
-uniform mat4 uModelNormalMatrix;
-
-//from scene
-uniform mat4 uProjectionMatrix;
-uniform vec3 uLight;
-
-//output to fragment shader
-varying lowp vec4 vColor;
-//varying lowp vec4 vNormal;  
-
-void main(void) {
-    vec4 buf_normal;
-    float fact_diffuse;
-
-    buf_normal = normalize(uModelNormalMatrix * vec4(aVertexNormal, 1.0));	
-    fact_diffuse = max(dot(buf_normal.xyz, uLight), 0.0);
-
-    // outputs
-    vColor = vec4(0.2,0.2,0.2,1.0) + (aVertexColor * fact_diffuse * 0.8);
-    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-
-    //vNormal = aVertexNormal;
-}
-`;
-
-
-const fsSource = `
-varying lowp vec4 vColor;
-
-void main(void) {
-    gl_FragColor = vColor;
-}
-`;
-
+var shdr;
 timer = new E3D_timing(true, 25, timerTick);
 addLine("Session Start");
 
@@ -508,27 +468,15 @@ function main() {
     // Only continue if WebGL is available and working
     if (!gl) {
         addLine("Unable to initialize WebGL. Your browser or machine may not support it.");
+        timer.pause();
         return;
     }
 
     addLine("Shader Program Initialization");
 
-    const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-    programInfo = {
-        program: shaderProgram,
-        attribLocations: {
-            vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-            vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
-            vertexNormal:  gl.getAttribLocation(shaderProgram, 'aVertexNormal')
-        },
-        uniformLocations: {
-            projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-            modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-            modelNormalMatrix: gl.getUniformLocation(shaderProgram, 'uModelNormalMatrix'),
-            light:  gl.getUniformLocation(shaderProgram, 'uLight')
-        },
-    };
-
+    shdr = new E3D_program("mainProgram", gl);
+    shdr.compile(vertShader00, fragShader00);
+    shdr.bindLocations(attribList00, uniformList00);
 
     gl.clearColor(0.0, 0.0, 0.2, 1.0);
     gl.clearDepth(1.0);                 // Clear everything
@@ -538,8 +486,6 @@ function main() {
     gl.enable(gl.CULL_FACE);
 
     winResize();
-
-    //prepView();
 
     getModel();
 
@@ -590,29 +536,29 @@ function bind3FloatBufferToLocation(buffer, location) {
     gl.enableVertexAttribArray(location);
 }
 
-function drawScene(gl, programInfo) {
+function drawScene(gl) {
 
     if (sceneStatus == E3D_ACTIVE) {
 
         setView();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // todo move to scene properties
 
-        // scence uniforms
-        gl.useProgram(programInfo.program);       
-        gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, cam.getViewMatrix());        
-        gl.uniform3fv(programInfo.uniformLocations.light, light_direction);
+        gl.useProgram(shdr.shaderProgram);
+
+        gl.uniformMatrix4fv(shdr.shaderUniforms["uProjectionMatrix"], false, cam.getViewMatrix());        
+        gl.uniform3fv(shdr.shaderUniforms["uLight"], light_direction);
 
         for (let i = 0; i < entities.length; ++i) {
             if ((entities[i].visible) && (entities[i].numElements > 0)) {
 
                 // Entity Attributes
-                bind3FloatBufferToLocation(entities[i].vertexBuffer, programInfo.attribLocations.vertexPosition);
-                bind3FloatBufferToLocation(entities[i].normalBuffer, programInfo.attribLocations.vertexNormal)
-                bind3FloatBufferToLocation(entities[i].colorBuffer,  programInfo.attribLocations.vertexColor)
+                bind3FloatBufferToLocation(entities[i].vertexBuffer, shdr.shaderAttributes["aVertexPosition"]);
+                bind3FloatBufferToLocation(entities[i].normalBuffer, shdr.shaderAttributes["aVertexNormal"])
+                bind3FloatBufferToLocation(entities[i].colorBuffer,  shdr.shaderAttributes["aVertexColor"])
 
                 // Entity Uniforms
-                gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, entities[i].modelMatrix);
-                gl.uniformMatrix4fv(programInfo.uniformLocations.modelNormalMatrix, false, entities[i].normalMatrix);
+                gl.uniformMatrix4fv(shdr.shaderUniforms["uModelViewMatrix"], false, entities[i].modelMatrix);
+                gl.uniformMatrix4fv(shdr.shaderUniforms["uModelNormalMatrix"], false, entities[i].normalMatrix);
                 
                 // Draw
                 gl.drawArrays(gl.TRIANGLES, 0, entities[i].numElements);
@@ -704,55 +650,7 @@ function initBuffers(gl, rawModelData) {
     entities[0].visible = true;
 }
 
-//
-// Initialize a shader program, so WebGL knows how to draw our data
-//
-function initShaderProgram(gl, vsSource, fsSource) {
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
-    // Create the shader program
-
-    const shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    // If creating the shader program failed, alert
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        addLine('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-        return null;
-    }
-
-    return shaderProgram;
-}
-//
-// creates a shader of the given type, uploads the source and
-// compiles it.
-//
-function loadShader(gl, type, source) {
- //   addLine("Creating shader: " + type );
-    const shader = gl.createShader(type);
-
-    // Send the source to the shader object
-
-    gl.shaderSource(shader, source);
-
-    // Compile the shader program
-
-    gl.compileShader(shader);
-
-    // See if it compiled successfully
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        addLine('An error occurred compiling the '+ type +' shaders: ' + gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
-    }
-
-    return shader;
-}
 
 function addLine(text) {
     log.innerHTML += "[" + ((new Date()).getTime() - timer.start) + "] " + text + "<br />";
