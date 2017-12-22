@@ -19,9 +19,8 @@ const _zFar = 100.0;
 const _moveSpeed = 50; // units per sec
 const _rotateSpeed = 3.14; // rad per sec
 
-const _mouseXFactor = 0.0025;
-const _mouseYFactor = 0.0025;
-const _mouseZFactor = 0.001;
+const _mouseSpeed = 0.0025;
+const _mouseWheelSpeed = 0.001;
 
 const _keyUP = " ";
 const _keyDN = "c";
@@ -206,13 +205,13 @@ function mouseMove(event) {
     my = event.pageY;
     
     if (panning) {
-        dx += (mx - pinx) * _mouseXFactor * _moveSpeed;
-        dy += (my - piny) * _mouseYFactor * _moveSpeed;
+        dx += (mx - pinx) * _mouseSpeed * _moveSpeed;
+        dy += (my - piny) * _mouseSpeed * _moveSpeed;
     }
     
     if (rotating) {
-        rx += (mx - pinx) * _mouseXFactor * _rotateSpeed;
-        ry += (my - piny) * _mouseYFactor * _rotateSpeed;
+        rx += (mx - pinx) * _mouseSpeed * _rotateSpeed;
+        ry += (my - piny) * _mouseSpeed * _rotateSpeed;
     }
     
     pinx = mx;
@@ -223,16 +222,16 @@ function mouseMove(event) {
 function mouseLockedMove(x, y) {
     // de facto rotating
     if (pLockActive) {
-        rx += x * _mouseXFactor * _rotateSpeed;
-        ry += y * _mouseYFactor * _rotateSpeed;
-        addLine( x + " " + y);
+        rx += x * _mouseSpeed * _rotateSpeed;
+        ry += y * _mouseSpeed * _rotateSpeed;
+      //  addLine( x + " " + y);
         }
 }
 
 function mouseWheel(event) {
 
     if (event.deltaY != 0) {
-        dz += event.deltaY * _mouseZFactor * _moveSpeed;
+        dz += event.deltaY * _mouseWheelSpeed * _moveSpeed;
     }
 
     if (event.preventDefault) { event.preventDefault(); };

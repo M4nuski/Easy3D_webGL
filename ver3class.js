@@ -17,7 +17,7 @@ class E3D_timing {
         }
     }
     smooth(val, target, fact) { // TODO upgrade for time independant smoothing
-        return (val * fact) + (target * (1.0 - fact));
+        return val + ((target-val) * fact);
         // target Fact + val - val fact
         // target + (target - val) * fact
         //return target + ((target - val) * fact);  
