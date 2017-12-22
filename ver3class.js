@@ -212,8 +212,8 @@ class E3D_camera { // base camera, orthogonal
 
     adjustToCamera(vect) {
         let result = vec3.create();
-        vec3.rotateY(result, vect, [0, 0, 0], -this.rotation.x); 
-        vec3.rotateX(result, result, [0, 0, 0], -this.rotation.y); 
+        vec3.rotateY(result, vect, [0, 0, 0], -this.rotation[1]); 
+        vec3.rotateX(result, result, [0, 0, 0], -this.rotation[0]); 
         return result;
     }  
 
@@ -263,9 +263,9 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
     }
     updateInternal() {
         // update matrix per internal data
-        mat4.translate(this.matrix, this.matrix, this.position);
+        mat4.translate(this.matrix, this.baseMatrix, this.position);
 
-        mat4.rotateY(this.matrix, this.baseMatrix, this.rotation[1] );
+        mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
         mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );        
     }
