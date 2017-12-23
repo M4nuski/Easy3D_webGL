@@ -34,9 +34,7 @@ const _keyBD = "s";
 
 const _smooth = 0.1;
 
-let timer; // E3D_timing class
 
-var sceneStatus = E3D_CREATED;
 
 // global state var
 
@@ -53,27 +51,17 @@ var tadx = dx, tady =dy, tadz = dz, tarx = sumRX, tary = sumRY;
 
 var touchDist = 0;
 var ongoingTouches = [];
-
 var inputTable = {};
 
 
+//Scene
 
+var sceneStatus = E3D_CREATED;
+let timer; // E3D_timing class
 var winWidth = 10, winHeight = 10;
-var projectionMatrix = mat4.create();
-var viewMatrix = mat4.clone(projectionMatrix);
-
-var light_direction = vec3.fromValues(-1.0, -1.0, -1.0);
-vec3.normalize(light_direction, light_direction);
-var _light0 = vec3.clone(light_direction);
-
-var current_pos = vec3.fromValues(0, 0, -16.0);
-var current_rot = mat4.create();
-
-
 var gl, programInfo, cam;
-
-
 var entities = []; // of E3D_entity
+
 
 
 log("Get DOM Elements");
@@ -503,8 +491,18 @@ function main() {
     log("Shader Program Initialization", false);
 
     shdr = new E3D_program("mainProgram", gl);
-    shdr.compile(vertShader00, fragShader00);
-    shdr.bindLocations(attribList00, uniformList00);
+    shdr.compile(vertShader01, fragShader00);
+    shdr.bindLocations(attribList01, uniformList01);
+
+    lights = new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
+
+    lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
+    lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
+    lights.light0_lockToCamera = true;
+
+    lights.setColor1(vec3.fromValues(1.0, 1.0, 0.25));
+    lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
+    lights.light1_lockToCamera = false;
 
     gl.clearColor(0.0, 0.0, 0.2, 1.0);
     gl.clearDepth(1.0);                 // Clear everything
@@ -548,9 +546,14 @@ function setView() {
 
     cam.move(tadx, -tady, tadz, tary, tarx, 0);
 
-    if (cam.id == "cam1m") { // rotate around object
-        light_direction = cam.adjustToCamera(_light0);
-    } 
+  //  if (cam.id == "cam1m") { // rotate around object
+        if (lights.light0_lockToCamera) {
+            lights.light0_adjusted = cam.adjustToCamera(lights.light0_direction);
+        }
+        if (lights.light1_lockToCamera) {
+            lights.light1_adjusted = cam.adjustToCamera(lights.light1_direction);
+        }
+   // } 
 
     // clean up state changes
     dx = 0; dy = 0; dz = 0;
@@ -573,8 +576,18 @@ function drawScene(gl) {
 
         gl.useProgram(shdr.shaderProgram);
 
-        gl.uniformMatrix4fv(shdr.shaderUniforms["uProjectionMatrix"], false, cam.getViewMatrix());        
-        gl.uniform3fv(shdr.shaderUniforms["uLight"], light_direction);
+        gl.uniformMatrix4fv(shdr.shaderUniforms["uProjectionMatrix"], false, cam.getViewMatrix());     
+
+        gl.uniform3fv(shdr.shaderUniforms["uLightA_Color"], lights.ambiant_color);
+
+        gl.uniform3fv(shdr.shaderUniforms["uLight0_Color"], lights.light0_color);
+        gl.uniform3fv(shdr.shaderUniforms["uLight0_Direction"], lights.light0_adjusted);
+
+        gl.uniform3fv(shdr.shaderUniforms["uLight1_Color"], lights.light1_color);
+        gl.uniform3fv(shdr.shaderUniforms["uLight1_Direction"], lights.light1_adjusted);
+
+
+
 
         for (let i = 0; i < entities.length; ++i) {
             if ((entities[i].visible) && (entities[i].numElements > 0)) {
@@ -585,8 +598,8 @@ function drawScene(gl) {
                 bind3FloatBufferToLocation(entities[i].colorBuffer,  shdr.shaderAttributes["aVertexColor"])
 
                 // Entity Uniforms
-                gl.uniformMatrix4fv(shdr.shaderUniforms["uModelViewMatrix"], false, entities[i].modelMatrix);
-                gl.uniformMatrix4fv(shdr.shaderUniforms["uModelNormalMatrix"], false, entities[i].normalMatrix);
+                gl.uniformMatrix4fv(shdr.shaderUniforms["uModelMatrix"], false, entities[i].modelMatrix);
+                gl.uniformMatrix4fv(shdr.shaderUniforms["uNormalMatrix"], false, entities[i].normalMatrix);
                 
                 // Draw
                 gl.drawArrays(gl.TRIANGLES, 0, entities[i].numElements);

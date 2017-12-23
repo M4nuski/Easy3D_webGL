@@ -22,5 +22,6 @@ Next Steps
 3. Sounds
 4. Some kind of game :P
 5. NetCode !
+6. Better lights shaders (array of different types of ligts) (spot, point etc)
 
 -M4nuski
