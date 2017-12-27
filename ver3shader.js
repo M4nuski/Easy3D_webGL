@@ -79,23 +79,21 @@ void main(void) {
     vec3 Color0;
     vec3 Color1;
 
-    // Normals and diffuse compurations
-    buf_normal = normalize(uNormalMatrix * vec4(aVertexNormal, 1.0));	
-    fact_diffuse0 = max(dot(buf_normal.xyz, uLight0_Direction), 0.0);
-    fact_diffuse1 = max(dot(buf_normal.xyz, uLight1_Direction), 0.0);
+    if (aVertexNormal != vec3(0.0, 0.0, 0.0)) {
 
-    // Color (  vColor = max(ColorA, Color0, Color1, aVertexColor); )
-   // ColorA = uLightA_Color * aVertexColor;
+        // Normals and diffuse computations
+        buf_normal = normalize(uNormalMatrix * vec4(aVertexNormal, 1.0));	
+        fact_diffuse0 = max(dot(buf_normal.xyz, uLight0_Direction), 0.0);
+        fact_diffuse1 = max(dot(buf_normal.xyz, uLight1_Direction), 0.0);
 
-    Color0 = fact_diffuse0 * uLight0_Color;
-    Color1 = fact_diffuse1 * uLight1_Color;
+        Color0 = fact_diffuse0 * uLight0_Color * aVertexColor;
+        Color1 = fact_diffuse1 * uLight1_Color * aVertexColor;
 
+        vColor = vec4(clamp(max(Color0, Color1), uLightA_Color * aVertexColor, aVertexColor) , 1.0);
 
-    //vColor = max(Color0, Color1);
-   // vColor = max(vColor, Color1);
-
-    vColor = vec4(clamp(max(Color0, Color1), uLightA_Color * aVertexColor, aVertexColor) , 1.0);
-
+    } else {
+        vColor = vec4(aVertexColor, 1.0);
+    };
 
     // Position (vertex trough modelMatrix trough projectionMatrix)
     gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;

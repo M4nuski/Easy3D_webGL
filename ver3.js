@@ -500,7 +500,7 @@ function main() {
     lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
     lights.light0_lockToCamera = true;
 
-    lights.setColor1(vec3.fromValues(1.0, 1.0, 0.25));
+    lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
     lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
     lights.light1_lockToCamera = false;
 
@@ -509,7 +509,7 @@ function main() {
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
     gl.cullFace(gl.BACK);
-    gl.enable(gl.CULL_FACE);
+    gl.disable(gl.CULL_FACE);
 
     winResize();
 
@@ -554,6 +554,13 @@ function setView() {
             lights.light1_adjusted = cam.adjustToCamera(lights.light1_direction);
         }
    // } 
+   entities[1].vertexArray[21] = lights.light0_adjusted[0];
+   entities[1].vertexArray[22] = lights.light0_adjusted[1];
+   entities[1].vertexArray[23] = lights.light0_adjusted[2];
+
+   entities[2].vertexArray[21] = lights.light1_adjusted[0];
+   entities[2].vertexArray[22] = lights.light1_adjusted[1];
+   entities[2].vertexArray[23] = lights.light1_adjusted[2];
 
     // clean up state changes
     dx = 0; dy = 0; dz = 0;
@@ -561,10 +568,17 @@ function setView() {
 }
 
 
-function bind3FloatBufferToLocation(buffer, location) {
+function bind3FloatBuffer(location, buffer) { //TODO static in scene
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(location);
+}
+
+function bindAndUpdate3FloatBuffer(location, buffer, data) { // TODO static in scene
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(location);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 }
 
 function drawScene(gl) {
@@ -593,25 +607,32 @@ function drawScene(gl) {
             if ((entities[i].visible) && (entities[i].numElements > 0)) {
 
                 // Entity Attributes
-                bind3FloatBufferToLocation(entities[i].vertexBuffer, shdr.shaderAttributes["aVertexPosition"]);
-                bind3FloatBufferToLocation(entities[i].normalBuffer, shdr.shaderAttributes["aVertexNormal"])
-                bind3FloatBufferToLocation(entities[i].colorBuffer,  shdr.shaderAttributes["aVertexColor"])
-
+                if (entities[i].dynamic) {
+                    bindAndUpdate3FloatBuffer(shdr.shaderAttributes["aVertexPosition"], entities[i].vertexBuffer, entities[i].vertexArray);
+                    bindAndUpdate3FloatBuffer(shdr.shaderAttributes["aVertexNormal"], entities[i].normalBuffer, entities[i].normalArray);    
+                    bindAndUpdate3FloatBuffer(shdr.shaderAttributes["aVertexColor"], entities[i].colorBuffer, entities[i].colorArray);  
+                } else {
+                    bind3FloatBuffer(shdr.shaderAttributes["aVertexPosition"], entities[i].vertexBuffer);  
+                    bind3FloatBuffer(shdr.shaderAttributes["aVertexNormal"], entities[i].normalBuffer);    
+                    bind3FloatBuffer(shdr.shaderAttributes["aVertexColor"], entities[i].colorBuffer);
+                }
                 // Entity Uniforms
                 gl.uniformMatrix4fv(shdr.shaderUniforms["uModelMatrix"], false, entities[i].modelMatrix);
                 gl.uniformMatrix4fv(shdr.shaderUniforms["uNormalMatrix"], false, entities[i].normalMatrix);
                 
                 // Draw
-                gl.drawArrays(gl.TRIANGLES, 0, entities[i].numElements);
+                gl.drawArrays(entities[i].drawMode, 0, entities[i].numElements);
             }
         }
+
+
     }
 }
 
 
 function initBuffers(gl, rawModelData) {
 
-    entities.push( new E3D_entity("map", "") );
+    entities.push( new E3D_entity("map", "", false) );
 
     log("Creating buffers");
 
@@ -671,24 +692,93 @@ function initBuffers(gl, rawModelData) {
     log((numFloats / 3) + " vertices", true);
     log((numFloats / 9) + " triangles", false);
 
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    entities[0].vertexArray = new Float32Array(positions);
+    entities[0].vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[0].vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[0].vertexArray, gl.STATIC_DRAW);
 
-    const colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    entities[0].colorArray = new Float32Array(colors);
+    entities[0].colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[0].colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[0].colorArray, gl.STATIC_DRAW);
+    
+    entities[0].normalArray = new Float32Array(normals);
+    entities[0].normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[0].normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[0].normalArray, gl.STATIC_DRAW);
 
-    const normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+   // entities[0].vertexBuffer = positionBuffer;
+  //  entities[0].colorBuffer = colorBuffer;
+   // entities[0].normalBuffer = normalBuffer;
 
-    entities[0].vertexBuffer = positionBuffer;
-    entities[0].colorBuffer = colorBuffer;
-    entities[0].normalBuffer = normalBuffer;
     entities[0].numElements = numFloats / 3;
 
     entities[0].visible = true;
+
+
+
+    let posData = [ 0, 0, 0, 1, 0, 0,
+                      0, 0, 0, 0, 1, 0,
+                      0, 0, 0, 0, 0, 1,
+                      0, 0, 0, 1, 1, 1];
+
+    let colData = [1, 0, 0, 1, 0, 0,
+                   0, 1, 0, 0, 1, 0,
+                   0, 0, 1, 0, 0, 1,
+                   1, 1, 1, 1, 1, 1 ];
+
+
+    entities.push( new E3D_entity("light0vect", "", true) );
+    entities[1].position = vec3.fromValues(0, 20, 0);
+    entities[1].scale = vec3.fromValues(10, 10, 10);
+
+    entities[1].vertexArray = new Float32Array(posData);
+    entities[1].vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[1].vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[1].vertexArray, gl.DYNAMIC_DRAW);
+
+    entities[1].colorArray = new Float32Array(colData);
+    entities[1].colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[1].colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[1].colorArray, gl.STATIC_DRAW);
+    
+    entities[1].normalArray = new Float32Array(24);
+    entities[1].normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[1].normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[1].normalArray, gl.STATIC_DRAW);
+
+    entities[1].numElements = 8;
+    entities[1].drawMode = gl.LINES;
+    entities[1].visible = true;
+    entities[1].resetMatrix();
+
+
+
+
+
+    entities.push( new E3D_entity("light1vect", "", true) );
+    entities[2].position = vec3.fromValues(0, 20, 0);
+    entities[2].scale = vec3.fromValues(10, 10, 10);
+
+    entities[2].vertexArray = new Float32Array(posData);
+    entities[2].vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[2].vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[2].vertexArray, gl.DYNAMIC_DRAW);
+
+    entities[2].colorArray = new Float32Array(colData);
+    entities[2].colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[2].colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[2].colorArray, gl.STATIC_DRAW);
+    
+    entities[2].normalArray = new Float32Array(24);
+    entities[2].normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, entities[2].normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, entities[2].normalArray, gl.STATIC_DRAW);
+
+    entities[2].numElements = 8;
+    entities[2].drawMode = gl.LINES;
+    entities[2].visible = true;
+    entities[2].resetMatrix();
 }
 
 

@@ -57,11 +57,12 @@ class E3D_timing {
 
 
 class E3D_entity {
-    constructor(id, filename) {
+    constructor(id, filename, dynamic = false) {
 
         this.id = id; // to find object in list
         this.visible = false;
-
+        this.dynamic = dynamic;
+        
         // Properties
         this.position = vec3.create();
         this.rotation = vec3.create();
@@ -73,11 +74,19 @@ class E3D_entity {
 
         // Data
         this.numElements = 0;
+        this.drawMode = 4;//gl.TRIANGLES;
+
+        // GL buffer data stores
         this.vertexBuffer;
         this.normalBuffer;
         this.colorBuffer; // todo replace by texture
         //this.uvBuffer; // todo
         //this.indiceBuffer; // todo 
+
+        // float32Array of raw data
+        this.vertexArray; 
+        this.normalArray;
+        this.colorArray;
 
         //this.textureID = ""; // todo        
         this.filename = filename;
@@ -93,6 +102,10 @@ class E3D_entity {
 
     }
 
+    cloneBuffers(entity) {
+        //fill own buffers with other entity's buffer data
+    }
+
     resetMatrix(){
         // recreate matrices from scale, rotation and position
         mat4.rotateZ(this.normalMatrix, mat4.create(), this.rotation[2] );
@@ -103,9 +116,9 @@ class E3D_entity {
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
 
-        mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
-
         mat4.translate(this.modelMatrix, this.modelMatrix, this.position);
+        
+        mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
     }
 
 }
@@ -181,6 +194,8 @@ class E3D_scene {
     render() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         // entities, sprites, hud
+
+
     }
     postRender() {
         // cleanup or other events
@@ -317,8 +332,8 @@ class E3D_camera { // base camera, orthogonal
 
     adjustToCamera(vect) {
         let result = vec3.create();
-        vec3.rotateY(result, vect, [0, 0, 0], -this.rotation[1]); 
-        vec3.rotateX(result, result, [0, 0, 0], -this.rotation[0]); 
+        vec3.rotateX(result, vect, [0, 0, 0], -this.rotation[0]); 
+        vec3.rotateY(result, result, [0, 0, 0], -this.rotation[1]); 
         return result;
     }  
 
