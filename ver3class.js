@@ -62,7 +62,7 @@ class E3D_entity {
         this.id = id; // to find object in list
         this.visible = false;
         this.dynamic = dynamic;
-        
+
         // Properties
         this.position = vec3.create();
         this.rotation = vec3.create();
@@ -303,7 +303,7 @@ class E3D_camera { // base camera, orthogonal
 
     updateInternal() {
         // create matrix per position and rotation
-        mat4.translate(this.matrix, this.baseMatrix, this.position);
+        mat4.translate(this.matrix, this.baseMatrix, [-this.position[0], -this.position[1], -this.position[2]] );
 
         mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
@@ -362,7 +362,7 @@ class E3D_camera_persp extends E3D_camera { // basic perspective based matrix vi
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
 
-        mat4.translate(this.matrix, this.matrix, this.position);
+        mat4.translate(this.matrix, this.matrix, [-this.position[0], -this.position[1], -this.position[2]] );
     }
 
     move(tx, ty, tz, rx, ry, rz) {
@@ -383,7 +383,7 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
     }
     updateInternal() {
         // update matrix per internal data
-        mat4.translate(this.matrix, this.baseMatrix, this.position);
+        mat4.translate(this.matrix, this.baseMatrix,  [-this.position[0], -this.position[1], -this.position[2]] );
 
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );

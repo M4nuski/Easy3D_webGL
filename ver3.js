@@ -154,22 +154,22 @@ function keyUp(event) {
 
 function processKeyInputs() {
     if (inputTable[_keyUP]) {
-        dy += _moveSpeed * timer.delta;
-    }
-    if (inputTable[_keyDN]) {
         dy -= _moveSpeed * timer.delta;
     }
-    if (inputTable[_keyLT]) {
-        dx += _moveSpeed * timer.delta;
+    if (inputTable[_keyDN]) {
+        dy += _moveSpeed * timer.delta;
     }
-    if (inputTable[_keyRT]) {
+    if (inputTable[_keyLT]) {
         dx -= _moveSpeed * timer.delta;
     }
+    if (inputTable[_keyRT]) {
+        dx += _moveSpeed * timer.delta;
+    }
     if (inputTable[_keyFD]) {
-        dz += _moveSpeed * timer.delta;
+        dz -= _moveSpeed * timer.delta;
     }
     if (inputTable[_keyBD]) {
-        dz -= _moveSpeed * timer.delta;
+        dz += _moveSpeed * timer.delta;
     }
 
 }
@@ -509,7 +509,7 @@ function main() {
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
     gl.cullFace(gl.BACK);
-    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
 
     winResize();
 
