@@ -717,44 +717,6 @@ function initBuffers(gl, rawModelData) {
     entities[1].normalBuffer = gl.createBuffer();
 
 
-/*
-
-    let posData = [ 0, 0, 0, 1, 0, 0,
-                      0, 0, 0, 0, 1, 0,
-                      0, 0, 0, 0, 0, 1,
-                      0, 0, 0, 1, 1, 1];
-
-    let colData = [1, 0, 0, 1, 0, 0,
-                   0, 1, 0, 0, 1, 0,
-                   0, 0, 1, 0, 0, 1,
-                   1, 1, 1, 1, 1, 1 ];
-
-
-    entities.push( new E3D_entity("light0vect", "", true) );
-    entities[1].position = vec3.fromValues(0, 20, 0);
-    entities[1].scale = vec3.fromValues(10, 10, 10);
-
-    entities[1].vertexArray = new Float32Array(posData);
-    entities[1].vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[1].vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[1].vertexArray, gl.DYNAMIC_DRAW);
-
-    entities[1].colorArray = new Float32Array(colData);
-    entities[1].colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[1].colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[1].colorArray, gl.STATIC_DRAW);
-    
-    entities[1].normalArray = new Float32Array(24);
-    entities[1].normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[1].normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[1].normalArray, gl.STATIC_DRAW);
-
-    entities[1].numElements = 8;
-    entities[1].drawMode = gl.LINES; // 1
-    entities[1].visible = true;
-    entities[1].resetMatrix();*/
-
-
     entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
     entities[2].position = vec3.fromValues(5, 20, 5);
     entities[2].scale = vec3.fromValues(5, 5, 5);
@@ -765,29 +727,6 @@ function initBuffers(gl, rawModelData) {
     entities[2].colorBuffer = gl.createBuffer();
     entities[2].normalBuffer = gl.createBuffer();
 
-/*
-
-    entities.push( new E3D_entity("light1vect", "", true) );
-
-    entities[2].vertexArray = new Float32Array(posData);
-    entities[2].vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[2].vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[2].vertexArray, gl.DYNAMIC_DRAW);
-
-    entities[2].colorArray = new Float32Array(colData);
-    entities[2].colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[2].colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[2].colorArray, gl.STATIC_DRAW);
-    
-    entities[2].normalArray = new Float32Array(24);
-    entities[2].normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[2].normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[2].normalArray, gl.STATIC_DRAW);
-
-    entities[2].numElements = 8;
-    entities[2].drawMode = gl.LINES;
-    entities[2].visible = true;
-    entities[2].resetMatrix();*/
 
 }
 
@@ -796,7 +735,7 @@ function initBuffers(gl, rawModelData) {
 function log(text, silent = true) {
     let ts = 0;
     try {
-        ts = new Date().getTime() - timer.start;
+        ts = Date.now() - timer.start;
     } catch (e) {
         // timer was not yet defined
     } 

@@ -42,6 +42,7 @@ class E3D_timing {
         if (this.onTick) {             
             this.onTick(); 
         }
+
         this.usage = 100*(Date.now() - this.lastTick)/this.tickInterval;
     }
 
@@ -110,11 +111,11 @@ class E3D_entity {
 
     resetMatrix(){
         // recreate matrices from scale, rotation and position
-        mat4.rotateZ(this.normalMatrix, mat4.create(), this.rotation[2] );
+        mat4.rotateZ(this.normalMatrix, mat4_identity, this.rotation[2] );
         mat4.rotateX(this.normalMatrix, this.normalMatrix, this.rotation[0] );
         mat4.rotateY(this.normalMatrix, this.normalMatrix, this.rotation[1] );
 
-        mat4.rotateZ(this.modelMatrix, mat4.create(), this.rotation[2] );
+        mat4.rotateZ(this.modelMatrix, mat4_identity, this.rotation[2] );
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
 
@@ -325,7 +326,7 @@ class E3D_camera { // base camera, orthogonal
 
     updateInternal() {
         // create matrix per position and rotation
-        mat4.translate(this.matrix, this.baseMatrix, [-this.position[0], -this.position[1], -this.position[2]] );
+        mat4.translate(this.matrix, this.baseMatrix, vec3.negate(vec3_dummy, this.position) );
 
         mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
@@ -354,8 +355,8 @@ class E3D_camera { // base camera, orthogonal
 
     adjustToCamera(vect) {
         let result = vec3.create();
-        vec3.rotateX(result, vect, [0, 0, 0], -this.rotation[0]); 
-        vec3.rotateY(result, result, [0, 0, 0], -this.rotation[1]); 
+        vec3.rotateX(result, vect, vec3_origin, -this.rotation[0]); 
+        vec3.rotateY(result, result, vec3_origin, -this.rotation[1]); 
         return result;
     }  
 
@@ -384,15 +385,15 @@ class E3D_camera_persp extends E3D_camera { // basic perspective based matrix vi
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
 
-        mat4.translate(this.matrix, this.matrix, [-this.position[0], -this.position[1], -this.position[2]] );
+        mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
     }
 
     move(tx, ty, tz, rx, ry, rz) {
         // adjust translation to current rotation
         const t = vec3.fromValues(tx , ty, tz);
-        vec3.rotateZ(t, t, [0,0,0], -rz);
-        vec3.rotateX(t, t, [0,0,0], -rx);
-        vec3.rotateY(t, t, [0,0,0], -ry);
+        vec3.rotateZ(t, t, vec3_origin, -rz);
+        vec3.rotateX(t, t, vec3_origin, -rx);
+        vec3.rotateY(t, t, vec3_origin, -ry);
         // update
         this.update(this.position[0]+t[0], this.position[1]+t[1], this.position[2]+t[2], rx, ry, rz);
     }
@@ -405,7 +406,7 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
     }
     updateInternal() {
         // update matrix per internal data
-        mat4.translate(this.matrix, this.baseMatrix,  [-this.position[0], -this.position[1], -this.position[2]] );
+        mat4.translate(this.matrix, this.baseMatrix, vec3.negate(vec3_dummy , this.position) );
 
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
@@ -441,14 +442,14 @@ class E3D_lighting {
     }
     setDirection0(d) {
         vec3.normalize(this.light0_direction, d);
-        this.light0_adjusted = vec3.clone(this.light0_direction);
+        vec3.copy(this.light0_adjusted, this.light0_direction);
     }
     setColor1(c) {
         this.light1_color = c;
     }
     setDirection1(d) {
         vec3.normalize(this.light1_direction, d);
-        this.light1_adjusted = vec3.clone(this.light1_direction);
+        vec3.copy(this.light0_adjusted, this.light1_direction);
     }
 
 }
