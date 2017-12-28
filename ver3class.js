@@ -8,23 +8,23 @@ class E3D_timing {
 
         this.timer; 
 
-        this.start = new Date().getTime();
+        this.start = Date.now();
         this.lastTick = this.start;
         this.active = run;
+        this.usage = this.start;
 
         if (run) {
             this.timer = setInterval( () => {this.tickEvent() }, interval);
         }
     }
-    smooth(val, target, fact) { // TODO upgrade for time independant smoothing
-        return val + ((target-val) * fact);
-        // target Fact + val - val fact
-        // target + (target - val) * fact
-        //return target + ((target - val) * fact);  
+    smooth(val, target, fact) { 
+        let f = this.delta * fact;
+        if (f > 1.0) f = 1.0;
+        return val + ((target-val) * f);
     }
 
     run() {
-        this.lastTick = new Date().getTime();
+        this.lastTick = Date.now();
         this.timer = setInterval( () => {this.tickEvent() }, this.tickInterval);
         this.active = true;
     }
@@ -34,7 +34,7 @@ class E3D_timing {
     }
 
     tickEvent(){
-        const ts = new Date().getTime(); 
+        const ts = Date.now(); 
 
         this.delta = (ts - this.lastTick) / 1000;
         this.lastTick = ts;
@@ -42,6 +42,7 @@ class E3D_timing {
         if (this.onTick) {             
             this.onTick(); 
         }
+        this.usage = 100*(Date.now() - this.lastTick)/this.tickInterval;
     }
 
     setInterval(interval) {
@@ -104,6 +105,7 @@ class E3D_entity {
 
     cloneBuffers(entity) {
         //fill own buffers with other entity's buffer data
+
     }
 
     resetMatrix(){
@@ -122,6 +124,44 @@ class E3D_entity {
     }
 
 }
+
+
+class E3D_entity_vector extends E3D_entity {
+    constructor (id, showAxis, vectorScale, normalize) {
+        super(id, "", true);
+        this.showAxis = showAxis; // todo
+        this.vectorScale = vectorScale;
+        this.normalize = normalize;
+        this.drawMode = 1; // gl.LINES;
+
+        this.vertexArray = new Float32Array([0, 0, 0, 1, 0, 0,
+                                             0, 0, 0, 0, 1, 0,
+                                             0, 0, 0, 0, 0, 1,
+                                             0, 0, 0, 1, 1, 1]);
+
+        this.colorArray = new Float32Array([1, 0, 0, 1, 0, 0,
+                                            0, 1, 0, 0, 1, 0,
+                                            0, 0, 1, 0, 0, 1,
+                                            1, 1, 1, 1, 1, 1 ]);
+
+        this.normalArray = new Float32Array(24);
+
+        this.numElements = 8;
+    }
+
+    updateVector(vec) {
+        let nv = [vec[0], vec[1], vec[2]];
+        if (this.normalize) {
+            vec3.normalize(nv, vec);
+        }
+        vec3.scale(nv, nv, this.vectorScale);
+        this.vertexArray[21] = nv[0];
+        this.vertexArray[22] = nv[1];
+        this.vertexArray[23] = nv[2];
+    }
+
+}
+
 
 class E3D_animation {
     constructor(id, funct) {
@@ -244,31 +284,13 @@ class E3D_program {
         }
     }
 
-  /*  programInfo = {
-        program: shaderProgram,
-        attribLocations: {
-            vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-            vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
-            vertexNormal:  gl.getAttribLocation(shaderProgram, 'aVertexNormal')
-        },
-        uniformLocations: {
-            projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-            modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-            modelNormalMatrix: gl.getUniformLocation(shaderProgram, 'uModelNormalMatrix'),
-            light:  gl.getUniformLocation(shaderProgram, 'uLight')
-        },
-    };*/
-
-
-
-
-    static loadShader(gl, type, source) {
-        const shader = gl.createShader(type);       
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.log('An error occurred compiling the '+ type +' shaders: ' + gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
+    static loadShader(context, type, source) {
+        const shader = context.createShader(type);       
+        context.shaderSource(shader, source);
+        context.compileShader(shader);
+        if (!context.getShaderParameter(shader, context.COMPILE_STATUS)) {
+            console.log('An error occurred compiling the '+ type +' shaders: ' + context.getShaderInfoLog(shader));
+            context.deleteShader(shader);
             return null;
         }
         return shader;

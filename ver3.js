@@ -32,7 +32,7 @@ const _keyRT = "d";
 const _keyFD = "w";
 const _keyBD = "s";
 
-const _smooth = 0.1;
+const _smooth = 6.0;
 
 
 
@@ -114,7 +114,7 @@ document.forms["moveTypeForm"].addEventListener("change", prepView);
 
 function updateStatus() {
     status.innerHTML = "pX:" + Math.floor(cam.position[0]) + "pY:" + Math.floor(cam.position[1]) + "pZ:" + Math.floor(cam.position[2])+ "<br />"+
-    "rX: " + Math.floor(sumRY * 57.3) + " rY:"+ Math.floor(sumRX * 57.3) + " delta:" + timer.delta + "s";
+    "rX: " + Math.floor(sumRY * 57.3) + " rY:"+ Math.floor(sumRX * 57.3) + " delta:" + timer.delta + "s " + timer.usage + "%";
 }
 
 function winResize() {
@@ -211,8 +211,8 @@ function mouseMove(event) {
     my = event.pageY;
     
     if (panning) {
-        dx += (mx - pinx) * _mouseSpeed * _moveSpeed;
-        dy += (my - piny) * _mouseSpeed * _moveSpeed;
+        dx -= (mx - pinx) * _mouseSpeed * _moveSpeed;
+        dy -= (my - piny) * _mouseSpeed * _moveSpeed;
     }
     
     if (rotating) {
@@ -363,7 +363,7 @@ function touchMove(event) {
          if (Math.abs(touchDist - newTouchDist) > _pinchHysteresis) {        
             // mouse wheel zoom
             var delta = (touchDist - newTouchDist) / Math.abs(touchDist - newTouchDist) * _pinchHysteresis;
-            mouseWheel({ deltaY: -5*((touchDist - newTouchDist) - delta) });
+            mouseWheel({ deltaY: 5*((touchDist - newTouchDist) - delta) });
             touchDist = newTouchDist;
         }
 
@@ -546,21 +546,15 @@ function setView() {
 
     cam.move(tadx, -tady, tadz, tary, tarx, 0);
 
-  //  if (cam.id == "cam1m") { // rotate around object
-        if (lights.light0_lockToCamera) {
-            lights.light0_adjusted = cam.adjustToCamera(lights.light0_direction);
-        }
-        if (lights.light1_lockToCamera) {
-            lights.light1_adjusted = cam.adjustToCamera(lights.light1_direction);
-        }
-   // } 
-   entities[1].vertexArray[21] = lights.light0_adjusted[0];
-   entities[1].vertexArray[22] = lights.light0_adjusted[1];
-   entities[1].vertexArray[23] = lights.light0_adjusted[2];
+    if (lights.light0_lockToCamera) {
+        lights.light0_adjusted = cam.adjustToCamera(lights.light0_direction);
+    }
+    if (lights.light1_lockToCamera) {
+        lights.light1_adjusted = cam.adjustToCamera(lights.light1_direction);
+    }
 
-   entities[2].vertexArray[21] = lights.light1_adjusted[0];
-   entities[2].vertexArray[22] = lights.light1_adjusted[1];
-   entities[2].vertexArray[23] = lights.light1_adjusted[2];
+   entities[1].updateVector(lights.light0_adjusted);
+   entities[2].updateVector(lights.light1_adjusted);
 
     // clean up state changes
     dx = 0; dy = 0; dz = 0;
@@ -576,9 +570,9 @@ function bind3FloatBuffer(location, buffer) { //TODO static in scene
 
 function bindAndUpdate3FloatBuffer(location, buffer, data) { // TODO static in scene
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(location);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 }
 
 function drawScene(gl) {
@@ -707,15 +701,23 @@ function initBuffers(gl, rawModelData) {
     gl.bindBuffer(gl.ARRAY_BUFFER, entities[0].normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, entities[0].normalArray, gl.STATIC_DRAW);
 
-   // entities[0].vertexBuffer = positionBuffer;
-  //  entities[0].colorBuffer = colorBuffer;
-   // entities[0].normalBuffer = normalBuffer;
-
     entities[0].numElements = numFloats / 3;
 
     entities[0].visible = true;
 
 
+    entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
+    entities[1].position = vec3.fromValues(-5, 20, -5);
+    entities[1].scale = vec3.fromValues(5, 5, 5);
+    entities[1].visible = true;
+    entities[1].resetMatrix();
+
+    entities[1].vertexBuffer = gl.createBuffer(); //todo move to scene with context
+    entities[1].colorBuffer = gl.createBuffer();
+    entities[1].normalBuffer = gl.createBuffer();
+
+
+/*
 
     let posData = [ 0, 0, 0, 1, 0, 0,
                       0, 0, 0, 0, 1, 0,
@@ -748,17 +750,24 @@ function initBuffers(gl, rawModelData) {
     gl.bufferData(gl.ARRAY_BUFFER, entities[1].normalArray, gl.STATIC_DRAW);
 
     entities[1].numElements = 8;
-    entities[1].drawMode = gl.LINES;
+    entities[1].drawMode = gl.LINES; // 1
     entities[1].visible = true;
-    entities[1].resetMatrix();
+    entities[1].resetMatrix();*/
 
 
+    entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
+    entities[2].position = vec3.fromValues(5, 20, 5);
+    entities[2].scale = vec3.fromValues(5, 5, 5);
+    entities[2].visible = true;
+    entities[2].resetMatrix();
 
+    entities[2].vertexBuffer = gl.createBuffer(); //todo move to scene with context
+    entities[2].colorBuffer = gl.createBuffer();
+    entities[2].normalBuffer = gl.createBuffer();
 
+/*
 
     entities.push( new E3D_entity("light1vect", "", true) );
-    entities[2].position = vec3.fromValues(0, 20, 0);
-    entities[2].scale = vec3.fromValues(10, 10, 10);
 
     entities[2].vertexArray = new Float32Array(posData);
     entities[2].vertexBuffer = gl.createBuffer();
@@ -778,7 +787,8 @@ function initBuffers(gl, rawModelData) {
     entities[2].numElements = 8;
     entities[2].drawMode = gl.LINES;
     entities[2].visible = true;
-    entities[2].resetMatrix();
+    entities[2].resetMatrix();*/
+
 }
 
 
