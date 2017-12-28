@@ -449,7 +449,7 @@ class E3D_lighting {
     }
     setDirection1(d) {
         vec3.normalize(this.light1_direction, d);
-        vec3.copy(this.light0_adjusted, this.light1_direction);
+        vec3.copy(this.light1_adjusted, this.light1_direction);
     }
 
 }

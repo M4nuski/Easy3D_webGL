@@ -7,20 +7,17 @@ log("DOMContentLoaded");
 
 
 
-const _PId2 = Math.PI / 2;
-const _PIx2 = Math.PI * 2;
-
 // global config
 const _pinchHysteresis = 10;
 const _rotateMouseButton = 0;
 const _panMouseButton = 1;
 
-const _fieldOfView = 45 * Math.PI / 180; // 45deg in radians
+const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
 const _zFar = 200.0;
 
 const _moveSpeed = 50; // units per sec
-const _rotateSpeed = 3.14; // rad per sec
+const _rotateSpeed = 180 * DegToRad; // rad per sec
 
 const _mouseSpeed = 0.0025;
 const _mouseWheelSpeed = 0.001;
@@ -114,7 +111,7 @@ document.forms["moveTypeForm"].addEventListener("change", prepView);
 
 function updateStatus() {
     status.innerHTML = "pX:" + Math.floor(cam.position[0]) + "pY:" + Math.floor(cam.position[1]) + "pZ:" + Math.floor(cam.position[2])+ "<br />"+
-    "rX: " + Math.floor(sumRY * 57.3) + " rY:"+ Math.floor(sumRX * 57.3) + " delta:" + timer.delta + "s " + timer.usage + "%";
+    "rX: " + Math.floor(sumRY * RadToDeg) + " rY:"+ Math.floor(sumRX * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
 }
 
 function winResize() {
@@ -518,22 +515,20 @@ function main() {
 }
 
 function setView() {
-    const origin = [0, 0, 0];
-
     sumRX += rx;
     sumRY += ry;  
     
     // some clamping and warping        
-    if (sumRY < -_PId2) { sumRY = -_PId2; }
-    if (sumRY >  _PId2) { sumRY =  _PId2; }
+    if (sumRY < -PIdiv2) { sumRY = -PIdiv2; }
+    if (sumRY >  PIdiv2) { sumRY =  PIdiv2; }
 
     if (sumRX < 0) { 
-        sumRX += _PIx2;
-        tarx += _PIx2;
+        sumRX += PIx2;
+        tarx += PIx2;
      }
-    if (sumRX > _PIx2) { 
-        sumRX -= _PIx2; 
-        tarx -= _PIx2; 
+    if (sumRX > PIx2) { 
+        sumRX -= PIx2; 
+        tarx -= PIx2; 
     }
 
     // smooth controls
@@ -562,13 +557,13 @@ function setView() {
 }
 
 
-function bind3FloatBuffer(location, buffer) { //TODO static in scene
+function bind3FloatBuffer(location, buffer) { //TODO in scene
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(location);
 }
 
-function bindAndUpdate3FloatBuffer(location, buffer, data) { // TODO static in scene
+function bindAndUpdate3FloatBuffer(location, buffer, data) { // TODO in scene
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
