@@ -456,3 +456,365 @@ class E3D_lighting {
 
 
 
+
+class E3D_input {
+    constructor (element, supportMouse, supportKeyboard, supportTouch, lockMouse) {
+
+        this.element = element;
+
+        this.supportMouse = supportMouse;
+        this.supportKeyboard = supportKeyboard;
+        this.supportTouch = supportTouch;
+        this.lockMouse = lockMouse;
+
+        this.doPan = true;
+        this.doRotate = true;
+        this.mouseMoveWhenLockedOnly = false;
+
+        this.touchDist = 0;
+        this.ongoingTouches = [];
+        this.inputTable = {};
+
+        if (supportMouse) {
+            element.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
+            element.addEventListener("mouseup", (e) => { this.mouseUp(e) } );
+            element.addEventListener("mousemove", (e) => {this.mouseMove(e) } );
+            element.addEventListener("mouseleave",(e) => { this.mouseLeave(e) } );
+            element.addEventListener("wheel", (e) => {this.mouseWheel(e) } );
+            element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
+        }
+
+        if (supportKeyboard) {
+            document.addEventListener("keydown",(e) => { this.keyDown(e) } );
+            document.addEventListener("keyup",(e) => { this.keyUp(e) } );
+        }
+
+        if (lockMouse) {
+            if (pLockSupported) { 
+                pLockMoveEvent = (x, y) => { this.mouseLockedMove(x, y) } ; 
+            }
+        } else console.log("Mouse lock requested but not supported");
+
+        if (supportTouch) {
+            element.addEventListener("touchstart", (e) => {this.touchStart(e) } );
+            element.addEventListener("touchend", (e) => {this.touchEnd(e) } );
+            element.addEventListener("touchcancel", (e) => {this.touchCancel(e) } );
+            element.addEventListener("touchmove", (e) => {this.touchMove(e) } );
+        }
+
+        // Config
+        this._pinchHysteresis = 10;
+        this._rotateMouseButton = 0;
+        this._panMouseButton = 1;
+
+        this._moveSpeed = 50; // units per sec
+        this._rotateSpeed = 90 * DegToRad; // rad per sec
+
+        this._mouseSpeed = 0.0025;
+        this._mouseWheelSpeed = 0.001;
+
+        this._keyUP = " "; // change to objects of attrib: event.key
+        this._keyDN = "c"; // ex keyConfig["Down"] = "c"
+        this._keyLT = "a";
+        this._keyRT = "d"; // or keyConfig[event.key] = "Down"
+        this._keyFD = "w"; // to better handle multiple key inputs ?
+        this._keyBD = "s";
+
+        this._smooth = 6.0;
+        this.panning = false;
+        this.rotating = false;
+
+        this.mx=0;this.pinx=0;this.dx=0;this.rx=0;this.sumRX=0;
+        this.my=0;this.piny=0;this.dy=0;this.ry=0;this.sumRY=0;
+        this.dz=0;this.tadx=0;this.tady=0;this.tadz=0;this.tarx=0;this.tary=0;
+
+
+
+    }
+
+
+    // Keyboard Inputs
+
+
+    keyDown(event) {
+        this.inputTable[event.key] = true;    
+        if ((pLockActive) && (event.key == "Escape")) {
+            pLockExit();
+        }
+    }
+    
+    keyUp(event) {    
+        if (this.inputTable[event.key] != undefined) {
+            this.inputTable[event.key] = false;
+        }    
+    }
+
+    processInputs(timer) {
+        if (this.inputTable[this._keyUP]) {
+            this.dy -= this._moveSpeed * timer.delta;
+        }
+        if (this.inputTable[this._keyDN]) {
+            this.dy += this._moveSpeed * timer.delta;
+        }
+        if (this.inputTable[this._keyLT]) {
+            this.dx -= this._moveSpeed * timer.delta;
+        }
+        if (this.inputTable[this._keyRT]) {
+            this.dx += this._moveSpeed * timer.delta;
+        }
+        if (this.inputTable[this._keyFD]) {
+            this.dz -= this._moveSpeed * timer.delta;
+        }
+        if (this.inputTable[this._keyBD]) {
+            this.dz += this._moveSpeed * timer.delta;
+        }    
+        
+        this.sumRX += this.rx;
+        this.sumRY += this.ry;  
+        
+        // some clamping and warping        
+        if (this.sumRY < -PIdiv2) { this.sumRY = -PIdiv2; }
+        if (this.sumRY >  PIdiv2) { this.sumRY =  PIdiv2; }
+        
+        if (this.sumRX < 0) { 
+            this.sumRX += PIx2;
+            this.tarx += PIx2;
+        }
+        if (this.sumRX > PIx2) { 
+            this.sumRX -= PIx2; 
+            this.tarx -= PIx2; 
+        }
+        
+        // smooth controls
+        this.tarx = timer.smooth(this.tarx, this.sumRX, this._smooth);
+        this.tary = timer.smooth(this.tary, this.sumRY, this._smooth);
+        
+        this.tadx = timer.smooth(this.tadx, this.dx, this._smooth);
+        this.tady = timer.smooth(this.tady, this.dy, this._smooth);
+        this.tadz = timer.smooth(this.tadz, this.dz, this._smooth);
+
+            // clean up state changes
+            this.dx = 0; this.dy = 0; this.dz = 0;
+            this.rx = 0; this.ry = 0;
+    }
+
+
+
+    // Mouse Inputs
+
+
+    mouseDown(event) {
+        this.pinx = event.pageX; // store relative ref
+        this.piny = event.pageY;
+    
+        if (event.button == this._panMouseButton) {
+            this.panning = true;
+        }
+        if (event.button == this._rotateMouseButton) {
+            this.rotating = true;
+        }
+        if (event.preventDefault) { event.preventDefault(); };
+    }
+    
+    mouseUp(event) {
+        if (event.button == this._panMouseButton) {
+            this.panning = false;
+        }
+        if (event.button == this._rotateMouseButton) {
+            this.rotating = false;
+        }
+    }
+    
+    mouseLeave(event) {
+        this.panning = false;
+        this.rotating = false;
+    }
+    
+    mouseMove(event) {
+        this.mx = event.pageX;
+        this.my = event.pageY;
+        
+        if (this.panning) {
+            this.dx -= (this.mx - this.pinx) * this._mouseSpeed * this._moveSpeed;
+            this.dy -= (this.my - this.piny) * this._mouseSpeed * this._moveSpeed;
+        }
+        
+        if (this.rotating) {
+            this.rx += (this.mx - this.pinx) * this._mouseSpeed * this._rotateSpeed;
+            this.ry += (this.my - this.piny) * this._mouseSpeed * this._rotateSpeed;
+        }
+        
+        this.pinx = this.mx;
+        this.piny = this.my;
+    }
+    
+    mouseLockedMove(x, y) {
+        // de facto rotating
+        if (pLockActive) {
+            this.rx += x * this._mouseSpeed * this._rotateSpeed;
+            this.ry += y * this._mouseSpeed * this._rotateSpeed;
+        }
+    }
+    
+    mouseWheel(event) {
+    
+        if (event.deltaY != 0) {
+            this.dz += event.deltaY * this._mouseWheelSpeed * this._moveSpeed;
+        }
+    
+        if (event.preventDefault) { event.preventDefault(); };
+    }
+    
+    mouseDblClick(event) {
+        if (pLockSupported) {
+            pLockRequest(this.element);
+        }
+        if (event.preventDefault) { event.preventDefault(); };
+    }
+
+
+    // Touch Inputs 
+
+
+    touchStart(event) {
+
+        event.preventDefault(); // to revise
+        var touches = event.changedTouches;
+
+        for (var i = 0; i < touches.length; i++) {
+
+            this.ongoingTouches.push(copyTouch(touches[i]));
+        }
+
+        if (this.ongoingTouches.length == 1) {
+            //process as mouse down
+            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.mouseDown(this.ongoingTouches[0]);
+
+        } else if (this.ongoingTouches.length == 2) {
+            //process as mouse up and then wheel / pan
+
+            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.mouseUp(this.ongoingTouches[0]);
+
+            this.ongoingTouches[0].button = this._panMouseButton;
+
+            this.mouseDown( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
+                                    (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
+                                    this._panMouseButton) );
+
+            var tdx = this.ongoingTouches[1].pageX - this.ongoingTouches[0].pageX;
+            var tdy = this.ongoingTouches[1].pageY - this.ongoingTouches[0].pageY;
+
+            this.touchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
+        }
+    }
+
+
+    touchEnd(event) {
+
+        event.preventDefault();
+        var touches = event.changedTouches;
+
+        if (this.ongoingTouches.length == 1) {
+            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.mouseUp(this.ongoingTouches[0]);
+        }
+
+        if (this.ongoingTouches.length == 2) {
+            this.ongoingTouches[0].button = this._panMouseButton;
+            this.mouseUp(ongoingTouches[0]);
+        }
+
+        for (var i = 0; i < touches.length; i++) {
+            var idx = this.ongoingTouchIndexById(touches[i].identifier);
+            if (idx >= 0) {
+                this.ongoingTouches.splice(idx, 1);
+            } 
+            else console.log("(touchEnd) Touch Id not found");
+        }
+    }
+
+    touchCancel(event) {
+
+        event.preventDefault();
+
+        if (this.ongoingTouches.length == 1) {
+            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.mouseUp(ongoingTouches[0]);
+        }
+
+        if (this.ongoingTouches.length == 2) {
+            this.ongoingTouches[0].button = this._panMouseButton;
+            this.mouseUp(this.ongoingTouches[0]);
+        }
+
+        var touches = event.changedTouches;
+
+        for (var i = 0; i < touches.length; i++) {
+            var idx = this.ongoingTouchIndexById(touches[i].identifier);
+            this.ongoingTouches.splice(idx, 1);
+        } 
+    }
+
+    touchMove(event) {
+
+        event.preventDefault();
+        var touches = event.changedTouches;
+
+        for (var i = 0; i < touches.length; i++) {
+            var idx = this.ongoingTouchIndexById(touches[i].identifier);
+            if (idx >= 0) {
+                this.ongoingTouches.splice(idx, 1, this.copyTouch(touches[i]));  // swap in the new touch record
+            } else console.log("(touchMove) Touch Id not found");
+        }
+
+
+        if (this.ongoingTouches.length == 1) {
+            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.mouseMove(this.ongoingTouches[0]);
+
+        } else if (this.ongoingTouches.length == 2) {
+
+            var tdx = this.ongoingTouches[1].pageX - this.ongoingTouches[0].pageX;
+            var tdy = this.ongoingTouches[1].pageY - this.ongoingTouches[0].pageY;
+            var newTouchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
+
+            // pinch panning
+            this.ongoingTouches[0].button = this._panMouseButton;
+            this.mouseMove( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
+                                        (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
+                                        this._panMouseButton) );
+
+            if (Math.abs(this.touchDist - newTouchDist) > this._pinchHysteresis) {        
+                // mouse wheel zoom
+                var delta = (this.touchDist - newTouchDist) / Math.abs(this.touchDist - newTouchDist) * this._pinchHysteresis;
+                this.mouseWheel({ deltaY: 5*((this.touchDist - newTouchDist) - delta) });
+                this.touchDist = newTouchDist;
+            }
+
+        } // 2 touches
+
+    }
+
+    static touchToButton(x, y, btn) {
+        return { pageX: x, pageY: y, button: btn } ;
+    }
+
+    copyTouch(touch) {
+        return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY, button: this._rotateMouseButton };
+    }
+
+    ongoingTouchIndexById(idToFind) {
+        for (var i = 0; i < this.ongoingTouches.length; i++) {
+            var id = this.ongoingTouches[i].identifier;
+
+            if (id == idToFind) {
+                return i;
+            }
+        }
+        return -1;    // not found
+    }
+
+
+}

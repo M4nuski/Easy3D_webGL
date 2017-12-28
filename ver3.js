@@ -8,47 +8,14 @@ log("DOMContentLoaded");
 
 
 // global config
-const _pinchHysteresis = 10;
-const _rotateMouseButton = 0;
-const _panMouseButton = 1;
+
 
 const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
 const _zFar = 200.0;
 
-const _moveSpeed = 50; // units per sec
-const _rotateSpeed = 180 * DegToRad; // rad per sec
-
-const _mouseSpeed = 0.0025;
-const _mouseWheelSpeed = 0.001;
-
-const _keyUP = " ";
-const _keyDN = "c";
-const _keyLT = "a";
-const _keyRT = "d";
-const _keyFD = "w";
-const _keyBD = "s";
-
-const _smooth = 6.0;
-
-
 
 // global state var
-
-
-
-//for input model
-var panning = false;
-var rotating = false;
-
-var mx, pinx, dx = 0, rx = 0, sumRX = 0;
-var my, piny, dy = 0, ry = 0, sumRY = 0;
-var dz = 0;
-var tadx = dx, tady =dy, tadz = dz, tarx = sumRX, tary = sumRY;
-
-var touchDist = 0;
-var ongoingTouches = [];
-var inputTable = {};
 
 
 //Scene
@@ -62,331 +29,54 @@ var entities = []; // of E3D_entity
 
 
 log("Get DOM Elements");
-// elements
 const can = document.getElementById("GLCanvas");
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
-
 const inputForm = document.getElementById("inputTable");
 
 log("Set DOM Events");
-// events
-can.addEventListener("mousedown", mouseDown);
-can.addEventListener("mouseup", mouseUp);
-can.addEventListener("mousemove", mouseMove);
-can.addEventListener("mouseleave", mouseLeave);
-can.addEventListener("wheel", mouseWheel);
-can.addEventListener("dblclick", mouseDblClick);
-if (pLockSupported) { pLockMoveEvent = mouseLockedMove };
-
-can.addEventListener("touchstart", touchStart);
-can.addEventListener("touchend", touchEnd);
-can.addEventListener("touchcancel", touchCancel);
-can.addEventListener("touchmove", touchMove);
-
 can.addEventListener("resize", winResize);
+document.forms["moveTypeForm"].addEventListener("change", prepView);
 
-document.addEventListener("keydown", keyDown);
-document.addEventListener("keyup", keyUp);
 
+// Inputs from virtual devices / UI
 inputForm.addEventListener("mousedown", formMouseDown);
 inputForm.addEventListener("mouseup", formMouseUp);
 inputForm.addEventListener("mouseleave", formMouseUp);
-
 inputForm.addEventListener("dblclick", formMouseDblClick);
 
 inputForm.addEventListener("touchstart", formTouchStart);
 inputForm.addEventListener("touchend", formTouchEnd);
 inputForm.addEventListener("touchcancel", formTouchEnd);
 
-document.forms["moveTypeForm"].addEventListener("change", prepView);
 
 
-
-
-
-
-
+var inputs = new E3D_input(can, true, true, true, true);
 
 
 function updateStatus() {
     status.innerHTML = "pX:" + Math.floor(cam.position[0]) + "pY:" + Math.floor(cam.position[1]) + "pZ:" + Math.floor(cam.position[2])+ "<br />"+
-    "rX: " + Math.floor(sumRY * RadToDeg) + " rY:"+ Math.floor(sumRX * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
+    "rX: " + Math.floor(inputs.sumRY * RadToDeg) + " rY:"+ Math.floor(inputs.sumRX * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
 }
 
 function winResize() {
     winWidth = gl.canvas.clientWidth
     winHeight = gl.canvas.clientHeight;
-
+    
     prepView();
 }
 
 function timerTick(){  // "game" loop
-    processKeyInputs();
-    updateStatus();
-    drawScene(gl, programInfo);
+inputs.processInputs(timer);
+updateStatus();
+drawScene(gl, programInfo);
 }
 
 
 
 
 
-
-
-function keyDown(event) {
-    inputTable[event.key] = true;
-
-    if ((pLockActive) && (event.key == "Escape")) {
-        pLockExit();
-    }
-}
-
-function keyUp(event) {
-
-    if (inputTable[event.key] != undefined) {
-        inputTable[event.key] = false;
-    }
-
-}
-
-function processKeyInputs() {
-    if (inputTable[_keyUP]) {
-        dy -= _moveSpeed * timer.delta;
-    }
-    if (inputTable[_keyDN]) {
-        dy += _moveSpeed * timer.delta;
-    }
-    if (inputTable[_keyLT]) {
-        dx -= _moveSpeed * timer.delta;
-    }
-    if (inputTable[_keyRT]) {
-        dx += _moveSpeed * timer.delta;
-    }
-    if (inputTable[_keyFD]) {
-        dz -= _moveSpeed * timer.delta;
-    }
-    if (inputTable[_keyBD]) {
-        dz += _moveSpeed * timer.delta;
-    }
-
-}
-
-function mouseDown(event) {
-
-    pinx = event.pageX; // store relative ref
-    piny = event.pageY;
-
-    if (event.button == _panMouseButton) {
-        panning = true;
-    }
-    if (event.button == _rotateMouseButton) {
-        rotating = true;
-    }
-
-    if (event.preventDefault) { event.preventDefault(); };
-}
-
-function mouseUp(event) {
-
-    if (event.button == _panMouseButton) {
-        panning = false;
-    }
-    if (event.button == _rotateMouseButton) {
-        rotating = false;
-    }
-
-}
-
-function mouseLeave(event) {
-    panning = false;
-    rotating = false;
-}
-
-function mouseMove(event) {
-
-    mx = event.pageX;
-    my = event.pageY;
-    
-    if (panning) {
-        dx -= (mx - pinx) * _mouseSpeed * _moveSpeed;
-        dy -= (my - piny) * _mouseSpeed * _moveSpeed;
-    }
-    
-    if (rotating) {
-        rx += (mx - pinx) * _mouseSpeed * _rotateSpeed;
-        ry += (my - piny) * _mouseSpeed * _rotateSpeed;
-    }
-    
-    pinx = mx;
-    piny = my;
-
-}
-
-function mouseLockedMove(x, y) {
-    // de facto rotating
-    if (pLockActive) {
-        rx += x * _mouseSpeed * _rotateSpeed;
-        ry += y * _mouseSpeed * _rotateSpeed;
-      //  log( x + " " + y, false);
-        }
-}
-
-function mouseWheel(event) {
-
-    if (event.deltaY != 0) {
-        dz += event.deltaY * _mouseWheelSpeed * _moveSpeed;
-    }
-
-    if (event.preventDefault) { event.preventDefault(); };
-}
-
-function mouseDblClick(event) {
-    if (pLockSupported) {
-        pLockRequest(can);
-    }
-    if (event.preventDefault) { event.preventDefault(); };
-}
-
-
-function touchStart(event) {
-
-    event.preventDefault(); // to revise
-    var touches = event.changedTouches;
-
-    for (var i = 0; i < touches.length; i++) {
-
-        ongoingTouches.push(copyTouch(touches[i]));
-    }
-
-    if (ongoingTouches.length == 1) {
-        //process as mouse down
-        ongoingTouches[0].button = _rotateMouseButton;
-        mouseDown(ongoingTouches[0]);
-
-    } else if (ongoingTouches.length == 2) {
-        //process as mouse up and then wheel / pan
-
-        ongoingTouches[0].button = _rotateMouseButton;
-        mouseUp(ongoingTouches[0]);
-
-        ongoingTouches[0].button = _panMouseButton;
-
-        mouseDown( touchToButton( (ongoingTouches[0].pageX + ongoingTouches[1].pageX) / 2,
-                                  (ongoingTouches[0].pageY + ongoingTouches[1].pageY) / 2,
-                                    _panMouseButton) );
-
-        var tdx = ongoingTouches[1].pageX - ongoingTouches[0].pageX;
-        var tdy = ongoingTouches[1].pageY - ongoingTouches[0].pageY;
-
-        touchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
-    }
-}
-
-
-function touchEnd(event) {
-
-    event.preventDefault();
-    var touches = event.changedTouches;
-
-    if (ongoingTouches.length == 1) {
-        ongoingTouches[0].button = _rotateMouseButton;
-        mouseUp(ongoingTouches[0]);
-    }
-
-    if (ongoingTouches.length == 2) {
-        ongoingTouches[0].button = _panMouseButton;
-        mouseUp(ongoingTouches[0]);
-    }
-
-    for (var i = 0; i < touches.length; i++) {
-        var idx = ongoingTouchIndexById(touches[i].identifier);
-        if (idx >= 0) {
-            ongoingTouches.splice(idx, 1);
-        } 
-        else log("(touchEnd) Touch Id not found");
-    }
-}
-function touchCancel(event) {
-
-    event.preventDefault();
-
-    if (ongoingTouches.length == 1) {
-        ongoingTouches[0].button = _rotateMouseButton;
-        mouseUp(ongoingTouches[0]);
-    }
-
-    if (ongoingTouches.length == 2) {
-        ongoingTouches[0].button = _panMouseButton;
-        mouseUp(ongoingTouches[0]);
-    }
-
-    var touches = event.changedTouches;
-
-    for (var i = 0; i < touches.length; i++) {
-        var idx = ongoingTouchIndexById(touches[i].identifier);
-        ongoingTouches.splice(idx, 1);
-    } 
-}
-
-function touchMove(event) {
-
-    event.preventDefault();
-    var touches = event.changedTouches;
-
-    for (var i = 0; i < touches.length; i++) {
-        var idx = ongoingTouchIndexById(touches[i].identifier);
-        if (idx >= 0) {
-            ongoingTouches.splice(idx, 1, copyTouch(touches[i]));  // swap in the new touch record
-        } else log("(touchMove) Touch Id not found");
-    }
-
-
-    if (ongoingTouches.length == 1) {
-        ongoingTouches[0].button = _rotateMouseButton;
-        mouseMove(ongoingTouches[0]);
-
-    } else if (ongoingTouches.length == 2) {
-
-        var tdx = ongoingTouches[1].pageX - ongoingTouches[0].pageX;
-        var tdy = ongoingTouches[1].pageY - ongoingTouches[0].pageY;
-        var newTouchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
-
-        // pinch panning
-        ongoingTouches[0].button = _panMouseButton;
-        mouseMove( touchToButton( (ongoingTouches[0].pageX + ongoingTouches[1].pageX) / 2,
-                                    (ongoingTouches[0].pageY + ongoingTouches[1].pageY) / 2,
-                                    _panMouseButton) );
-
-         if (Math.abs(touchDist - newTouchDist) > _pinchHysteresis) {        
-            // mouse wheel zoom
-            var delta = (touchDist - newTouchDist) / Math.abs(touchDist - newTouchDist) * _pinchHysteresis;
-            mouseWheel({ deltaY: 5*((touchDist - newTouchDist) - delta) });
-            touchDist = newTouchDist;
-        }
-
-    } // 2 touches
-
-}
-
-function touchToButton(x, y, btn) {
-    return { pageX: x, pageY: y, button: btn } ;
-}
-
-function copyTouch(touch) {
-    return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY, button: _rotateMouseButton };
-}
-
-function ongoingTouchIndexById(idToFind) {
-    for (var i = 0; i < ongoingTouches.length; i++) {
-        var id = ongoingTouches[i].identifier;
-
-        if (id == idToFind) {
-            return i;
-        }
-    }
-    return -1;    // not found
-}
-
+// UI virtual device inputs // TODO create class
 function injectKey(fct, event) {
     const newKey = (event.target.innerHTML).toLowerCase();
     if (newKey != "") {
@@ -399,23 +89,23 @@ function injectKey(fct, event) {
 }
 
 function formMouseDown(event) {
-    injectKey(keyDown, event);
+    injectKey((e) => inputs.keyDown(e) , event);
     event.preventDefault();
 }
 
 function formMouseUp(event) {
-    injectKey(keyUp, event);
+    injectKey((e) => inputs.keyUp(e), event);
 }
 
 function formMouseDblClick(event) {
     event.preventDefault();
 }
 function formTouchStart(event) {
-    injectKey(keyDown, event);
+    injectKey((e) => inputs.keyDown(e), event);
     event.preventDefault();
 }
 function formTouchEnd(event) {
-    injectKey(keyUp, event);
+    injectKey((e) => inputs.keyUp(e), event);
 }
 
 
@@ -469,6 +159,8 @@ function prepView() {
 
 var shdr;
 timer = new E3D_timing(true, 25, timerTick);
+
+
 log("Session Start", true);
 
 main();
@@ -515,6 +207,7 @@ function main() {
 }
 
 function setView() {
+    /*
     sumRX += rx;
     sumRY += ry;  
     
@@ -537,9 +230,9 @@ function setView() {
 
     tadx = timer.smooth(tadx, dx, _smooth);
     tady = timer.smooth(tady, dy, _smooth);
-    tadz = timer.smooth(tadz, dz, _smooth);
+    tadz = timer.smooth(tadz, dz, _smooth);*/
 
-    cam.move(tadx, -tady, tadz, tary, tarx, 0);
+    cam.move(inputs.tadx, -inputs.tady, inputs.tadz, inputs.tary, inputs.tarx, 0);
 
     if (lights.light0_lockToCamera) {
         lights.light0_adjusted = cam.adjustToCamera(lights.light0_direction);
@@ -551,9 +244,6 @@ function setView() {
    entities[1].updateVector(lights.light0_adjusted);
    entities[2].updateVector(lights.light1_adjusted);
 
-    // clean up state changes
-    dx = 0; dy = 0; dz = 0;
-    rx = 0; ry = 0;
 }
 
 
