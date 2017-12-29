@@ -11,7 +11,7 @@ class E3D_timing {
         this.start = Date.now();
         this.lastTick = this.start;
         this.active = run;
-        this.usage = this.start;
+        this.usage = 0;
 
         if (run) {
             this.timer = setInterval( () => {this.tickEvent() }, interval);

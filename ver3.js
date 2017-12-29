@@ -47,6 +47,7 @@ var scn;  // E3D_scene
 var inputs = new E3D_input(can, true, true, true, true);
 var l0v, l1v;// light entities index
 var cloned = false;
+var usepct_smth=0;
 
 log("Session Start", true);
 initEngine();
@@ -371,8 +372,9 @@ function log(text, silent = true) {
 }
 
 function updateStatus() {
+    usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
     status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "<br />"+
-    "rX: " + Math.floor(inputs.ry_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
+    "rX: " + Math.floor(inputs.ry_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + " delta:" + timer.delta + "s " + Math.floor(usepct_smth) + "%";
 }
 
 
