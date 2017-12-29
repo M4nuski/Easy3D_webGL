@@ -9,6 +9,11 @@ const E3D_CREATED = 0;
 const E3D_READY = 1;
 const E3D_ACTIVE = 2;
 
+// Ressource Callback
+const E3D_RES_FAIL = 0;
+const E3D_RES_LOAD = 1;
+const E3D_RES_ALL = 2;
+
 // Premade vec and mat to avoid inline creation of instances
 const vec3_origin = vec3.fromValues(0, 0, 0);
 const vec3_x = vec3.fromValues(1, 0, 0);

@@ -172,14 +172,14 @@ function timerTick() {  // Game Loop
 
 
 function onRessource(name, msg) {
-    if (msg == "failed") {
+    if (msg == E3D_RES_FAIL) {
         log("Failed to load ressource: " + name, false);        
     }
-    if (msg == "all") {
+    if (msg == E3D_RES_ALL) {
         log("All async ressources loaded for tag: " + name, true);          
     }
 
-    if (msg == "loaded") {
+    if (msg == E3D_RES_LOAD) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {

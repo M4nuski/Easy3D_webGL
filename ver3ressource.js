@@ -23,11 +23,11 @@ class ressource {
         if (xm) {
             if (xm.status == 200) {
                 this.data = xm.responseText;
-                this.cb(this.name, "loaded");
+                this.cb(this.name, E3D_RES_LOAD);
             } else {
                 this.data = null;
                 console.log(xm.responseURL  + " " + xm.statusText);
-                this.cb(this.name, "failed");
+                this.cb(this.name, E3D_RES_FAIL);
             }
         }
         this.ajax = null;
@@ -47,7 +47,7 @@ class ressourceManager {
         if (this.getIndex(name) == -1) {
             this.ressList.push( new ressource(path, name, type, (n, m) => this.cb(n, m)) );
         } else {
-            this.cb(name, "loaded", true); // return already if ressource in store
+            this.cb(name, E3D_RES_LOAD, true); // return already if ressource in store
         }
     }
 
@@ -63,7 +63,7 @@ class ressourceManager {
         }
         if (this.numLoaded == this.ressList.length) {
             if (this.callBack) {
-                this.callBack(tag, "all");
+                this.callBack(tag, E3D_RES_ALL);
             }
         }
     }
@@ -88,27 +88,27 @@ class ressourceManager {
         } 
         if (this.numLoaded == this.ressList.length) {
             if (this.callBack) {
-                this.callBack(tag, "all");
+                this.callBack(tag, E3D_RES_ALL);
             }
         }
     }
 
     cb(n, m, inhibitCount = false) {
-        if (m == "loaded") {
+        if (m == E3D_RES_LOAD) {
             if (this.callBack) {
                 if (!inhibitCount) this.numLoaded++;
-                this.callBack(n, "loaded");
+                this.callBack(n, E3D_RES_LOAD);
             }
         }
-        if (m == "failed") {
+        if (m == E3D_RES_FAIL) {
             if (this.callBack) {
-                this.callBack(n, "failed");
+                this.callBack(n, E3D_RES_FAIL);
             }
         }
 
         if (this.numLoaded == this.ressList.length) {
             if (this.callBack) {
-                this.callBack(this.tag, "all");
+                this.callBack(this.tag, E3D_RES_ALL);
             }
         }
     }
