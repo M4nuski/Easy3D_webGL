@@ -45,7 +45,7 @@ var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var inputs = new E3D_input(can, true, true, true, true);
-
+var l0v, l1v;// light entities index
 
 
 log("Session Start", true);
@@ -122,6 +122,19 @@ function initEngine() {
     getModel();   
     timer.run();
 
+    l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
+    l0v.position = vec3.fromValues(-5, 20, -5);
+    l0v.scale = vec3.fromValues(5, 5, 5);
+    l0v.visible = true;
+    l0v.resetMatrix();
+    l0v = scn.addEntity(l0v);
+
+    l1v = new E3D_entity_vector("light1vect", true, 2.0, true);
+    l1v.position = vec3.fromValues(5, 20, 5);
+    l1v.scale = vec3.fromValues(5, 5, 5);
+    l1v.visible = true;
+    l1v.resetMatrix();
+    l1v = scn.addEntity(l1v);
 }
 
 function prepRender() {
@@ -129,9 +142,9 @@ function prepRender() {
     scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth, inputs.rx_smth, 0);
 
     // update some entities per current lights direction
-    if (scn.entities.length == 3) {
-        scn.entities[1].updateVector(scn.lights.light0_adjusted);
-        scn.entities[2].updateVector(scn.lights.light1_adjusted);
+    if (scn.entities.length >= 3) {
+        scn.entities[l0v].updateVector(scn.lights.light0_adjusted);
+        scn.entities[l1v].updateVector(scn.lights.light1_adjusted);
     }
 
 }
@@ -152,6 +165,13 @@ function timerTick() {  // Game Loop
 
 
 // Model / Entity loading
+function loadModelAsync(filename) {
+
+}
+
+function load(scn) {
+
+}
 
 // async file loader
 function reqListener() {
@@ -177,8 +197,7 @@ function getModel() {
 
 // TODO own class or entity class
 function initBuffers(gl, rawModelData) {
-
-    scn.entities.push( new E3D_entity("map", "", false) );
+    let mp = new E3D_entity("map", "", false);
 
     log("Creating buffers");
 
@@ -238,48 +257,15 @@ function initBuffers(gl, rawModelData) {
     log((numFloats / 3) + " vertices", true);
     log((numFloats / 9) + " triangles", false);
 
-    scn.entities[0].vertexArray = new Float32Array(positions);
-    scn.entities[0].vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, scn.entities[0].vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, scn.entities[0].vertexArray, gl.STATIC_DRAW);
 
-    scn.entities[0].colorArray = new Float32Array(colors);
-    scn.entities[0].colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, scn.entities[0].colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, scn.entities[0].colorArray, gl.STATIC_DRAW);
-    
-    scn.entities[0].normalArray = new Float32Array(normals);
-    scn.entities[0].normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, scn.entities[0].normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, scn.entities[0].normalArray, gl.STATIC_DRAW);
+    mp.vertexArray = new Float32Array(positions);
+    mp.colorArray = new Float32Array(colors);
+    mp.normalArray = new Float32Array(normals);
 
-    scn.entities[0].numElements = numFloats / 3;
+    mp.numElements = numFloats / 3;
+    mp.visible = true;
 
-    scn.entities[0].visible = true;
-
-
-    scn.entities.push( new E3D_entity_vector("light0vect", true, 2.0, true) );
-    scn.entities[1].position = vec3.fromValues(-5, 20, -5);
-    scn.entities[1].scale = vec3.fromValues(5, 5, 5);
-    scn.entities[1].visible = true;
-    scn.entities[1].resetMatrix();
-
-    scn.entities[1].vertexBuffer = gl.createBuffer(); //todo move to scene with context
-    scn.entities[1].colorBuffer = gl.createBuffer();
-    scn.entities[1].normalBuffer = gl.createBuffer();
-
-
-    scn.entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
-    scn.entities[2].position = vec3.fromValues(5, 20, 5);
-    scn.entities[2].scale = vec3.fromValues(5, 5, 5);
-    scn.entities[2].visible = true;
-    scn.entities[2].resetMatrix();
-
-    scn.entities[2].vertexBuffer = gl.createBuffer(); //todo move to scene with context
-    scn.entities[2].colorBuffer = gl.createBuffer();
-    scn.entities[2].normalBuffer = gl.createBuffer();
-
-
+    scn.addEntity(mp);
 }
 
 

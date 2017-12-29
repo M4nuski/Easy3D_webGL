@@ -315,6 +315,32 @@ class E3D_scene {
         this.context.enableVertexAttribArray(location);
     }
 
+
+    addEntity(ent) {
+        // Initialize context data buffers
+        ent.vertexBuffer = this.context.createBuffer();
+        ent.colorBuffer = this.context.createBuffer();
+        ent.normalBuffer = this.context.createBuffer();
+
+        if (!ent.dynamic) { // if static already assign data
+            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.STATIC_DRAW);
+        
+        
+            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.STATIC_DRAW);
+            
+        
+            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.STATIC_DRAW);
+        }
+
+        // Add entity to list
+        this.entities.push(ent);
+
+        return this.entities.length - 1; // return new index
+    }
+
 }
 
 class E3D_program {
