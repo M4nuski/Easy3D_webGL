@@ -59,19 +59,6 @@ function updateStatus() {
     "rX: " + Math.floor(inputs.sumRY * RadToDeg) + " rY:"+ Math.floor(inputs.sumRX * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
 }
 
-function winResize() {
-    winWidth = gl.canvas.clientWidth
-    winHeight = gl.canvas.clientHeight;
-    
-    prepView();
-}
-
-function timerTick() {  // game loop
-    inputs.processInputs(timer);
-    updateStatus();
-    drawScene(gl, programInfo);
-}
-
 
 
 
@@ -140,22 +127,37 @@ function getModel() {
 
 
 
-
+function winResize() {
+    winWidth = gl.canvas.clientWidth
+    winHeight = gl.canvas.clientHeight;
+    
+    prepView();
+}
 
 function prepView() {
     let vmode = document.forms["moveTypeForm"].moveType.value; 
+
     if (vmode == "model") {
         scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+        scn.lights.light0_lockToCamera = false;
     } 
-    else  if (vmode == "free") {
+    else if (vmode == "free") {
         scn.camera = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    } else {
+        scn.lights.light0_lockToCamera = true;
+    } 
+    else {
         scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
-        scn.camera.resize(winWidth, winHeight);
-        scn.camera.updateInternal();
     }
 
 }
+
+
+function timerTick() {  // game loop
+    inputs.processInputs(timer);
+    updateStatus();
+    drawScene();
+}
+
 
 
 timer = new E3D_timing(true, 25, timerTick);
@@ -210,16 +212,10 @@ function main() {
 }
 
 function setView() {
-
+    // move camera per inputs
     scn.camera.move(inputs.tadx, -inputs.tady, inputs.tadz, inputs.tary, inputs.tarx, 0);
 
-    if (scn.lights.light0_lockToCamera) {
-        scn.lights.light0_adjusted = scn.camera.adjustToCamera(scn.lights.light0_direction);
-    }
-    if (scn.lights.light1_lockToCamera) {
-        scn.lights.light1_adjusted = scn.camera.adjustToCamera(scn.lights.light1_direction);
-    }
-
+    // update some entities per current lights direction
     if (scn.entities.length == 3) {
         scn.entities[1].updateVector(scn.lights.light0_adjusted);
         scn.entities[2].updateVector(scn.lights.light1_adjusted);
@@ -231,7 +227,6 @@ function setView() {
 
 
 function drawScene(gl) {
-
     if (scn.status == E3D_ACTIVE) {
         scn.preRender();
         scn.render();

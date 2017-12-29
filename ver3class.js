@@ -204,9 +204,7 @@ class E3D_scene {
         this.context = context; // GL rendering context
         this.state = E3D_CREATED;
 
-        this.camera = new E3D_camera();
-        this.camera.resize(width, height);
-        this.camera.updateInternal(); // finalize view matrix
+        this.camera = new E3D_camera(id+"defaultCtorCamera", width, height);
 
         this.entities = [];
 
@@ -235,6 +233,14 @@ class E3D_scene {
 
     preRender() {
         // timing, events, controls, camera, animations
+
+        if (this.lights.light0_lockToCamera) {
+            this.lights.light0_adjusted = this.camera.adjustToCamera(this.lights.light0_direction);
+        }
+        if (this.lights.light1_lockToCamera) {
+            this.lights.light1_adjusted = this.camera.adjustToCamera(this.lights.light1_direction);
+        }
+
 
         if (this.preRenderFunction) {
             this.preRenderFunction(this);
@@ -369,12 +375,15 @@ class E3D_program {
 
 class E3D_camera { // base camera, orthogonal
 
-    constructor(id) {        
+    constructor(id, width, height) {        
         this.id = id;
         this.rotation = vec3.create();
         this.position = vec3.create();
         this.matrix = mat4.create();
         this.baseMatrix = mat4.create(); 
+
+        this.resize(width, height);
+        this.updateInternal();
     }
 
     resize(width, height) {
@@ -385,8 +394,7 @@ class E3D_camera { // base camera, orthogonal
         if (hd2 > wd2) {
             dd2 = hd2;
         }
-        
-        this.baseMatrix = mat4.create();
+ 
         mat4.ortho(this.baseMatrix, -wd2, wd2, hd2, -hd2, -dd2, dd2);  
     }
 
@@ -430,19 +438,21 @@ class E3D_camera { // base camera, orthogonal
 
 class E3D_camera_persp extends E3D_camera { // basic perspective based matrix view (free move)
     constructor(id, width, height, fov, near, far) {
-        super(id);
+        super(id, width, height);
 
         this.fov = fov;
         this.near = near;
         this.far = far;
-        this.baseMatrix = mat4.perspective(mat4.create(), fov, width / height, near, far);
+
+        this.resize(width, height, fov, near, far);
+        this.updateInternal();
     }
 
     resize(width, height, fov, near, far) {
         this.fov = fov;
         this.near = near;
         this.far = far;
-        this.baseMatrix = mat4.perspective(mat4.create(), fov, width / height, near, far);
+        mat4.perspective(this.baseMatrix, fov, width / height, near, far);
     }
 
     updateInternal() {
