@@ -34,7 +34,7 @@ inputForm.addEventListener("touchcancel", formTouchEnd);
 
 const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
-const _zFar = 200.0;
+const _zFar = 500.0;
 
 
 // Engine Components
@@ -46,7 +46,7 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var inputs = new E3D_input(can, true, true, true, true);
 var l0v, l1v;// light entities index
-
+var cloned = false;
 
 log("Session Start", true);
 initEngine();
@@ -119,22 +119,28 @@ function initEngine() {
         return; 
     }
     
-    getModel();   
-    timer.run();
+    //getModel();   
 
+    loadModelAsync("ST.raw");
+    loadModelAsync("AXIS.raw");
+    //loadModelAsync("SsdfasfT.raw");
+    
     l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
     l0v.scale = vec3.fromValues(5, 5, 5);
     l0v.visible = true;
     l0v.resetMatrix();
     l0v = scn.addEntity(l0v);
-
+    
     l1v = new E3D_entity_vector("light1vect", true, 2.0, true);
     l1v.position = vec3.fromValues(5, 20, 5);
     l1v.scale = vec3.fromValues(5, 5, 5);
     l1v.visible = true;
     l1v.resetMatrix();
     l1v = scn.addEntity(l1v);
+
+    timer.run();
+    scn.state = E3D_ACTIVE;
 }
 
 function prepRender() {
@@ -146,6 +152,7 @@ function prepRender() {
         scn.entities[l0v].updateVector(scn.lights.light0_adjusted);
         scn.entities[l1v].updateVector(scn.lights.light1_adjusted);
     }
+
 
 }
 
@@ -159,45 +166,60 @@ function timerTick() {  // Game Loop
         scn.render();
         scn.postRender();
     }
+
+    if (!cloned) { // some fun
+        let st = scn.getEntityIndexFromId("ST");
+        if (st > -1) {
+            for (let j = 1; j < 36; ++j) {
+                let newGuy = scn.cloneStaticEntity("ST", "ST" + j);
+                scn.entities[newGuy].rotation[1] = j * 10 * DegToRad;
+                scn.entities[newGuy].position[2] = -120;
+                vec3.rotateY(scn.entities[newGuy].position, scn.entities[newGuy].position, vec3_origin, j * 10 * DegToRad );
+                scn.entities[newGuy].resetMatrix();
+                scn.entities[newGuy].visible = true;
+
+            }
+            cloned = true;
+        }
+    }
 }
 
 
 
+// TODO ressource manager
+// addressource (path, defer)
+// fetchressources ()
+// callback on new ressource, on all ressource loaded, on error
+// getressourcedata(path)
 
 // Model / Entity loading
 function loadModelAsync(filename) {
-
-}
-
-function load(scn) {
-
-}
-
-// async file loader
-function reqListener() {
-    log("Parsing Response Text", false);
-    var data = this.responseText.split("\n");
-    let rawModelData = [];
-    for (var i = 0; i < data.length; i++) {
-        if ((data[i] != "") && (data[i].split(" ").length != 1)) {
-            rawModelData.push(data[i]);
-        }
-    }
-    initBuffers(gl, rawModelData);
-    scn.state = E3D_ACTIVE;
-}
-
-function getModel() {
     var oReq = new XMLHttpRequest();
-    oReq.addEventListener("load", reqListener);
-    oReq.open("GET", "AXIS.raw");//CM ST.raw");
-    log("Loading Model Async", false);
+    oReq.addEventListener("load", loadModelAsyncCallback );    
+    oReq.open("GET", filename);
+    log("Loading Model " + filename, false);
     oReq.send();
 }
 
+function loadModelAsyncCallback(event) {
+    let xm = event.target;
+    if (xm) {
+        if (xm.status == 200) {
+            log(xm.responseURL  + " " + xm.statusText + " " + xm.responseText.length, true);
+            let nm = loadModel_RAW(xm.responseText, "?", xm.responseURL, false);
+            scn.addEntity(nm);            
+        } else {
+            log(xm.responseURL  + " " + xm.statusText, false);
+        }
+    }
+}
+
+
 // TODO own class or entity class
-function initBuffers(gl, rawModelData) {
-    let mp = new E3D_entity("map", "", false);
+//function initBuffers(gl, rawModelData) {
+function loadModel_RAW(rawModelData, name, file, smoothShading) {
+
+    let mp = new E3D_entity(name, file, false);
 
     log("Creating buffers");
 
@@ -213,6 +235,17 @@ function initBuffers(gl, rawModelData) {
     let normals = [];
 
 
+    log("Parsing Response Text", false);
+
+    var data = rawModelData.split("\n"); // remove empty and text lines
+    rawModelData = [];
+    for (var i = 0; i < data.length; i++) {
+        if ((data[i] != "") && (data[i].split(" ").length != 1)) {
+            rawModelData.push(data[i]);
+        }
+    }
+
+    // parse locations
     for (var i = 0; i < rawModelData.length; i++) {
         var chunk = rawModelData[i].split(" ");
         for (var j = 0; j < chunk.length; j++) {
@@ -225,6 +258,7 @@ function initBuffers(gl, rawModelData) {
         }
     }
 
+    // create face normals
     for (var i = 0; i < numFloats / 9; i++) { // for each face
         var v1 = vec3.fromValues(positions[i * 9], positions[(i * 9) + 1], positions[(i * 9) + 2]);
         var v2 = vec3.fromValues(positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]);
@@ -238,6 +272,8 @@ function initBuffers(gl, rawModelData) {
         vec3.cross(newNormal, v3, v2);
 
         vec3.normalize(newNormal, newNormal);
+
+        // TODO smoothShading
 
         normals.push(newNormal[0]); // flat shading
         normals.push(newNormal[1]); 
@@ -257,7 +293,6 @@ function initBuffers(gl, rawModelData) {
     log((numFloats / 3) + " vertices", true);
     log((numFloats / 9) + " triangles", false);
 
-
     mp.vertexArray = new Float32Array(positions);
     mp.colorArray = new Float32Array(colors);
     mp.normalArray = new Float32Array(normals);
@@ -265,7 +300,15 @@ function initBuffers(gl, rawModelData) {
     mp.numElements = numFloats / 3;
     mp.visible = true;
 
-    scn.addEntity(mp);
+    // some funny business
+    if (file.indexOf("ST.raw") > -1) {
+        mp.position[2] = -120;    
+        mp.id = "ST";    
+    }
+
+    mp.resetMatrix();
+
+    return mp;
 }
 
 

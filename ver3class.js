@@ -105,9 +105,20 @@ class E3D_entity {
     }
 
     cloneBuffers(entity) {
-        //fill own buffers with other entity's buffer data
+        this.numElements = entity.numElements;
+        this.drawMode = entity.drawMode;
 
+        this.vertexBuffer = entity.vertexBuffer;
+        this.normalBuffer = entity.normalBuffer;
+        this.colorBuffer = entity.colorBuffer;
+
+        if (entity.dynamic) {
+            this.vertexArray = entity.vertexArray; 
+            this.normalArray = entity.normalArray;
+            this.colorArray = entity.colorArray;
+        }
     }
+
 
     resetMatrix(){
         // recreate matrices from scale, rotation and position
@@ -115,13 +126,14 @@ class E3D_entity {
         mat4.rotateX(this.normalMatrix, this.normalMatrix, this.rotation[0] );
         mat4.rotateY(this.normalMatrix, this.normalMatrix, this.rotation[1] );
 
-        mat4.rotateZ(this.modelMatrix, mat4_identity, this.rotation[2] );
+        mat4.translate(this.modelMatrix, mat4_identity, this.position);
+        mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
+        
+        mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.rotation[2] );
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
-
-        mat4.translate(this.modelMatrix, this.modelMatrix, this.position);
         
-        mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
+        
     }
 
 }
@@ -339,6 +351,24 @@ class E3D_scene {
         this.entities.push(ent);
 
         return this.entities.length - 1; // return new index
+    }
+
+    cloneStaticEntity(id, newId) {
+        let idx = this.getEntityIndexFromId(id);
+        if ((idx > -1) && (!this.entities[idx].dynamic)){
+            let ent = new E3D_entity(newId, this.entities[idx].filename, false);
+            ent.cloneBuffers(this.entities[idx]);            
+            this.entities.push(ent);
+    
+            return this.entities.length - 1; // return new index
+        }        
+    }
+
+    getEntityIndexFromId(id) {
+        for (let i = 0; i < this.entities.length; ++i) {
+            if (this.entities[i].id == id) return i;
+        }
+        return -1;
     }
 
 }
