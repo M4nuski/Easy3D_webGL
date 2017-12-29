@@ -213,9 +213,12 @@ class E3D_scene {
         this.lights = new E3D_lighting();
         this.clearColor = vBackColor;
 
-        //this.setupFunction = null; // callback to setup scene before rendering
-        //this.renderFunction = null; // callback to render scene
         this.program = null; // shader program class
+
+        this.preRenderFunction = null; 
+        this.renderFunction = null; 
+        this.postRenderFunction = null;
+
 
     }
 
@@ -227,21 +230,84 @@ class E3D_scene {
         this.context.depthFunc(this.context.LEQUAL);
         this.context.cullFace(this.context.BACK);
         this.context.enable(this.context.CULL_FACE);
+        this.state = E3D_READY;
     }
 
     preRender() {
         // timing, events, controls, camera, animations
+
+        if (this.preRenderFunction) {
+            this.preRenderFunction(this);
+        }
     }
+
     render() {
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         // entities, sprites, hud
 
+        this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
 
+        this.context.useProgram(this.program.shaderProgram);
+
+        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());     
+
+        this.context.uniform3fv(this.program.shaderUniforms["uLightA_Color"], this.lights.ambiant_color);
+
+        this.context.uniform3fv(this.program.shaderUniforms["uLight0_Color"], this.lights.light0_color);
+        this.context.uniform3fv(this.program.shaderUniforms["uLight0_Direction"], this.lights.light0_adjusted);
+
+        this.context.uniform3fv(this.program.shaderUniforms["uLight1_Color"], this.lights.light1_color);
+        this.context.uniform3fv(this.program.shaderUniforms["uLight1_Direction"], this.lights.light1_adjusted);
+
+
+
+
+        for (let i = 0; i < this.entities.length; ++i) {
+            if ((this.entities[i].visible) && (this.entities[i].numElements > 0)) {
+
+                // Entity Attributes
+                if (this.entities[i].dynamic) {
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
+                } else {
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
+                }
+                // Entity Uniforms
+                this.context.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
+                this.context.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, this.entities[i].normalMatrix);
+                
+                // Draw
+                this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
+            }
+        }
+
+        if (this.renderFunction) {
+            this.renderFunction(this);
+        }
     }
+
     postRender() {
         // cleanup or other events
+        if (this.postRenderFunction) {
+            this.postRenderFunction(this);
+        }
     }
 
+
+    bind3FloatBuffer(location, buffer) {
+        this.context.bindBuffer(this.context.ARRAY_BUFFER, buffer);
+        this.context.vertexAttribPointer(location, 3, this.context.FLOAT, false, 0, 0);
+        this.context.enableVertexAttribArray(location);
+    }
+    
+    bindAndUpdate3FloatBuffer(location, buffer, data) {
+        this.context.bindBuffer(this.context.ARRAY_BUFFER, buffer);
+        this.context.bufferData(this.context.ARRAY_BUFFER, data, this.context.DYNAMIC_DRAW);
+        this.context.vertexAttribPointer(location, 3, this.context.FLOAT, false, 0, 0);
+        this.context.enableVertexAttribArray(location);
+    }
 
 }
 

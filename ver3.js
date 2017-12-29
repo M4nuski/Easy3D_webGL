@@ -20,11 +20,11 @@ const _zFar = 200.0;
 
 //Scene
 
-var sceneStatus = E3D_CREATED;
+
 let timer; // E3D_timing class
 var winWidth = 10, winHeight = 10;
-var gl, programInfo, cam;
-var entities = []; // of E3D_entity
+var gl, programInfo;
+
 
 
 
@@ -55,7 +55,7 @@ var inputs = new E3D_input(can, true, true, true, true);
 
 
 function updateStatus() {
-    status.innerHTML = "pX:" + Math.floor(cam.position[0]) + "pY:" + Math.floor(cam.position[1]) + "pZ:" + Math.floor(cam.position[2])+ "<br />"+
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "<br />"+
     "rX: " + Math.floor(inputs.sumRY * RadToDeg) + " rY:"+ Math.floor(inputs.sumRX * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
 }
 
@@ -145,23 +145,23 @@ function getModel() {
 function prepView() {
     let vmode = document.forms["moveTypeForm"].moveType.value; 
     if (vmode == "model") {
-        cam = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+        scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     } 
     else  if (vmode == "free") {
-        cam = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+        scn.camera = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     } else {
-        cam = new E3D_camera("cam1o", winWidth, winHeight);
-        cam.resize(winWidth, winHeight);
-        cam.updateInternal();
+        scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
+        scn.camera.resize(winWidth, winHeight);
+        scn.camera.updateInternal();
     }
 
 }
 
-var shdr;
+
 timer = new E3D_timing(true, 25, timerTick);
-
-
+var scn; 
 log("Session Start", true);
+
 
 main();
 
@@ -177,141 +177,72 @@ function main() {
         return;
     }
 
+    log("Scene Creation", false);
+    scn = new E3D_scene("mainScene", gl, winWidth, winHeight);
+
     log("Shader Program Initialization", false);
+    scn.program = new E3D_program("mainProgram", gl);
+    scn.program .compile(vertShader01, fragShader00);
+    scn.program .bindLocations(attribList01, uniformList01);
 
-    shdr = new E3D_program("mainProgram", gl);
-    shdr.compile(vertShader01, fragShader00);
-    shdr.bindLocations(attribList01, uniformList01);
+    log("Lighting Initialization", false);
+    scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
+    scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
+    scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
+    scn.lights.light0_lockToCamera = true;
 
-    lights = new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
+    scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
+    scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
+    scn.lights.light1_lockToCamera = false;
 
-    lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
-    lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
-    lights.light0_lockToCamera = true;
-
-    lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
-    lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
-    lights.light1_lockToCamera = false;
-
-    gl.clearColor(0.0, 0.0, 0.2, 1.0);
-    gl.clearDepth(1.0);                 // Clear everything
-    gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-    gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-    gl.cullFace(gl.BACK);
-    gl.enable(gl.CULL_FACE);
-
+    log("Camera Initialization", false);
     winResize();
 
-    getModel();
+    log("Scene Initialization", false);
+    scn.initialize();
+
+    scn.preRenderFunction = setView;
+
+    scn.status = E3D_ACTIVE;
+    
+    getModel();    
 
 }
 
 function setView() {
-    /*
-    sumRX += rx;
-    sumRY += ry;  
-    
-    // some clamping and warping        
-    if (sumRY < -PIdiv2) { sumRY = -PIdiv2; }
-    if (sumRY >  PIdiv2) { sumRY =  PIdiv2; }
 
-    if (sumRX < 0) { 
-        sumRX += PIx2;
-        tarx += PIx2;
-     }
-    if (sumRX > PIx2) { 
-        sumRX -= PIx2; 
-        tarx -= PIx2; 
+    scn.camera.move(inputs.tadx, -inputs.tady, inputs.tadz, inputs.tary, inputs.tarx, 0);
+
+    if (scn.lights.light0_lockToCamera) {
+        scn.lights.light0_adjusted = scn.camera.adjustToCamera(scn.lights.light0_direction);
+    }
+    if (scn.lights.light1_lockToCamera) {
+        scn.lights.light1_adjusted = scn.camera.adjustToCamera(scn.lights.light1_direction);
     }
 
-    // smooth controls
-    tarx = timer.smooth(tarx, sumRX, _smooth);
-    tary = timer.smooth(tary, sumRY, _smooth);
-
-    tadx = timer.smooth(tadx, dx, _smooth);
-    tady = timer.smooth(tady, dy, _smooth);
-    tadz = timer.smooth(tadz, dz, _smooth);*/
-
-    cam.move(inputs.tadx, -inputs.tady, inputs.tadz, inputs.tary, inputs.tarx, 0);
-
-    if (lights.light0_lockToCamera) {
-        lights.light0_adjusted = cam.adjustToCamera(lights.light0_direction);
+    if (scn.entities.length == 3) {
+        scn.entities[1].updateVector(scn.lights.light0_adjusted);
+        scn.entities[2].updateVector(scn.lights.light1_adjusted);
     }
-    if (lights.light1_lockToCamera) {
-        lights.light1_adjusted = cam.adjustToCamera(lights.light1_direction);
-    }
-
-   entities[1].updateVector(lights.light0_adjusted);
-   entities[2].updateVector(lights.light1_adjusted);
 
 }
 
 
-function bind3FloatBuffer(location, buffer) { //TODO in scene
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(location);
-}
 
-function bindAndUpdate3FloatBuffer(location, buffer, data) { // TODO in scene
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-    gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(location);
-}
 
 function drawScene(gl) {
 
-    if (sceneStatus == E3D_ACTIVE) {
-
-        setView();
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // todo move to scene properties
-
-        gl.useProgram(shdr.shaderProgram);
-
-        gl.uniformMatrix4fv(shdr.shaderUniforms["uProjectionMatrix"], false, cam.getViewMatrix());     
-
-        gl.uniform3fv(shdr.shaderUniforms["uLightA_Color"], lights.ambiant_color);
-
-        gl.uniform3fv(shdr.shaderUniforms["uLight0_Color"], lights.light0_color);
-        gl.uniform3fv(shdr.shaderUniforms["uLight0_Direction"], lights.light0_adjusted);
-
-        gl.uniform3fv(shdr.shaderUniforms["uLight1_Color"], lights.light1_color);
-        gl.uniform3fv(shdr.shaderUniforms["uLight1_Direction"], lights.light1_adjusted);
-
-
-
-
-        for (let i = 0; i < entities.length; ++i) {
-            if ((entities[i].visible) && (entities[i].numElements > 0)) {
-
-                // Entity Attributes
-                if (entities[i].dynamic) {
-                    bindAndUpdate3FloatBuffer(shdr.shaderAttributes["aVertexPosition"], entities[i].vertexBuffer, entities[i].vertexArray);
-                    bindAndUpdate3FloatBuffer(shdr.shaderAttributes["aVertexNormal"], entities[i].normalBuffer, entities[i].normalArray);    
-                    bindAndUpdate3FloatBuffer(shdr.shaderAttributes["aVertexColor"], entities[i].colorBuffer, entities[i].colorArray);  
-                } else {
-                    bind3FloatBuffer(shdr.shaderAttributes["aVertexPosition"], entities[i].vertexBuffer);  
-                    bind3FloatBuffer(shdr.shaderAttributes["aVertexNormal"], entities[i].normalBuffer);    
-                    bind3FloatBuffer(shdr.shaderAttributes["aVertexColor"], entities[i].colorBuffer);
-                }
-                // Entity Uniforms
-                gl.uniformMatrix4fv(shdr.shaderUniforms["uModelMatrix"], false, entities[i].modelMatrix);
-                gl.uniformMatrix4fv(shdr.shaderUniforms["uNormalMatrix"], false, entities[i].normalMatrix);
-                
-                // Draw
-                gl.drawArrays(entities[i].drawMode, 0, entities[i].numElements);
-            }
-        }
-
-
+    if (scn.status == E3D_ACTIVE) {
+        scn.preRender();
+        scn.render();
+        scn.postRender();
     }
 }
 
 
 function initBuffers(gl, rawModelData) {
 
-    entities.push( new E3D_entity("map", "", false) );
+    scn.entities.push( new E3D_entity("map", "", false) );
 
     log("Creating buffers");
 
@@ -371,46 +302,46 @@ function initBuffers(gl, rawModelData) {
     log((numFloats / 3) + " vertices", true);
     log((numFloats / 9) + " triangles", false);
 
-    entities[0].vertexArray = new Float32Array(positions);
-    entities[0].vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[0].vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[0].vertexArray, gl.STATIC_DRAW);
+    scn.entities[0].vertexArray = new Float32Array(positions);
+    scn.entities[0].vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, scn.entities[0].vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, scn.entities[0].vertexArray, gl.STATIC_DRAW);
 
-    entities[0].colorArray = new Float32Array(colors);
-    entities[0].colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[0].colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[0].colorArray, gl.STATIC_DRAW);
+    scn.entities[0].colorArray = new Float32Array(colors);
+    scn.entities[0].colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, scn.entities[0].colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, scn.entities[0].colorArray, gl.STATIC_DRAW);
     
-    entities[0].normalArray = new Float32Array(normals);
-    entities[0].normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, entities[0].normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, entities[0].normalArray, gl.STATIC_DRAW);
+    scn.entities[0].normalArray = new Float32Array(normals);
+    scn.entities[0].normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, scn.entities[0].normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, scn.entities[0].normalArray, gl.STATIC_DRAW);
 
-    entities[0].numElements = numFloats / 3;
+    scn.entities[0].numElements = numFloats / 3;
 
-    entities[0].visible = true;
-
-
-    entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
-    entities[1].position = vec3.fromValues(-5, 20, -5);
-    entities[1].scale = vec3.fromValues(5, 5, 5);
-    entities[1].visible = true;
-    entities[1].resetMatrix();
-
-    entities[1].vertexBuffer = gl.createBuffer(); //todo move to scene with context
-    entities[1].colorBuffer = gl.createBuffer();
-    entities[1].normalBuffer = gl.createBuffer();
+    scn.entities[0].visible = true;
 
 
-    entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
-    entities[2].position = vec3.fromValues(5, 20, 5);
-    entities[2].scale = vec3.fromValues(5, 5, 5);
-    entities[2].visible = true;
-    entities[2].resetMatrix();
+    scn.entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
+    scn.entities[1].position = vec3.fromValues(-5, 20, -5);
+    scn.entities[1].scale = vec3.fromValues(5, 5, 5);
+    scn.entities[1].visible = true;
+    scn.entities[1].resetMatrix();
 
-    entities[2].vertexBuffer = gl.createBuffer(); //todo move to scene with context
-    entities[2].colorBuffer = gl.createBuffer();
-    entities[2].normalBuffer = gl.createBuffer();
+    scn.entities[1].vertexBuffer = gl.createBuffer(); //todo move to scene with context
+    scn.entities[1].colorBuffer = gl.createBuffer();
+    scn.entities[1].normalBuffer = gl.createBuffer();
+
+
+    scn.entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
+    scn.entities[2].position = vec3.fromValues(5, 20, 5);
+    scn.entities[2].scale = vec3.fromValues(5, 5, 5);
+    scn.entities[2].visible = true;
+    scn.entities[2].resetMatrix();
+
+    scn.entities[2].vertexBuffer = gl.createBuffer(); //todo move to scene with context
+    scn.entities[2].colorBuffer = gl.createBuffer();
+    scn.entities[2].normalBuffer = gl.createBuffer();
 
 
 }
