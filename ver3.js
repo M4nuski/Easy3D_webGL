@@ -41,13 +41,14 @@ const _zFar = 500.0;
 
 
 var winWidth = 10, winHeight = 10;
+var usepct_smth=0;
 var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
+var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true);
 var l0v, l1v;// light entities index
 var cloned = false;
-var usepct_smth=0;
 
 log("Session Start", true);
 initEngine();
@@ -121,10 +122,17 @@ function initEngine() {
     }
     
     //getModel();   
+    resMngr.addRessource("ST.raw", "ST");
+    resMngr.addRessource("AXIS.raw", "Map");
 
-    loadModelAsync("ST.raw");
-    loadModelAsync("AXIS.raw");
+    resMngr.loadAll("models");
+
+    //loadModelAsync("ST.raw");
+    //loadModelAsync("AXIS.raw");
     //loadModelAsync("SsdfasfT.raw");
+
+    //var r = new ress ("CM.raw", "cm raw name", pu);
+    //r.load();
     
     l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
@@ -143,6 +151,7 @@ function initEngine() {
     timer.run();
     scn.state = E3D_ACTIVE;
 }
+
 
 function prepRender() {
     // move camera per inputs
@@ -186,13 +195,29 @@ function timerTick() {  // Game Loop
 }
 
 
+function onRessource(name, msg) {
+    if (msg == "failed") {
+        log("Failed to load ressource: " + name, false);        
+    }
+    if (msg == "loaded") {
+        log("Async ressource loaded: " + name, true); 
+        // TODO better logic than that
+        let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), false);
+        scn.addEntity(nm);    
+    }
+    if (msg == "all") {
+        log("All async ressources loaded for tag: " + name, true);          
+    }
+}
+
+
 
 // TODO ressource manager
 // addressource (path, defer)
 // fetchressources ()
 // callback on new ressource, on all ressource loaded, on error
 // getressourcedata(path)
-
+/*
 // Model / Entity loading
 function loadModelAsync(filename) {
     var oReq = new XMLHttpRequest();
@@ -214,7 +239,7 @@ function loadModelAsyncCallback(event) {
         }
     }
 }
-
+*/
 
 // TODO own class or entity class
 //function initBuffers(gl, rawModelData) {
@@ -222,7 +247,7 @@ function loadModel_RAW(rawModelData, name, file, smoothShading) {
 
     let mp = new E3D_entity(name, file, false);
 
-    log("Creating buffers");
+    log("Creating entity", false);
 
     let numFloats = 0;
 
@@ -236,7 +261,7 @@ function loadModel_RAW(rawModelData, name, file, smoothShading) {
     let normals = [];
 
 
-    log("Parsing Response Text", false);
+    log("Parsing Response Text", true);
 
     var data = rawModelData.split("\n"); // remove empty and text lines
     rawModelData = [];
@@ -301,11 +326,8 @@ function loadModel_RAW(rawModelData, name, file, smoothShading) {
     mp.numElements = numFloats / 3;
     mp.visible = true;
 
-    // some funny business
-    if (file.indexOf("ST.raw") > -1) {
-        mp.position[2] = -120;    
-        mp.id = "ST";    
-    }
+
+    if (mp.id == "ST") mp.position[2] = -120;
 
     mp.resetMatrix();
 
