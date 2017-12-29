@@ -588,23 +588,28 @@ class E3D_input {
 
         this._mouseSpeed = 0.0025;
         this._mouseWheelSpeed = 0.001;
-
-        this._keyUP = " "; // change to objects of attrib: event.key
-        this._keyDN = "c"; // ex keyConfig["Down"] = "c"
-        this._keyLT = "a";
-        this._keyRT = "d"; // or keyConfig[event.key] = "Down"
-        this._keyFD = "w"; // to better handle multiple key inputs ?
-        this._keyBD = "s";
-
         this._smooth = 6.0;
+
+        // Keyboard Controls
+        this.keyMap = {}; // this.keyMap[command name] = event.key
+        this.keyMap["moveUp"] = " ";
+        this.keyMap["moveDown"] = "c";
+
+        this.keyMap["strafeLeft"] = "a";
+        this.keyMap["strafeRight"] = "d";
+
+        this.keyMap["moveForward"] = "w";
+        this.keyMap["moveBackward"] = "s";
+
+        // Mouse Controls
         this.panning = false;
         this.rotating = false;
 
-        this.mx=0;this.pinx=0;this.dx=0;this.rx=0;this.sumRX=0;
-        this.my=0;this.piny=0;this.dy=0;this.ry=0;this.sumRY=0;
-        this.dz=0;this.tadx=0;this.tady=0;this.tadz=0;this.tarx=0;this.tary=0;
-
-
+        this.pinx=0;  this.px=0;  this.px_smth=0;
+        this.piny=0;  this.py=0;  this.py_smth=0;
+                      this.pz=0;  this.pz_smth=0; // no pin because wheel already gives delta
+        this.rx=0; this.rx_sum=0; this.rx_smth=0;
+        this.ry=0; this.ry_sum=0; this.ry_smth=0;
 
     }
 
@@ -626,51 +631,51 @@ class E3D_input {
     }
 
     processInputs(timer) {
-        if (this.inputTable[this._keyUP]) {
-            this.dy -= this._moveSpeed * timer.delta;
+        if (this.inputTable[this.keyMap["moveUp"]]) {
+            this.py -= this._moveSpeed * timer.delta;
         }
-        if (this.inputTable[this._keyDN]) {
-            this.dy += this._moveSpeed * timer.delta;
+        if (this.inputTable[this.keyMap["moveDown"]]) {
+            this.py += this._moveSpeed * timer.delta;
         }
-        if (this.inputTable[this._keyLT]) {
-            this.dx -= this._moveSpeed * timer.delta;
+        if (this.inputTable[this.keyMap["strafeLeft"]]) {
+            this.px -= this._moveSpeed * timer.delta;
         }
-        if (this.inputTable[this._keyRT]) {
-            this.dx += this._moveSpeed * timer.delta;
+        if (this.inputTable[this.keyMap["strafeRight"]]) {
+            this.px += this._moveSpeed * timer.delta;
         }
-        if (this.inputTable[this._keyFD]) {
-            this.dz -= this._moveSpeed * timer.delta;
+        if (this.inputTable[this.keyMap["moveForward"]]) {
+            this.pz -= this._moveSpeed * timer.delta;
         }
-        if (this.inputTable[this._keyBD]) {
-            this.dz += this._moveSpeed * timer.delta;
+        if (this.inputTable[this.keyMap["moveBackward"]]) {
+            this.pz += this._moveSpeed * timer.delta;
         }    
         
-        this.sumRX += this.rx;
-        this.sumRY += this.ry;  
+        this.rx_sum += this.rx;
+        this.ry_sum += this.ry;  
         
         // some clamping and warping        
-        if (this.sumRY < -PIdiv2) { this.sumRY = -PIdiv2; }
-        if (this.sumRY >  PIdiv2) { this.sumRY =  PIdiv2; }
+        if (this.ry_sum < -PIdiv2) { this.ry_sum = -PIdiv2; }
+        if (this.ry_sum >  PIdiv2) { this.ry_sum =  PIdiv2; }
         
-        if (this.sumRX < 0) { 
-            this.sumRX += PIx2;
-            this.tarx += PIx2;
+        if (this.rx_sum < 0) { 
+            this.rx_sum += PIx2;
+            this.rx_smth += PIx2;
         }
-        if (this.sumRX > PIx2) { 
-            this.sumRX -= PIx2; 
-            this.tarx -= PIx2; 
+        if (this.rx_sum > PIx2) { 
+            this.rx_sum -= PIx2; 
+            this.rx_smth -= PIx2; 
         }
         
         // smooth controls
-        this.tarx = timer.smooth(this.tarx, this.sumRX, this._smooth);
-        this.tary = timer.smooth(this.tary, this.sumRY, this._smooth);
+        this.rx_smth = timer.smooth(this.rx_smth, this.rx_sum, this._smooth);
+        this.ry_smth = timer.smooth(this.ry_smth, this.ry_sum, this._smooth);
         
-        this.tadx = timer.smooth(this.tadx, this.dx, this._smooth);
-        this.tady = timer.smooth(this.tady, this.dy, this._smooth);
-        this.tadz = timer.smooth(this.tadz, this.dz, this._smooth);
+        this.px_smth = timer.smooth(this.px_smth, this.px, this._smooth);
+        this.py_smth = timer.smooth(this.py_smth, this.py, this._smooth);
+        this.pz_smth = timer.smooth(this.pz_smth, this.pz, this._smooth);
 
             // clean up state changes
-            this.dx = 0; this.dy = 0; this.dz = 0;
+            this.px = 0; this.py = 0; this.pz = 0;
             this.rx = 0; this.ry = 0;
     }
 
@@ -707,21 +712,21 @@ class E3D_input {
     }
     
     mouseMove(event) {
-        this.mx = event.pageX;
-        this.my = event.pageY;
+        const mx = event.pageX;
+        const my = event.pageY;
         
         if (this.panning) {
-            this.dx -= (this.mx - this.pinx) * this._mouseSpeed * this._moveSpeed;
-            this.dy -= (this.my - this.piny) * this._mouseSpeed * this._moveSpeed;
+            this.px -= (mx - this.pinx) * this._mouseSpeed * this._moveSpeed;
+            this.py -= (my - this.piny) * this._mouseSpeed * this._moveSpeed;
         }
         
         if (this.rotating) {
-            this.rx += (this.mx - this.pinx) * this._mouseSpeed * this._rotateSpeed;
-            this.ry += (this.my - this.piny) * this._mouseSpeed * this._rotateSpeed;
+            this.rx += (mx - this.pinx) * this._mouseSpeed * this._rotateSpeed;
+            this.ry += (my - this.piny) * this._mouseSpeed * this._rotateSpeed;
         }
         
-        this.pinx = this.mx;
-        this.piny = this.my;
+        this.pinx = mx;
+        this.piny = my;
     }
     
     mouseLockedMove(x, y) {
@@ -735,7 +740,7 @@ class E3D_input {
     mouseWheel(event) {
     
         if (event.deltaY != 0) {
-            this.dz += event.deltaY * this._mouseWheelSpeed * this._moveSpeed;
+            this.pz += event.deltaY * this._mouseWheelSpeed * this._moveSpeed;
         }
     
         if (event.preventDefault) { event.preventDefault(); };

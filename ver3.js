@@ -2,44 +2,23 @@ document.addEventListener("DOMContentLoaded", function () {
 log("DOMContentLoaded");
 
 
-
 "use strict"
-
-
-
-// global config
-
-
-const _fieldOfView = 45 * DegToRad;
-const _zNear = 0.1;
-const _zFar = 200.0;
-
-
-// global state var
-
-
-//Scene
-
-
-let timer; // E3D_timing class
-var winWidth = 10, winHeight = 10;
-var gl, programInfo;
-
-
 
 
 log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
+
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
-const inputForm = document.getElementById("inputTable");
+
+const inputForm = document.getElementById("inputTable"); // Inputs from virtual devices / UI // TODO extract to subclass on E3D_input
+
 
 log("Set DOM Events");
-can.addEventListener("resize", winResize);
-document.forms["moveTypeForm"].addEventListener("change", prepView);
+can.addEventListener("resize", winResize); // To reset camera matrix
+document.forms["moveTypeForm"].addEventListener("change", winResize); // To update camera matrix
 
-
-// Inputs from virtual devices / UI
+// Inputs from virtual devices / UI // TODO extract to subclass on E3D_input
 inputForm.addEventListener("mousedown", formMouseDown);
 inputForm.addEventListener("mouseup", formMouseUp);
 inputForm.addEventListener("mouseleave", formMouseUp);
@@ -50,80 +29,27 @@ inputForm.addEventListener("touchend", formTouchEnd);
 inputForm.addEventListener("touchcancel", formTouchEnd);
 
 
+// Engine Config
 
+
+const _fieldOfView = 45 * DegToRad;
+const _zNear = 0.1;
+const _zFar = 200.0;
+
+
+// Engine Components
+
+
+var winWidth = 10, winHeight = 10;
+var gl; // webGL canvas rendering context
+var timer = new E3D_timing(false, 25, timerTick);
+var scn;  // E3D_scene
 var inputs = new E3D_input(can, true, true, true, true);
 
 
-function updateStatus() {
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "<br />"+
-    "rX: " + Math.floor(inputs.sumRY * RadToDeg) + " rY:"+ Math.floor(inputs.sumRX * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
-}
 
-
-
-
-
-// UI virtual device inputs // TODO create class
-function injectKey(fct, event) {
-    const newKey = (event.target.innerHTML).toLowerCase();
-    if (newKey != "") {
-        if (newKey == "space") {
-            fct({ key: " " });
-        } else if (newKey.length == 1) {
-            fct({ key: (newKey) });
-        }
-    }
-}
-
-function formMouseDown(event) {
-    injectKey((e) => inputs.keyDown(e) , event);
-    event.preventDefault();
-}
-
-function formMouseUp(event) {
-    injectKey((e) => inputs.keyUp(e), event);
-}
-
-function formMouseDblClick(event) {
-    event.preventDefault();
-}
-function formTouchStart(event) {
-    injectKey((e) => inputs.keyDown(e), event);
-    event.preventDefault();
-}
-function formTouchEnd(event) {
-    injectKey((e) => inputs.keyUp(e), event);
-}
-
-
-
-
-
-// async file loader
-function reqListener() {
-    log("Parsing Response Text", false);
-    var data = this.responseText.split("\n");
-    let rawModelData = [];
-    for (var i = 0; i < data.length; i++) {
-        if ((data[i] != "") && (data[i].split(" ").length != 1)) {
-            rawModelData.push(data[i]);
-        }
-    }
-    initBuffers(gl, rawModelData);
-
-    sceneStatus = E3D_ACTIVE;
-
-}
-
-function getModel() {
-    var oReq = new XMLHttpRequest();
-    oReq.addEventListener("load", reqListener);
-    oReq.open("GET", "AXIS.raw");//CM ST.raw");
-    log("Loading Model Async", false);
-    oReq.send();
-}
-
-
+log("Session Start", true);
+initEngine();
 
 
 
@@ -131,10 +57,6 @@ function winResize() {
     winWidth = gl.canvas.clientWidth
     winHeight = gl.canvas.clientHeight;
     
-    prepView();
-}
-
-function prepView() {
     let vmode = document.forms["moveTypeForm"].moveType.value; 
 
     if (vmode == "model") {
@@ -151,28 +73,11 @@ function prepView() {
 
 }
 
+function initEngine() {
 
-function timerTick() {  // game loop
-    inputs.processInputs(timer);
-    updateStatus();
-    drawScene();
-}
-
-
-
-timer = new E3D_timing(true, 25, timerTick);
-var scn; 
-log("Session Start", true);
-
-
-main();
-
-function main() {
     log("Context Initialization", false);
-    // Initialize the GL context
     gl = can.getContext("webgl");
 
-    // Only continue if WebGL is available and working
     if (!gl) {
         log("Unable to initialize WebGL. Your browser or machine may not support it.", false);
         timer.pause();
@@ -180,40 +85,48 @@ function main() {
     }
 
     log("Scene Creation", false);
-    scn = new E3D_scene("mainScene", gl, winWidth, winHeight);
+    try {
+        scn = new E3D_scene("mainScene", gl, winWidth, winHeight);
 
-    log("Shader Program Initialization", false);
-    scn.program = new E3D_program("mainProgram", gl);
-    scn.program .compile(vertShader01, fragShader00);
-    scn.program .bindLocations(attribList01, uniformList01);
+        log("Shader Program Initialization", false);
+        scn.program = new E3D_program("mainProgram", gl);
+        scn.program .compile(vertShader01, fragShader00);
+        scn.program .bindLocations(attribList01, uniformList01);
 
-    log("Lighting Initialization", false);
-    scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
-    scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
-    scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
-    scn.lights.light0_lockToCamera = true;
+        log("Lighting Initialization", false);
+        scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
+        scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
+        scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
+        scn.lights.light0_lockToCamera = true;
 
-    scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
-    scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
-    scn.lights.light1_lockToCamera = false;
+        scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
+        scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
+        scn.lights.light1_lockToCamera = false;
 
-    log("Camera Initialization", false);
-    winResize();
+        log("Camera Initialization", false);
+        winResize();
 
-    log("Scene Initialization", false);
-    scn.initialize();
+        log("Scene Initialization", false);
+        scn.initialize();
 
-    scn.preRenderFunction = setView;
+        scn.preRenderFunction = prepRender;
 
-    scn.status = E3D_ACTIVE;
+        //scn.state = E3D_ACTIVE;
+
+    } catch (e) {
+        log(e, false);
+
+        return; 
+    }
     
-    getModel();    
+    getModel();   
+    timer.run();
 
 }
 
-function setView() {
+function prepRender() {
     // move camera per inputs
-    scn.camera.move(inputs.tadx, -inputs.tady, inputs.tadz, inputs.tary, inputs.tarx, 0);
+    scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth, inputs.rx_smth, 0);
 
     // update some entities per current lights direction
     if (scn.entities.length == 3) {
@@ -223,11 +136,12 @@ function setView() {
 
 }
 
+function timerTick() {  // Game Loop
 
+    inputs.processInputs(timer);
+    updateStatus();
 
-
-function drawScene(gl) {
-    if (scn.status == E3D_ACTIVE) {
+    if (scn.state == E3D_ACTIVE) {
         scn.preRender();
         scn.render();
         scn.postRender();
@@ -235,6 +149,33 @@ function drawScene(gl) {
 }
 
 
+
+
+// Model / Entity loading
+
+// async file loader
+function reqListener() {
+    log("Parsing Response Text", false);
+    var data = this.responseText.split("\n");
+    let rawModelData = [];
+    for (var i = 0; i < data.length; i++) {
+        if ((data[i] != "") && (data[i].split(" ").length != 1)) {
+            rawModelData.push(data[i]);
+        }
+    }
+    initBuffers(gl, rawModelData);
+    scn.state = E3D_ACTIVE;
+}
+
+function getModel() {
+    var oReq = new XMLHttpRequest();
+    oReq.addEventListener("load", reqListener);
+    oReq.open("GET", "AXIS.raw");//CM ST.raw");
+    log("Loading Model Async", false);
+    oReq.send();
+}
+
+// TODO own class or entity class
 function initBuffers(gl, rawModelData) {
 
     scn.entities.push( new E3D_entity("map", "", false) );
@@ -317,7 +258,7 @@ function initBuffers(gl, rawModelData) {
     scn.entities[0].visible = true;
 
 
-    scn.entities.push( new E3D_entity_vector("light1vect", true, 2.0, true) );
+    scn.entities.push( new E3D_entity_vector("light0vect", true, 2.0, true) );
     scn.entities[1].position = vec3.fromValues(-5, 20, -5);
     scn.entities[1].scale = vec3.fromValues(5, 5, 5);
     scn.entities[1].visible = true;
@@ -343,6 +284,49 @@ function initBuffers(gl, rawModelData) {
 
 
 
+
+
+// Virtual inputs 
+// TODO create class
+function injectKey(fct, event) {
+    const newKey = (event.target.innerHTML).toLowerCase();
+    if (newKey != "") {
+        if (newKey == "space") {
+            fct({ key: " " });
+        } else if (newKey.length == 1) {
+            fct({ key: (newKey) });
+        }
+    }
+}
+
+function formMouseDown(event) {
+    injectKey((e) => inputs.keyDown(e) , event);
+    event.preventDefault();
+}
+
+function formMouseUp(event) {
+    injectKey((e) => inputs.keyUp(e), event);
+}
+
+function formMouseDblClick(event) {
+    event.preventDefault();
+}
+function formTouchStart(event) {
+    injectKey((e) => inputs.keyDown(e), event);
+    event.preventDefault();
+}
+function formTouchEnd(event) {
+    injectKey((e) => inputs.keyUp(e), event);
+}
+
+
+
+
+
+
+// Logging and status information
+
+
 function log(text, silent = true) {
     let ts = 0;
     try {
@@ -356,6 +340,12 @@ function log(text, silent = true) {
         logElement.innerHTML += "[" + ts + "] " + text + "<br />";
     }
 }
+
+function updateStatus() {
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "<br />"+
+    "rX: " + Math.floor(inputs.ry_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + " delta:" + timer.delta + "s " + timer.usage + "%";
+}
+
 
 
 });
