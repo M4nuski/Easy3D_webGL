@@ -1,11 +1,14 @@
 
 class ressource {
-    constructor(path, name, cb) {
+    constructor(path, name, type, cb) {
         this.path = path;
         this.name = name;
-        this.ajax = null;
+        this.type = type;
         this.cb = cb; // (ressourceName, message)
+
+        this.ajax = null;
         this.data = null;
+        this.new = true;
     }
 
     load(){
@@ -28,6 +31,7 @@ class ressource {
             }
         }
         this.ajax = null;
+        this.new = false;
     }
 }
 
@@ -39,9 +43,9 @@ class ressourceManager {
         this.tag = "";
     }
 
-    addRessource(path, name) {
+    addRessource(path, name, type) {
         if (this.getIndex(name) == -1) {
-            this.ressList.push( new ressource(path, name, (n, m) => this.cb(n, m)) );
+            this.ressList.push( new ressource(path, name, type, (n, m) => this.cb(n, m)) );
         } else {
             this.cb(name, "loaded", true); // return already if ressource in store
         }
@@ -69,6 +73,23 @@ class ressourceManager {
         this.numLoaded = 0;
         for (let i = 0; i < this.ressList.length; ++i) {
             this.ressList[i].load();
+        }
+    }
+
+    loadNew(tag) {
+        this.tag = tag;
+        this.numLoaded = 0;
+        for (let i = 0; i < this.ressList.length; ++i) {
+            if (this.ressList[i].new) {
+                this.ressList[i].load();
+            } else {
+                this.numLoaded++;
+            }
+        } 
+        if (this.numLoaded == this.ressList.length) {
+            if (this.callBack) {
+                this.callBack(tag, "all");
+            }
         }
     }
 
@@ -106,6 +127,12 @@ class ressourceManager {
         } else return "";
     }
 
+    getRessourceType(name) {
+        let idx = this.getIndex(name);
+        if (idx > -1) {
+            return this.ressList[idx].type;
+        } else return "";
+    }
 
     getIndex(name) {
         for (let i = 0; i < this.ressList.length; ++i) {

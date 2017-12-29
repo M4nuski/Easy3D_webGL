@@ -113,26 +113,18 @@ function initEngine() {
 
         scn.preRenderFunction = prepRender;
 
-        //scn.state = E3D_ACTIVE;
-
     } catch (e) {
         log(e, false);
 
         return; 
     }
-    
-    //getModel();   
-    resMngr.addRessource("ST.raw", "ST");
-    resMngr.addRessource("AXIS.raw", "Map");
+     
+    resMngr.addRessource("ST.raw", "ST", "Model");
+    resMngr.addRessource("AXIS.raw", "Map", "Model");
 
     resMngr.loadAll("models");
 
-    //loadModelAsync("ST.raw");
-    //loadModelAsync("AXIS.raw");
-    //loadModelAsync("SsdfasfT.raw");
 
-    //var r = new ress ("CM.raw", "cm raw name", pu);
-    //r.load();
     
     l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
@@ -176,22 +168,6 @@ function timerTick() {  // Game Loop
         scn.render();
         scn.postRender();
     }
-
-    if (!cloned) { // some fun
-        let st = scn.getEntityIndexFromId("ST");
-        if (st > -1) {
-            for (let j = 1; j < 36; ++j) {
-                let newGuy = scn.cloneStaticEntity("ST", "ST" + j);
-                scn.entities[newGuy].rotation[1] = j * 10 * DegToRad;
-                scn.entities[newGuy].position[2] = -120;
-                vec3.rotateY(scn.entities[newGuy].position, scn.entities[newGuy].position, vec3_origin, j * 10 * DegToRad );
-                scn.entities[newGuy].resetMatrix();
-                scn.entities[newGuy].visible = true;
-
-            }
-            cloned = true;
-        }
-    }
 }
 
 
@@ -199,50 +175,41 @@ function onRessource(name, msg) {
     if (msg == "failed") {
         log("Failed to load ressource: " + name, false);        
     }
-    if (msg == "loaded") {
-        log("Async ressource loaded: " + name, true); 
-        // TODO better logic than that
-        let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), false);
-        scn.addEntity(nm);    
-    }
     if (msg == "all") {
         log("All async ressources loaded for tag: " + name, true);          
     }
+
+    if (msg == "loaded") {
+        log("Async ressource loaded: " + name, true); 
+
+        if (resMngr.getRessourceType(name) == "Model") {
+            let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), false);
+            scn.addEntity(nm);  
+
+            if ((name == "ST") && (!cloned)) { 
+                cloneWar();
+            }
+
+        }  
+
+
+    } // msg loaded
 }
 
 
-
-// TODO ressource manager
-// addressource (path, defer)
-// fetchressources ()
-// callback on new ressource, on all ressource loaded, on error
-// getressourcedata(path)
-/*
-// Model / Entity loading
-function loadModelAsync(filename) {
-    var oReq = new XMLHttpRequest();
-    oReq.addEventListener("load", loadModelAsyncCallback );    
-    oReq.open("GET", filename);
-    log("Loading Model " + filename, false);
-    oReq.send();
-}
-
-function loadModelAsyncCallback(event) {
-    let xm = event.target;
-    if (xm) {
-        if (xm.status == 200) {
-            log(xm.responseURL  + " " + xm.statusText + " " + xm.responseText.length, true);
-            let nm = loadModel_RAW(xm.responseText, "?", xm.responseURL, false);
-            scn.addEntity(nm);            
-        } else {
-            log(xm.responseURL  + " " + xm.statusText, false);
-        }
+function cloneWar() {
+    for (let j = 1; j < 36; ++j) {
+        var newGuy = scn.cloneStaticEntity("ST", "ST" + j);
+        scn.entities[newGuy].rotation[1] = j * 10 * DegToRad;
+        scn.entities[newGuy].position[2] = -120;
+        vec3.rotateY(scn.entities[newGuy].position, scn.entities[newGuy].position, vec3_origin, j * 10 * DegToRad );
+        scn.entities[newGuy].resetMatrix();
+        scn.entities[newGuy].visible = true;
     }
+    cloned = true;
 }
-*/
 
-// TODO own class or entity class
-//function initBuffers(gl, rawModelData) {
+
 function loadModel_RAW(rawModelData, name, file, smoothShading) {
 
     let mp = new E3D_entity(name, file, false);
