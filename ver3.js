@@ -373,8 +373,8 @@ function log(text, silent = true) {
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "<br />"+
-    "rX: " + Math.floor(inputs.ry_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + " delta:" + timer.delta + "s " + Math.floor(usepct_smth) + "%";
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.ry_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + "<br />" +
+    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets;
 }
 
 

@@ -229,6 +229,7 @@ class E3D_scene {
         this.renderFunction = null; 
         this.postRenderFunction = null;
 
+        this.drawnElemenets = 0; // some stats
 
     }
 
@@ -262,6 +263,8 @@ class E3D_scene {
     render() {
         // entities, sprites, hud
 
+
+
         this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
 
         this.context.useProgram(this.program.shaderProgram);
@@ -277,7 +280,7 @@ class E3D_scene {
         this.context.uniform3fv(this.program.shaderUniforms["uLight1_Direction"], this.lights.light1_adjusted);
 
 
-
+        this.drawnElemenets = 0;
 
         for (let i = 0; i < this.entities.length; ++i) {
             if ((this.entities[i].visible) && (this.entities[i].numElements > 0)) {
@@ -298,6 +301,7 @@ class E3D_scene {
                 
                 // Draw
                 this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
+                this.drawnElemenets += this.entities[i].numElements;
             }
         }
 
