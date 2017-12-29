@@ -31,24 +31,26 @@ inputForm.addEventListener("touchcancel", formTouchEnd);
 
 // Engine Config
 
-
 const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
 const _zFar = 500.0;
 
-
-// Engine Components
-
+// Engine State
 
 var winWidth = 10, winHeight = 10;
 var usepct_smth=0;
+var l0v, l1v;// light entities index
+var cloned = false;
+
+// Engine Components
+
 var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true);
-var l0v, l1v;// light entities index
-var cloned = false;
+
+
 
 log("Session Start", true);
 initEngine();
@@ -160,7 +162,7 @@ function prepRender() {
 
 function timerTick() {  // Game Loop
 
-    inputs.processInputs(timer);
+    inputs.processInputs(timer.delta);
     updateStatus();
 
     if (scn.state == E3D_ACTIVE) {
@@ -183,11 +185,13 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-            let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), false);
-            scn.addEntity(nm);  
-
-            if ((name == "ST") && (!cloned)) { 
-                cloneWar();
+            if (name == "ST") {
+                let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), 2, vec3.fromValues(1,1,1));
+                scn.addEntity(nm);  
+                if (!cloned) cloneWar();
+            } else {
+                let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), 0, "sweep");
+                scn.addEntity(nm);  
             }
 
         }  
@@ -209,8 +213,8 @@ function cloneWar() {
     cloned = true;
 }
 
-
-function loadModel_RAW(rawModelData, name, file, smoothShading) {
+// data, name, file, smoothShading (epsillon limit), color(sweep / vec3 )
+function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
 
     let mp = new E3D_entity(name, file, false);
 
@@ -218,11 +222,22 @@ function loadModel_RAW(rawModelData, name, file, smoothShading) {
 
     let numFloats = 0;
 
-    const colorSweep = [
-        1.0, 0.5, 0.5,
-        0.5, 1.0, 0.5,
-        0.5, 0.5, 1.0
-    ];
+    var colorSweep;
+    if (color === "sweep") {
+        colorSweep = [
+            1.0, 0.5, 0.5,
+            0.5, 1.0, 0.5,
+            0.5, 0.5, 1.0
+        ];
+    } else {
+        colorSweep = [
+            color[0], color[1], color[2],
+            color[0], color[1], color[2],
+            color[0], color[1], color[2]
+        ];   
+    }
+
+
     let colors = [];
     let positions = [];
     let normals = [];
@@ -266,8 +281,6 @@ function loadModel_RAW(rawModelData, name, file, smoothShading) {
 
         vec3.normalize(newNormal, newNormal);
 
-        // TODO smoothShading
-
         normals.push(newNormal[0]); // flat shading
         normals.push(newNormal[1]); 
         normals.push(newNormal[2]); 
@@ -279,6 +292,89 @@ function loadModel_RAW(rawModelData, name, file, smoothShading) {
         normals.push(newNormal[0]); // flat shading
         normals.push(newNormal[1]); 
         normals.push(newNormal[2]); 
+
+    }
+
+    if (smoothShading > 0.0) {
+        log("Smooth Shading Normals", true);
+        // group vertex by locality (list of unique location)
+        // average normals per locality
+        // if diff < smoothShading normal is average
+        // else keep flat normal
+        // expand back
+        let numVert =  (numFloats / 3);
+        log("numVert: " + numVert, true);
+        var uniqueVertex = [];
+        var indices = [numVert];
+        for (ind in indices) {
+            ind = -1;
+        }
+
+        for (var i =0; i < numVert; ++i) {
+            var unique = true;
+            var ind = -1;
+            var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
+            for (var j = 0; j < uniqueVertex.length; ++j) {
+                if ((unique) && (vec3.equals(uniqueVertex[j], curVert))) {
+                    unique = false;
+                    indices[i] = j;
+                }
+            }
+            if (unique) { 
+                uniqueVertex.push(vec3.clone(curVert));
+                indices[i] = uniqueVertex.length-1;
+            } 
+        }
+
+        log("unique Vert: " + uniqueVertex.length, true);
+
+        var avgNorms = [uniqueVertex.length];
+        // for all unique, average normals
+        //
+        for (var i = 0; i < uniqueVertex.length; ++i) { // i index in uniqueVertex and avgNorms
+            avgNorms[i] = vec3.create();
+
+            for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
+                if (indices[j] == i) {
+                    var curNorm = [normals[j*3], normals[(j*3)+1], normals[(j*3)+2] ];
+                    vec3.add(avgNorms[i] , avgNorms[i], curNorm);
+                }
+            }
+
+            vec3.normalize(avgNorms[i], avgNorms[i]);
+        }
+
+        log("Smoothing...", true);
+
+        for (var i = 0; i < uniqueVertex.length; ++i) { // i index in uniqueVertex and avgNorms
+
+            //current compare normal = avgNorms[i]
+
+            for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
+                if (indices[j] == i) {
+                    var curNorm = [normals[j*3], normals[(j*3)+1], normals[(j*3)+2] ];
+
+                    if (vec3.angle(avgNorms[i], curNorm) < smoothShading) {
+                        normals[j*3] = avgNorms[i][0];
+                        normals[(j*3)+1] = avgNorms[i][1];
+                        normals[(j*3)+2] = avgNorms[i][2];
+                    }
+                }
+            }
+
+
+        }
+
+
+        for (var i = 0; i < numVert; ++i) {
+            var unique = true;
+            var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
+            for (var j = 0; j < uniqueVertex.length; ++j) {
+                if ((unique) && (vec3.equals(uniqueVertex[j], curVert))) unique = false;
+            }
+            if (unique) uniqueVertex.push(vec3.clone(curVert));
+        }
+
 
     }
 

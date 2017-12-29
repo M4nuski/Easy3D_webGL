@@ -617,8 +617,8 @@ class E3D_input {
             element.addEventListener("mousemove", (e) => {this.mouseMove(e) } );
             element.addEventListener("mouseleave",(e) => { this.mouseLeave(e) } );
             element.addEventListener("wheel", (e) => {this.mouseWheel(e) } );
-            element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
         }
+        element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
 
         if (supportKeyboard) {
             document.addEventListener("keydown",(e) => { this.keyDown(e) } );
@@ -690,24 +690,24 @@ class E3D_input {
         }    
     }
 
-    processInputs(timer) {
+    processInputs(delta = 1.0) {
         if (this.inputTable[this.keyMap["moveUp"]]) {
-            this.py -= this._moveSpeed * timer.delta;
+            this.py -= this._moveSpeed * delta;
         }
         if (this.inputTable[this.keyMap["moveDown"]]) {
-            this.py += this._moveSpeed * timer.delta;
+            this.py += this._moveSpeed * delta;
         }
         if (this.inputTable[this.keyMap["strafeLeft"]]) {
-            this.px -= this._moveSpeed * timer.delta;
+            this.px -= this._moveSpeed * delta;
         }
         if (this.inputTable[this.keyMap["strafeRight"]]) {
-            this.px += this._moveSpeed * timer.delta;
+            this.px += this._moveSpeed * delta;
         }
         if (this.inputTable[this.keyMap["moveForward"]]) {
-            this.pz -= this._moveSpeed * timer.delta;
+            this.pz -= this._moveSpeed * delta;
         }
         if (this.inputTable[this.keyMap["moveBackward"]]) {
-            this.pz += this._moveSpeed * timer.delta;
+            this.pz += this._moveSpeed * delta;
         }    
         
         this.rx_sum += this.rx;
@@ -727,17 +727,22 @@ class E3D_input {
         }
         
         // smooth controls
-        this.rx_smth = timer.smooth(this.rx_smth, this.rx_sum, this._smooth);
-        this.ry_smth = timer.smooth(this.ry_smth, this.ry_sum, this._smooth);
+        let f = delta * this._smooth;
+        if (f > 1.0) f = 1.0;
+        //return val + ((target-val) * f);
+        this.rx_smth += (this.rx_sum - this.rx_smth) * f;
+        this.ry_smth += (this.ry_sum - this.ry_smth) * f;
         
-        this.px_smth = timer.smooth(this.px_smth, this.px, this._smooth);
-        this.py_smth = timer.smooth(this.py_smth, this.py, this._smooth);
-        this.pz_smth = timer.smooth(this.pz_smth, this.pz, this._smooth);
+        this.px_smth += (this.px - this.px_smth) * f;
+        this.py_smth += (this.py - this.py_smth) * f;
+        this.pz_smth += (this.pz - this.pz_smth) * f;
 
             // clean up state changes
-            this.px = 0; this.py = 0; this.pz = 0;
-            this.rx = 0; this.ry = 0;
+        this.px = 0; this.py = 0; this.pz = 0;
+        this.rx = 0; this.ry = 0;
     }
+
+    
 
 
 
