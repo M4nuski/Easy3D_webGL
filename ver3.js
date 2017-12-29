@@ -66,10 +66,10 @@ function winResize() {
     prepView();
 }
 
-function timerTick(){  // "game" loop
-inputs.processInputs(timer);
-updateStatus();
-drawScene(gl, programInfo);
+function timerTick() {  // game loop
+    inputs.processInputs(timer);
+    updateStatus();
+    drawScene(gl, programInfo);
 }
 
 

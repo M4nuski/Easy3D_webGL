@@ -683,7 +683,7 @@ class E3D_input {
 
         for (var i = 0; i < touches.length; i++) {
 
-            this.ongoingTouches.push(copyTouch(touches[i]));
+            this.ongoingTouches.push(this.copyTouch(touches[i]));
         }
 
         if (this.ongoingTouches.length == 1) {
@@ -723,7 +723,7 @@ class E3D_input {
 
         if (this.ongoingTouches.length == 2) {
             this.ongoingTouches[0].button = this._panMouseButton;
-            this.mouseUp(ongoingTouches[0]);
+            this.mouseUp(this.ongoingTouches[0]);
         }
 
         for (var i = 0; i < touches.length; i++) {
