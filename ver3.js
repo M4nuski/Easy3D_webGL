@@ -7,26 +7,14 @@ log("DOMContentLoaded");
 
 log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
-
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
-
-const inputForm = document.getElementById("inputTable"); // Inputs from virtual devices / UI // TODO extract to subclass on E3D_input
+const virtualKb = document.getElementById("inputTable"); 
 
 
 log("Set DOM Events");
 can.addEventListener("resize", winResize); // To reset camera matrix
 document.forms["moveTypeForm"].addEventListener("change", winResize); // To update camera matrix
-
-// Inputs from virtual devices / UI // TODO extract to subclass on E3D_input
-inputForm.addEventListener("mousedown", formMouseDown);
-inputForm.addEventListener("mouseup", formMouseUp);
-inputForm.addEventListener("mouseleave", formMouseUp);
-inputForm.addEventListener("dblclick", formMouseDblClick);
-
-inputForm.addEventListener("touchstart", formTouchStart);
-inputForm.addEventListener("touchend", formTouchEnd);
-inputForm.addEventListener("touchcancel", formTouchEnd);
 
 
 // Engine Config
@@ -49,7 +37,7 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true);
-
+var vKBinputs = new E3D_input_virtual_kb(virtualKb, inputs, true);
 
 
 log("Session Start", true);
@@ -94,8 +82,8 @@ function initEngine() {
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
-        scn.program .compile(vertShader01, fragShader00);
-        scn.program .bindLocations(attribList01, uniformList01);
+        scn.program.compile(vertShader01, fragShader00);
+        scn.program.bindLocations(attribList01, uniformList01);
 
         log("Lighting Initialization", false);
         scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
@@ -113,7 +101,7 @@ function initEngine() {
         log("Scene Initialization", false);
         scn.initialize();
 
-        scn.preRenderFunction = prepRender;
+        scn.preRenderFunction = prepRender; // callback to do some custom stuff
 
     } catch (e) {
         log(e, false);
@@ -188,6 +176,8 @@ function onRessource(name, msg) {
             if (name == "ST") {
                 let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), 2, vec3.fromValues(1,1,1));
                 scn.addEntity(nm);  
+                nm.position[2] = -120;
+                nm.resetMatrix();
                 if (!cloned) cloneWar();
             } else {
                 let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), 0, "sweep");
@@ -218,7 +208,7 @@ function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
 
     let mp = new E3D_entity(name, file, false);
 
-    log("Creating entity", false);
+    log("Creating entity " + name, false);
 
     let numFloats = 0;
 
@@ -306,13 +296,9 @@ function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
         log("numVert: " + numVert, true);
         var uniqueVertex = [];
         var indices = [numVert];
-        for (ind in indices) {
-            ind = -1;
-        }
 
-        for (var i =0; i < numVert; ++i) {
+        for (var i = 0; i < numVert; ++i) {
             var unique = true;
-            var ind = -1;
             var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
             for (var j = 0; j < uniqueVertex.length; ++j) {
                 if ((unique) && (vec3.equals(uniqueVertex[j], curVert))) {
@@ -347,8 +333,6 @@ function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
         log("Smoothing...", true);
 
         for (var i = 0; i < uniqueVertex.length; ++i) { // i index in uniqueVertex and avgNorms
-
-            //current compare normal = avgNorms[i]
 
             for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
                 if (indices[j] == i) {
@@ -389,53 +373,10 @@ function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
     mp.numElements = numFloats / 3;
     mp.visible = true;
 
-
-    if (mp.id == "ST") mp.position[2] = -120;
-
     mp.resetMatrix();
 
     return mp;
 }
-
-
-
-
-
-// Virtual inputs 
-// TODO create class
-function injectKey(fct, event) {
-    const newKey = (event.target.innerHTML).toLowerCase();
-    if (newKey != "") {
-        if (newKey == "space") {
-            fct({ key: " " });
-        } else if (newKey.length == 1) {
-            fct({ key: (newKey) });
-        }
-    }
-}
-
-function formMouseDown(event) {
-    injectKey((e) => inputs.keyDown(e) , event);
-    event.preventDefault();
-}
-
-function formMouseUp(event) {
-    injectKey((e) => inputs.keyUp(e), event);
-}
-
-function formMouseDblClick(event) {
-    event.preventDefault();
-}
-function formTouchStart(event) {
-    injectKey((e) => inputs.keyDown(e), event);
-    event.preventDefault();
-}
-function formTouchEnd(event) {
-    injectKey((e) => inputs.keyUp(e), event);
-}
-
-
-
 
 
 

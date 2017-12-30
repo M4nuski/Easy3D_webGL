@@ -14,6 +14,7 @@ Current work-in-progress
 ----------
 * Plucking the hard-coded logic from main script (ver3.js) to classes.
 * Adding different mode to interface gaming controls on mobile.
+* Adding model loading (ideally external tool should prepare model data for better load perf)
 
 Next Steps
 -----------

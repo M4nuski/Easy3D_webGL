@@ -46,6 +46,7 @@
     <script type="text/javascript" src="gl-matrix.js"></script>
     <script type="text/javascript" src="pLock.js"></script>
     <script type="text/javascript" src="ver3const.js"></script>
+    <script type="text/javascript" src="ver3input.js"></script>
     <script type="text/javascript" src="ver3ressource.js"></script>
     <script type="text/javascript" src="ver3shader.js"></script>
     <script type="text/javascript" src="ver3class.js"></script>
@@ -60,11 +61,20 @@
         <div id="statusDiv">Status</div><br />
         <div id="logDiv"></div>
     </div>
+
     <div id="controlDiv">LMB(touch) rotate, MouseWheel(pinch) zoom/pan, doubleclick Lock, Escape Remove Lock<br />
+
         <table id="inputTable">
-            <tr><td>&nbsp;</td><td>W</td><td>&nbsp;</td>  <td>&nbsp;</td><td>&nbsp;</td> <td>&nbsp;</td><td>Space</td>  </tr>
-            <tr><td>A</td><td>S</td><td>D</td>            <td>&nbsp;</td><td>&nbsp;</td> <td>&nbsp;</td><td>C</td>  </tr>
+            <tr>
+                <td> &nbsp;        </td><td vKey="w">Avant  </td><td>&nbsp;         </td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td vKey=" ">Haut</td> 
+            </tr>
+            <tr>
+                <td vKey="a">Gauche</td><td vKey="s">Arriere</td><td vKey="d">Droit </td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td vKey="c">Bas      </td>  
+            </tr>
         </table>
+    
+
+
         TODO<br />
         joystick1 btns joystick2<br />
         POV btns trackpad
