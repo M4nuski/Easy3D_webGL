@@ -211,7 +211,7 @@ class E3D_animation {
 
 
 class E3D_scene {
-    constructor(id, context, width, height, vBackColor = vec4.fromValues(0.0, 0.0, 0.1, 1.0)) {
+    constructor(id, context, width, height, vBackColor = vec4.fromValues(0.0, 0.0, 0.1, 1.0), fogLimit = -1) {
         this.id = id;
         this.context = context; // GL rendering context
         this.state = E3D_CREATED;
@@ -222,6 +222,8 @@ class E3D_scene {
 
         this.lights = new E3D_lighting();
         this.clearColor = vBackColor;
+        this.fogLimit = fogLimit;
+        this.fogFactor = 1.0;
 
         this.program = null; // shader program class
 
@@ -255,6 +257,11 @@ class E3D_scene {
         }
 
 
+        if (this.fogLimit > 0.0) {
+            this.fogFactor = 1.0 / ((this.camera.far - this.camera.near) - this.fogLimit);
+        };
+
+
         if (this.preRenderFunction) {
             this.preRenderFunction(this);
         }
@@ -279,6 +286,9 @@ class E3D_scene {
         this.context.uniform3fv(this.program.shaderUniforms["uLight1_Color"], this.lights.light1_color);
         this.context.uniform3fv(this.program.shaderUniforms["uLight1_Direction"], this.lights.light1_adjusted);
 
+        this.context.uniform4fv(this.program.shaderUniforms["uFogColor"], this.clearColor);
+        this.context.uniform1f(this.program.shaderUniforms["uFogLimit"], this.fogLimit);
+        this.context.uniform1f(this.program.shaderUniforms["uFogFactor"], this.fogFactor);
 
         this.drawnElemenets = 0;
 
@@ -442,6 +452,11 @@ class E3D_camera { // base camera, orthogonal
         this.matrix = mat4.create();
         this.baseMatrix = mat4.create(); 
 
+        this.near = -1.0;
+        this.far = 1.0;
+
+        this.fov = -1;
+
         this.resize(width, height);
         this.updateInternal();
     }
@@ -456,6 +471,9 @@ class E3D_camera { // base camera, orthogonal
         }
  
         mat4.ortho(this.baseMatrix, -wd2, wd2, hd2, -hd2, -dd2, dd2);  
+
+        this.near = -dd2;
+        this.far = dd2;
     }
 
     updateInternal() {

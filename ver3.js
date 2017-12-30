@@ -21,7 +21,7 @@ document.forms["moveTypeForm"].addEventListener("change", winResize); // To upda
 
 const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
-const _zFar = 500.0;
+const _zFar = 300.0;
 
 // Engine State
 
@@ -79,10 +79,12 @@ function initEngine() {
     log("Scene Creation", false);
     try {
         scn = new E3D_scene("mainScene", gl, winWidth, winHeight);
+        scn.clearColor = vec4.fromValues(0.0, 0.0, 0.15, 1.0);
+        scn.fogLimit = (_zFar - _zNear)*0.5;
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
-        scn.program.compile(vertShader01, fragShader00);
+        scn.program.compile(vertShader01, fragShader01);
         scn.program.bindLocations(attribList01, uniformList01);
 
         log("Lighting Initialization", false);

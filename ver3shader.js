@@ -45,7 +45,8 @@ const uniformList00 = ["uModelViewMatrix", "uModelNormalMatrix", "uProjectionMat
 
 const attribList01 = ["aVertexPosition", "aVertexColor", "aVertexNormal"];
 const uniformList01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", 
-"uLightA_Color", "uLight0_Color", "uLight1_Color", "uLight0_Direction", "uLight1_Direction"];
+"uLightA_Color", "uLight0_Color", "uLight1_Color", "uLight0_Direction", "uLight1_Direction",
+"uFogColor", "uFogLimit", "uFogFactor"];
 
 const vertShader01 = `
 //from model
@@ -99,3 +100,22 @@ void main(void) {
     gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
 }
 `;
+
+const fragShader01 = `
+uniform lowp vec4 uFogColor;
+uniform lowp float uFogLimit;
+uniform lowp float uFogFactor;
+
+varying lowp vec4 vColor;
+
+void main(void) {
+
+    lowp float z_dist = (gl_FragCoord.z / gl_FragCoord.w) - uFogLimit;
+
+    if ((uFogLimit > 0.0) && ( z_dist > 0.0 )) {
+        gl_FragColor = mix(vColor, uFogColor, z_dist * uFogFactor);
+
+    } else {
+        gl_FragColor = vColor;
+    }
+}`;
