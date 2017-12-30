@@ -1,5 +1,5 @@
 class E3D_input {
-    constructor (element, supportMouse, supportKeyboard, supportTouch, lockMouse) {
+    constructor (element, supportMouse, supportKeyboard, supportTouch, lockMouse, clampPitch= true, allowPan = true) {
 
         this.element = element;
 
@@ -7,13 +7,17 @@ class E3D_input {
         this.supportKeyboard = supportKeyboard;
         this.supportTouch = supportTouch;
         this.lockMouse = lockMouse;
+        this.clampPitch = clampPitch;
+        this.allowPan = allowPan;
 
         this.doPan = true;
         this.doRotate = true;
         this.mouseMoveWhenLockedOnly = false;
 
-        this.touchDist = 0;
+        this.touchDist = 0;        
         this.ongoingTouches = [];
+        this.doubleTapping = false;
+
         this.inputTable = {};
 
         if (supportMouse) {
@@ -55,6 +59,8 @@ class E3D_input {
         this._mouseWheelSpeed = 0.001;
         this._smooth = 6.0;
 
+        this._doubleTapDelay = 200;
+
         // Keyboard Controls
         this.keyMap = {}; // this.keyMap[command name] = event.key
         this.keyMap["moveUp"] = " ";
@@ -66,6 +72,13 @@ class E3D_input {
         this.keyMap["moveForward"] = "w";
         this.keyMap["moveBackward"] = "s";
 
+        this.keyMap["rollLeft"] = "q";
+        this.keyMap["rollRight"] = "e";
+
+        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch
+        this.keyMap["action1"] = "f";
+
+
         // Mouse Controls
         this.panning = false;
         this.rotating = false;
@@ -75,7 +88,16 @@ class E3D_input {
                       this.pz=0;  this.pz_smth=0; // no pin because wheel already gives delta
         this.rx=0; this.rx_sum=0; this.rx_smth=0;
         this.ry=0; this.ry_sum=0; this.ry_smth=0;
+        this.rz=0; this.rz_sum=0; this.rz_smth=0;
 
+    }
+
+    checkCommand(cmd, reset = false) {
+        if (this.inputTable[this.keyMap[cmd]]) {
+            if (reset) this.inputTable[this.keyMap[cmd]] = false;
+            return true;
+        } 
+        return false;
     }
 
 
@@ -114,14 +136,32 @@ class E3D_input {
         if (this.inputTable[this.keyMap["moveBackward"]]) {
             this.pz += this._moveSpeed * delta;
         }    
+
+        if (this.inputTable[this.keyMap["rollRight"]]) {
+            this.rz += this._rotateSpeed * delta;
+        }
+        if (this.inputTable[this.keyMap["rollLeft"]]) {
+            this.rz -= this._rotateSpeed * delta;
+        }    
         
         this.rx_sum += this.rx;
         this.ry_sum += this.ry;  
+        this.rz_sum += this.rz;  
         
-        // some clamping and warping        
-        if (this.ry_sum < -PIdiv2) { this.ry_sum = -PIdiv2; }
-        if (this.ry_sum >  PIdiv2) { this.ry_sum =  PIdiv2; }
-        
+        // some clamping and warping      
+        if (this.clampPitch) {  
+            if (this.ry_sum < -PIdiv2) { this.ry_sum = -PIdiv2; }
+            if (this.ry_sum >  PIdiv2) { this.ry_sum =  PIdiv2; }
+        } else {
+            if (this.ry_sum < 0) { 
+                this.ry_sum += PIx2;
+                this.ry_smth += PIx2;
+            }
+            if (this.ry_sum > PIx2) { 
+                this.ry_sum -= PIx2; 
+                this.ry_smth -= PIx2; 
+            }
+        }
         if (this.rx_sum < 0) { 
             this.rx_sum += PIx2;
             this.rx_smth += PIx2;
@@ -130,6 +170,16 @@ class E3D_input {
             this.rx_sum -= PIx2; 
             this.rx_smth -= PIx2; 
         }
+
+        if (this.rz_sum < 0) { 
+            this.rz_sum += PIx2;
+            this.rz_smth += PIx2;
+        }
+        if (this.rz_sum > PIx2) { 
+            this.rz_sum -= PIx2; 
+            this.rz_smth -= PIx2; 
+        }
+
         
         // smooth controls
         let f = delta * this._smooth;
@@ -137,6 +187,7 @@ class E3D_input {
         //return val + ((target-val) * f);
         this.rx_smth += (this.rx_sum - this.rx_smth) * f;
         this.ry_smth += (this.ry_sum - this.ry_smth) * f;
+        this.rz_smth += (this.rz_sum - this.rz_smth) * f;
         
         this.px_smth += (this.px - this.px_smth) * f;
         this.py_smth += (this.py - this.py_smth) * f;
@@ -144,7 +195,7 @@ class E3D_input {
 
             // clean up state changes
         this.px = 0; this.py = 0; this.pz = 0;
-        this.rx = 0; this.ry = 0;
+        this.rx = 0; this.ry = 0; this.rz = 0;
     }
 
     
@@ -159,11 +210,16 @@ class E3D_input {
         this.piny = event.pageY;
     
         if (event.button == this._panMouseButton) {
-            this.panning = true;
+            this.panning = this.allowPan;
         }
         if (event.button == this._rotateMouseButton) {
             this.rotating = true;
         }
+
+        if (pLockActive) { 
+            this.keyDown( { key : this.keyMap["action0"] } );
+        } 
+
         if (event.preventDefault) { event.preventDefault(); };
     }
     
@@ -207,12 +263,10 @@ class E3D_input {
         }
     }
     
-    mouseWheel(event) {
-    
+    mouseWheel(event) {    
         if (event.deltaY != 0) {
             this.pz += event.deltaY * this._mouseWheelSpeed * this._moveSpeed;
-        }
-    
+        }    
         if (event.preventDefault) { event.preventDefault(); };
     }
     
@@ -258,6 +312,13 @@ class E3D_input {
             var tdy = this.ongoingTouches[1].pageY - this.ongoingTouches[0].pageY;
 
             this.touchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
+        }
+
+        if (this.doubleTapping) {
+            this.keyDown( { key : this.keyMap["action0"] } );
+            this.doubleTapping = false;
+        } else {
+            setTimout( ()  => { this.doubleTapping = false; }, this._doubleTapDelay );
         }
     }
 

@@ -15,7 +15,7 @@ const virtualKb = document.getElementById("inputTable");
 log("Set DOM Events");
 can.addEventListener("resize", winResize); // To reset camera matrix
 document.forms["moveTypeForm"].addEventListener("change", winResize); // To update camera matrix
-
+document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
 
 // Engine Config
 
@@ -36,7 +36,7 @@ var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
-var inputs = new E3D_input(can, true, true, true, true);
+var inputs = new E3D_input(can, true, true, true, true, true, true);
 var vKBinputs = new E3D_input_virtual_kb(virtualKb, inputs, true);
 
 
@@ -54,11 +54,21 @@ function winResize() {
     if (vmode == "model") {
         scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = false;
+        inputs.clampPitch = true;
+        inputs.allowPan = true;
     } 
     else if (vmode == "free") {
         scn.camera = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
+        inputs.clampPitch = true;
+        inputs.allowPan = false;
     } 
+    else if (vmode == "space") {
+        scn.camera = new E3D_camera_space("cam1s", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+        scn.lights.light0_lockToCamera = true;
+        inputs.clampPitch = false;
+        inputs.allowPan = false;
+    }
     else {
         scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
     }
@@ -113,7 +123,7 @@ function initEngine() {
      
     resMngr.addRessource("ST.raw", "ST", "Model");
     resMngr.addRessource("AXIS.raw", "Map", "Model");
-
+    resMngr.addRessource("CM.raw", "CM", "Model");
     resMngr.loadAll("models");
 
 
@@ -139,8 +149,8 @@ function initEngine() {
 
 function prepRender() {
     // move camera per inputs
-    scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth, inputs.rx_smth, 0);
-
+    let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
+    scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth*yf, inputs.rx_smth, inputs.rz_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         scn.entities[l0v].updateVector(scn.lights.light0_adjusted);
@@ -154,6 +164,9 @@ function timerTick() {  // Game Loop
 
     inputs.processInputs(timer.delta);
     updateStatus();
+
+    if (inputs.checkCommand("action0", true)) log("action0", false);
+    if (inputs.checkCommand("action1", true)) log("action1", false);
 
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
@@ -181,6 +194,17 @@ function onRessource(name, msg) {
                 nm.position[2] = -120;
                 nm.resetMatrix();
                 if (!cloned) cloneWar();
+            } else if (name == "CM") {
+                let nm = loadModel_RAW(resMngr.getData(name), name+"_top", resMngr.getRessourcePath(name), 0, "sweep");
+                scn.addEntity(nm);  
+                nm.position[1] = -80;
+                nm.resetMatrix();
+                nm.visible = true;
+                nm = scn.cloneStaticEntity("CM_top", "CM_bottom");
+                scn.entities[nm].position[1] = 80;
+                scn.entities[nm].resetMatrix();
+                scn.entities[nm].visible = true;
+
             } else {
                 let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), 0, "sweep");
                 scn.addEntity(nm);  
@@ -401,7 +425,7 @@ function log(text, silent = true) {
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.ry_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + "<br />" +
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.rx_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + "<br />" +
     " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets;
 }
 

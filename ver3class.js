@@ -535,8 +535,8 @@ class E3D_camera_persp extends E3D_camera { // basic perspective based matrix vi
 
     updateInternal() {
         // update matrix per internal data        
-        mat4.rotateZ(this.matrix, this.baseMatrix, this.rotation[2] );
-        mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
+     //   mat4.rotateZ(this.matrix, this.baseMatrix, this.rotation[2] );
+        mat4.rotateX(this.matrix, this.baseMatrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
 
         mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
@@ -545,7 +545,7 @@ class E3D_camera_persp extends E3D_camera { // basic perspective based matrix vi
     move(tx, ty, tz, rx, ry, rz) {
         // adjust translation to current rotation
         const t = vec3.fromValues(tx , ty, tz);
-        vec3.rotateZ(t, t, vec3_origin, -rz);
+   //     vec3.rotateZ(t, t, vec3_origin, -rz);
         vec3.rotateX(t, t, vec3_origin, -rx);
         vec3.rotateY(t, t, vec3_origin, -ry);
         // update
@@ -564,12 +564,69 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
 
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
-        mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );        
+    //    mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );        
     }
 
     move(tx, ty, tz, rx, ry, rz) {
         this.update(this.position[0] + tx, this.position[1] + ty, this.position[2] + tz, rx, ry, rz);
     }
+}
+
+class E3D_camera_space extends E3D_camera_persp { // free 3D view incremental direction and position
+    constructor(id, width, height, fov, near, far) {
+        super(id, width, height, fov, near, far);
+
+        this.lastRx = 0;
+        this.lastRy = 0;
+        this.lastRz = 0;
+        this.nvx = vec3.create();
+        this.nvy = vec3.create();
+        this.nvz = vec3.create();
+        this.rotationMatrix = mat4.create();
+        this.inverseRotationMatrix = mat4.create();
+        // start with identity matrix
+        // translations are applied according to current matrix
+        // then roration are applied incrementally from rotation matrix
+        // output matrix is mix of both tx and rotation matrix
+    }
+
+    updateInternal() {
+        // update matrix per internal data
+        // Set new axis reference system
+        if (this.nvx) {
+            vec3.transformMat4(this.nvx, vec3_x, this.inverseRotationMatrix);
+            vec3.transformMat4(this.nvy, vec3_y, this.inverseRotationMatrix);
+            vec3.transformMat4(this.nvz, vec3_z, this.inverseRotationMatrix);
+
+            mat4.rotate(this.rotationMatrix,this.rotationMatrix,this.rotation[0] , this.nvx);
+            mat4.rotate(this.rotationMatrix,this.rotationMatrix, this.rotation[1] , this.nvy);
+            mat4.rotate(this.rotationMatrix,this.rotationMatrix,this.rotation[2] , this.nvz);
+
+            mat4.multiply(this.matrix, this.baseMatrix, this.rotationMatrix);     
+
+            mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
+
+            mat4.invert(this.inverseRotationMatrix, this.rotationMatrix);
+        }
+    }
+
+    move(tx, ty, tz, rx, rz, ry) { // rotation are now used with delta
+
+        const t = vec3.fromValues(tx , ty, tz);
+        vec3.transformMat4(t, t, this.inverseRotationMatrix);
+
+        this.update(this.position[0]+t[0], this.position[1]+t[1], this.position[2]+t[2], rx - this.lastRx, ry - this.lastRy, rz - this.lastRz);
+        this.lastRx = rx;
+        this.lastRy = ry;
+        this.lastRz = rz;
+    }
+
+    adjustToCamera(vect) {
+        let result = vec3.create();
+        vec3.transformMat4(result, vect, this.inverseRotationMatrix);
+        return result;
+    }  
+
 }
 
 

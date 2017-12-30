@@ -63,21 +63,19 @@
     </div>
 
     <div id="controlDiv">LMB(touch) rotate, MouseWheel(pinch) zoom/pan, doubleclick Lock, Escape Remove Lock<br />
-
+        vKeyboard (click/touch)<br />
         <table id="inputTable">
             <tr>
-                <td> &nbsp;        </td><td vKey="w">Avant  </td><td>&nbsp;         </td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td vKey=" ">Haut</td> 
+                <td vKey="q">R-Gauche</td><td vKey="w">Avant  </td><td vKey="e">R-Droit</td><td>&nbsp;</td><td vKey="Click">Action 0</td><td>&nbsp;</td><td vKey=" ">Haut</td> 
             </tr>
             <tr>
-                <td vKey="a">Gauche</td><td vKey="s">Arriere</td><td vKey="d">Droit </td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td vKey="c">Bas      </td>  
+                <td vKey="a">Gauche  </td><td vKey="s">Arriere</td><td vKey="d">Droit  </td><td>&nbsp;</td><td vKey="f">Action 1    </td><td>&nbsp;</td><td vKey="c">Bas      </td>  
             </tr>
-        </table>
-    
-
+        </table><br />
 
         TODO<br />
-        joystick1 btns joystick2<br />
-        POV btns trackpad
+        ThumbStick / Trackpad<br />    
+        ThumbStick / ThumbStick<br />
     </div>
 
     <div id="selectionDiv">
@@ -88,7 +86,8 @@
             <input type="radio" value= "walk"  name="moveType">Walking</input>(Not Implemented)<br />
             <input type="radio" value= "drive"  name="moveType">Driving</input>(Not Implemented)<br />
             <input type="radio" value= "plane"  name="moveType">Fly</input>(Not Implemented)<br />
-            <input type="radio" value= "space"  name="moveType">Space</input>(Not Implemented)<br />
+            <input type="radio" value= "space"  name="moveType">Space</input>-WIP<br />
+            <input type="checkbox" value= "invertY" name="invertY">Invert Y</input><br />
         </form>
     </div>
 </body>
