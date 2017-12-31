@@ -4,16 +4,16 @@
     <style>
         #mainDiv {
             position: absolute;
-            top : 0px;
-            left : 0px;
+            top : 5px;
+            left : 5px;
             width : 1280px;
             height : 720px;
         } 
         #dataDiv {
             position: absolute;
             top:0px;
-            left:650px;
-            width:600px;         
+            left:850px;
+            width:400px;         
         }
         #logDiv {
             height : 300px;
@@ -22,22 +22,22 @@
         }
         #controlDiv {
             position: absolute;
-            top: 370px;
+            top: 460px;
             left : 10px;
-            width : 640px;
+            width : 790px;
             
         }
 
         #selectionDiv {
             position: absolute;
             top : 370px;
-            left : 650px;
-            width : 600px;
+            left : 850px;
+            width : 400px;
             height : 200px;
         }
         td {
-            width : 85px;
-            height : 40px;
+            width : 110px;
+            height : 60px;
             text-align: center;
             background-color: lightgray;
         }
@@ -55,7 +55,7 @@
 
 <body>
     <div id="mainDiv">
-            <canvas id="GLCanvas" width="640" height="360">Erreur - Canvas non supporté</canvas>
+            <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
     </div>
     <div id="dataDiv">
         <div id="statusDiv">Status</div><br />
@@ -66,10 +66,10 @@
         vKeyboard (click/touch)<br />
         <table id="inputTable">
             <tr>
-                <td vKey="q">R-Gauche</td><td vKey="w">Avant  </td><td vKey="e">R-Droit</td><td>&nbsp;</td><td vKey="Click">Action 0</td><td>&nbsp;</td><td vKey=" ">Haut</td> 
+                <td vKey="q">R-Gauche<br />(Q)</td><td vKey="w">Avant<br />(W)</td><td vKey="e">R-Droit<br />(E)</td><td>&nbsp;</td><td vKey="Click">Action 0<br />(Click/Tap)</td><td>&nbsp;</td><td vKey=" ">Haut<br />(Spacebar)</td> 
             </tr>
             <tr>
-                <td vKey="a">Gauche  </td><td vKey="s">Arriere</td><td vKey="d">Droit  </td><td>&nbsp;</td><td vKey="f">Action 1    </td><td>&nbsp;</td><td vKey="c">Bas      </td>  
+                <td vKey="a">Gauche<br />(A)  </td><td vKey="s">Arriere<br />(S)</td><td vKey="d">Droit<br />(D)</td><td>&nbsp;</td><td vKey="f">Action 1<br />(F)</td><td>&nbsp;</td><td vKey="c">Bas<br />(C)</td>  
             </tr>
         </table><br />
 
@@ -81,13 +81,13 @@
     <div id="selectionDiv">
         Movement/Physic Type:<br />
         <form id="moveTypeForm">
+            <input type="checkbox" value= "invertY" name="invertY">Invert Y</input><br />
             <input type="radio" value= "model" name="moveType">Model</input><br />
-            <input type="radio" value= "free"  name="moveType" checked = "true" >Free Roam</input><br />
+            <input type="radio" value= "space"  name="moveType" checked = "true">Space</input><br />
+            <input type="radio" value= "free"  name="moveType">Free Roam</input><br />
             <input type="radio" value= "walk"  name="moveType">Walking</input>(Not Implemented)<br />
             <input type="radio" value= "drive"  name="moveType">Driving</input>(Not Implemented)<br />
             <input type="radio" value= "plane"  name="moveType">Fly</input>(Not Implemented)<br />
-            <input type="radio" value= "space"  name="moveType">Space</input>-WIP<br />
-            <input type="checkbox" value= "invertY" name="invertY">Invert Y</input><br />
         </form>
     </div>
 </body>

@@ -318,7 +318,8 @@ class E3D_input {
             this.keyDown( { key : this.keyMap["action0"] } );
             this.doubleTapping = false;
         } else {
-            setTimout( ()  => { this.doubleTapping = false; }, this._doubleTapDelay );
+            this.doubleTapping = true;
+            setTimeout( ()  => { this.doubleTapping = false; }, this._doubleTapDelay );
         }
     }
 

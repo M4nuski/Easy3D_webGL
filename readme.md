@@ -2,7 +2,7 @@ Easy3D - webGL
 ----------
 Yet another JS 3D/game engine test
 
-Trying out webGL, transfering most of my old Delphi and C# OpenGL engine structure in webGL
+Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
 
 * ver3.txt for basic target structure.
 * ver3.html for current status.
@@ -12,9 +12,11 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL engine structu
 
 Current work-in-progress
 ----------
-* Plucking the hard-coded logic from main script (ver3.js) to classes.
 * Adding different mode to interface gaming controls on mobile.
+* Animation, sprites
+* Entity culling
 * Adding model loading (ideally external tool should prepare model data for better load perf)
+* Collision detection
 
 Next Steps
 -----------

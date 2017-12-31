@@ -21,7 +21,7 @@ document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.pre
 
 const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
-const _zFar = 300.0;
+const _zFar = 500.0;
 
 // Engine State
 
@@ -88,9 +88,7 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene("mainScene", gl, winWidth, winHeight);
-        scn.clearColor = vec4.fromValues(0.0, 0.0, 0.15, 1.0);
-        scn.fogLimit = (_zFar - _zNear)*0.5;
+        scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.0, 0.0, 0.15, 1.0), 300);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -198,10 +196,14 @@ function onRessource(name, msg) {
                 let nm = loadModel_RAW(resMngr.getData(name), name+"_top", resMngr.getRessourcePath(name), 0, "sweep");
                 scn.addEntity(nm);  
                 nm.position[1] = -80;
+                nm.scale[0] = 3;
+                nm.scale[2] = 3;
                 nm.resetMatrix();
                 nm.visible = true;
                 nm = scn.cloneStaticEntity("CM_top", "CM_bottom");
                 scn.entities[nm].position[1] = 80;
+                scn.entities[nm].scale[0] = 3;
+                scn.entities[nm].scale[2] = 3;
                 scn.entities[nm].resetMatrix();
                 scn.entities[nm].visible = true;
 
