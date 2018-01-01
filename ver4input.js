@@ -109,12 +109,14 @@ class E3D_input {
         if ((pLockActive) && (event.key == "Escape")) {
             pLockExit();
         }
+        if ((event.target) && (event.target == document.body) && (event.key == " ")) event.preventDefault(); 
     }
     
     keyUp(event) {    
         if (this.inputTable[event.key] != undefined) {
             this.inputTable[event.key] = false;
         }    
+      //  if ((event.target) && (event.target == "body") && (event.key == " ")) event.preventDefault(); 
     }
 
     processInputs(delta = 1.0) {
@@ -283,7 +285,7 @@ class E3D_input {
 
     touchStart(event) {
 
-        event.preventDefault(); // to revise
+        if (event.preventDefault) { event.preventDefault(); };
         var touches = event.changedTouches;
 
         for (var i = 0; i < touches.length; i++) {
@@ -326,7 +328,7 @@ class E3D_input {
 
     touchEnd(event) {
 
-        event.preventDefault();
+        if (event.preventDefault) { event.preventDefault(); };
         var touches = event.changedTouches;
 
         if (this.ongoingTouches.length == 1) {
@@ -350,7 +352,7 @@ class E3D_input {
 
     touchCancel(event) {
 
-        event.preventDefault();
+        if (event.preventDefault) { event.preventDefault(); };
 
         if (this.ongoingTouches.length == 1) {
             this.ongoingTouches[0].button = this._rotateMouseButton;
@@ -372,7 +374,7 @@ class E3D_input {
 
     touchMove(event) {
 
-        event.preventDefault();
+        if (event.preventDefault) { event.preventDefault(); };
         var touches = event.changedTouches;
 
         for (var i = 0; i < touches.length; i++) {
@@ -433,7 +435,7 @@ class E3D_input {
 
 class E3D_input_virtual_kb {
     constructor(element, inputClass, supportTouch) {
-      //  this.element = element;
+
         this.inputClass = inputClass;
 
         element.addEventListener("mousedown", (e) => this.vKeyDown(e) );
@@ -450,20 +452,6 @@ class E3D_input_virtual_kb {
 
     }
 
-    /*
-    injectKey(fct, event) {
-        const newKey = (event.target.vKey);
-        if (newKey)
-
-
-            if (newKey == "space") {
-                fct({ key: " " });
-            } else if (newKey.length == 1) {
-                fct({ key: (newKey) });
-            }
-    }*/
-
-
     vKeyDown(event) {
         let k = event.target.getAttribute("vKey");
         if (k) {
@@ -477,28 +465,69 @@ class E3D_input_virtual_kb {
         if (k) {
             this.inputClass.keyUp( { key : k } );
         }
-       // injectKey((e) => inputs.keyUp(e), event);
     }
 
     vDblClk(event) {
         event.preventDefault();
     }
-/*
-    formTouchStart(event) {
-        if (event.target.vKey) {
-            this.inputClass.keyDown( { key : (event.target.vKey)} );
-        }
-       // injectKey((e) => inputs.keyDown(e), event);
+}
+
+class E3D_input_virtual_trackpad {
+    constructor (element, inputClass) {
+
+        this.inputClass = inputClass;
+        this.element = element;
+        this.xScale = 1.0;// inputClass.element.offsetWidth / element.offsetWidth;
+        this.yScale = 1.0;// inputClass.element.offsetHeight / element.offsetHeight;
+
+        this.xOffset = 0;// inputClass.element.offsetLeft - element.offsetLeft;
+        this.yOffset = 0;// inputClass.element.offsetTop - element.offsetTop;
+
+        // average touch, send mouse data
+        element.addEventListener("touchstart",  (e) => this.onTouchStart(e));
+        element.addEventListener("touchend", (e) => this.onTouchEnd(e));
+        element.addEventListener("touchmove", (e) => this.onTouchMove(e));
+        element.addEventListener("touchcancel",  (e) => this.onTouchCancel(e));
+        element.addEventListener("resize",  (e) => this.onResize(e));
+
+        this.onResize();
+
+    } 
+
+    onResize(event) {
+        this.xScale = this.inputClass.element.offsetWidth / this.element.offsetWidth;
+        this.yScale = this.inputClass.element.offsetHeight / this.element.offsetHeight;
+
+        this.xOffset = this.inputClass.element.offsetLeft - this.element.offsetLeft;
+        this.yOffset = this.inputClass.element.offsetTop - this.element.offsetTop;
+    }
+
+    onTouchStart(event) {
         event.preventDefault();
+        this.inputClass.touchStart( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
     }
-    formTouchEnd(event) {
-        if (event.target.vKey) {
-            this.inputClass.keyUp( { key : (event.target.vKey)} );
-        }
-       // injectKey((e) => inputs.keyUp(e), event);
+
+    onTouchEnd(event) {
+        event.preventDefault();
+        this.inputClass.touchEnd( { changedTouches : [this.offsetTouch(event.changedTouches[0])]  } );
     }
-*/
 
+    onTouchMove(event) {
+        event.preventDefault();
+        this.inputClass.touchMove( { changedTouches : [this.offsetTouch(event.changedTouches[0])] });
+    }
 
+    onTouchCancel(event) {
+        event.preventDefault();
+        this.inputClass.touchCancel( { changedTouches : [this.offsetTouch(event.changedTouches[0])]  });
+    }
+    
+
+    offsetTouch(touch) {
+        return { identifier: touch.identifier, 
+            pageX: (touch.pageX - this.xOffset) * this.xScale, 
+            pageY: (touch.pageY - this.yOffset) * this.yScale            
+            };
+    }
 
 }

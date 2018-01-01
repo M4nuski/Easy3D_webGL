@@ -10,6 +10,7 @@ const can = document.getElementById("GLCanvas");
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 const virtualKb = document.getElementById("inputTable"); 
+const virtualTrackpad = document.getElementById("track0"); 
 
 
 log("Set DOM Events");
@@ -37,7 +38,9 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true, true, true);
+
 var vKBinputs = new E3D_input_virtual_kb(virtualKb, inputs, true);
+var vTPinput = new E3D_input_virtual_trackpad(virtualTrackpad , inputs);
 
 
 log("Session Start", true);
