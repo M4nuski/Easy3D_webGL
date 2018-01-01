@@ -69,6 +69,10 @@ class E3D_entity {
         this.position = vec3.create();
         this.rotation = vec3.create();
         this.scale = vec3.fromValues(1.0, 1.0, 1.0);
+
+        //this.cull_view_axis = vec3.fromValues(0.0, 0.0, -1.0); 
+        this.cull_dist = 0;
+        this.cull_dist_scale = 1.0;
         
         // Computed matrix
         this.modelMatrix = mat4.create();
@@ -125,8 +129,9 @@ class E3D_entity {
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
         
-        
+        this.cull_dist_scale = vec3.length(this.scale);
     }
+
 
 }
 
@@ -253,6 +258,7 @@ class E3D_scene {
             this.fogFactor = 1.0 / ((this.camera.far - this.camera.near) - this.fogLimit);
         };
 
+       // this.cull_view_axis = this.camera.adjustToCamera(vec3_nz);
 
         if (this.preRenderFunction) {
             this.preRenderFunction(this);
@@ -285,7 +291,7 @@ class E3D_scene {
         this.drawnElemenets = 0;
 
         for (let i = 0; i < this.entities.length; ++i) {
-            if ((this.entities[i].visible) && (this.entities[i].numElements > 0)) {
+            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i)) ) {
 
                 // Entity Attributes
                 if (this.entities[i].dynamic) {
@@ -334,7 +340,7 @@ class E3D_scene {
     }
 
 
-    addEntity(ent) {
+    addEntity(ent, visibility_culling = true) {
         // Initialize context data buffers
         ent.vertexBuffer = this.context.createBuffer();
         ent.colorBuffer = this.context.createBuffer();
@@ -354,6 +360,11 @@ class E3D_scene {
         }
 
         ent.resetMatrix();
+        if (visibility_culling) {
+            ent.cull_dist = E3D_scene.cull_calculate_max_dist(ent.vertexArray);
+        } else {
+            ent.cull_dist = 0;
+        }
 
         // Add entity to list
         this.entities.push(ent);
@@ -365,7 +376,8 @@ class E3D_scene {
         let idx = this.getEntityIndexFromId(id);
         if ((idx > -1) && (!this.entities[idx].dynamic)){
             let ent = new E3D_entity(newId, this.entities[idx].filename, false);
-            ent.cloneBuffers(this.entities[idx]);            
+            ent.cloneBuffers(this.entities[idx]);   
+            ent.cull_dist = this.entities[idx].cull_dist;
             this.entities.push(ent);
     
             return this.entities.length - 1; // return new index
@@ -377,6 +389,27 @@ class E3D_scene {
             if (this.entities[i].id == id) return i;
         }
         return -1;
+    }
+
+    static cull_calculate_max_dist(vertArray) {
+        let result = 0;
+        for (let i = 0; i < vertArray.length; i += 3) {
+            var currentDist = vec3.length([vertArray[i], vertArray[i+1], vertArray[i+2] ]);
+            if (currentDist > result) result = currentDist;
+        }
+        return result;
+    }
+
+    cull_check_visible(idx) {
+        if (this.entities[idx].cull_dist > 0) {
+            var pos = [0, 0, 0];
+            vec3.subtract(pos, this.entities[idx].position, this.camera.position);
+            this.camera.negateCamera(pos);
+            var dist = -pos[2];
+            return (((dist - (this.entities[idx].cull_dist*this.entities[idx].cull_dist_scale)) < this.camera.far) && 
+            ((dist + (this.entities[idx].cull_dist*this.entities[idx].cull_dist_scale)) > this.camera.near) );
+        }
+        return true;
     }
 
 }
@@ -506,6 +539,11 @@ class E3D_camera { // base camera, orthogonal
         return result;
     }  
 
+    negateCamera(vect) {
+        vec3.rotateY(vect, vect, vec3_origin, this.rotation[1]); 
+        return vec3.rotateX(vect, vect, vec3_origin, this.rotation[0]); 
+    }  
+
 }
 
 class E3D_camera_persp extends E3D_camera { // basic perspective based matrix view (free move)
@@ -619,6 +657,12 @@ class E3D_camera_space extends E3D_camera_persp { // free 3D view incremental di
         let result = vec3.create();
         vec3.transformMat4(result, vect, this.inverseRotationMatrix);
         return result;
+    }  
+
+    negateCamera(vect) {
+    //    let result = vec3.create();
+        return vec3.transformMat4(vect, vect, this.rotationMatrix);
+      //  return result;
     }  
 
 }

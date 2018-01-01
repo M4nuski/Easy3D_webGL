@@ -8,6 +8,8 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 * ver4.html for current status.
 * tuto1.html basic re-transcript of webGL tutorial.
 * tuto2.html added a lot of controls abstraction.
+* ver3.html working model loading and most of engine neatly packaged.
+* test1.html performance benchmarking for various JS and gl-matrix.js. 
 * Works with mouse/keyboard in destktop browser, touch controls for mobile.
 
 Current work-in-progress

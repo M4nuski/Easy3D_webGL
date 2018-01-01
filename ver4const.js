@@ -19,6 +19,9 @@ const vec3_origin = vec3.fromValues(0, 0, 0);
 const vec3_x = vec3.fromValues(1, 0, 0);
 const vec3_y = vec3.fromValues(0, 1, 0);
 const vec3_z = vec3.fromValues(0, 0, 1);
+const vec3_nx = vec3.fromValues(-1, 0, 0);
+const vec3_ny = vec3.fromValues(0, -1, 0);
+const vec3_nz = vec3.fromValues(0, 0, -1);
 
 const mat4_identity = mat4.create();
 
