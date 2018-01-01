@@ -188,13 +188,14 @@ function onRessource(name, msg) {
 
         if (resMngr.getRessourceType(name) == "Model") {
             if (name == "ST") {
-                let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), 2, vec3.fromValues(1,1,1));
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, vec3.fromValues(1,1,1));
                 scn.addEntity(nm);  
                 nm.position[2] = -120;
+                nm.visible = true;
                 nm.resetMatrix();
                 if (!cloned) cloneWar();
             } else if (name == "CM") {
-                let nm = loadModel_RAW(resMngr.getData(name), name+"_top", resMngr.getRessourcePath(name), 0, "sweep");
+                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
                 scn.addEntity(nm);  
                 nm.position[1] = -80;
                 nm.scale[0] = 3;
@@ -209,8 +210,9 @@ function onRessource(name, msg) {
                 scn.entities[nm].visible = true;
 
             } else {
-                let nm = loadModel_RAW(resMngr.getData(name), name, resMngr.getRessourcePath(name), 0, "sweep");
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
                 scn.addEntity(nm);  
+                nm.visible = true;
             }
 
         }  
@@ -231,183 +233,6 @@ function cloneWar() {
     }
     cloned = true;
 }
-
-// data, name, file, smoothShading (epsillon limit), color(sweep / vec3 )
-function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
-
-    let mp = new E3D_entity(name, file, false);
-
-    log("Creating entity " + name, false);
-
-    let numFloats = 0;
-
-    var colorSweep;
-    if (color === "sweep") {
-        colorSweep = [
-            1.0, 0.5, 0.5,
-            0.5, 1.0, 0.5,
-            0.5, 0.5, 1.0
-        ];
-    } else {
-        colorSweep = [
-            color[0], color[1], color[2],
-            color[0], color[1], color[2],
-            color[0], color[1], color[2]
-        ];   
-    }
-
-
-    let colors = [];
-    let positions = [];
-    let normals = [];
-
-
-    log("Parsing Response Text", true);
-
-    var data = rawModelData.split("\n"); // remove empty and text lines
-    rawModelData = [];
-    for (var i = 0; i < data.length; i++) {
-        if ((data[i] != "") && (data[i].split(" ").length != 1)) {
-            rawModelData.push(data[i]);
-        }
-    }
-
-    // parse locations
-    for (var i = 0; i < rawModelData.length; i++) {
-        var chunk = rawModelData[i].split(" ");
-        for (var j = 0; j < chunk.length; j++) {
-            var n = chunk[j].trim();
-            if (n != "") {
-                positions.push(Number(chunk[j].trim()));
-                colors.push(colorSweep[numFloats % 9]);
-                numFloats++;
-            }
-        }
-    }
-
-    // create face normals
-    for (var i = 0; i < numFloats / 9; i++) { // for each face
-        var v1 = vec3.fromValues(positions[i * 9], positions[(i * 9) + 1], positions[(i * 9) + 2]);
-        var v2 = vec3.fromValues(positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]);
-        var v3 = vec3.fromValues(positions[(i * 9) + 6], positions[(i * 9) + 7], positions[(i * 9) + 8]);
-
-        v2 = vec3.subtract(v2, v2, v1);
-        v3 = vec3.subtract(v3, v3, v1);
-
-        var newNormal = vec3.create();
-
-        vec3.cross(newNormal, v3, v2);
-
-        vec3.normalize(newNormal, newNormal);
-
-        normals.push(newNormal[0]); // flat shading
-        normals.push(newNormal[1]); 
-        normals.push(newNormal[2]); 
-
-        normals.push(newNormal[0]); // flat shading
-        normals.push(newNormal[1]); 
-        normals.push(newNormal[2]); 
-
-        normals.push(newNormal[0]); // flat shading
-        normals.push(newNormal[1]); 
-        normals.push(newNormal[2]); 
-
-    }
-
-    if (smoothShading > 0.0) {
-        log("Smooth Shading Normals", true);
-        // group vertex by locality (list of unique location)
-        // average normals per locality
-        // if diff < smoothShading normal is average
-        // else keep flat normal
-        // expand back
-        let numVert =  (numFloats / 3);
-        log("numVert: " + numVert, true);
-        var uniqueVertex = [];
-        var indices = [numVert];
-
-        for (var i = 0; i < numVert; ++i) {
-            var unique = true;
-            var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
-            for (var j = 0; j < uniqueVertex.length; ++j) {
-                if ((unique) && (vec3.equals(uniqueVertex[j], curVert))) {
-                    unique = false;
-                    indices[i] = j;
-                }
-            }
-            if (unique) { 
-                uniqueVertex.push(vec3.clone(curVert));
-                indices[i] = uniqueVertex.length-1;
-            } 
-        }
-
-        log("unique Vert: " + uniqueVertex.length, true);
-
-        var avgNorms = [uniqueVertex.length];
-        // for all unique, average normals
-        //
-        for (var i = 0; i < uniqueVertex.length; ++i) { // i index in uniqueVertex and avgNorms
-            avgNorms[i] = vec3.create();
-
-            for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
-                if (indices[j] == i) {
-                    var curNorm = [normals[j*3], normals[(j*3)+1], normals[(j*3)+2] ];
-                    vec3.add(avgNorms[i] , avgNorms[i], curNorm);
-                }
-            }
-
-            vec3.normalize(avgNorms[i], avgNorms[i]);
-        }
-
-        log("Smoothing...", true);
-
-        for (var i = 0; i < uniqueVertex.length; ++i) { // i index in uniqueVertex and avgNorms
-
-            for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
-                if (indices[j] == i) {
-                    var curNorm = [normals[j*3], normals[(j*3)+1], normals[(j*3)+2] ];
-
-                    if (vec3.angle(avgNorms[i], curNorm) < smoothShading) {
-                        normals[j*3] = avgNorms[i][0];
-                        normals[(j*3)+1] = avgNorms[i][1];
-                        normals[(j*3)+2] = avgNorms[i][2];
-                    }
-                }
-            }
-
-
-        }
-
-
-        for (var i = 0; i < numVert; ++i) {
-            var unique = true;
-            var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
-            for (var j = 0; j < uniqueVertex.length; ++j) {
-                if ((unique) && (vec3.equals(uniqueVertex[j], curVert))) unique = false;
-            }
-            if (unique) uniqueVertex.push(vec3.clone(curVert));
-        }
-
-
-    }
-
-    log("Loaded " + numFloats + " float locations", true);
-    log((numFloats / 3) + " vertices", true);
-    log((numFloats / 9) + " triangles", false);
-
-    mp.vertexArray = new Float32Array(positions);
-    mp.colorArray = new Float32Array(colors);
-    mp.normalArray = new Float32Array(normals);
-
-    mp.numElements = numFloats / 3;
-    mp.visible = true;
-
-    mp.resetMatrix();
-
-    return mp;
-}
-
-
 
 // Logging and status information
 

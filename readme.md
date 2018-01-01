@@ -5,7 +5,7 @@ Yet another JS 3D/game engine test
 Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
 
 * ver3.txt for basic target structure.
-* ver3.html for current status.
+* ver4.html for current status.
 * tuto1.html basic re-transcript of webGL tutorial.
 * tuto2.html added a lot of controls abstraction.
 * Works with mouse/keyboard in destktop browser, touch controls for mobile.
@@ -13,10 +13,10 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 Current work-in-progress
 ----------
 * Adding different mode to interface gaming controls on mobile.
-* Animation, sprites
+* Collision detection (vector, sphere/elipsoid, plane/cuboid)
 * Entity culling
+* Animation, sprites
 * Adding model loading (ideally external tool should prepare model data for better load perf)
-* Collision detection
 
 Next Steps
 -----------
