@@ -9,10 +9,6 @@ log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
-const virtualKb = document.getElementById("inputTable"); 
-const virtualTrackpad = document.getElementById("track0"); 
-const virtualThumbStick0 = document.getElementById("thumb0"); 
-
 
 log("Set DOM Events");
 can.addEventListener("resize", winResize); // To reset camera matrix
@@ -39,10 +35,14 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true, true, true);
-
-var vKBinputs = new E3D_input_virtual_kb(virtualKb, inputs, true);
-var vTPinput = new E3D_input_virtual_trackpad(virtualTrackpad , inputs);
-var vTSinput = new E3D_input_virtual_thumbstick(virtualThumbStick0, inputs);
+// virtual KB
+var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
+// virtual trackpad + thumbstick
+var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") , inputs);
+var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs);
+// virtual dual sticks
+var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs);
+var vTSinputRight  =new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs);
 
 
 log("Session Start", true);
@@ -164,8 +164,17 @@ function prepRender() {
 }
 
 function timerTick() {  // Game Loop
+    
+    vTSinputRight.processInputs("rx", "ry", timer.delta);
 
-    vTSinput.processInputs("rz", "pz", timer.delta);
+    if (scn.camera.id == "cam1s") {
+        vTSinput.processInputs("rz", "pz", timer.delta);
+        vTSinputLeft.processInputs("rz", "pz", timer.delta);
+    } else {
+        vTSinput.processInputs("px", "pz", timer.delta);
+        vTSinputLeft.processInputs("px", "pz", timer.delta);
+    }
+
     inputs.processInputs(timer.delta);
 
     updateStatus();

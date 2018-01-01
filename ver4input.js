@@ -116,7 +116,6 @@ class E3D_input {
         if (this.inputTable[event.key] != undefined) {
             this.inputTable[event.key] = false;
         }    
-      //  if ((event.target) && (event.target == "body") && (event.key == " ")) event.preventDefault(); 
     }
 
     processInputs(delta = 1.0) {
@@ -126,12 +125,14 @@ class E3D_input {
         if (this.inputTable[this.keyMap["moveDown"]]) {
             this.py += this._moveSpeed * delta;
         }
+
         if (this.inputTable[this.keyMap["strafeLeft"]]) {
             this.px -= this._moveSpeed * delta;
         }
         if (this.inputTable[this.keyMap["strafeRight"]]) {
             this.px += this._moveSpeed * delta;
         }
+
         if (this.inputTable[this.keyMap["moveForward"]]) {
             this.pz -= this._moveSpeed * delta;
         }
@@ -207,8 +208,6 @@ class E3D_input {
         this.px = 0; this.py = 0; this.pz = 0;
         this.rx = 0; this.ry = 0; this.rz = 0;
     }
-
-    
 
 
 
@@ -549,12 +548,15 @@ class E3D_input_virtual_thumbstick {
         this.inputClass = inputClass;
         this.element = element;
 
-        this.Speed = 0.01; // touch to mouse factor
+        this.Speed = 0.015; // touch to mouse factor
         this.Touch = -1; // current touch to follow (1st hit)
 
         // Center of element in pageX/Y
         this.xMid = 0.5;
         this.yMid = 0.5;
+
+        this.xMax = 100;
+        this.yMax = 100;
 
         // Current position
         this.x = 0;
@@ -574,8 +576,12 @@ class E3D_input_virtual_thumbstick {
 
     onResize(event) {
         let o = getTotalPageOffset(this.element);
-        this.xMid = o.x + (this.element.offsetWidth / 2);
-        this.yMid = o.y + (this.element.offsetHeight / 2);
+
+        this.xMax = this.element.offsetWidth / 2;
+        this.yMax = this.element.offsetHeight / 2;
+
+        this.xMid = o.x + this.xMax;
+        this.yMid = o.y + this.yMax;
     }
 
     processInputs(xTarget = "rz", yTarget = "pz", delta = 1) {
@@ -583,10 +589,24 @@ class E3D_input_virtual_thumbstick {
             var dx = this.x - this.xMid;
             var dy = this.y - this.yMid; 
 
-            var f = xTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed;        
+            if (dx < -this.xMax) dx = -this.xMax;
+            if (dx >  this.xMax) dx =  this.xMax;
+            if (dy < -this.yMax) dy = -this.yMax;
+            if (dy >  this.yMax) dy =  this.yMax;
+ 
+
+            var f = xTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed;  
+            if (xTarget.indexOf("-") > -1) {
+                f = -f;
+                xTarget = xTarget.substring(1);
+            }  
             this.inputClass[xTarget] += dx * this.Speed * delta * f;
 
             f = yTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed; 
+            if (xTarget.indexOf("-") > -1) {
+                f = -f;
+                xTarget = xTarget.substring(1);
+            }  
             this.inputClass[yTarget] += dy * this.Speed * delta * f;
 
         }
