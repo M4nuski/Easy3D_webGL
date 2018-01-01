@@ -185,15 +185,23 @@ class E3D_input {
         
         // smooth controls
         let f = delta * this._smooth;
-        if (f > 1.0) f = 1.0;
-        //return val + ((target-val) * f);
-        this.rx_smth += (this.rx_sum - this.rx_smth) * f;
-        this.ry_smth += (this.ry_sum - this.ry_smth) * f;
-        this.rz_smth += (this.rz_sum - this.rz_smth) * f;
-        
-        this.px_smth += (this.px - this.px_smth) * f;
-        this.py_smth += (this.py - this.py_smth) * f;
-        this.pz_smth += (this.pz - this.pz_smth) * f;
+        if (f < 1.0) {
+            this.rx_smth += (this.rx_sum - this.rx_smth) * f;
+            this.ry_smth += (this.ry_sum - this.ry_smth) * f;
+            this.rz_smth += (this.rz_sum - this.rz_smth) * f;
+            
+            this.px_smth += (this.px - this.px_smth) * f;
+            this.py_smth += (this.py - this.py_smth) * f;
+            this.pz_smth += (this.pz - this.pz_smth) * f;
+        } else {
+            this.rx_smth = this.rx_sum;
+            this.ry_smth = this.ry_sum;
+            this.rz_smth = this.rz_sum;
+            
+            this.px_smth = this.px;
+            this.py_smth = this.py;
+            this.pz_smth = this.pz;
+        }
 
             // clean up state changes
         this.px = 0; this.py = 0; this.pz = 0;
@@ -477,21 +485,20 @@ class E3D_input_virtual_trackpad {
 
         this.inputClass = inputClass;
         this.element = element;
-        this.xScale = 1.0;// inputClass.element.offsetWidth / element.offsetWidth;
-        this.yScale = 1.0;// inputClass.element.offsetHeight / element.offsetHeight;
+        this.xScale = 1.0;
+        this.yScale = 1.0;
 
-        this.xOffset = 0;// inputClass.element.offsetLeft - element.offsetLeft;
-        this.yOffset = 0;// inputClass.element.offsetTop - element.offsetTop;
+        this.xOffset = 0;
+        this.yOffset = 0;
 
-        // average touch, send mouse data
         element.addEventListener("touchstart",  (e) => this.onTouchStart(e));
         element.addEventListener("touchend", (e) => this.onTouchEnd(e));
         element.addEventListener("touchmove", (e) => this.onTouchMove(e));
         element.addEventListener("touchcancel",  (e) => this.onTouchCancel(e));
+
         element.addEventListener("resize",  (e) => this.onResize(e));
 
         this.onResize();
-
     } 
 
     onResize(event) {
@@ -530,4 +537,97 @@ class E3D_input_virtual_trackpad {
             };
     }
 
+}
+
+
+
+
+
+class E3D_input_virtual_thumbstick {
+    constructor (element, inputClass) {
+
+        this.inputClass = inputClass;
+        this.element = element;
+
+        this.Speed = 0.01; // touch to mouse factor
+        this.Touch = -1; // current touch to follow (1st hit)
+
+        // Center of element in pageX/Y
+        this.xMid = 0.5;
+        this.yMid = 0.5;
+
+        // Current position
+        this.x = 0;
+        this.y = 0;
+
+        // average touch, send mouse data
+        element.addEventListener("touchstart",  (e) => this.onTouchStart(e));
+        element.addEventListener("touchend", (e) => this.onTouchEnd(e));
+        element.addEventListener("touchmove", (e) => this.onTouchMove(e));
+        element.addEventListener("touchcancel",  (e) => this.onTouchEnd(e));
+
+        element.addEventListener("resize",  (e) => this.onResize(e));
+
+        this.onResize();
+
+    } 
+
+    onResize(event) {
+        let o = getTotalPageOffset(this.element);
+        this.xMid = o.x + (this.element.offsetWidth / 2);
+        this.yMid = o.y + (this.element.offsetHeight / 2);
+    }
+
+    processInputs(xTarget = "rz", yTarget = "pz", delta = 1) {
+        if (this.Touch != -1) {
+            var dx = this.x - this.xMid;
+            var dy = this.y - this.yMid; 
+
+            var f = xTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed;        
+            this.inputClass[xTarget] += dx * this.Speed * delta * f;
+
+            f = yTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed; 
+            this.inputClass[yTarget] += dy * this.Speed * delta * f;
+
+        }
+        //injection targets :
+        //px : strafe left/right
+        //pz : move forward/backward
+        //rz : roll left/right
+    }
+
+    onTouchStart(event) {
+        event.preventDefault();
+        this.Touch = event.changedTouches[0].identifier;
+        this.x = event.changedTouches[0].pageX;
+        this.y = event.changedTouches[0].pageY;
+    }
+
+    onTouchEnd(event) {
+        event.preventDefault();
+        if (this.Touch == event.changedTouches[0].identifier) {
+            this.Touch = -1;
+        }
+    }
+
+    onTouchMove(event) {
+        event.preventDefault();
+        if (this.Touch == event.changedTouches[0].identifier) {
+            this.x = event.changedTouches[0].pageX;
+            this.y = event.changedTouches[0].pageY;
+        }
+    }    
+
+}
+
+function getTotalPageOffset(element) {
+    var xo = element.offsetLeft;
+    var yo = element.offsetTop;
+    var currentElement = element;
+    while ((currentElement.offsetParent) && (currentElement.offsetParent != document.body)) {
+        xo += currentElement.offsetParent.offsetLeft;
+        yo += currentElement.offsetParent.offsetTop;
+        currentElement = currentElement.offsetParent;
+    }
+    return { x: xo, y:yo };
 }

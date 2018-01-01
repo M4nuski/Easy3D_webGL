@@ -11,6 +11,7 @@ const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 const virtualKb = document.getElementById("inputTable"); 
 const virtualTrackpad = document.getElementById("track0"); 
+const virtualThumbStick0 = document.getElementById("thumb0"); 
 
 
 log("Set DOM Events");
@@ -41,6 +42,7 @@ var inputs = new E3D_input(can, true, true, true, true, true, true);
 
 var vKBinputs = new E3D_input_virtual_kb(virtualKb, inputs, true);
 var vTPinput = new E3D_input_virtual_trackpad(virtualTrackpad , inputs);
+var vTSinput = new E3D_input_virtual_thumbstick(virtualThumbStick0, inputs);
 
 
 log("Session Start", true);
@@ -163,7 +165,9 @@ function prepRender() {
 
 function timerTick() {  // Game Loop
 
+    vTSinput.processInputs("rz", "pz", timer.delta);
     inputs.processInputs(timer.delta);
+
     updateStatus();
 
     if (inputs.checkCommand("action0", true)) log("action0", false);
