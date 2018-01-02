@@ -27,6 +27,7 @@ var winWidth = 10, winHeight = 10;
 var usepct_smth=0;
 var l0v, l1v;// light entities index
 var cloned = false;
+var a0, a1; // animations test
 
 // Engine Components
 
@@ -42,7 +43,7 @@ var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") 
 var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs);
 // virtual dual sticks
 var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs);
-var vTSinputRight  =new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs);
+var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs);
 
 
 log("Session Start", true);
@@ -127,6 +128,7 @@ function initEngine() {
     resMngr.addRessource("ST.raw", "ST", "Model");
     resMngr.addRessource("AXIS.raw", "Map", "Model");
     resMngr.addRessource("CM.raw", "CM", "Model");
+    resMngr.addRessource("SPH.raw", "sph", "Model");
     resMngr.loadAll("models");
 
 
@@ -147,6 +149,8 @@ function initEngine() {
 
     timer.run();
     scn.state = E3D_ACTIVE;
+
+
 }
 
 
@@ -160,11 +164,12 @@ function prepRender() {
         scn.entities[l1v].updateVector(scn.lights.light1_adjusted);
     }
 
-
+    if (a0) a0.animate();
+    if (a1) a1.animate();
 }
 
 function timerTick() {  // Game Loop
-    
+
     vTSinputRight.processInputs("rx", "ry", timer.delta);
 
     if (scn.camera.id == "cam1s") {
@@ -179,7 +184,10 @@ function timerTick() {  // Game Loop
 
     updateStatus();
 
-    if (inputs.checkCommand("action0", true)) log("action0", false);
+    if (inputs.checkCommand("action0", true)) {
+        log("action0", false);
+        a1.restart();
+    }
     if (inputs.checkCommand("action1", true)) log("action1", false);
 
     if (scn.state == E3D_ACTIVE) {
@@ -209,6 +217,8 @@ function onRessource(name, msg) {
                 nm.position[2] = -120;
                 nm.visible = true;
                 nm.resetMatrix();
+                a0 = new E3D_animation("ST rotate", rot0, nm, scn, timer);
+                a0.play();
                 if (!cloned) cloneWar();
             } else if (name == "CM") {
                 let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
@@ -225,6 +235,11 @@ function onRessource(name, msg) {
                 scn.entities[nm].resetMatrix();
                 scn.entities[nm].visible = true;
 
+            } else if (name == "sph") {
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
+                scn.addEntity(nm);   
+                a1 = new E3D_animation("ball throw", sphAnim, nm, scn, timer);
+                
             } else {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
                 scn.addEntity(nm);  
@@ -249,6 +264,42 @@ function cloneWar() {
     }
     cloned = true;
 }
+
+
+// animator functions
+
+function sphAnim() {
+    if (this.state == E3D_RESTART) {
+        vec3.copy(this.target.position, this.scn.camera.position);
+        this.target.position[1] += 5;
+        this.data.spd = this.scn.camera.adjustToCamera(vec3.scale(vec3_dummy, vec3_nz, 100));
+        this.state = E3D_PLAY;
+        this.target.visible = true;
+    } 
+
+    if (this.state == E3D_PLAY) {
+        vec3.add(this.target.position, this.target.position, vec3.scale(vec3_dummy, this.data.spd, this.timer.delta));
+        this.data.spd[1] -= this.timer.delta * 9.81; // or whateveris G in this scale and projectopn
+        this.target.resetMatrix();
+
+        if (this.target.position[1] < -500) {
+            this.state = E3D_PAUSE;
+            this.target.visible = false;
+        } 
+    }  
+}
+
+function rot0() {
+    if (this.state == E3D_PLAY) {
+        this.target.rotation[1] += this.timer.delta;
+        this.target.resetMatrix();
+    }  
+}
+
+
+
+
+
 
 // Logging and status information
 

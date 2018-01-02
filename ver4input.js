@@ -439,7 +439,7 @@ class E3D_input {
     }
 }
 
-
+// Bind event on element and transpose "vKey=" attribute value to keyboard input handler
 class E3D_input_virtual_kb {
     constructor(element, inputClass, supportTouch) {
 

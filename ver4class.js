@@ -174,16 +174,20 @@ class E3D_entity_vector extends E3D_entity {
 
 
 class E3D_animation {
-    constructor(id, funct) {
+    constructor(id, animatorFunct, targetObject, sceneContext, timerclass) { // id ??
         this.id = id;
+        this.anim = animatorFunct; // function delegate that perform the animation
+        this.target = targetObject;
+        this.scn = sceneContext;
+        this.timer = timerclass;
+
         this.state = E3D_RESET;
-        this.stateData = {}; // to store data through the animation
-        this.anim = funct; // function delegate that perform the animation
+        this.data = {}; // to store data through the animation
     }
 
-    animate(toAnimate) {
+    animate() {
         if (this.anim) {
-            this.anim(toAnimate, this); // object to animate, animation 
+            this.anim();
         }
     }
 
@@ -199,11 +203,11 @@ class E3D_animation {
     restart() {
         this.state = E3D_RESTART;  
     }
-    animator(funct) {
+    /*animator(funct) {
         this.state = E3D_RESET;
         this.stateData = {}; 
         this.anim = funct;
-    }
+    }*/
 }
 
 
