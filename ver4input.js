@@ -543,10 +543,14 @@ class E3D_input_virtual_trackpad {
 
 
 class E3D_input_virtual_thumbstick {
-    constructor (element, inputClass) {
+    constructor (element, inputClass, doubleTapCommand = "action0") {
 
         this.inputClass = inputClass;
         this.element = element;
+
+        this.doubleTapCommand = doubleTapCommand;
+        this._doubleTapDelay = 200;
+        this.doubleTapping = false;
 
         this.Speed = 0.015; // touch to mouse factor
         this.Touch = -1; // current touch to follow (1st hit)
@@ -571,7 +575,7 @@ class E3D_input_virtual_thumbstick {
         element.addEventListener("resize",  (e) => this.onResize(e));
 
         this.onResize();
-
+        //this.keyDown( { key : this.keyMap["action0"] } );
     } 
 
     onResize(event) {
@@ -621,6 +625,15 @@ class E3D_input_virtual_thumbstick {
         this.Touch = event.changedTouches[0].identifier;
         this.x = event.changedTouches[0].pageX;
         this.y = event.changedTouches[0].pageY;
+
+        if (this.doubleTapping) {
+            this.inputClass.keyDown( { key : this.inputClass.keyMap[this.doubleTapCommand] } );
+            this.doubleTapping = false;
+        } else {
+            this.doubleTapping = true;
+            setTimeout( ()  => { this.doubleTapping = false; }, this._doubleTapDelay );
+        }
+
     }
 
     onTouchEnd(event) {

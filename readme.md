@@ -15,6 +15,7 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 Current work-in-progress
 ----------
 * Animations
+* Multidraw on entity !
 * Sprites
 * Collision detection (vector, sphere/elipsoid, plane/cuboid)
 * Model loading (ideally external tool should prepare model data for better load perf)

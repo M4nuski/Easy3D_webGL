@@ -40,10 +40,10 @@ var inputs = new E3D_input(can, true, true, true, true, true, true);
 var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
 // virtual trackpad + thumbstick
 var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") , inputs);
-var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs);
+var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs, "action1");
 // virtual dual sticks
-var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs);
-var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs);
+var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "action1");
+var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "action0");
 
 
 log("Session Start", true);
