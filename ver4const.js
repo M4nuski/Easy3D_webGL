@@ -1,8 +1,9 @@
 // Animation State and commands (exclusives)
-const E3D_RESET = 0; // initial, back to start and pause, animator function should build the stateData object
+const E3D_RESET = 0; // initial, back to start and pause, animator function should build the stateData object if nec
 const E3D_PLAY = 1;  // play
 const E3D_PAUSE = 2; // pause
 const E3D_RESTART = 3; // reset and play
+const E3D_DONE = 4;
 
 // Scene State (exclusives)
 const E3D_CREATED = 0;

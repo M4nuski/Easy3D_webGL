@@ -27,7 +27,7 @@ var winWidth = 10, winHeight = 10;
 var usepct_smth=0;
 var l0v, l1v;// light entities index
 var cloned = false;
-var a0, a1; // animations test
+var animations = [];
 
 // Engine Components
 
@@ -163,9 +163,14 @@ function prepRender() {
         scn.entities[l0v].updateVector(scn.lights.light0_adjusted);
         scn.entities[l1v].updateVector(scn.lights.light1_adjusted);
     }
+    for (let i = animations.length -1; i >=0; --i) {
+        animations[i].animate();
+        if (animations[i].state == E3D_DONE) {
+            scn.removeEntity(animations[i].target.id);
+            animations.splice(i, 1);
+        }
+    }
 
-    if (a0) a0.animate();
-    if (a1) a1.animate();
 }
 
 function timerTick() {  // Game Loop
@@ -185,8 +190,10 @@ function timerTick() {  // Game Loop
     updateStatus();
 
     if (inputs.checkCommand("action0", true)) {
-        log("action0", false);
-        a1.restart();
+        //log("action0", false);
+        let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
+        animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
+        animations[animations.length-1].restart();
     }
     if (inputs.checkCommand("action1", true)) log("action1", false);
 
@@ -217,9 +224,11 @@ function onRessource(name, msg) {
                 nm.position[2] = -120;
                 nm.visible = true;
                 nm.resetMatrix();
-                a0 = new E3D_animation("ST rotate", rot0, nm, scn, timer);
-                a0.play();
+                animations.push(new E3D_animation("ST rotate", rot0, nm, scn, timer));
+                animations[animations.length-1].play();
+
                 if (!cloned) cloneWar();
+
             } else if (name == "CM") {
                 let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
                 scn.addEntity(nm);  
@@ -228,18 +237,17 @@ function onRessource(name, msg) {
                 nm.scale[2] = 3;
                 nm.resetMatrix();
                 nm.visible = true;
-                nm = scn.cloneStaticEntity("CM_top", "CM_bottom");
-                scn.entities[nm].position[1] = 80;
-                scn.entities[nm].scale[0] = 3;
-                scn.entities[nm].scale[2] = 3;
-                scn.entities[nm].resetMatrix();
-                scn.entities[nm].visible = true;
+
+                nm = scn.cloneEntity("CM_top", "CM_bottom");
+                nm.position[1] = 80;
+                nm.scale[0] = 3;
+                nm.scale[2] = 3;
+                nm.resetMatrix();
+                nm.visible = true;
 
             } else if (name == "sph") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
-                scn.addEntity(nm);   
-                a1 = new E3D_animation("ball throw", sphAnim, nm, scn, timer);
-                
+                scn.addEntity(nm);               
             } else {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
                 scn.addEntity(nm);  
@@ -255,12 +263,12 @@ function onRessource(name, msg) {
 
 function cloneWar() {
     for (let j = 1; j < 36; ++j) {
-        var newGuy = scn.cloneStaticEntity("ST", "ST" + j);
-        scn.entities[newGuy].rotation[1] = j * 10 * DegToRad;
-        scn.entities[newGuy].position[2] = -120;
-        vec3.rotateY(scn.entities[newGuy].position, scn.entities[newGuy].position, vec3_origin, j * 10 * DegToRad );
-        scn.entities[newGuy].resetMatrix();
-        scn.entities[newGuy].visible = true;
+        var newGuy = scn.cloneEntity("ST", "ST" + j);
+        newGuy.rotation[1] = j * 10 * DegToRad;
+        newGuy.position[2] = -120;
+        vec3.rotateY(newGuy.position, newGuy.position, vec3_origin, j * 10 * DegToRad );
+        newGuy.resetMatrix();
+        newGuy.visible = true;
     }
     cloned = true;
 }
@@ -272,18 +280,23 @@ function sphAnim() {
     if (this.state == E3D_RESTART) {
         vec3.copy(this.target.position, this.scn.camera.position);
         this.target.position[1] += 5;
+        this.target.rotation[0] = Math.random()*PIx2;
+        this.target.rotation[1] = Math.random()*PIx2;
         this.data.spd = this.scn.camera.adjustToCamera(vec3.scale(vec3_dummy, vec3_nz, 100));
+        this.data.spd[0] += Math.random()-0.5;
+        this.data.spd[1] += Math.random()-0.5;
+        this.data.spd[2] += Math.random()-0.5;
         this.state = E3D_PLAY;
         this.target.visible = true;
     } 
 
     if (this.state == E3D_PLAY) {
         vec3.add(this.target.position, this.target.position, vec3.scale(vec3_dummy, this.data.spd, this.timer.delta));
-        this.data.spd[1] -= this.timer.delta * 9.81; // or whateveris G in this scale and projectopn
+        this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection
         this.target.resetMatrix();
 
         if (this.target.position[1] < -500) {
-            this.state = E3D_PAUSE;
+            this.state = E3D_DONE;
             this.target.visible = false;
         } 
     }  
@@ -321,7 +334,7 @@ function log(text, silent = true) {
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
     status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.rx_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + "<br />" +
-    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets;
+    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + " nAnims: " + animations.length;
 }
 
 

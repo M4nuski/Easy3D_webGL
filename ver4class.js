@@ -70,7 +70,6 @@ class E3D_entity {
         this.rotation = vec3.create();
         this.scale = vec3.fromValues(1.0, 1.0, 1.0);
 
-        //this.cull_view_axis = vec3.fromValues(0.0, 0.0, -1.0); 
         this.cull_dist = 0;
         this.cull_dist_scale = 1.0;
         
@@ -89,7 +88,7 @@ class E3D_entity {
         //this.uvBuffer; // todo
         //this.indiceBuffer; // todo 
 
-        // float32Array of raw data
+        // float32Array of raw data for dynamic rendering
         this.vertexArray; 
         this.normalArray;
         this.colorArray;
@@ -100,19 +99,21 @@ class E3D_entity {
         this.resetMatrix();
     } 
 
-    cloneBuffers(entity) {
+    cloneData(entity) {
         this.numElements = entity.numElements;
         this.drawMode = entity.drawMode;
 
-        this.vertexBuffer = entity.vertexBuffer;
-        this.normalBuffer = entity.normalBuffer;
-        this.colorBuffer = entity.colorBuffer;
-
         if (entity.dynamic) {
-            this.vertexArray = entity.vertexArray; 
-            this.normalArray = entity.normalArray;
-            this.colorArray = entity.colorArray;
+            this.vertexArray = new Float32Array(entity.vertexArray); 
+            this.normalArray = new Float32Array(entity.normalArray);
+            this.colorArray = new Float32Array(entity.colorArray);
+        } else {
+            this.vertexBuffer = entity.vertexBuffer;
+            this.normalBuffer = entity.normalBuffer;
+            this.colorBuffer = entity.colorBuffer;
         }
+
+        this.cull_dist = entity.cull_dist;
     }
 
 
@@ -203,11 +204,9 @@ class E3D_animation {
     restart() {
         this.state = E3D_RESTART;  
     }
-    /*animator(funct) {
-        this.state = E3D_RESET;
-        this.stateData = {}; 
-        this.anim = funct;
-    }*/
+    done() {
+        this.state = E3D_DONE;  
+    }
 }
 
 
@@ -233,6 +232,11 @@ class E3D_scene {
         this.postRenderFunction = null;
 
         this.drawnElemenets = 0; // some stats
+
+        // context data buffers for dynamic entities
+        this.vertexBuffer = context.createBuffer();
+        this.colorBuffer  = context.createBuffer();
+        this.normalBuffer = context.createBuffer();
 
     }
 
@@ -299,9 +303,9 @@ class E3D_scene {
 
                 // Entity Attributes
                 if (this.entities[i].dynamic) {
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.vertexBuffer, this.entities[i].vertexArray);
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.normalBuffer, this.entities[i].normalArray);    
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.colorBuffer, this.entities[i].colorArray);  
                 } else {
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
@@ -346,24 +350,25 @@ class E3D_scene {
 
     addEntity(ent, visibility_culling = true) {
         // Initialize context data buffers
-        ent.vertexBuffer = this.context.createBuffer();
-        ent.colorBuffer = this.context.createBuffer();
-        ent.normalBuffer = this.context.createBuffer();
-
-        if (!ent.dynamic) { // if static already assign data
-            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.STATIC_DRAW);
         
+        if (!ent.dynamic) { // if static initialize context data buffers and assign data right away
+
+            ent.vertexBuffer = this.context.createBuffer();
+            ent.colorBuffer = this.context.createBuffer();
+            ent.normalBuffer = this.context.createBuffer();
+
+            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.STATIC_DRAW);        
         
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.STATIC_DRAW);
-            
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.STATIC_DRAW);            
         
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
             this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.STATIC_DRAW);
         }
 
         ent.resetMatrix();
+
         if (visibility_culling) {
             ent.cull_dist = E3D_scene.cull_calculate_max_dist(ent.vertexArray);
         } else {
@@ -376,23 +381,28 @@ class E3D_scene {
         return this.entities.length - 1; // return new index
     }
 
-    cloneStaticEntity(id, newId) {
+    cloneEntity(id, newId) {
         let idx = this.getEntityIndexFromId(id);
-        if ((idx > -1) && (!this.entities[idx].dynamic)){
-            let ent = new E3D_entity(newId, this.entities[idx].filename, false);
-            ent.cloneBuffers(this.entities[idx]);   
-            ent.cull_dist = this.entities[idx].cull_dist;
-            this.entities.push(ent);
-    
-            return this.entities.length - 1; // return new index
+        if (idx > -1) {
+            var ent = new E3D_entity(newId, this.entities[idx].filename, this.entities[idx].dynamic);
+            ent.cloneData(this.entities[idx]);   
+            this.entities.push(ent);    
+            return ent; // return reference to new entity
         }        
     }
 
-    getEntityIndexFromId(id) {
+    getEntityIndexFromId(id) { // TODO use map to store index vs ID
         for (let i = 0; i < this.entities.length; ++i) {
             if (this.entities[i].id == id) return i;
         }
         return -1;
+    }
+
+    removeEntity(id) {
+        let idx = this.getEntityIndexFromId(id);
+        if (idx > -1) {
+            this.entities.splice(idx, 1);
+        }    
     }
 
     static cull_calculate_max_dist(vertArray) {
