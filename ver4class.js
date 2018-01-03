@@ -170,8 +170,50 @@ class E3D_entity_vector extends E3D_entity {
         this.vertexArray[22] = nv[1];
         this.vertexArray[23] = nv[2];
     }
-
 }
+
+class E3D_entity_dynamic extends E3D_entity {
+    constructor (id, sourceEntity) {
+        super(id, sourceEntity.filename, true);
+
+        this.numElements = 0;
+
+        this.srcVertex = [];
+        this.srcColor = [];
+        this.srcNormal = [];
+
+        for (var i =0; i < sourceEntity.numElements; ++i) {
+            this.srcVertex.push([sourceEntity.vertexArray[i*3],sourceEntity.vertexArray[(i*3)+1],sourceEntity.vertexArray[(i*3)+2]]);
+            this.srcColor.push([sourceEntity.colorArray[i*3],sourceEntity.colorArray[(i*3)+1],sourceEntity.colorArray[(i*3)+2]]);
+            this.srcNormal.push([sourceEntity.normalArray[i*3],sourceEntity.normalArray[(i*3)+1],sourceEntity.normalArray[(i*3)+2]]);
+        } 
+        this.srcNumElements = sourceEntity.numElements;
+    }
+
+    setSize(nElements) {
+        this.numElements = nElements;
+        this.vertexArray = new Float32Array(nElements*3);
+        this.colorArray = new Float32Array(nElements*3);
+        this.normalArray = new Float32Array(nElements*3);
+    }
+
+    copySource(offset) { // offset in elements
+        for (var i =0; i < this.srcNumElements; ++i) { 
+            this.vertexArray[3*(offset + i)] = this.srcVertex[i][0];
+            this.vertexArray[3*(offset + i) + 1] = this.srcVertex[i][1];
+            this.vertexArray[3*(offset + i) + 2] = this.srcVertex[i][2];
+
+            this.colorArray[3*(offset + i)] = this.srcColor[i][0];
+            this.colorArray[3*(offset + i) + 1] = this.srcColor[i][1];
+            this.colorArray[3*(offset + i) + 2] = this.srcColor[i][2];
+
+            this.normalArray[3*(offset + i)] = this.srcNormal[i][0];
+            this.normalArray[3*(offset + i) + 1] = this.srcNormal[i][1];
+            this.normalArray[3*(offset + i) + 2] = this.srcNormal[i][2];
+        }
+    }
+}
+
 
 
 class E3D_animation {

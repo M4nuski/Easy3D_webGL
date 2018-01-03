@@ -15,10 +15,22 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 Current work-in-progress
 ----------
 * Animations
+* Test value of culling on mobile
 * Multidraw on entity !
 * Sprites
 * Collision detection (vector, sphere/elipsoid, plane/cuboid)
+
+| Collisons     | Vertor  | Sphere | Plane | Cube | Traingle/Mesh |
+|:------------- |:-------:|:------:|:-----:|:----:|:-------------:|
+| Vector        | useless |  Easy  | Easy  |  ok  |  ok |
+| Sphere        |         |  Easy  |  ok   |  hmm | nope |
+| Plane         |         |        |  useless | wtf | nope |
+| Cube          |         |        |       | not easy | nope |
+| Triangle/Mesh |         |        |       |       | NOPE |
+
+* Collision physics
 * Model loading (ideally external tool should prepare model data for better load perf)
+
 
 Next Steps
 -----------

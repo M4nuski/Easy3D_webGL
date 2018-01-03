@@ -18,7 +18,8 @@ class E3D_input {
         this.ongoingTouches = [];
         this.doubleTapping = false;
 
-        this.inputTable = {};
+        this.inputTable = {}; // keys that are pressed down
+        this.inputDoneTable = {}; // keys that got release to avoid keyboard auto-repeat
 
         if (supportMouse) {
             element.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
@@ -105,7 +106,10 @@ class E3D_input {
 
 
     keyDown(event) {
-        this.inputTable[event.key] = true;    
+        if ((this.inputDoneTable[event.key] == undefined) || (this.inputDoneTable[event.key] === true)) {
+            this.inputTable[event.key] = true;   
+            this.inputDoneTable[event.key] = false;
+        }    
         if ((pLockActive) && (event.key == "Escape")) {
             pLockExit();
         }
@@ -115,6 +119,7 @@ class E3D_input {
     keyUp(event) {    
         if (this.inputTable[event.key] != undefined) {
             this.inputTable[event.key] = false;
+            this.inputDoneTable[event.key] = true;
         }    
     }
 
@@ -239,6 +244,9 @@ class E3D_input {
         if (event.button == this._rotateMouseButton) {
             this.rotating = false;
         }
+        if (pLockActive) { 
+            this.keyUp( { key : this.keyMap["action0"] } );
+        } 
     }
     
     mouseLeave(event) {
@@ -355,6 +363,7 @@ class E3D_input {
             } 
             else console.log("(touchEnd) Touch Id not found");
         }
+        this.keyUp( { key : this.keyMap["action0"] } );
     }
 
     touchCancel(event) {
@@ -640,6 +649,7 @@ class E3D_input_virtual_thumbstick {
         event.preventDefault();
         if (this.Touch == event.changedTouches[0].identifier) {
             this.Touch = -1;
+            this.inputClass.keyUp( { key : this.inputClass.keyMap[this.doubleTapCommand] } );
         }
     }
 

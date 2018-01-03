@@ -129,6 +129,7 @@ function initEngine() {
     resMngr.addRessource("AXIS.raw", "Map", "Model");
     resMngr.addRessource("CM.raw", "CM", "Model");
     resMngr.addRessource("SPH.raw", "sph", "Model");
+    resMngr.addRessource("PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
 
 
@@ -190,13 +191,17 @@ function timerTick() {  // Game Loop
     updateStatus();
 
     if (inputs.checkCommand("action0", true)) {
-        //log("action0", false);
+        log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
         animations[animations.length-1].restart();
     }
-    if (inputs.checkCommand("action1", true)) log("action1", false);
-
+    if (inputs.checkCommand("action1", true)) {
+        log("action1", true);      
+        let newPyra = new E3D_entity_dynamic("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
+        animations.push(new E3D_animation("shotgun " + timer.lastTick, shotgunAnim, newPyra, scn, timer));
+        animations[animations.length-1].restart();
+    }
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
         scn.render();
@@ -248,6 +253,9 @@ function onRessource(name, msg) {
             } else if (name == "sph") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
                 scn.addEntity(nm);               
+            } else if (name == "pyra") {
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, [1.0,0.8,0.0]);
+                scn.addEntity(nm);   
             } else {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
                 scn.addEntity(nm);  
@@ -309,7 +317,59 @@ function rot0() {
     }  
 }
 
+function shotgunAnim() {
+    if (this.state == E3D_RESTART) {
+        vec3.copy(this.target.position, this.scn.camera.position);
+        var offset = this.scn.camera.adjustToCamera(vec3.fromValues(5, -5, -2));
 
+        this.data.vect = [];
+        this.data.ttl = 2.0;
+
+        this.target.setSize(this.target.srcNumElements * 10);
+        for (let i = 0; i < 10; ++i) {
+            this.target.copySource(this.target.srcNumElements * i);
+            var dx = Math.random()*20-10;
+            var dy = Math.random()*20-10;
+            var dz = Math.random()*4-2;
+            this.data.vect.push(this.scn.camera.adjustToCamera(vec3.fromValues(dx*3, dy*3, -750 - dz)));
+            
+            for (var j = 0; j < this.target.srcNumElements; ++j ) {
+                this.target.vertexArray[j * 3 + (i*this.target.srcNumElements*3)] += offset[0] + (dx/10);
+                this.target.vertexArray[(j * 3)+1 + (i*this.target.srcNumElements*3)] += offset[1] + (dy/10);
+                this.target.vertexArray[(j * 3)+2 + (i*this.target.srcNumElements*3)] += offset[2] + (dz/10);
+
+                this.target.normalArray[j * 3 + (i*this.target.srcNumElements*3)] = 0;
+                this.target.normalArray[(j * 3)+1 + (i*this.target.srcNumElements*3)] = 0;
+                this.target.normalArray[(j * 3)+2 + (i*this.target.srcNumElements*3)] = 0;
+            }
+        }
+
+        this.state = E3D_PLAY;
+        this.target.visible = true;
+        this.scn.addEntity(this.target, false);
+        this.target.scale = [0.1, 0.1, 0.1];
+        this.target.resetMatrix();
+    } 
+
+    if (this.state == E3D_PLAY) {
+
+        for (let i = 0; i < 10; ++i) {
+            var v = vec3.scale(vec3_dummy, this.data.vect[i], timer.delta);
+            for (var j = 0; j < this.target.srcNumElements; ++j ) {
+                this.target.vertexArray[j * 3 + (i*this.target.srcNumElements*3)] += v[0];
+                this.target.vertexArray[(j * 3)+1 + (i*this.target.srcNumElements*3)] += v[1];
+                this.target.vertexArray[(j * 3)+2 + (i*this.target.srcNumElements*3)] += v[2];
+            }
+        }
+
+        this.data.ttl -= timer.delta;
+        if (this.data.ttl  <= 0) {
+            this.state = E3D_DONE;
+            this.target.visible = false;
+        } 
+    }  
+
+}
 
 
 
