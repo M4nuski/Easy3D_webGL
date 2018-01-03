@@ -96,6 +96,8 @@ class E3D_entity {
         //this.textureID = ""; // todo        
         this.filename = filename;
 
+        this.colDetData = { }; 
+
         this.resetMatrix();
     } 
 
@@ -114,6 +116,8 @@ class E3D_entity {
         }
 
         this.cull_dist = entity.cull_dist;
+
+        this.colDetData = entity.colDetData;
     }
 
 
@@ -176,7 +180,8 @@ class E3D_entity_vector extends E3D_entity {
 class E3D_entity_dynamic extends E3D_entity {
     constructor(id) {
         super(id, "E3D_entity_dynamic/"+id, true);
-        this.drawMode = 1; // gl.LINES;        
+        this.drawMode = 1; // gl.LINES;      
+        this.colDetData.sph = [];  
     }
 
     setSize(nElements) {        
@@ -233,7 +238,10 @@ class E3D_entity_dynamic extends E3D_entity {
         this.vertexArray.set(vert, elem*3);
     }
 
-    addWireSphere(location, size, color, sides) {
+    addWireSphere(location, dia, color, sides) {
+        this.colDetData.sph.push( { p : location, r : dia/2 } );
+
+        dia = dia / 2;
         let idx = this.numElements;
         this.increaseSize(sides*6);
         var x=0, y=0, z=0;
@@ -242,44 +250,44 @@ class E3D_entity_dynamic extends E3D_entity {
             
             //x
             x = location[0];
-            y = location[1] + Math.sin(i* PIx2 / sides) * size;
-            z = location[2] + Math.cos(i* PIx2 / sides) * size;
+            y = location[1] + Math.sin(i* PIx2 / sides) * dia;
+            z = location[2] + Math.cos(i* PIx2 / sides) * dia;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
             
             x = location[0];
-            y = location[1] + Math.sin((i+1)* PIx2 / sides) * size;
-            z = location[2] + Math.cos((i+1)* PIx2 / sides) * size;
+            y = location[1] + Math.sin((i+1)* PIx2 / sides) * dia;
+            z = location[2] + Math.cos((i+1)* PIx2 / sides) * dia;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
             
             //y
-            x = location[0] + Math.sin(i* PIx2 / sides) * size;
+            x = location[0] + Math.sin(i* PIx2 / sides) * dia;
             y = location[1];
-            z = location[2] + Math.cos(i* PIx2 / sides) * size;
+            z = location[2] + Math.cos(i* PIx2 / sides) * dia;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
 
-            x = location[0] + Math.sin((i+1)* PIx2 / sides) * size;
+            x = location[0] + Math.sin((i+1)* PIx2 / sides) * dia;
             y = location[1];
-            z = location[2] + Math.cos((i+1)* PIx2 / sides) * size;
+            z = location[2] + Math.cos((i+1)* PIx2 / sides) * dia;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
 
             //z
-            x = location[0] + Math.sin(i* PIx2 / sides) * size;
-            y = location[1] + Math.cos(i* PIx2 / sides) * size;
+            x = location[0] + Math.sin(i* PIx2 / sides) * dia;
+            y = location[1] + Math.cos(i* PIx2 / sides) * dia;
             z = location[2];
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
 
-            x = location[0] + Math.sin((i+1)* PIx2 / sides) * size;
-            y = location[1] + Math.cos((i+1)* PIx2 / sides) * size;
+            x = location[0] + Math.sin((i+1)* PIx2 / sides) * dia;
+            y = location[1] + Math.cos((i+1)* PIx2 / sides) * dia;
             z = location[2];
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
@@ -287,8 +295,32 @@ class E3D_entity_dynamic extends E3D_entity {
         }
     }
         
-     addWireCross(location, size, color) {
-                 
+     addWireCross(location, size, color = [1,1,1]) {
+        let idx = this.numElements;
+        size = size / 2;
+        this.increaseSize(6);
+            this.setVertex3f(idx, [location[0] + size, location[1], location[2] ]);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx, [location[0] - size, location[1], location[2] ]);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx, [location[0], location[1] + size, location[2] ]);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx, [location[0], location[1] - size, location[2] ]);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx, [location[0], location[1], location[2] + size]);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx, [location[0], location[1], location[2] - size]);
+            this.setColor3f(idx, color);
     }
 
 

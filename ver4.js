@@ -26,6 +26,7 @@ const _zFar = 500.0;
 var winWidth = 10, winHeight = 10;
 var usepct_smth=0;
 var l0v, l1v;// light entities index
+var testSph;
 var cloned = false;
 var animations = [];
 
@@ -151,10 +152,10 @@ function initEngine() {
     timer.run();
     scn.state = E3D_ACTIVE;
 
-    let testSph = new E3D_entity_dynamic("wireSphereTest");
-    testSph.addWireSphere([30,0,0], 10, [1,0,0], 24);
-    testSph.addWireSphere([0,30,0], 10, [0,1,0], 24);
-    testSph.addWireSphere([0,0,30], 10, [0,0,1], 24);
+    testSph = new E3D_entity_dynamic("wireSphereTest");
+    testSph.addWireSphere([30,0,0], 20, [1,0,0], 24);
+    testSph.addWireSphere([0,30,0], 20, [0,1,0], 24);
+    testSph.addWireSphere([0,0,30], 20, [0,0,1], 24);
     testSph.visible = true;
     scn.addEntity(testSph, false);
 
@@ -258,7 +259,10 @@ function onRessource(name, msg) {
 
             } else if (name == "sph") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
+                nm.colDetData.sph = [];
+                nm.colDetData.sph.push( { p : [0,0,0] , r : 0.5 } );
                 scn.addEntity(nm);               
+
             } else if (name == "pyra") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, [1.0,0.8,0.0]);
                 scn.addEntity(nm);   
@@ -266,6 +270,8 @@ function onRessource(name, msg) {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
                 scn.addEntity(nm);  
                 nm.visible = true;
+                nm.colDetData.sph = [];
+                nm.colDetData.sph.push( { p : [0,0,0] , r : 7.0 } );
             }
 
         }  
@@ -306,6 +312,37 @@ function sphAnim() {
 
     if (this.state == E3D_PLAY) {
         vec3.add(this.target.position, this.target.position, vec3.scale(vec3_dummy, this.data.spd, this.timer.delta));
+
+        // collision detection !!!
+        var thisLoc = [0,0,0];
+        vec3.add(thisLoc, this.target.position, this.target.colDetData.sph[0].p); // only static for now
+
+        for (let i = 0; i < this.scn.entities.length; ++i ){
+            //does have data and not same object...
+            if ((this.scn.entities[i].colDetData.sph) && (this.target.id != this.scn.entities[i].id)) {
+
+                for (let j = 0; j < this.scn.entities[i].colDetData.sph.length; ++j) {
+                    var thatLoc = [0,0,0];
+                    vec3.add(thatLoc, this.scn.entities[i].position, this.scn.entities[i].colDetData.sph[j].p); // only static for now
+                    var d = vec3.distance(thatLoc, thisLoc);
+                    var minD = this.target.colDetData.sph[0].r + this.scn.entities[i].colDetData.sph[j].r;
+                    if (d <= minD) {
+                       // log(vec3.length(this.data.spd));
+                        log("col Det " + this.target.id + " - " + this.scn.entities[i].id);
+                        var penetration = minD - d;
+
+                        var n = [thisLoc[0] - thatLoc[0], thisLoc[1] - thatLoc[1], thisLoc[2] - thatLoc[2] ];
+                        this.data.spd = reflect(this.data.spd, n);
+                        vec3.scale(n, n, penetration);
+                        vec3.add(this.target.position, this.target.position, n);
+                       // log(vec3.length(this.data.spd));
+                       // vec3.negate(this.data.spd,this.data.spd);
+                        //this.data.spd = [0,0,0];
+                    }
+                }
+            }
+        }
+
         this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection
         this.target.resetMatrix();
 
@@ -331,6 +368,7 @@ function shotgunAnim() {
         var offset = this.scn.camera.adjustToCamera(vec3.fromValues(5, -5, -2));
 
         this.data.vect = [];
+        this.data.act = [];
         this.data.ttl = 2.0;
 
         this.target.setSize(this.target.srcNumElements * numPellets);
@@ -368,7 +406,15 @@ function shotgunAnim() {
             var v = vec3.scale(vec3_dummy, this.data.vect[i], timer.delta);
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
                 var b = this.target.getVertex3f((i*this.target.srcNumElements) + j);
-                vec3.add(b, v, b)
+                var p0 = [ b[0], b[1], b[2] ]; 
+                vec3.add(b, v, b);
+                var p1 = [ b[0], b[1], b[2] ]; 
+
+                // collision detection !
+                // vector->sph col det
+                //testSph.addWireCross(loc, 2, [1,1,1]);
+
+
             }
         }
 
@@ -380,6 +426,21 @@ function shotgunAnim() {
     }  
 
 }
+
+function reflect(inc, norm) {
+    //r = v - 2.0 * dot(v, n) * n
+    vec3.normalize(norm, norm);
+
+    var result = [0 ,0 ,0];
+    var dr = vec3.dot(inc, norm);
+
+    vec3.scale(result, norm, dr * 2.0);
+   // vec3.scale(result, result, 2.0);
+    vec3.subtract(result, inc, result) // out a b return a-b
+
+    return result;
+}
+
 
 
 
