@@ -139,7 +139,7 @@ class E3D_entity {
 
 class E3D_entity_vector extends E3D_entity {
     constructor (id, showAxis, vectorScale, normalize) {
-        super(id, "", true);
+        super(id, "E3D_entity_vector/" + id, true);
         this.showAxis = showAxis; // todo
         this.vectorScale = vectorScale;
         this.normalize = normalize;
@@ -172,49 +172,150 @@ class E3D_entity_vector extends E3D_entity {
     }
 }
 
+
 class E3D_entity_dynamic extends E3D_entity {
+    constructor(id) {
+        super(id, "E3D_entity_dynamic/"+id, true);
+        this.drawMode = 1; // gl.LINES;        
+    }
+
+    setSize(nElements) {        
+        this.increaseSize(nElements - this.numElements);
+    }
+
+    increaseSize(by) {
+        
+        if (this.numElements > 0) {     
+            
+            let end = (by >= 0) ? this.numElements*3 : (this.numElements - by)*3;
+
+            this.numElements += by;
+
+            let oldV = this.vertexArray.subarray(0, end);
+            let oldN = this.colorArray.subarray(0, end);
+            let oldC = this.normalArray.subarray(0, end);
+            
+            this.vertexArray = new Float32Array(this.numElements*3);
+            this.colorArray = new Float32Array(this.numElements*3);
+            this.normalArray = new Float32Array(this.numElements*3);
+            
+            this.vertexArray.set(oldV, 0);
+            this.colorArray.set(oldN, 0);
+            this.normalArray.set(oldC, 0);
+            
+        } else {
+            this.numElements += by;
+            this.vertexArray = new Float32Array(this.numElements*3);
+            this.colorArray = new Float32Array(this.numElements*3);
+            this.normalArray = new Float32Array(this.numElements*3);
+        }
+    }
+    
+    
+    getColor3f(elem) {
+        return this.colorArray.subarray(elem*3, (elem+1)*3);
+    }    
+    setColor3f(elem, col) {
+        this.colorArray.set(col, elem*3);
+    }
+    
+    getNormal3f(elem) {
+        return this.normalArray.subarray(elem*3, (elem+1)*3);
+    }    
+    setNormal3f(elem, norm) {
+        this.normalArray.set(norm, elem*3);
+    }
+    
+    getVertex3f(elem) {
+        return this.vertexArray.subarray(elem*3, (elem+1)*3);
+    }    
+    setVertex3f(elem, vert) {
+        this.vertexArray.set(vert, elem*3);
+    }
+
+    addWireSphere(location, size, color, sides) {
+        let idx = this.numElements;
+        this.increaseSize(sides*6);
+        var x=0, y=0, z=0;
+        
+        for (var i = 0; i< sides; ++i) { 
+            
+            //x
+            x = location[0];
+            y = location[1] + Math.sin(i* PIx2 / sides) * size;
+            z = location[2] + Math.cos(i* PIx2 / sides) * size;
+            this.setVertex3f(idx, [x, y, z]);
+            this.setColor3f(idx, color);
+            idx++;
+            
+            x = location[0];
+            y = location[1] + Math.sin((i+1)* PIx2 / sides) * size;
+            z = location[2] + Math.cos((i+1)* PIx2 / sides) * size;
+            this.setVertex3f(idx, [x, y, z]);
+            this.setColor3f(idx, color);
+            idx++;
+            
+            //y
+            x = location[0] + Math.sin(i* PIx2 / sides) * size;
+            y = location[1];
+            z = location[2] + Math.cos(i* PIx2 / sides) * size;
+            this.setVertex3f(idx, [x, y, z]);
+            this.setColor3f(idx, color);
+            idx++;
+
+            x = location[0] + Math.sin((i+1)* PIx2 / sides) * size;
+            y = location[1];
+            z = location[2] + Math.cos((i+1)* PIx2 / sides) * size;
+            this.setVertex3f(idx, [x, y, z]);
+            this.setColor3f(idx, color);
+            idx++;
+
+            //z
+            x = location[0] + Math.sin(i* PIx2 / sides) * size;
+            y = location[1] + Math.cos(i* PIx2 / sides) * size;
+            z = location[2];
+            this.setVertex3f(idx, [x, y, z]);
+            this.setColor3f(idx, color);
+            idx++;
+
+            x = location[0] + Math.sin((i+1)* PIx2 / sides) * size;
+            y = location[1] + Math.cos((i+1)* PIx2 / sides) * size;
+            z = location[2];
+            this.setVertex3f(idx, [x, y, z]);
+            this.setColor3f(idx, color);
+            idx++;
+        }
+    }
+        
+     addWireCross(location, size, color) {
+                 
+    }
+
+
+}
+
+class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
     constructor (id, sourceEntity) {
-        super(id, sourceEntity.filename, true);
+        super(id, true);
 
         this.numElements = 0;
+        this.cull_dist = 0;
+        this.drawMode = 4;//gl.TRIANGLES;
 
-        this.srcVertex = [];
-        this.srcColor = [];
-        this.srcNormal = [];
-
-        for (var i =0; i < sourceEntity.numElements; ++i) {
-            this.srcVertex.push([sourceEntity.vertexArray[i*3],sourceEntity.vertexArray[(i*3)+1],sourceEntity.vertexArray[(i*3)+2]]);
-            this.srcColor.push([sourceEntity.colorArray[i*3],sourceEntity.colorArray[(i*3)+1],sourceEntity.colorArray[(i*3)+2]]);
-            this.srcNormal.push([sourceEntity.normalArray[i*3],sourceEntity.normalArray[(i*3)+1],sourceEntity.normalArray[(i*3)+2]]);
-        } 
+        this.srcVertex = new Float32Array(sourceEntity.vertexArray);
+        this.srcColor = new Float32Array(sourceEntity.colorArray);
+        this.srcNormal = new Float32Array(sourceEntity.normalArray);
         this.srcNumElements = sourceEntity.numElements;
     }
 
-    setSize(nElements) {
-        this.numElements = nElements;
-        this.vertexArray = new Float32Array(nElements*3);
-        this.colorArray = new Float32Array(nElements*3);
-        this.normalArray = new Float32Array(nElements*3);
+    copySource(offset) { // offset in elements     
+        this.vertexArray.set(this.srcVertex, offset*3);
+        this.colorArray.set(this.srcColor, offset*3);
+        this.normalArray.set(this.srcNormal, offset*3);
     }
 
-    copySource(offset) { // offset in elements
-        for (var i =0; i < this.srcNumElements; ++i) { 
-            this.vertexArray[3*(offset + i)] = this.srcVertex[i][0];
-            this.vertexArray[3*(offset + i) + 1] = this.srcVertex[i][1];
-            this.vertexArray[3*(offset + i) + 2] = this.srcVertex[i][2];
 
-            this.colorArray[3*(offset + i)] = this.srcColor[i][0];
-            this.colorArray[3*(offset + i) + 1] = this.srcColor[i][1];
-            this.colorArray[3*(offset + i) + 2] = this.srcColor[i][2];
-
-            this.normalArray[3*(offset + i)] = this.srcNormal[i][0];
-            this.normalArray[3*(offset + i) + 1] = this.srcNormal[i][1];
-            this.normalArray[3*(offset + i) + 2] = this.srcNormal[i][2];
-        }
-    }
 }
-
-
 
 class E3D_animation {
     constructor(id, animatorFunct, targetObject, sceneContext, timerclass) { // id ??

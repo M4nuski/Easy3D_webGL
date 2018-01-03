@@ -139,18 +139,24 @@ function initEngine() {
     l0v.scale = vec3.fromValues(5, 5, 5);
     l0v.visible = true;
     l0v.resetMatrix();
-    l0v = scn.addEntity(l0v);
+    scn.addEntity(l0v, false);
     
     l1v = new E3D_entity_vector("light1vect", true, 2.0, true);
     l1v.position = vec3.fromValues(5, 20, 5);
     l1v.scale = vec3.fromValues(5, 5, 5);
     l1v.visible = true;
     l1v.resetMatrix();
-    l1v = scn.addEntity(l1v);
+    scn.addEntity(l1v, false);
 
     timer.run();
     scn.state = E3D_ACTIVE;
 
+    let testSph = new E3D_entity_dynamic("wireSphereTest");
+    testSph.addWireSphere([30,0,0], 10, [1,0,0], 24);
+    testSph.addWireSphere([0,30,0], 10, [0,1,0], 24);
+    testSph.addWireSphere([0,0,30], 10, [0,0,1], 24);
+    testSph.visible = true;
+    scn.addEntity(testSph, false);
 
 }
 
@@ -161,8 +167,8 @@ function prepRender() {
     scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth*yf, inputs.rx_smth, inputs.rz_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
-        scn.entities[l0v].updateVector(scn.lights.light0_adjusted);
-        scn.entities[l1v].updateVector(scn.lights.light1_adjusted);
+        l0v.updateVector(scn.lights.light0_adjusted);
+        l1v.updateVector(scn.lights.light1_adjusted);
     }
     for (let i = animations.length -1; i >=0; --i) {
         animations[i].animate();
@@ -198,7 +204,7 @@ function timerTick() {  // Game Loop
     }
     if (inputs.checkCommand("action1", true)) {
         log("action1", true);      
-        let newPyra = new E3D_entity_dynamic("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
+        let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
         animations.push(new E3D_animation("shotgun " + timer.lastTick, shotgunAnim, newPyra, scn, timer));
         animations[animations.length-1].restart();
     }
@@ -318,6 +324,8 @@ function rot0() {
 }
 
 function shotgunAnim() {
+    let numPellets = 10;
+
     if (this.state == E3D_RESTART) {
         vec3.copy(this.target.position, this.scn.camera.position);
         var offset = this.scn.camera.adjustToCamera(vec3.fromValues(5, -5, -2));
@@ -325,22 +333,25 @@ function shotgunAnim() {
         this.data.vect = [];
         this.data.ttl = 2.0;
 
-        this.target.setSize(this.target.srcNumElements * 10);
-        for (let i = 0; i < 10; ++i) {
+        this.target.setSize(this.target.srcNumElements * numPellets);
+
+        for (let i = 0; i < numPellets; ++i) {
+            //new pellet
             this.target.copySource(this.target.srcNumElements * i);
+
+            //some random noise
             var dx = Math.random()*20-10;
             var dy = Math.random()*20-10;
             var dz = Math.random()*4-2;
+            
             this.data.vect.push(this.scn.camera.adjustToCamera(vec3.fromValues(dx*3, dy*3, -750 - dz)));
             
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                this.target.vertexArray[j * 3 + (i*this.target.srcNumElements*3)] += offset[0] + (dx/10);
-                this.target.vertexArray[(j * 3)+1 + (i*this.target.srcNumElements*3)] += offset[1] + (dy/10);
-                this.target.vertexArray[(j * 3)+2 + (i*this.target.srcNumElements*3)] += offset[2] + (dz/10);
-
-                this.target.normalArray[j * 3 + (i*this.target.srcNumElements*3)] = 0;
-                this.target.normalArray[(j * 3)+1 + (i*this.target.srcNumElements*3)] = 0;
-                this.target.normalArray[(j * 3)+2 + (i*this.target.srcNumElements*3)] = 0;
+                var idx = (i*this.target.srcNumElements) + j;
+                var o2 = [  offset[0] + (dx/10)  ,  offset[1] + (dy/10)  ,  offset[2] + (dz/10)  ];
+                var b = this.target.getVertex3f(idx);
+                vec3.add(b, o2, b)
+                this.target.setNormal3f(idx, vec3_origin);
             }
         }
 
@@ -353,12 +364,11 @@ function shotgunAnim() {
 
     if (this.state == E3D_PLAY) {
 
-        for (let i = 0; i < 10; ++i) {
+        for (let i = 0; i < numPellets; ++i) {
             var v = vec3.scale(vec3_dummy, this.data.vect[i], timer.delta);
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                this.target.vertexArray[j * 3 + (i*this.target.srcNumElements*3)] += v[0];
-                this.target.vertexArray[(j * 3)+1 + (i*this.target.srcNumElements*3)] += v[1];
-                this.target.vertexArray[(j * 3)+2 + (i*this.target.srcNumElements*3)] += v[2];
+                var b = this.target.getVertex3f((i*this.target.srcNumElements) + j);
+                vec3.add(b, v, b)
             }
         }
 

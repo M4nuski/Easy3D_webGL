@@ -20,13 +20,13 @@ Current work-in-progress
 * Sprites
 * Collision detection (vector, sphere/elipsoid, plane/cuboid)
 
-| Collisons     | Vertor  | Sphere | Plane | Cube | Traingle/Mesh |
+| Collisons     | Vertor  | Sphere | Plane | Cube | Traingle Mesh |
 |:------------- |:-------:|:------:|:-----:|:----:|:-------------:|
-| Vector        | useless |  Easy  | Easy  |  ok  |  ok |
+| Vector        | useless |  Easy  | Easy  |  ok  |  hmm |
 | Sphere        |         |  Easy  |  ok   |  hmm | nope |
 | Plane         |         |        |  useless | wtf | nope |
 | Cube          |         |        |       | not easy | nope |
-| Triangle/Mesh |         |        |       |       | NOPE |
+| Triangle Mesh |         |        |       |       | NOPE |
 
 * Collision physics
 * Model loading (ideally external tool should prepare model data for better load perf)
