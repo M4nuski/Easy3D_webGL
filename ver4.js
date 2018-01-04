@@ -159,13 +159,6 @@ function initEngine() {
     testSph.addWireSphere([0,0,30], 20, [0,0,1], 24);
     testSph.visible = true;
     scn.addEntity(testSph, false);
-
-
-    //testSph.addWireSphere([0,0,0], 10, [1,1,1], 24);
-
-   // var r = VectSphHit([1,0,0], [50.5, 0, 0], 10);
-   // log("sph hit2 res: " + r );
-
 }
 
 
@@ -268,7 +261,7 @@ function onRessource(name, msg) {
             } else if (name == "sph") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
                 nm.colDetData.sph = [];
-                nm.colDetData.sph.push( { p : [0,0,0] , r : 0.5 } );
+                nm.colDetData.sph.push( { p : [0,0,0], p0 : [0,0,0], r : 0.5 } );
                 scn.addEntity(nm);               
 
             } else if (name == "pyra") {
@@ -279,7 +272,7 @@ function onRessource(name, msg) {
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.colDetData.sph = [];
-                nm.colDetData.sph.push( { p : [0,0,0] , r : 7.0 } );
+                nm.colDetData.sph.push( { p : [0,0,0], p0 : [0,0,0], r : 7.0 } );
             }
 
         }  
@@ -316,39 +309,38 @@ function sphAnim() {
         this.data.spd[2] += rndPM(1);
         this.state = E3D_PLAY;
         this.target.visible = true;
+        this.target.resetMatrix();
     } 
 
     if (this.state == E3D_PLAY) {
-        vec3.add(this.target.position, this.target.position, vec3.scale(vec3_dummy, this.data.spd, this.timer.delta));
+        vec3.scaleAndAdd(this.target.position, this.target.position, this.data.spd, this.timer.delta);
+        this.target.resetMatrix();
 
-        // collision detection !!!
-        var thisLoc = [0,0,0];
-        vec3.add(thisLoc, this.target.position, this.target.colDetData.sph[0].p);
-
+        // collision detection !        
         for (let i = 0; i < this.scn.entities.length; ++i ){
+            var thisLoc = copy3f(this.target.colDetData.sph[0].p);
             //does have data and not same object...
             if ((this.scn.entities[i].colDetData.sph) && (this.target.id != this.scn.entities[i].id)) {
 
                 for (let j = 0; j < this.scn.entities[i].colDetData.sph.length; ++j) {
                     nHitTest++;
-                    var thatLoc = [0,0,0]; // TODO remove target position, should ne computed in sph.p
-                    vec3.add(thatLoc, this.scn.entities[i].position, this.scn.entities[i].colDetData.sph[j].p); // only static for now
+                    var thatLoc = copy3f(this.scn.entities[i].colDetData.sph[j].p); 
                     var d = vec3.distance(thatLoc, thisLoc);
                     var minD = this.target.colDetData.sph[0].r + this.scn.entities[i].colDetData.sph[j].r;
                     if (d <= minD) {
                         log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
                         var penetration = minD - d;
-
                         var n = [thisLoc[0] - thatLoc[0], thisLoc[1] - thatLoc[1], thisLoc[2] - thatLoc[2] ];
                         this.data.spd = reflect(this.data.spd, n);
                         vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
+                        this.target.resetMatrix();
                     }
                 }
             }
         }
 
         this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection
-        this.target.resetMatrix();
+       
 
         if (this.target.position[1] < -500) {
             this.state = E3D_DONE;
@@ -410,7 +402,11 @@ function shotgunAnim() {
                     this.data.act[i] = false;
                     log("Hit sph-sph: ent[" + colList[0][0] + "] sph[" + colList[0][1] +"]");
                     var newloc = vec3.scaleAndAdd([0,0,0], this.data.org[i], this.data.vectNorm[i], colList[0][2]);
-                    testSph.addWireCross(newloc, 2, [1,1,1]);
+                    if (this.scn.entities[colList[0][0]].id.indexOf("sph") > -1) {
+                        splode(newloc);
+                    } else {
+                        testSph.addWireCross(newloc, 2, [1,1,1]);
+                    } 
                 }
             }
             // update pellet origin
@@ -467,45 +463,12 @@ function shotgunAnim() {
 
 } 
 
-function rndPM(val) { // random between plus or minus "val"
-    return (2*val*Math.random()) - val;
-}
 
 function reflect(inc, norm) {
     //r = v - 2.0 * dot(v, n) * n
     vec3.normalize(norm, norm);
     var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
     return [ inc[0] - (norm[0] * dr2) , inc[1] - (norm[1] * dr2), inc[2] - (norm[2] * dr2) ];
-}
-
-
-function VectSphHitwtf(v, so, sr) {
-    var t0 = 0; 
-    var t1 = 0;
-    var sr2 = sr * sr;
-
-   // var L = vec3.clone(so);
-    var a = vec3.dot(v, v); 
-    var b = 2 * vec3.dot(so, v); 
-    var c = vec3.dot(so, so) - sr2; 
-
-    var discr = b * b - 4 * a * c; 
-    if (discr < 0) return false;
-
-    if (discr == 0) {
-        t0 = - 0.5 * b / a; 
-        t1 = - 0.5 * b / a; 
-    } else { 
-        var q = (b > 0) ? 
-            -0.5 * (b + Math.sqrt(discr)) : 
-            -0.5 * (b - Math.sqrt(discr)); 
-        t0 = q / a; 
-        t1 = c / q; 
-    } 
-
-    return [t0, t1];
-    //var t = (t0 > t1) ? t0 : t1;
-    //return t > 0 ? t : false;
 }
 
 function VectSphHit(v, so, sr) { // translated to v origin
@@ -529,6 +492,41 @@ function VectSphHit(v, so, sr) { // translated to v origin
     return (t0 < t1) ? t0 : t1;
 }
 
+
+function splode(loc) {
+    log("sploded!", false);
+    var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
+    var nvect = 18;
+    var iter = 25;
+    var dim = 0.1;
+    var dvect = [];
+    var vect = [];
+    for (i = 0; i < nvect; ++i) {
+        vect.push( [rndPM(10), rndPM(10), rndPM(10)] );
+        dvect.push( [rndPM(10), 5+rndPM(10), rndPM(10)]  );
+    }
+    var idx = 0;
+    for (i = 0; i < iter; ++i) {
+        var s = 2 - (dim * i);
+        for (j=0; j < nvect; ++j) {
+
+            testSph.addWireCross(add3f(loc, vect[j]), s, col[idx]);
+
+            idx++;
+            if (idx >= col.length) idx = 0;
+        }
+        for (j = 0; j < nvect; ++j) {
+            vect[j][0] += dvect[j][0];
+            vect[j][1] += dvect[j][1];
+            vect[j][2] += dvect[j][2];
+            dvect[j][0] *= 0.9;
+            dvect[j][1] -= 1;
+            dvect[j][2] *= 0.9; 
+            
+        }
+    }
+
+}
 
 
 // Logging and status information

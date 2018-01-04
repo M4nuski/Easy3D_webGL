@@ -36,3 +36,14 @@ const PIx2 = Math.PI * 2.0;
 
 const RadToDeg = (180.0 / Math.PI);
 const DegToRad = (Math.PI / 180.0);
+
+function rndPM(val) { // random between plus or minus "val"
+    return (2*val*Math.random()) - val;
+}
+function copy3f(a) {
+    return [ a[0], a[1], a[2] ];
+}
+function add3f(a, b) {
+    return [a[0] + b[0], a[1] + b[1], a[2] + b[2] ];
+}
+

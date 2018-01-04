@@ -117,7 +117,15 @@ class E3D_entity {
 
         this.cull_dist = entity.cull_dist;
 
-        this.colDetData = entity.colDetData;
+        if (entity.colDetData.sph) {
+            this.colDetData.sph = [];
+            for (var i = 0; i < entity.colDetData.sph.length; ++i) {
+                this.colDetData.sph.push( { p0 : copy3f(entity.colDetData.sph[i].p0),
+                    p :  copy3f(entity.colDetData.sph[i].p) , r : entity.colDetData.sph[i].r } );
+
+            }
+        }
+
     }
 
 
@@ -136,7 +144,11 @@ class E3D_entity {
         
         this.cull_dist_scale = vec3.length(this.scale);
 
-        // todo update colDet data 
+        if (this.colDetData.sph) {
+            for (var i = 0; i < this.colDetData.sph.length; ++i) {
+                vec3.transformMat4(this.colDetData.sph[i].p, this.colDetData.sph[i].p0, this.modelMatrix);
+            }
+        }
     }
 
 
@@ -248,7 +260,7 @@ class E3D_entity_dynamic extends E3D_entity {
     }
 
     addWireSphere(location, dia, color, sides) {
-        this.colDetData.sph.push( { p : location, r : dia/2 } );
+        this.colDetData.sph.push( { p : location, p0 : location, r : dia/2 } );
 
         dia = dia / 2;
         let idx = this.numElements;
