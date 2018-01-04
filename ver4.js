@@ -399,27 +399,18 @@ function shotgunAnim() {
             } // end for each sph data of each entities with sph colDetData
 
             if (colList.length > 0) {
-                var vLen = vec3.length(v);
-                log("Pre-colision stage 1 list length: " + colList.length);
+                var vLen = vec3.length(v);      
+                // remove out of range          
+                for (cl = colList.length-1; cl >= 0; --cl) if (colList[cl][2] > vLen) colList.splice(cl, 1);
+                // if nec sort ascending
+                if (colList.length > 0) {
+                    if (colList.length > 1) colList.sort((a, b) => { return a[2] - b[2];} );
 
-                for (cl = colList.length-1; cl >= 0; --cl) {
-                    if (colList[cl][2] <= vLen) {
-                        log("Pre-colision stage 2 t:" +  colList[cl][2]);
-                    } else colList.splice(cl, 1);
-                    
-                }
-                log("Pre-colision stage 3 list length: " + colList.length);
-
-                if (colList.length == 1) {
+                    //deactive pellet, log, add do something...
                     this.data.act[i] = false;
                     log("Hit sph-sph: ent[" + colList[0][0] + "] sph[" + colList[0][1] +"]");
-
                     var newloc = vec3.scaleAndAdd([0,0,0], this.data.org[i], this.data.vectNorm[i], colList[0][2]);
-                   // var newloc = vec3.scale([0,0,0],this.data.vectNorm[i],colList[0][2]);
-                   // vec3.add(newloc, newloc,  this.data.org[i]);
                     testSph.addWireCross(newloc, 2, [1,1,1]);
-                } else if (colList.length > 1) {
-                    //find closest
                 }
             }
             // update pellet origin
@@ -453,10 +444,10 @@ function shotgunAnim() {
             //pellet vector
             this.data.vect.push(this.scn.camera.adjustToCamera(vec3.fromValues(rndPM(20), rndPM(20), -500 - rndPM(10) ) ) );
             this.data.vectNorm.push(vec3.normalize([0,0,0], this.data.vect[i] ) );
-        //    vec3.negate(this.data.vectNorm[i], this.data.vectNorm[i]);
+
             //pellet origin (world coordinates)
             var offset = this.scn.camera.adjustToCamera(vec3.fromValues(10 + rndPM(5), -15 - rndPM(5),  rndPM(2)));
-            this.data.org.push( vec3.add(vec3_dummy, this.target.position, offset) );
+            this.data.org.push( vec3.add([0, 0, 0], this.target.position, offset) );
             
             //offset pelets vertex by new origin and invalidate normal
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
@@ -470,7 +461,6 @@ function shotgunAnim() {
         this.state = E3D_PLAY;
         this.target.visible = true;
         this.scn.addEntity(this.target, false);
-        //this.target.scale = [0.1, 0.1, 0.1];
         this.target.resetMatrix();
     } 
 
@@ -536,7 +526,7 @@ function VectSphHit(v, so, sr) { // translated to v origin
     t0 = tca - thc;
     t1 = tca + thc;
 
-    return (t0 > t1) ? t0 : t1;
+    return (t0 < t1) ? t0 : t1;
 }
 
 
