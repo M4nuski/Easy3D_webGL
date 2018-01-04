@@ -135,6 +135,8 @@ class E3D_entity {
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
         
         this.cull_dist_scale = vec3.length(this.scale);
+
+        // todo update colDet data 
     }
 
 
@@ -182,6 +184,8 @@ class E3D_entity_dynamic extends E3D_entity {
         super(id, "E3D_entity_dynamic/"+id, true);
         this.drawMode = 1; // gl.LINES;      
         this.colDetData.sph = [];  
+        this.arraySize = 0;
+        this.arrayIncrement = 128 ;// 3 vertex * 128;
     }
 
     setSize(nElements) {        
@@ -189,30 +193,35 @@ class E3D_entity_dynamic extends E3D_entity {
     }
 
     increaseSize(by) {
-        
-        if (this.numElements > 0) {     
-            
-            let end = (by >= 0) ? this.numElements*3 : (this.numElements - by)*3;
-
+        if (this.arraySize > (this.numElements + by)) {
             this.numElements += by;
-
-            let oldV = this.vertexArray.subarray(0, end);
-            let oldN = this.colorArray.subarray(0, end);
-            let oldC = this.normalArray.subarray(0, end);
-            
-            this.vertexArray = new Float32Array(this.numElements*3);
-            this.colorArray = new Float32Array(this.numElements*3);
-            this.normalArray = new Float32Array(this.numElements*3);
-            
-            this.vertexArray.set(oldV, 0);
-            this.colorArray.set(oldN, 0);
-            this.normalArray.set(oldC, 0);
-            
         } else {
-            this.numElements += by;
-            this.vertexArray = new Float32Array(this.numElements*3);
-            this.colorArray = new Float32Array(this.numElements*3);
-            this.normalArray = new Float32Array(this.numElements*3);
+            if (this.numElements > 0) {     
+                
+                let end = (by >= 0) ? this.numElements*3 : (this.numElements - by)*3;
+
+                this.arraySize += by + this.arrayIncrement;
+                this.numElements += by;
+
+                let oldV = this.vertexArray.subarray(0, end);
+                let oldN = this.colorArray.subarray(0, end);
+                let oldC = this.normalArray.subarray(0, end);
+                
+                this.vertexArray = new Float32Array(this.arraySize*3);
+                this.colorArray = new Float32Array(this.arraySize*3);
+                this.normalArray = new Float32Array(this.arraySize*3);
+                
+                this.vertexArray.set(oldV, 0);
+                this.colorArray.set(oldN, 0);
+                this.normalArray.set(oldC, 0);
+                
+            } else {
+                this.numElements = by; 
+                this.arraySize = by + this.arrayIncrement;
+                this.vertexArray = new Float32Array(this.arraySize*3);
+                this.colorArray = new Float32Array(this.arraySize*3);
+                this.normalArray = new Float32Array(this.arraySize*3);
+            }
         }
     }
     
@@ -245,53 +254,62 @@ class E3D_entity_dynamic extends E3D_entity {
         let idx = this.numElements;
         this.increaseSize(sides*6);
         var x=0, y=0, z=0;
-        
+
+        var si = Math.sin(0) * dia;
+        var ci = Math.cos(0) * dia;
+
         for (var i = 0; i< sides; ++i) { 
-            
+
+            var sip = Math.sin((i+1) * PIx2 / sides) * dia;
+            var cip = Math.cos((i+1) * PIx2 / sides) * dia;
+
             //x
             x = location[0];
-            y = location[1] + Math.sin(i* PIx2 / sides) * dia;
-            z = location[2] + Math.cos(i* PIx2 / sides) * dia;
+            y = location[1] + si;
+            z = location[2] + ci;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
             
             x = location[0];
-            y = location[1] + Math.sin((i+1)* PIx2 / sides) * dia;
-            z = location[2] + Math.cos((i+1)* PIx2 / sides) * dia;
+            y = location[1] + sip;
+            z = location[2] + cip;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
             
             //y
-            x = location[0] + Math.sin(i* PIx2 / sides) * dia;
+            x = location[0] + si;
             y = location[1];
-            z = location[2] + Math.cos(i* PIx2 / sides) * dia;
+            z = location[2] + ci;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
 
-            x = location[0] + Math.sin((i+1)* PIx2 / sides) * dia;
+            x = location[0] + sip;
             y = location[1];
-            z = location[2] + Math.cos((i+1)* PIx2 / sides) * dia;
+            z = location[2] + cip;
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
 
             //z
-            x = location[0] + Math.sin(i* PIx2 / sides) * dia;
-            y = location[1] + Math.cos(i* PIx2 / sides) * dia;
+            x = location[0] + si;
+            y = location[1] + ci;
             z = location[2];
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
 
-            x = location[0] + Math.sin((i+1)* PIx2 / sides) * dia;
-            y = location[1] + Math.cos((i+1)* PIx2 / sides) * dia;
+            x = location[0] + sip;
+            y = location[1] + cip;
             z = location[2];
             this.setVertex3f(idx, [x, y, z]);
             this.setColor3f(idx, color);
             idx++;
+
+            si = sip;
+            ci = cip;
         }
     }
         

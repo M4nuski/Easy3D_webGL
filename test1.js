@@ -16,6 +16,7 @@ document.getElementById("test2").addEventListener("click", test2);
 document.getElementById("test3").addEventListener("click", test3);
 document.getElementById("test4").addEventListener("click", test4);
 document.getElementById("test5").addEventListener("click", test5);
+document.getElementById("test6").addEventListener("click", test6);
 
 const gco = [0 ,0 ,0];
 let glo = [0,0 ,0];
@@ -399,11 +400,211 @@ function test5() {
 
 
 
+function test6() {
+    const numtst = 5000000;
+    var vec3_dummy = [0, 0, 0];
+
+    addLine("Num iter: " + numtst);
+
+    var _ia = [];
+    var _na = [];
+    var _ra = [];
+    
+    for (var i = 0; i < numtst; ++i ) {
+        _ia[i] = vec3.random(vec3_dummy, Math.random(10)+1);
+        _na[i] = vec3.random(vec3_dummy, Math.random(10)+1);
+        _ra[i] =  Math.random(10)+1;
+    }
+
+    var ia = _ia.slice(0, numtst);
+    var na = _na.slice(0, numtst);
+
+    let dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        var x = reflect1(ia[i], na[i]);
+        var r = x[0] + x[1] + x[2];
+    }
+
+    let et = Date.now();
+    addLine("reflect1: " + (et-dt));
+
+    ia = _ia.slice(0, numtst);
+    na = _na.slice(0, numtst);
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+      var x = reflect2(ia[i], na[i]);
+      var r = x[0] + x[1] + x[2];
+    }
+
+    et = Date.now();
+    addLine("reflect2: " + (et-dt));
+
+
+    ia = _ia.slice(0, numtst);
+    na = _na.slice(0, numtst);
+    var ra = _ra.slice(0, numtst);
+    var r = 0;
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        var x = VectSphHit_geo(ia[i], na[i], ra[i]);
+        if (x != false) r += x;
+
+    }
+
+    et = Date.now();
+    addLine("VectSphHit_geo: " + (et-dt));
+
+
+    ia = _ia.slice(0, numtst);
+    na = _na.slice(0, numtst);
+    ra = _ra.slice(0, numtst);
+    r = 0;
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        var x = VectSphHit_quad(ia[i], na[i], ra[i]);
+        if (x != false) r += x;
+
+    }
+
+    et = Date.now();
+    addLine("VectSphHit_quad: " + (et-dt));
 
 
 
 
 
+
+
+}
+
+function reflect1(inc, norm) {
+    //r = v - 2.0 * dot(v, n) * n
+    vec3.normalize(norm, norm);
+
+    var result = [0 ,0 ,0];
+    var dr = vec3.dot(inc, norm) * 2.0;
+    vec3.scale(result, norm, dr);
+    vec3.subtract(result, inc, result); // out a b return a-b
+
+    return result;
+}
+
+
+function reflect2(inc, norm) {
+    //r = v - 2.0 * dot(v, n) * n
+    vec3.normalize(norm, norm);
+   // var nx = norm[0], ny = norm[1], nz = norm[2];
+   // var ix = inc[0], iy = inc[1], iz = inc[2];
+    var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);   
+    return [ inc[0] - (norm[0] * dr2) , inc[1] - (norm[1] * dr2), inc[2] - (norm[2] * dr2) ];
+   //var dr2 = 2.0 * (ix * nx + iy * ny + iz * nz);  
+   //return [ ix - (nx * dr2) , iy - (ny * dr2), iz - (nz * dr2) ];
+
+}
+
+function VectSphHit_geo(v, so, sr) {
+    var t0 = 0; 
+    var t1 = 0;
+    var sr2 = sr * sr;
+
+    var L = vec3.clone(so);
+    var tca = vec3.dot(L, v);
+
+    if  (tca < 0) return false;
+    // sph behind origin
+
+    var d2 = vec3.dot(L, L) - tca * tca;
+
+    if (d2 > sr2) return false;
+    // tangential point farther than radius
+
+    var thc = Math.sqrt(sr2 - d2);
+    t0 = tca - thc;
+    t1 = tca + thc;
+    var t = (t0 > t1) ? t0 : t1;
+    return t > 0 ? t : false;
+}
+
+function VectSphHit_quad(v, so, sr) {
+    var t0 = 0; 
+    var t1 = 0;
+    var sr2 = sr * sr;
+
+    var L = vec3.clone(so);
+    var a = vec3.dot(v, v); 
+    var b = 2 * vec3.dot(L, v); 
+    var c = vec3.dot(L, L) - sr2; 
+
+    var discr = b * b - 4 * a * c; 
+    if (discr < 0) return false;
+
+    if (discr == 0) {
+        t0 = - 0.5 * b / a; 
+        t1 = - 0.5 * b / a; 
+    } else { 
+        var q = (b > 0) ? 
+            -0.5 * (b + Math.sqrt(discr)) : 
+            -0.5 * (b - Math.sqrt(discr)); 
+        t0 = q / a; 
+        t1 = c / q; 
+    } 
+
+    var t = (t0 > t1) ? t0 : t1;
+    return t > 0 ? t : false;
+}
+
+/*
+bool intersect(const Ray &ray) const 
+{ 
+        float t0, t1; // solutions for t if the ray intersects 
+#if 0 
+        // geometric solution
+        Vec3f L = center - orig; 
+        float tca = L.dotProduct(dir); 
+        // if (tca < 0) return false;
+        float d2 = L.dotProduct(L) - tca * tca; 
+        if (d2 > radius2) return false; 
+        float thc = sqrt(radius2 - d2); 
+        t0 = tca - thc; 
+        t1 = tca + thc; 
+#else 
+        // analytic solution
+        Vec3f L = orig - center; 
+        float a = dir.dotProduct(dir); 
+        float b = 2 * dir.dotProduct(L); 
+        float c = L.dotProduct(L) - radius2; 
+        if (!solveQuadratic(a, b, c, t0, t1)) return false; 
+#endif 
+        if (t0 > t1) std::swap(t0, t1); 
+ 
+        if (t0 < 0) { 
+            t0 = t1; // if t0 is negative, let's use t1 instead 
+            if (t0 < 0) return false; // both t0 and t1 are negative 
+        } 
+ 
+        t = t0; 
+ 
+        return true; 
+bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1) 
+{ 
+    float discr = b * b - 4 * a * c; 
+    if (discr < 0) return false; 
+    else if (discr == 0) x0 = x1 = - 0.5 * b / a; 
+    else { 
+        float q = (b > 0) ? 
+            -0.5 * (b + sqrt(discr)) : 
+            -0.5 * (b - sqrt(discr)); 
+        x0 = q / a; 
+        x1 = c / q; 
+    } 
+    if (x0 > x1) std::swap(x0, x1); 
+ 
+    return true; 
+} 
+*/
 
 
 
