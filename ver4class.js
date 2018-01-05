@@ -97,8 +97,6 @@ class E3D_entity {
         //this.textureID = ""; // todo        
         this.filename = filename;
 
-        //this.colDetData = { }; 
-
         // Collision Detection / Hit Test Data (faster split in different array than accessing single array then object attributes)
             // Vector Source 
             this.CD_vec = 0;
@@ -153,14 +151,14 @@ class E3D_entity {
             this.CD_sph = entity.CD_sph;
             this.CD_sph_p0 = copy3fArray(entity.CD_sph_p0);
             this.CD_sph_p = copy3fArray(entity.CD_sph_p);
-            this.CD_sph_r0 = entity.CD_sph_r0.slice(0, entity.CD_sph);
-            this.CD_sph_r = entity.CD_sph_r.slice(0, entity.CD_sph);
-            this.CD_sph_rs = entity.CD_sph_rs.slice(0, entity.CD_sph);
+            this.CD_sph_r0 = entity.CD_sph_r0.slice();
+            this.CD_sph_r = entity.CD_sph_r.slice();
+            this.CD_sph_rs = entity.CD_sph_rs.slice();
         }
         if (entity.CD_iPlane > 0) {
             this.CD_iPlane = entity.CD_iPlane;
-            this.CD_iPlane_d0 = entity.CD_iPlane_d0.slice(0, entity.CD_iPlane);
-            this.CD_iPlane_d  = entity.CD_iPlane_d.slice(0, entity.CD_iPlane);
+            this.CD_iPlane_d0 = entity.CD_iPlane_d0.slice();
+            this.CD_iPlane_d  = entity.CD_iPlane_d.slice();
             this.CD_iPlane_n0 = copy3fArray(entity.CD_iPlane_n0);
             this.CD_iPlane_n  = copy3fArray(entity.CD_iPlane_n);
         }
@@ -181,9 +179,10 @@ class E3D_entity {
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
         
-        this.cull_dist_scale = vec3.length(this.scale);
+        this.cull_dist_scale = vec3.length(this.scale)/1.732;
 
         for (var i = 0; i < this.CD_vec; ++i) {
+            vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
             vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.modelMatrix);
         }
         for (var i = 0; i < this.CD_sph; ++i) {
@@ -199,26 +198,31 @@ class E3D_entity {
     }
 
     pushCD_vec(p, v) {
+        this.CD_vec_p0[this.CD_vec] = p.slice(); 
+        this.CD_vec_p[this.CD_vec] = p.slice();
+        
+        this.CD_vec_v0[this.CD_vec] = p.slice(); 
+        this.CD_vec_v[this.CD_vec] = p.slice(); 
+        
         this.CD_vec += 1;
-
-        this.CD_vec_p0[this.CD_vec] = copy3f(p); 
-        this.CD_vec_p[this.CD_vec] = copy3f(p); 
-
-        this.CD_vec_v0[this.CD_vec] = copy3f(v); 
-        this.CD_vec_v[this.CD_vec] = copy3f(v); 
     }
     pushCD_sph(p, r) {
-        this.CD_sph += 1;
-
-        this.CD_sph_p0[this.CD_sph] = copy3f(p); 
-        this.CD_sph_p[this.CD_sph] = copy3f(p); 
-
+        this.CD_sph_p0[this.CD_sph] = p.slice();
+        this.CD_sph_p[this.CD_sph] = p.slice(); 
+        
         this.CD_sph_r0[this.CD_sph] = r;
         this.CD_sph_r[this.CD_sph] = r;
         this.CD_sph_rs[this.CD_sph] = r*r;
+        
+        this.CD_sph += 1;
     }
-    pushCD_iPlane() {
+    pushCD_iPlane(d, n) {
+        this.CD_iPlane_d0[this.CD_iPlane] = d; 
+        this.CD_iPlane_d[this.CD_iPlane] = d; 
+        this.CD_iPlane_n0[this.CD_iPlane] = n.slice(); 
+        this.CD_iPlane_n[this.CD_iPlane] = n.slice();
 
+        this.CD_iPlane += 1;
     }
 
 }
@@ -328,9 +332,9 @@ class E3D_entity_dynamic extends E3D_entity {
     }
 
     addWireSphere(location, dia, color, sides) {
-        this.colDetData.sph.push( { p : location, p0 : location, r : dia/2 } );
-
         dia = dia / 2;
+        this.pushCD_sph(location, dia);
+
         let idx = this.numElements;
         this.increaseSize(sides*6);
         var x=0, y=0, z=0;

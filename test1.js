@@ -693,6 +693,17 @@ function test7(event) {
     s = 0;
     dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
+        s = []; 
+        s.push(1);
+        s.push(2);
+        s.push(3);
+    }
+    et = Date.now();
+    addLine("create [] + push(1) push(2) push(3): " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
         s = Array(3);
         s[0]=1;
         s[1]=2;
@@ -700,6 +711,14 @@ function test7(event) {
     }
     et = Date.now();
     addLine("create Array(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = Array(1, 2, 3);
+    }
+    et = Date.now();
+    addLine("create Array(1, 2, 3): " + (et-dt));
 
     s = 0;
     dt = Date.now();

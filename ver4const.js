@@ -40,16 +40,14 @@ const DegToRad = (Math.PI / 180.0);
 function rndPM(val) { // random between plus or minus "val"
     return (2*val*Math.random()) - val;
 }
-function copy3f(a) {
-    return [ a[0], a[1], a[2] ];
-}
+
 function add3f(a, b) {
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2] ];
 }
 function copy3fArray(a) {
     var r = Array(a.length);
     for (var i = 0; i< a.length; ++i) {
-        r[i] = copy3f(a[i]);
+        r[i] = a[i].slice();
     }
     return r;
 }
