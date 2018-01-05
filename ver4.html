@@ -2,6 +2,7 @@
 
 <head>
     <title>Easy3D Engine webGL version 0.4</title>
+    <meta charset="UTF-8">
     <style>
         #mainDiv {
             position: absolute;
@@ -10,32 +11,49 @@
             width : 1280px;
             height : 720px;
         } 
-        #dataDiv {
-            position: absolute;
-            top:0px;
-            left:850px;
-            width:400px;         
-        }
-        #logDiv {
-            height : 300px;
-            overflow-x: wrap;
-            overflow-y: scroll;
-        }
+
         #controlDiv {
             position: absolute;
             top: 460px;
             left : 10px;
-            width : 790px;
-            
+            width : 790px;            
+        }
+
+        #statusDiv {
+            position: absolute;
+            top:0px;
+            left:850px;
+            width:350px;
+            height: 60px;      
         }
 
         #selectionDiv {
             position: absolute;
-            top : 370px;
+            top : 70px;
             left : 850px;
-            width : 400px;
+            width : 350px;
             height : 200px;
+        }    
+
+        #instructionsDiv {
+            position: absolute;
+            top: 280px;
+            left: 850px;
+            width: 600px;
         }
+
+        #logDiv {
+            position: absolute;
+            top: 5px;
+            left: 1210px;
+            width: 310px;
+            height : 275px;
+            overflow-x: wrap;
+            overflow-y: scroll;
+        }
+    
+
+
         td {
             width : 110px;
             height : 60px;
@@ -51,6 +69,8 @@
             position: absolute;
             right: 0px;
         }
+
+
 
     </style>
     <script type="text/javascript" src="gl-matrix-min.js"></script>
@@ -68,10 +88,9 @@
     <div id="mainDiv">
             <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
     </div>
-    <div id="dataDiv">
-        <div id="statusDiv">Status</div><br />
-        <div id="logDiv"></div>
-    </div>
+
+    <div id="statusDiv">Status</div>
+    <div id="logDiv"></div>
 
     <div id="controlDiv">LMB(touch) rotate, MouseWheel(pinch) zoom/pan, doubleclick Lock, Escape Remove Lock<br />
         vKeyboard (click/touch)<br />
@@ -88,6 +107,33 @@
 
         vThumbSticks<br />
         <img src="tp.svg" width= "200" height="200" id="thumb1Left" /> <img src="tp.svg" width= "200" height="200" id="thumb1Right"/><br />  
+    </div>
+
+    <div id="instructionsDiv">
+        Page de test pour game engine en Javascript / WebGL<br/>
+        Testé sur Windows dans Chrome et Firefox<br />
+        Android dans Chrome, iOS dans Safari (iphone5!)<br />
+        Détection de collision seulement entre les spheres (incluant les balles lancées) et les particules du shotgun
+        <br />
+        Mouvements : <br/>
+        Space - Déplacements en 3D sans restriction ni référence.<br />
+        Free Roam - Déplacements dans le monde en 3D mais avec contraintes et concepte de "haut" vs "bas"<br />
+        Model - Les controles déplacent le monde autour d'un point fixe<br />
+        <br />
+        Controles :
+        <br />
+        Desktop (sourie + clavier) - Controles typique de jeux (W A S D, C, Space, Click (action0), F(acton1)). Double Click dans fenetre pour capturer et cacher le pointeur de sourie.
+        Escape pour sortir du mode.<br />
+        Click-Drag dans fenetre pour rotation, Molette (roulette(grament pour scroller)) pour zoomer ou déplacer avant/arrière.<br />
+        Molette-Click pour translations.<br />
+        <br />
+        Mobile - Touch-drag dans fenetre pour rotation, pinch zoom ou avant/arrière. pinch-drag pour translation.<br />
+        Double-tap active l'action0 (equivalent au click).
+        Clavier virtuel - tap pour simuler touches du clavier.
+        Controle virtuels PovTrackPad - Thumbstick de gauche comme joystick de console, double-tap action1 (shotgun)<br />
+        Trackpad de droit agit comme dans la fenetre. Double-tap action0(balle)<br />
+        Double thumbstick - semblable aux controls de jeux sur mobile ou dual stick de console.
+        <br />
     </div>
 
     <div id="selectionDiv">

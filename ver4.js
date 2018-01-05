@@ -26,7 +26,7 @@ const _zFar = 500.0;
 var winWidth = 10, winHeight = 10;
 var usepct_smth=0;
 var l0v, l1v;// light entities index
-var testSph;
+var testSph, splos;
 var cloned = false;
 var animations = [];
 var nHitTest = 0;
@@ -159,6 +159,12 @@ function initEngine() {
     testSph.addWireSphere([0,0,30], 20, [0,0,1], 24);
     testSph.visible = true;
     scn.addEntity(testSph, false);
+
+    splos = new E3D_entity_dynamic("splosions");
+    splos.visible = true;
+    splos.arrayIncrement = 2700; 
+    scn.addEntity(splos, false);
+    
 }
 
 
@@ -495,6 +501,7 @@ function VectSphHit(v, so, sr) { // translated to v origin
 
 function splode(loc) {
     log("sploded!", false);
+  // log(splos.numElements);
     var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
     var nvect = 18;
     var iter = 25;
@@ -510,7 +517,7 @@ function splode(loc) {
         var s = 2 - (dim * i);
         for (j=0; j < nvect; ++j) {
 
-            testSph.addWireCross(add3f(loc, vect[j]), s, col[idx]);
+            splos.addWireCross(add3f(loc, vect[j]), s, col[idx]);
 
             idx++;
             if (idx >= col.length) idx = 0;
@@ -525,7 +532,7 @@ function splode(loc) {
             
         }
     }
-
+  //  log(splos.numElements);
 }
 
 
