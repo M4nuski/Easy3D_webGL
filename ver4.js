@@ -154,9 +154,9 @@ function initEngine() {
     scn.state = E3D_ACTIVE;
 
     testSph = new E3D_entity_dynamic("wireSphereTest");
-    testSph.addWireSphere([30,0,0], 20, [1,0,0], 24);
-    testSph.addWireSphere([0,30,0], 20, [0,1,0], 24);
-    testSph.addWireSphere([0,0,30], 20, [0,0,1], 24);
+    testSph.addWireSphere([30,0,0], 20, [1,0,0], 24, true);
+    testSph.addWireSphere([0,30,0], 20, [0,1,0], 24, true);
+    testSph.addWireSphere([0,0,30], 20, [0,0,1], 24, true);
     testSph.visible = true;
     scn.addEntity(testSph, false);
 
@@ -164,6 +164,8 @@ function initEngine() {
     splos.visible = true;
     splos.arrayIncrement = 2700; 
     scn.addEntity(splos, false);
+
+    testSph.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true, false);
     
 }
 
@@ -320,11 +322,11 @@ function sphAnim() {
         vec3.scaleAndAdd(this.target.position, this.target.position, this.data.spd, this.timer.delta);
         this.target.resetMatrix();
 
-        // collision detection - this.sph to other sph        
-        for (let i = 0; i < this.scn.entities.length; ++i ){
+    
+        // for each other entity
+        for (let i = 0; i < this.scn.entities.length; ++i ) if (this.target.id != this.scn.entities[i].id) {
          
-            //does have data and not same object...
-            if ((this.scn.entities[i].CD_sph > 0) && (this.target.id != this.scn.entities[i].id)) {
+            if (this.scn.entities[i].CD_sph > 0) {  // collision detection - this.sph to other sph  
 
                 for (let j = 0; j < this.scn.entities[i].CD_sph; ++j) {
                     nHitTest++;
@@ -339,7 +341,29 @@ function sphAnim() {
                         this.target.resetMatrix();
                     }
                 }
-            }
+            } // sph
+
+            if (this.scn.entities[i].CD_iPlane > 0) {  // collision detection - this.sph to infinite plane
+                //CD_iPlane_d CD_iPlane_n
+                for (let j = 0; j < this.scn.entities[i].CD_iPlane; ++j) {
+                    nHitTest++;
+                    // v = position - plane position
+                    var v = vec3.subtract([0, 0, 0],  this.scn.entities[i].position, this.target.CD_sph_p[0]);
+                    // v * normal
+                    vec3.multiply(v, v, this.scn.entities[i].CD_iPlane_n[j]);
+                    // v.z < radius 
+                    if (((v[2] - this.target.CD_sph_r[0]) < this.scn.entities[i].CD_iPlane_d[j]) && 
+                    ( (v[2] + this.target.CD_sph_r[0]) > this.scn.entities[i].CD_iPlane_d[j] )) { 
+                        log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
+                        this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
+                   //     vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
+                   //     this.target.resetMatrix();
+                    }
+                }         
+            } // iplane
+
+
+
         }
 
         this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection

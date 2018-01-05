@@ -331,9 +331,9 @@ class E3D_entity_dynamic extends E3D_entity {
         this.vertexArray.set(vert, elem*3);
     }
 
-    addWireSphere(location, dia, color, sides) {
+    addWireSphere(location, dia, color, sides, addSphCD = false) {
         dia = dia / 2;
-        this.pushCD_sph(location, dia);
+        if (addSphCD) this.pushCD_sph(location, dia);
 
         let idx = this.numElements;
         this.increaseSize(sides*6);
@@ -397,7 +397,7 @@ class E3D_entity_dynamic extends E3D_entity {
         }
     }
         
-     addWireCross(location, size, color = [1,1,1]) {
+    addWireCross(location, size, color = [1,1,1]) {
         let idx = this.numElements;
         size = size / 2;
         this.increaseSize(6);
@@ -424,6 +424,119 @@ class E3D_entity_dynamic extends E3D_entity {
             this.setVertex3f(idx, [location[0], location[1], location[2] - size]);
             this.setColor3f(idx, color);
     }
+
+    addPlane(pos, rot, width, height, numSubdiv, color = [1,1,1], addIPCD = false, addFPCD = false) {
+        let idx = this.numElements;
+
+        width = width / 2;
+        height = height / 2;
+        let p0 = [ width, height, 0];
+        let p1 = [ width,-height, 0];
+        let p2 = [-width,-height, 0];
+        let p3 = [-width, height, 0];
+        
+        let m = mat4.create();
+        mat4.rotateZ(m, m, rot[2]);
+        mat4.rotateX(m, m, rot[0]);
+        mat4.rotateY(m, m, rot[1]);
+        
+        let n = vec3.fromValues(0, 0, 1);
+        vec3.transformMat4(n, n, m);
+
+        mat4.translate(m, m, pos);
+        vec3.transformMat4(p0, p0, m);
+        vec3.transformMat4(p1, p1, m);
+        vec3.transformMat4(p2, p2, m);
+        vec3.transformMat4(p3, p3, m);
+
+        this.increaseSize(8);
+        
+            // around
+            this.setVertex3f(idx, p0);
+            this.setColor3f(idx, color);
+            idx++;
+            this.setVertex3f(idx, p1);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx, p1);
+            this.setColor3f(idx, color);
+            idx++;
+            this.setVertex3f(idx,p2);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx,p2);
+            this.setColor3f(idx, color);
+            idx++;
+            this.setVertex3f(idx,p3);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx,p3);
+            this.setColor3f(idx, color);
+            idx++;
+            this.setVertex3f(idx,p0);
+            this.setColor3f(idx, color);
+
+
+
+        if (numSubdiv == -1) {
+            this.increaseSize(4);   
+            // X
+            idx++;
+            this.setVertex3f(idx,p0);
+            this.setColor3f(idx, color);
+            idx++;
+            this.setVertex3f(idx,p2);
+            this.setColor3f(idx, color);
+
+            idx++;
+            this.setVertex3f(idx,p1);
+            this.setColor3f(idx, color);
+            idx++;
+            this.setVertex3f(idx,p3);
+            this.setColor3f(idx, color);
+        }
+        if (numSubdiv > 0) {
+            this.increaseSize(4*numSubdiv); 
+            let a = [0,0,0];
+            let b = [0,0,0];
+            let c = [0,0,0];
+            let d = [0,0,0];
+
+            for (var i = 0; i < numSubdiv; ++i){
+                let t = (i + 1) / (numSubdiv + 1);
+                vec3.lerp(a, p1, p0, t);
+                vec3.lerp(b, p2, p3, t);
+
+                vec3.lerp(c, p1, p2, t);
+                vec3.lerp(d, p0, p3, t);
+
+                idx++;
+                this.setVertex3f(idx, a);
+                this.setColor3f(idx, color);
+                idx++;
+                this.setVertex3f(idx, b);
+                this.setColor3f(idx, color);
+    
+                idx++;
+                this.setVertex3f(idx, c);
+                this.setColor3f(idx, color);
+                idx++;
+                this.setVertex3f(idx, d);
+                this.setColor3f(idx, color);
+
+
+            }
+        } 
+
+        if (addIPCD) {
+            this.pushCD_iPlane(vec3.length(pos), n);
+
+        }
+    }
+
 
 
 }
