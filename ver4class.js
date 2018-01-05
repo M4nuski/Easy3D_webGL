@@ -436,14 +436,13 @@ class E3D_entity_dynamic extends E3D_entity {
         let p3 = [-width, height, 0];
         
         let m = mat4.create();
+
+        mat4.translate(m, m, pos);
+
         mat4.rotateZ(m, m, rot[2]);
         mat4.rotateX(m, m, rot[0]);
         mat4.rotateY(m, m, rot[1]);
         
-        let n = vec3.fromValues(0, 0, 1);
-        vec3.transformMat4(n, n, m);
-
-        mat4.translate(m, m, pos);
         vec3.transformMat4(p0, p0, m);
         vec3.transformMat4(p1, p1, m);
         vec3.transformMat4(p2, p2, m);
@@ -532,6 +531,15 @@ class E3D_entity_dynamic extends E3D_entity {
         } 
 
         if (addIPCD) {
+            let n = [0, 0, 1];
+            vec3.rotateZ(n, n, vec3_origin, rot[2]); 
+            vec3.rotateX(n, n, vec3_origin, rot[0]); 
+            vec3.rotateY(n, n, vec3_origin, rot[1]); 
+
+            //mat4.rotateZ(m, m, rot[2]);
+            //mat4.rotateX(m, m, rot[0]);
+            //mat4.rotateY(m, m, rot[1]);
+
             this.pushCD_iPlane(vec3.length(pos), n);
 
         }
