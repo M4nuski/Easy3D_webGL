@@ -14,11 +14,11 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress
 ----------
-* Animations
-* Test value of culling on mobile
-* Multidraw on entity !
-* Sprites
 * Collision detection (vector, sphere/elipsoid, plane/cuboid)
+* Collision physics
+* Collision target culling
+* Evaluate value of render culling on mobile
+* Model loading (ideally external tool should prepare model data for better load perf)
 
 | Collisons     | Vertor  | Sphere | Plane | Cube | Traingle Mesh |
 |:------------- |:-------:|:------:|:-----:|:----:|:-------------:|
@@ -28,17 +28,14 @@ Current work-in-progress
 | Cube          |         |        |       | not easy | nope |
 | Triangle Mesh |         |        |       |       | NOPE |
 
-* Collision physics
-* Model loading (ideally external tool should prepare model data for better load perf)
-
-
 Next Steps
 -----------
-1. Replace per-vertex colors with textures
-2. Other type of physics mechanic for controls.
-3. Sounds
-4. Some kind of game :P
-5. NetCode !
-6. Better lights shaders (array of different types of ligts) (spot, point etc)
+* Replace per-vertex colors with textures
+* Sprites
+* Other type of physics mechanic for controls.
+* Sounds
+* Some kind of game :P
+* NetCode !
+* Better lights shaders (array of different types of ligts) (spot, point etc)
 
 -M4nuski

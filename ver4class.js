@@ -70,7 +70,8 @@ class E3D_entity {
         this.rotation = vec3.create();
         this.scale = vec3.fromValues(1.0, 1.0, 1.0);
 
-        this.cull_dist = 0;
+        // fustrum culling
+        this.cull_dist = 0; // 0 disable
         this.cull_dist_scale = 1.0;
         
         // Computed matrix
@@ -96,7 +97,33 @@ class E3D_entity {
         //this.textureID = ""; // todo        
         this.filename = filename;
 
-        this.colDetData = { }; 
+        //this.colDetData = { }; 
+
+        // Collision Detection / Hit Test Data (faster split in different array than accessing single array then object attributes)
+            // Vector Source 
+            this.CD_vec = 0;
+            this.CD_vec_p0 = []; // original to model space
+            this.CD_vec_p  = []; // transformed to world space
+            this.CD_vec_v0 = []; // original to model space
+            this.CD_vec_v  = []; // transformed to world space
+
+            // Sphere Source/Target
+            this.CD_sph = 0;
+            this.CD_sph_p0 = []; // original to model space
+            this.CD_sph_p  = []; // transformed to world space
+            this.CD_sph_r0 = []; // original to model space
+            this.CD_sph_r  = []; // transformed to world space
+            this.CD_sph_rs = []; // transformed to world space, squared
+
+            // Infinite Plane Target, on X-Y plane
+            this.CD_iPlane = 0;
+            this.CD_iPlane_d0 = []; // original to model space
+            this.CD_iPlane_d  = []; // transformed to world space (scale)
+            this.CD_iPlane_n0 = []; // normal original to model space
+            this.CD_iPlane_n  = []; // normal transformed to world space (rotation, scale)
+
+            // TODO Finite Plane Target
+            // TODO Cubic Target (/Source?)
 
         this.resetMatrix();
     } 
@@ -117,13 +144,25 @@ class E3D_entity {
 
         this.cull_dist = entity.cull_dist;
 
-        if (entity.colDetData.sph) {
-            this.colDetData.sph = [];
-            for (var i = 0; i < entity.colDetData.sph.length; ++i) {
-                this.colDetData.sph.push( { p0 : copy3f(entity.colDetData.sph[i].p0),
-                    p :  copy3f(entity.colDetData.sph[i].p) , r : entity.colDetData.sph[i].r } );
-
-            }
+        if (entity.CD_vec > 0) {
+            this.CD_vec = entity.CD_vec;
+            this.CD_vec_v0 = copy3fArray(entity.CD_vec_v0);
+            this.CD_vec_v  = copy3fArray(entity.CD_vec_v);
+        }
+        if (entity.CD_sph > 0) {
+            this.CD_sph = entity.CD_sph;
+            this.CD_sph_p0 = copy3fArray(entity.CD_sph_p0);
+            this.CD_sph_p = copy3fArray(entity.CD_sph_p);
+            this.CD_sph_r0 = entity.CD_sph_r0.slice(0, entity.CD_sph);
+            this.CD_sph_r = entity.CD_sph_r.slice(0, entity.CD_sph);
+            this.CD_sph_rs = entity.CD_sph_rs.slice(0, entity.CD_sph);
+        }
+        if (entity.CD_iPlane > 0) {
+            this.CD_iPlane = entity.CD_iPlane;
+            this.CD_iPlane_d0 = entity.CD_iPlane_d0.slice(0, entity.CD_iPlane);
+            this.CD_iPlane_d  = entity.CD_iPlane_d.slice(0, entity.CD_iPlane);
+            this.CD_iPlane_n0 = copy3fArray(entity.CD_iPlane_n0);
+            this.CD_iPlane_n  = copy3fArray(entity.CD_iPlane_n);
         }
 
     }
@@ -144,13 +183,43 @@ class E3D_entity {
         
         this.cull_dist_scale = vec3.length(this.scale);
 
-        if (this.colDetData.sph) {
-            for (var i = 0; i < this.colDetData.sph.length; ++i) {
-                vec3.transformMat4(this.colDetData.sph[i].p, this.colDetData.sph[i].p0, this.modelMatrix);
-            }
+        for (var i = 0; i < this.CD_vec; ++i) {
+            vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.modelMatrix);
+        }
+        for (var i = 0; i < this.CD_sph; ++i) {
+            vec3.transformMat4(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
+            this.CD_sph_r[i] = this.CD_sph_r0[i] * this.cull_dist_scale;
+            this.CD_sph_rs[i] = this.CD_sph_r[i] * this.CD_sph_r[i];
+        }
+        for (var i = 0; i < this.CD_iPlane; ++i) {
+            vec3.transformMat4(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
+            // norm * 1/scale
+            vec3.multiply(this.CD_iPlane_n[i], this.CD_iPlane_n[i], vec3.inverse(vec3_dummy ,this.scale));
         }
     }
 
+    pushCD_vec(p, v) {
+        this.CD_vec += 1;
+
+        this.CD_vec_p0[this.CD_vec] = copy3f(p); 
+        this.CD_vec_p[this.CD_vec] = copy3f(p); 
+
+        this.CD_vec_v0[this.CD_vec] = copy3f(v); 
+        this.CD_vec_v[this.CD_vec] = copy3f(v); 
+    }
+    pushCD_sph(p, r) {
+        this.CD_sph += 1;
+
+        this.CD_sph_p0[this.CD_sph] = copy3f(p); 
+        this.CD_sph_p[this.CD_sph] = copy3f(p); 
+
+        this.CD_sph_r0[this.CD_sph] = r;
+        this.CD_sph_r[this.CD_sph] = r;
+        this.CD_sph_rs[this.CD_sph] = r*r;
+    }
+    pushCD_iPlane() {
+
+    }
 
 }
 
@@ -195,7 +264,6 @@ class E3D_entity_dynamic extends E3D_entity {
     constructor(id) {
         super(id, "E3D_entity_dynamic/"+id, true);
         this.drawMode = 1; // gl.LINES;      
-        this.colDetData.sph = [];  
         this.arraySize = 0;
         this.arrayIncrement = 128 ;// 3 vertex * 128;
     }

@@ -46,4 +46,11 @@ function copy3f(a) {
 function add3f(a, b) {
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2] ];
 }
+function copy3fArray(a) {
+    var r = Array(a.length);
+    for (var i = 0; i< a.length; ++i) {
+        r[i] = copy3f(a[i]);
+    }
+    return r;
+}
 

@@ -500,11 +500,11 @@ function VectSphHit(v, so, sr) { // translated to v origin
 
 
 function splode(loc) {
-    log("sploded!", false);
+  // log("sploded!", false);
   // log(splos.numElements);
     var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
     var nvect = 18;
-    var iter = 25;
+    var iter = 20;
     var dim = 0.1;
     var dvect = [];
     var vect = [];

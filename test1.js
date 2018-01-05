@@ -17,6 +17,7 @@ document.getElementById("test3").addEventListener("click", test3);
 document.getElementById("test4").addEventListener("click", test4);
 document.getElementById("test5").addEventListener("click", test5);
 document.getElementById("test6").addEventListener("click", test6);
+document.getElementById("test7").addEventListener("click", test7);
 
 const gco = [0 ,0 ,0];
 let glo = [0,0 ,0];
@@ -411,9 +412,9 @@ function test6() {
     var _ra = [];
     
     for (var i = 0; i < numtst; ++i ) {
-        _ia[i] = vec3.random(vec3_dummy, Math.random(10)+1);
-        _na[i] = vec3.random(vec3_dummy, Math.random(10)+1);
-        _ra[i] =  Math.random(10)+1;
+        _ia[i] = vec3.random(vec3_dummy, 10*Math.random()+1);
+        _na[i] = vec3.random(vec3_dummy, 10*Math.random()+1);
+        _ra[i] = 10*Math.random()+1;
     }
 
     var ia = _ia.slice(0, numtst);
@@ -554,6 +555,172 @@ function VectSphHit_quad(v, so, sr) {
 
     var t = (t0 > t1) ? t0 : t1;
     return t > 0 ? t : false;
+}
+
+
+function test7(event) {
+    const numtst = 5000000;
+    
+    addLine("Num iter: " + numtst);
+  /*  
+    var vec3_dummy = [0, 0, 0];
+    var _ia = [];
+    var _na = [];
+    var _ra = [];
+    
+    for (var i = 0; i < numtst; ++i ) {
+        _ia[i] = vec3.random(vec3_dummy, Math.random(10)+1);
+        _na[i] = vec3.random(vec3_dummy, Math.random(10)+1);
+        _ra[i] =  Math.random(10)+1;
+    }
+
+    var ia = _ia.slice(0, numtst);
+    var na = _na.slice(0, numtst);
+/*
+*/
+    var idx = Array(numtst);
+    for (var i = 0; i < numtst; ++i ) {
+        idx[i] = Math.floor(Math.random()*3);
+    }
+
+    var s = 0;
+    var a1 = [1, 1, 1];
+    var a2 = [2, 2, 2];
+
+    let dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s += a1[idx[i]];
+    }
+    let et = Date.now();
+    addLine("[1, 1, 1] rnd access: " + (et-dt));
+
+     s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s += a1[0];
+        s += a1[2];
+        s += a1[3];
+    }
+    et = Date.now();
+    addLine("[1, 1, 1] x3 access: " + (et-dt));
+
+    s = 0;
+    var f1 = new Float32Array([1, 1, 1]);
+    var f2 = new Float32Array([2, 2, 2]);
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s += f1[idx[i]];
+    }
+    et = Date.now();
+    addLine("Float32Array([1, 1, 1]) rnd access: " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s += f1[0];
+        s += f1[1];
+        s += f1[2];
+    }
+    et = Date.now();
+    addLine("Float32Array([1, 1, 1]) x3 access: " + (et-dt));
+
+
+    s = 0;
+    var o1 = { a0: 1, a1 : 2, a2 : 3 };
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = new Float32Array(3);
+        s[0]=1;
+        s[1]=2;
+        s[2]=3;
+    }
+    et = Date.now();
+    addLine("access o.a0 o.a1, o.a2: " + (et-dt));
+
+
+
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s += a1[idx[i]] + a2[idx[i]]; 
+        s += a2[idx[i]] + a1[idx[i]]; 
+    }
+    et = Date.now();
+    addLine("add [1, 1, 1]: " + (et-dt));
+
+
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s += f1[idx[i]] + f2[idx[i]]; 
+        s += f2[idx[i]] + f1[idx[i]]; 
+    }
+    et = Date.now();
+    addLine("add Float32Array: " + (et-dt));
+
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s += f1[idx[i]] + a2[idx[i]]; 
+        s += f2[idx[i]] + a1[idx[i]]; 
+    }
+    et = Date.now();
+    addLine("add mix: " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = [1, 2, 3]; 
+    }
+    et = Date.now();
+    addLine("create [1, 2, 3]: " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = []; 
+        s[0]=1;
+        s[1]=2;
+        s[2]=3;
+    }
+    et = Date.now();
+    addLine("create [] +  [0]=1 [1]=2 [2]=3: " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = Array(3);
+        s[0]=1;
+        s[1]=2;
+        s[2]=3;
+    }
+    et = Date.now();
+    addLine("create Array(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = new Float32Array([1, 2, 3]);
+    }
+    et = Date.now();
+    addLine("create FloatArray([1, 2, 3]): " + (et-dt));
+
+    s = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = new Float32Array(3);
+        s[0]=1;
+        s[1]=2;
+        s[2]=3;
+    }
+    et = Date.now();
+    addLine("create FloatArray(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
+
+
 }
 
 /*
