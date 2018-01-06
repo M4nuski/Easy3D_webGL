@@ -40,6 +40,9 @@ const DegToRad = (Math.PI / 180.0);
 function rndPM(val) { // random between plus or minus "val"
     return (2*val*Math.random()) - val;
 }
+function rndInt(val) { // integer random between 0 and val-1
+    return Math.floor(Math.random() * val);
+}
 
 function add3f(a, b) {
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2] ];

@@ -18,6 +18,13 @@ document.getElementById("test4").addEventListener("click", test4);
 document.getElementById("test5").addEventListener("click", test5);
 document.getElementById("test6").addEventListener("click", test6);
 document.getElementById("test7").addEventListener("click", test7);
+document.getElementById("test8").addEventListener("click", test8);
+
+function addLine(text) {
+    log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
+}
+
+
 
 const gco = [0 ,0 ,0];
 let glo = [0,0 ,0];
@@ -562,22 +569,7 @@ function test7(event) {
     const numtst = 5000000;
     
     addLine("Num iter: " + numtst);
-  /*  
-    var vec3_dummy = [0, 0, 0];
-    var _ia = [];
-    var _na = [];
-    var _ra = [];
-    
-    for (var i = 0; i < numtst; ++i ) {
-        _ia[i] = vec3.random(vec3_dummy, Math.random(10)+1);
-        _na[i] = vec3.random(vec3_dummy, Math.random(10)+1);
-        _ra[i] =  Math.random(10)+1;
-    }
 
-    var ia = _ia.slice(0, numtst);
-    var na = _na.slice(0, numtst);
-/*
-*/
     var idx = Array(numtst);
     for (var i = 0; i < numtst; ++i ) {
         idx[i] = Math.floor(Math.random()*3);
@@ -738,66 +730,126 @@ function test7(event) {
     }
     et = Date.now();
     addLine("create FloatArray(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
-
-
 }
 
-/*
-bool intersect(const Ray &ray) const 
-{ 
-        float t0, t1; // solutions for t if the ray intersects 
-#if 0 
-        // geometric solution
-        Vec3f L = center - orig; 
-        float tca = L.dotProduct(dir); 
-        // if (tca < 0) return false;
-        float d2 = L.dotProduct(L) - tca * tca; 
-        if (d2 > radius2) return false; 
-        float thc = sqrt(radius2 - d2); 
-        t0 = tca - thc; 
-        t1 = tca + thc; 
-#else 
-        // analytic solution
-        Vec3f L = orig - center; 
-        float a = dir.dotProduct(dir); 
-        float b = 2 * dir.dotProduct(L); 
-        float c = L.dotProduct(L) - radius2; 
-        if (!solveQuadratic(a, b, c, t0, t1)) return false; 
-#endif 
-        if (t0 > t1) std::swap(t0, t1); 
- 
-        if (t0 < 0) { 
-            t0 = t1; // if t0 is negative, let's use t1 instead 
-            if (t0 < 0) return false; // both t0 and t1 are negative 
-        } 
- 
-        t = t0; 
- 
-        return true; 
-bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1) 
-{ 
-    float discr = b * b - 4 * a * c; 
-    if (discr < 0) return false; 
-    else if (discr == 0) x0 = x1 = - 0.5 * b / a; 
-    else { 
-        float q = (b > 0) ? 
-            -0.5 * (b + sqrt(discr)) : 
-            -0.5 * (b - sqrt(discr)); 
-        x0 = q / a; 
-        x1 = c / q; 
-    } 
-    if (x0 > x1) std::swap(x0, x1); 
- 
-    return true; 
-} 
+function test8 (event){
+    const numtst = 5000000;    
+    addLine("Num iter: " + numtst);
+
+    var idx = Array(numtst);
+    for (var i = 0; i < numtst; ++i ) {
+        idx[i] = Math.floor(Math.random()*3);
+    }
+
+    var s = [];
+  //  var a1 = [1, 1, 1];
+  //  var a2 = [2, 2, 2];
+
+    let dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s.push([1,2,3]);
+    }
+    let et = Date.now();
+    addLine("push([1, 1, 1]) : " + (et-dt));
+
+
+    s = [];
+    var idx = 0;
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s[idx] = [1, 2, 3];
+        idx++
+    }
+    et = Date.now();
+    addLine("holed idx++: " + (et-dt));
+
+    idx = 0;
+    var inc = 1000000;
+    s = Array(inc);
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s[idx] = [1, 2, 3];
+        idx++;
+    }
+    et = Date.now();
+    addLine("start at inc, then holed : " + (et-dt));
+
+    idx = 0;
+    inc = 1000;
+    var l = inc;
+    s = Array(inc);
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s[idx] = [1, 2, 3];
+        idx++;
+        if (idx >= l) {
+            s.length += inc;
+            l += inc;
+        }
+    }
+    et = Date.now();
+    addLine("length+= inc: " + (et-dt));
+
+    /*
+    idx = 0;
+    inc = 1000;
+    l = inc;
+    s = Array(inc);
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s[idx] = [1, 2, 3];
+        idx++;
+        if (idx >= l) {
+            s = s.concat(Array(inc));
+            l += inc;
+        }
+    }
+    et = Date.now();
+    addLine("concat(array(inc)) : " + (et-dt));
 */
+addLine("concat(array(inc)) : NOPE");
 
 
-
-
-function addLine(text) {
-    log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
+idx = 0;
+inc = 1000000;
+var x = 0;
+s = Array(inc);
+dt = Date.now();
+for (let i = 0; i < numtst; ++i) {
+    s[idx] = [1, 2, 3, 4, 5];
+    x += s[idx][0] + s[idx][1] + s[idx][2] + s[idx][3] + s[idx][4] ; 
+    idx++;
 }
+et = Date.now();
+addLine("s[a,b,c] read s[0]+s[1]+s[2] " + (et-dt));
+
+idx = 0;
+inc = 1000000;
+var x = 0;
+var s0 = Array(inc);
+var s1 = Array(inc);
+var s2 = Array(inc);
+var s3 = Array(inc);
+var s4 = Array(inc);
+dt = Date.now();
+for (let i = 0; i < numtst; ++i) {
+    s0[idx] = 1;
+    s1[idx] = 2;
+    s2[idx] = 3;
+    s3[idx] = 4;
+    s4[idx] = 5;
+    x += s0[idx] + s1[idx] + s2[idx] + s3[idx] + s4[idx]; 
+    idx++;
+}
+et = Date.now();
+addLine("s0=a, s1=b, s2=c read s0+s1+s2 " + (et-dt));
+
+
+
+
+
+}
+
 
 
 });

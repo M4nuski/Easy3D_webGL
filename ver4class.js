@@ -124,8 +124,8 @@ class E3D_entity {
             this.CD_fPlane = 0;
             this.CD_fPlane_n0 = []; // normal original to model space
             this.CD_fPlane_n  = []; // normal transformed to world space (rotation, scale)
-            this.CD_fPlane_d0 = []; // z distance original to model space
-            this.CD_fPlane_d  = []; // transformed to world space (scale)
+            this.CD_fPlane_d0 = []; // center position original to model space
+            this.CD_fPlane_d  = []; // transformed to world space (rotation, scale)
             this.CD_fPlane_w0 = []; // half width vector original to model space
             this.CD_fPlane_w  = []; // transformed to world space (rotation, scale)
             this.CD_fPlane_h0 = []; // half height vector original to model space
@@ -172,6 +172,17 @@ class E3D_entity {
             this.CD_iPlane_n0 = copy3fArray(entity.CD_iPlane_n0);
             this.CD_iPlane_n  = copy3fArray(entity.CD_iPlane_n);
         }
+        if (entity.CD_fPlane > 0) {
+            this.CD_fPlane = entity.CD_fPlane;
+            this.CD_fPlane_d0 = copy3fArray(entity.CD_fPlane_d0);
+            this.CD_fPlane_d  = copy3fArray(entity.CD_fPlane_d);
+            this.CD_fPlane_n0 = copy3fArray(entity.CD_iPlane_n0);
+            this.CD_fPlane_n  = copy3fArray(entity.CD_iPlane_n);
+            this.CD_fPlane_w0 = copy3fArray(entity.CD_fPlane_w0);
+            this.CD_fPlane_w  = copy3fArray(entity.CD_fPlane_w);
+            this.CD_fPlane_h0 = copy3fArray(entity.CD_iPlane_h0);
+            this.CD_fPlane_h  = copy3fArray(entity.CD_iPlane_h);
+        }
 
     }
 
@@ -208,6 +219,9 @@ class E3D_entity {
         for (var i = 0; i < this.CD_fPlane; ++i) {
             vec3.transformMat4(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
             vec3.multiply(this.CD_fPlane_n[i], this.CD_fPlane_n[i], invScale);
+
+            vec3.transformMat4(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.normalMatrix);
+            vec3.multiply(this.CD_fPlane_d[i], this.CD_fPlane_d[i], invScale);
 
             vec3.transformMat4(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
             vec3.multiply(this.CD_fPlane_w[i], this.CD_fPlane_w[i], invScale);
@@ -247,8 +261,8 @@ class E3D_entity {
     pushCD_fPlane(d, hw, hh, n) {
         this.CD_fPlane_n0[this.CD_fPlane] = n.slice();
         this.CD_fPlane_n[this.CD_fPlane] = n.slice();  
-        this.CD_fPlane_d0[this.CD_fPlane] = d; 
-        this.CD_fPlane_d[this.CD_fPlane] = d;
+        this.CD_fPlane_d0[this.CD_fPlane] = d.slice();  
+        this.CD_fPlane_d[this.CD_fPlane] = d.slice();  
         this.CD_fPlane_w0[this.CD_fPlane] = hw.slice();
         this.CD_fPlane_w[this.CD_fPlane] = hw.slice();
         this.CD_fPlane_h0[this.CD_fPlane] = hh.slice();
@@ -577,11 +591,11 @@ class E3D_entity_dynamic extends E3D_entity {
 
             vec3.transformMat4(n, n, m);
 
-            this.pushCD_iPlane(-vec3.dot(pos, n), n);// vec3.length(pos), n);
+            this.pushCD_iPlane(vec3.dot(pos, n), n);
         }
         if (addFPCD) {
             m = mat4.create();
-            let n = pos.slice();
+            let n = [0, 0, 1];
             let w = [1/width, 0, 0];
             let h = [0, 1/height, 0];
             mat4.rotateZ(m, m, rot[2]);
@@ -592,7 +606,7 @@ class E3D_entity_dynamic extends E3D_entity {
             vec3.transformMat4(w, w, m);
             vec3.transformMat4(h, h, m);
 
-            this.pushCD_fPlane(vec3.dot(pos, n), h, w, n);// -vec3.dot(pos, n)
+            this.pushCD_fPlane(pos, h, w, n);
         }
     }
 

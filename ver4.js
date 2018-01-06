@@ -171,6 +171,7 @@ function initEngine() {
     testSph.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true, false);
 
     testSph.addPlane([0, 0, 50], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
+    testSph.addPlane([-50, -20, 25], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
 }
 
 
@@ -327,7 +328,7 @@ function sphAnim() {
                     var d = vec3.squaredDistance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
                     var minD = this.target.CD_sph_rs[0] + this.scn.entities[i].CD_sph_rs[j];
                     if (d <= minD) {
-                        log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
+                      //  log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
                         var penetration = Math.sqrt(minD) - Math.sqrt(d);
                         var n = [this.target.CD_sph_p[0][0] - this.scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - this.scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - this.scn.entities[i].CD_sph_p[j][2] ];
                         this.data.spd = reflect(this.data.spd, n);
@@ -346,20 +347,17 @@ function sphAnim() {
                 for (let j = 0; j < this.scn.entities[i].CD_iPlane; ++j) {
                     nHitTest++;
 
-                    var dist = vec3.dot(v, this.scn.entities[i].CD_iPlane_n[j]);
-                    var last_Dist = vec3.dot(last_v, this.scn.entities[i].CD_iPlane_n[j]);
-                    
-                    dist = this.scn.entities[i].CD_iPlane_d[j] + dist;
+                    var dist = vec3.dot(v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j] ;
+                    var last_Dist = vec3.dot(last_v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j];
+                                       
                     var sgn = (dist > 0) ? 1 : -1;
                     dist = Math.abs(dist) ;
 
-                    last_Dist = this.scn.entities[i].CD_iPlane_d[j] + last_Dist;
                     var last_sgn = (last_Dist > 0) ? 1 : -1;
                     last_Dist = Math.abs(last_Dist) ;
-
                 
                     if ( dist < this.target.CD_sph_r[0]) { 
-                        log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
+                    //    log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
                         var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
                         penetration *= last_sgn;
                         this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
@@ -373,7 +371,7 @@ function sphAnim() {
                         dist *= sgn;
                         last_Dist *= last_sgn;
                         if ( ( (dist > 0) && (last_Dist < 0) ) || ( (dist < 0) && (last_Dist > 0) ) ) {
-                            log("hit sph(vect)-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
+                          //  log("hit sph(vect)-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
                             var penetration = ( Math.abs(last_Dist) +  Math.abs(dist)) * last_sgn;
                             this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
                               testSph.moveTo(this.target.position);
@@ -410,7 +408,7 @@ function sphAnim() {
         this.data.spd[0] += rndPM(1);
         this.data.spd[1] += rndPM(1);
         this.data.spd[2] += rndPM(1);
-        this.data.ttl = 10*60;
+        this.data.ttl = 10;
         
         this.state = E3D_PLAY;
         this.target.visible = true;
@@ -436,71 +434,72 @@ function shotgunAnim() {
         for (let i = 0; i < numPellets; ++i) if (this.data.act[i]) { // i is pallet index
 
             // current tranlation vector
-            var v = vec3.scale([0,0,0], this.data.vect[i], timer.delta);
-            var so = [0, 0, 0];
-            //vec3.scale(v, this.data.vect[i], timer.delta);
-
-            var v1 = vec3.add([0,0,0], this.data.org[i], v); // vector end
+            var vd = vec3.scale([0,0,0], this.data.vect[i], timer.delta); // vector delta
+            var so = [0, 0, 0]; // sphere origin
+            var v1 = vec3.add([0,0,0], this.data.org[i], vd); // vector end
 
             // translate pellet entity elements
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
                 var b = this.target.getVertex3f((i*this.target.srcNumElements) + j); // b is a view in float32array...
-                vec3.add(b, v, b);
+                vec3.add(b, vd, b);
             }
 
-            // collision detection - this vec (internal) to other sph
-            var colListS = [] ; // array of (entIdx, cdIdx, t)
-            var colListV = [] ; // array of (entIdx, cdIdx, t)
+            var colList = [] ; // array of [entIdx, cdIdx, t, srcType, trgtType, newloc]
+
             for (var entIdx = 0; entIdx < this.scn.entities.length; ++entIdx) {
+
                 if (this.scn.entities[entIdx].CD_sph > 0) 
                 for (var cdIdx = 0; cdIdx < this.scn.entities[entIdx].CD_sph; ++cdIdx) {
                     nHitTest++;
                     vec3.subtract(so, this.scn.entities[entIdx].CD_sph_p[cdIdx], this.data.org[i]);
-                    var t = VectSphHit(this.data.vectNorm[i], so, this.scn.entities[entIdx].CD_sph_rs[cdIdx]);
-                    
-                    if (t != false) colListS.push( [entIdx, cdIdx, t] );                         
+                    var t = VectSphHit(this.data.vectNorm[i], so, this.scn.entities[entIdx].CD_sph_rs[cdIdx]);                    
+                    if (t != false) colList.push( [entIdx, cdIdx, t, "vec", "sph"] );                         
                 } // end for each sph data of each entities with sph CD
+
+                if (this.scn.entities[entIdx].CD_iPlane > 0) 
+                for (var cdIdx = 0; cdIdx < this.scn.entities[entIdx].CD_iPlane; ++cdIdx) {
+                    nHitTest++;
+                    var d0 = vec3.dot(this.data.org[i], this.scn.entities[entIdx].CD_iPlane_n[cdIdx]) - this.scn.entities[entIdx].CD_iPlane_d[cdIdx];
+                    var d1 = vec3.dot(v1, this.scn.entities[entIdx].CD_iPlane_n[cdIdx]) - this.scn.entities[entIdx].CD_iPlane_d[cdIdx];
+                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) {
+                        var t = -d0 / (d1 - d0);
+                        var newloc = vec3.lerp([0,0,0], this.data.org[i], v1, t);
+                        colList.push( [entIdx, cdIdx, t, "vec", "iPlane", newloc] );
+                    }                     
+                } // end for each sph data of each entities with iPlane CD
 
                 if (this.scn.entities[entIdx].CD_fPlane > 0) 
                 for (var cdIdx = 0; cdIdx < this.scn.entities[entIdx].CD_fPlane; ++cdIdx) {
                     nHitTest++;
-                    // collapse vectors
-                    var d0 = vec3.dot(this.data.org[i], this.scn.entities[entIdx].CD_fPlane_n[cdIdx]) - this.scn.entities[entIdx].CD_fPlane_d[cdIdx];
-                    var d1 = vec3.dot(v1, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]) - this.scn.entities[entIdx].CD_fPlane_d[cdIdx];
-  
+                    var offsetV0 = vec3.subtract([0,0,0], this.data.org[i], this.scn.entities[entIdx].CD_fPlane_d[cdIdx]);
+                    var offsetV1 = vec3.subtract([0,0,0], v1, this.scn.entities[entIdx].CD_fPlane_d[cdIdx]);
+                    var d0 = vec3.dot(offsetV0, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
+                    var d1 = vec3.dot(offsetV1, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
                     if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) {
-                       // log (i + "fPlane " + d0 + " " + d1);
                         var t = -d0 / (d1 - d0);
-                        var newloc = vec3.lerp([0,0,0], this.data.org[i], v1, t);
-
-            //           var xx0 = Math.abs(vec3.dot(this.data.org[i], this.scn.entities[entIdx].CD_fPlane_w[cdIdx]) );//  -offset
-              //         var yy0 = Math.abs(vec3.dot(this.data.org[i], this.scn.entities[entIdx].CD_fPlane_h[cdIdx]) );//  -offset
-                        var xx1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_w[cdIdx]) );//  -offset
-                        var yy1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_h[cdIdx]) );//  -offset
-
-                        if ( (xx1 <= 1) && (yy1 <= 1) ) {
-                            colListV.push( [entIdx, cdIdx, newloc] );
-                        }
-                    }
-
-                  //  if (t != false) colList.push( [entIdx, cdIdx, t] );                         
+                        var newloc = vec3.lerp([0,0,0], offsetV0, offsetV1, t);
+                        var xx1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_w[cdIdx]) );
+                        var yy1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_h[cdIdx]) );
+                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "fPlane", add3f(newloc,this.scn.entities[entIdx].CD_fPlane_d[cdIdx] )] );
+                    }                     
                 } // end for each sph data of each entities with fPlane CD
+
 
             }
 
-            if (colListS.length > 0) {
-                var vLen = vec3.length(v);      
+            if (colList.length > 0) {
+                var vLen = vec3.length(vd);      
                 // remove out of range          
-                for (cl = colListS.length-1; cl >= 0; --cl) if (colListS[cl][2] > vLen) colListS.splice(cl, 1);
+                for (cl = colList.length-1; cl >= 0; --cl) if (colList[cl][2] > vLen) colList.splice(cl, 1);
                 // if nec sort ascending per item 2 (t)
-                if (colListS.length > 0) {
-                    if (colListS.length > 1) colListS.sort((a, b) => { return a[2] - b[2];} );
+                if (colList.length > 0) {
+                    if (colList.length > 1) colList.sort((a, b) => { return a[2] - b[2]; } );
 
                     //deactive pellet, log, and do something...
                     this.data.act[i] = false;
-                    log("Hit sph-sph: ent[" + colListS[0][0] + "] sph[" + colListS[0][1] +"]");
-                    var newloc = vec3.scaleAndAdd([0,0,0], this.data.org[i], this.data.vectNorm[i], colListS[0][2]);
-                    if (this.scn.entities[colListS[0][0]].id.indexOf("sph") > -1) {
+                  //  log("Hit pellet: " +colList[0][3] + " ent[" + colList[0][0] + "] " + colList[0][4] + " CD[" + colList[0][1] +"]");
+                    var newloc = (colList[0][5]) ? colList[0][5] : vec3.scaleAndAdd([0,0,0], this.data.org[i], this.data.vectNorm[i], colList[0][2]);
+                    if (this.scn.entities[colList[0][0]].id.indexOf("sph") > -1) {
                         splode(newloc);
                     } else {
                         testSph.addWireCross(newloc, 2, [1,1,1]);
@@ -508,32 +507,8 @@ function shotgunAnim() {
                 }
             }
 
-
-            if (colListV.length > 0) {
-          //      var vLen = vec3.length(v);      
-                // remove out of range          
-            //    for (cl = colListS.length-1; cl >= 0; --cl) if (colListS[cl][2] > vLen) colListS.splice(cl, 1);
-                // if nec sort ascending per item 2 (t)
-                //if (colListS.length > 0) {
-                    if (colListV.length > 1) colListV.sort((a, b) => { return a[2] - b[2];} );
-
-                    //deactive pellet, log, and do something...
-                    this.data.act[i] = false;
-                    log("Hit vect-fPlane: ent[" + colListV[0][0] + "] fPlane[" + colListV[0][1] +"]" + colListV[0][2]);
-
-                //    var newloc = vec3.lerp([0,0,0], this.data.org[i], v1, colListV[0][2]);
-                   // vec3.multiply(newloc, newloc, this.scn.entities[colListV[0][0]].CD_fPlane_n[colListV[0][1]] );
-                    
-//                    var newloc = vec3.scaleAndAdd([0,0,0], this.data.org[i], this.data.vectNorm[i], colListS[0][2]);
-
-                     testSph.addWireCross( colListV[0][2], 2, [0.5,0.5,0.5]);
-                   
-               // }
-            }
-
-
             // update pellet origin
-            vec3.add(this.data.org[i], this.data.org[i], v);
+            vec3.add(this.data.org[i], this.data.org[i], vd);
 
         } // end for each active pellet
 
@@ -565,7 +540,7 @@ function shotgunAnim() {
             this.data.vectNorm[i] = vec3.normalize([0,0,0], this.data.vect[i] );
 
             //pellet origin (world coordinates)
-            var offset = this.scn.camera.adjustToCamera(vec3.fromValues(10 + rndPM(5), -15 - rndPM(5),  rndPM(2)));
+            var offset = this.scn.camera.adjustToCamera(vec3.fromValues(10 + rndPM(5), -10 - rndPM(5),  rndPM(2)));
             this.data.org[i] = vec3.add([0, 0, 0], this.target.position, offset);
             
             //offset pelets vertex by new origin and invalidate normal
