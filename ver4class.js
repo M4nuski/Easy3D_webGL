@@ -115,12 +115,22 @@ class E3D_entity {
 
             // Infinite Plane Target, on X-Y plane
             this.CD_iPlane = 0;
-            this.CD_iPlane_d0 = []; // original to model space
-            this.CD_iPlane_d  = []; // transformed to world space (scale)
             this.CD_iPlane_n0 = []; // normal original to model space
             this.CD_iPlane_n  = []; // normal transformed to world space (rotation, scale)
+            this.CD_iPlane_d0 = []; // z distance original to model space
+            this.CD_iPlane_d  = []; // transformed to world space (scale)
 
-            // TODO Finite Plane Target
+            // Finite Plane Target, X-Y plane 
+            this.CD_fPlane = 0;
+            this.CD_fPlane_n0 = []; // normal original to model space
+            this.CD_fPlane_n  = []; // normal transformed to world space (rotation, scale)
+            this.CD_fPlane_d0 = []; // z distance original to model space
+            this.CD_fPlane_d  = []; // transformed to world space (scale)
+            this.CD_fPlane_w0 = []; // half width vector original to model space
+            this.CD_fPlane_w  = []; // transformed to world space (rotation, scale)
+            this.CD_fPlane_h0 = []; // half height vector original to model space
+            this.CD_fPlane_h  = []; // transformed to world space (rotation, scale)
+
             // TODO Cubic Target (/Source?)
 
         this.resetMatrix();
@@ -190,10 +200,20 @@ class E3D_entity {
             this.CD_sph_r[i] = this.CD_sph_r0[i] * this.cull_dist_scale;
             this.CD_sph_rs[i] = this.CD_sph_r[i] * this.CD_sph_r[i];
         }
+        var invScale = vec3.inverse([0, 0, 0] ,this.scale);
         for (var i = 0; i < this.CD_iPlane; ++i) {
             vec3.transformMat4(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
-            // norm * 1/scale
-            vec3.multiply(this.CD_iPlane_n[i], this.CD_iPlane_n[i], vec3.inverse(vec3_dummy ,this.scale));
+            vec3.multiply(this.CD_iPlane_n[i], this.CD_iPlane_n[i], invScale);
+        }
+        for (var i = 0; i < this.CD_fPlane; ++i) {
+            vec3.transformMat4(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
+            vec3.multiply(this.CD_fPlane_n[i], this.CD_fPlane_n[i], invScale);
+
+            vec3.transformMat4(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
+            vec3.multiply(this.CD_fPlane_w[i], this.CD_fPlane_w[i], invScale);
+
+            vec3.transformMat4(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
+            vec3.multiply(this.CD_fPlane_h[i], this.CD_fPlane_h[i], invScale);
         }
     }
 
@@ -223,6 +243,18 @@ class E3D_entity {
         this.CD_iPlane_n[this.CD_iPlane] = n.slice();
 
         this.CD_iPlane += 1;
+    }
+    pushCD_fPlane(d, hw, hh, n) {
+        this.CD_fPlane_n0[this.CD_fPlane] = n.slice();
+        this.CD_fPlane_n[this.CD_fPlane] = n.slice();  
+        this.CD_fPlane_d0[this.CD_fPlane] = d; 
+        this.CD_fPlane_d[this.CD_fPlane] = d;
+        this.CD_fPlane_w0[this.CD_fPlane] = hw.slice();
+        this.CD_fPlane_w[this.CD_fPlane] = hw.slice();
+        this.CD_fPlane_h0[this.CD_fPlane] = hh.slice();
+        this.CD_fPlane_h[this.CD_fPlane] = hh.slice();
+        
+        this.CD_fPlane += 1;
     }
 
 }
@@ -542,14 +574,25 @@ class E3D_entity_dynamic extends E3D_entity {
             mat4.rotateZ(m, m, rot[2]);
             mat4.rotateX(m, m, rot[0]);
             mat4.rotateY(m, m, rot[1]);
-            
-            vec3.transformMat4(n, n, m);
-        //    let n = [0, 0, 1];
-         //   vec3.rotateZ(n, n, vec3_origin, rot[2]); 
-         //   vec3.rotateX(n, n, vec3_origin, rot[0]); 
-         //   vec3.rotateY(n, n, vec3_origin, rot[1]); 
-            this.pushCD_iPlane(-vec3.dot(pos, n), n);// vec3.length(pos), n);
 
+            vec3.transformMat4(n, n, m);
+
+            this.pushCD_iPlane(-vec3.dot(pos, n), n);// vec3.length(pos), n);
+        }
+        if (addFPCD) {
+            m = mat4.create();
+            let n = pos.slice();
+            let w = [1/width, 0, 0];
+            let h = [0, 1/height, 0];
+            mat4.rotateZ(m, m, rot[2]);
+            mat4.rotateX(m, m, rot[0]);
+            mat4.rotateY(m, m, rot[1]);
+
+            vec3.transformMat4(n, n, m);
+            vec3.transformMat4(w, w, m);
+            vec3.transformMat4(h, h, m);
+
+            this.pushCD_fPlane(vec3.dot(pos, n), h, w, n);// -vec3.dot(pos, n)
         }
     }
 
