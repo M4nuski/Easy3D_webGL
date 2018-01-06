@@ -443,11 +443,11 @@ class E3D_entity_dynamic extends E3D_entity {
         let m = mat4.create();
 
         mat4.translate(m, m, pos);
-
+        
         mat4.rotateZ(m, m, rot[2]);
         mat4.rotateX(m, m, rot[0]);
         mat4.rotateY(m, m, rot[1]);
-        
+
         vec3.transformMat4(p0, p0, m);
         vec3.transformMat4(p1, p1, m);
         vec3.transformMat4(p2, p2, m);
@@ -536,11 +536,19 @@ class E3D_entity_dynamic extends E3D_entity {
         } 
 
         if (addIPCD) {
+            m = mat4.create();
             let n = [0, 0, 1];
-            vec3.rotateZ(n, n, vec3_origin, rot[2]); 
-            vec3.rotateX(n, n, vec3_origin, rot[0]); 
-            vec3.rotateY(n, n, vec3_origin, rot[1]); 
-            this.pushCD_iPlane(vec3.length(pos), n);
+            
+            mat4.rotateZ(m, m, rot[2]);
+            mat4.rotateX(m, m, rot[0]);
+            mat4.rotateY(m, m, rot[1]);
+            
+            vec3.transformMat4(n, n, m);
+        //    let n = [0, 0, 1];
+         //   vec3.rotateZ(n, n, vec3_origin, rot[2]); 
+         //   vec3.rotateX(n, n, vec3_origin, rot[0]); 
+         //   vec3.rotateY(n, n, vec3_origin, rot[1]); 
+            this.pushCD_iPlane(-vec3.dot(pos, n), n);// vec3.length(pos), n);
 
         }
     }
@@ -596,7 +604,7 @@ class E3D_entity_dynamic extends E3D_entity {
         this.setColor3f(idx, color);
 
         vec3.add(this.currentPos, this.currentPos, p);
-        
+
         idx++;
         this.setVertex3f(idx, p);
         this.setColor3f(idx, color);  

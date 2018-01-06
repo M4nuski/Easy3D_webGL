@@ -167,6 +167,8 @@ function initEngine() {
 
     testSph.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true, false);
     testSph.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true, false);
+    testSph.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true, false);
+    testSph.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true, false);
 }
 
 
@@ -353,11 +355,11 @@ function sphAnim() {
                     var last_sgn = (last_Dist > 0) ? 1 : -1;
                     last_Dist = Math.abs(last_Dist) ;
 
-                    
+                
                     if ( dist < this.target.CD_sph_r[0]) { 
                         log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
-
-                        var penetration = last_sgn * (this.target.CD_sph_r[0] - sgn*dist); 
+                        var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
+                        penetration *= last_sgn;
                         this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
                             testSph.moveTo(this.target.position);
                         vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
