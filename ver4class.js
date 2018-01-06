@@ -270,6 +270,11 @@ class E3D_entity_dynamic extends E3D_entity {
         this.drawMode = 1; // gl.LINES;      
         this.arraySize = 0;
         this.arrayIncrement = 128 ;// 3 vertex * 128;
+
+        this.colSweep =  [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
+        this.colSweepIndex = 0;
+
+        this.currentPos = [ 0, 0, 0 ];
     }
 
     setSize(nElements) {        
@@ -535,14 +540,66 @@ class E3D_entity_dynamic extends E3D_entity {
             vec3.rotateZ(n, n, vec3_origin, rot[2]); 
             vec3.rotateX(n, n, vec3_origin, rot[0]); 
             vec3.rotateY(n, n, vec3_origin, rot[1]); 
-
-            //mat4.rotateZ(m, m, rot[2]);
-            //mat4.rotateX(m, m, rot[0]);
-            //mat4.rotateY(m, m, rot[1]);
-
             this.pushCD_iPlane(vec3.length(pos), n);
 
         }
+    }
+
+    getNextSweepColor() {
+        this.colSweepIndex++;
+        if (this.colSweepIndex >= this.colSweep.length)  this.colSweepIndex = 0;
+        return this.colSweep[this.colSweepIndex];
+    }
+
+    moveTo (p) {
+        this.currentPos = p.slice();
+    }
+    moveBy (p) {
+        vec3.add(this.currentPos, this.currentPos, p);
+    }
+
+    lineTo(p, sweep, col= [1,1,1]) {
+        let idx = this.numElements;
+        this.increaseSize(2);
+
+        var color = (sweep) ? this.getNextSweepColor() : col;
+
+        this.setVertex3f(idx, this.currentPos);
+        this.setColor3f(idx, color);
+        idx++;
+        this.setVertex3f(idx, p);
+        this.setColor3f(idx, color);
+
+        this.currentPos = p.slice();
+    }
+
+    line(p0, p1, sweep, col= [1,1,1]) {
+        let idx = this.numElements;
+        this.increaseSize(2);
+
+        var color = (sweep) ? this.getNextSweepColor() : col;
+
+        this.setVertex3f(idx, p0);
+        this.setColor3f(idx, color);
+        idx++;
+        this.setVertex3f(idx, p1);
+        this.setColor3f(idx, color);
+    }
+
+    lineBy(p, sweep, col= [1,1,1]) {
+        let idx = this.numElements;
+        this.increaseSize(2);
+
+        var color = (sweep) ? this.getNextSweepColor() : col;
+
+        this.setVertex3f(idx, this.currentPos);
+        this.setColor3f(idx, color);
+
+        vec3.add(this.currentPos, this.currentPos, p);
+        
+        idx++;
+        this.setVertex3f(idx, p);
+        this.setColor3f(idx, color);  
     }
 
 
