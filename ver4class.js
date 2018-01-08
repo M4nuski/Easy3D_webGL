@@ -132,6 +132,16 @@ class E3D_entity {
             this.CD_fPlane_h  = []; // transformed to world space (rotation, scale)
 
             // TODO Cubic Target (/Source?)
+            this.CD_cube = 0;
+            this.CD_cube_p0 = []; // center position original to model space
+            this.CD_cube_p  = []; // transformed to world space (rotation, scale)
+            this.CD_cube_x0 = []; // half size on X vector original to model space
+            this.CD_cube_x  = []; // transformed to world space (rotation, scale)
+            this.CD_cube_y0 = []; // half size on Y vector original to model space
+            this.CD_cube_y  = []; // transformed to world space (rotation, scale)
+            this.CD_cube_z0 = []; // half size on Z vector original to model space
+            this.CD_cube_z  = []; // transformed to world space (rotation, scale)
+
 
         this.resetMatrix();
     } 
@@ -183,6 +193,17 @@ class E3D_entity {
             this.CD_fPlane_h0 = copy3fArray(entity.CD_iPlane_h0);
             this.CD_fPlane_h  = copy3fArray(entity.CD_iPlane_h);
         }
+        if (entity.CD_cube > 0) {
+            this.CD_cube = entity.CD_cube;
+            this.CD_cube_p0  = copy3fArray(entity.CD_cube_p0);
+            this.CD_cube_p = copy3fArray(entity.CD_cube_p);
+            this.CD_cube_x0  = copy3fArray(entity.CD_cube_x0);
+            this.CD_cube_x = copy3fArray(entity.CD_cube_x);
+            this.CD_cube_y0  = copy3fArray(entity.CD_cube_y0);
+            this.CD_cube_y = copy3fArray(entity.CD_cube_y);
+            this.CD_cube_z0  = copy3fArray(entity.CD_cube_z0);
+            this.CD_cube_z = copy3fArray(entity.CD_cube_z);
+        }
 
     }
 
@@ -229,6 +250,20 @@ class E3D_entity {
             vec3.transformMat4(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
             vec3.multiply(this.CD_fPlane_h[i], this.CD_fPlane_h[i], invScale);
         }
+
+        for (var i = 0; i < this.CD_cube; ++i) {
+            vec3.transformMat4(this.CD_cube_p[i], this.CD_cube_p0[i], this.normalMatrix);
+            vec3.multiply(this.CD_cube_p[i], this.CD_cube_p[i], invScale);
+
+            vec3.transformMat4(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
+            vec3.multiply(this.CD_cube_x[i], this.CD_cube_x[i], invScale);
+
+            vec3.transformMat4(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
+            vec3.multiply(this.CD_cube_y[i], this.CD_cube_y[i], invScale);
+
+            vec3.transformMat4(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
+            vec3.multiply(this.CD_cube_z[i], this.CD_cube_z[i], invScale);
+        }
     }
 
     pushCD_vec(p, v) {
@@ -270,6 +305,20 @@ class E3D_entity {
         
         this.CD_fPlane += 1;
     }
+
+    pushCD_cube(p, x, y, z) {
+        this.CD_cube_p0[this.CD_cube] = p.slice();
+        this.CD_cube_p[this.CD_cube] = p.slice();
+        this.CD_cube_x0[this.CD_cube] = x.slice();
+        this.CD_cube_x[this.CD_cube] = x.slice();
+        this.CD_cube_y0[this.CD_cube] = y.slice();
+        this.CD_cube_y[this.CD_cube] = y.slice();
+        this.CD_cube_z0[this.CD_cube] = z.slice();
+        this.CD_cube_z[this.CD_cube] = z.slice();
+
+        this.CD_cube += 1;
+    }
+
 
 }
 
@@ -667,6 +716,97 @@ class E3D_entity_dynamic extends E3D_entity {
         this.setColor3f(idx, color);  
     }
 
+    addWireCube(loc, rot, size, color, addCubeCD, centerCross = false, sideCross = false) {
+        let idx = this.numElements;
+
+        size[0] = Math.abs(size[0]) / 2;
+        size[1] = Math.abs(size[1]) / 2;
+        size[2] = Math.abs(size[2]) / 2;
+
+        let m = mat4.create();
+
+        mat4.translate(m, m, loc);
+        
+        mat4.rotateZ(m, m, rot[2]);
+        mat4.rotateX(m, m, rot[0]);
+        mat4.rotateY(m, m, rot[1]);
+
+        let tfr = [size[0], size[1], size[2]];
+        let tfl = [-size[0], size[1], size[2]];
+        let trr = [size[0], size[1], -size[2]];
+        let trl = [-size[0], size[1], -size[2]];
+
+        let bfr = [size[0], -size[1], size[2]];
+        let bfl = [-size[0], -size[1], size[2]];
+        let brr = [size[0], -size[1], -size[2]];
+        let brl = [-size[0], -size[1], -size[2]];
+
+        vec3.transformMat4(tfr, tfr, m);
+        vec3.transformMat4(tfl, tfl, m);
+        vec3.transformMat4(trr, trr, m);
+        vec3.transformMat4(trl, trl, m);
+
+        vec3.transformMat4(bfr, bfr, m);
+        vec3.transformMat4(bfl, bfl, m);
+        vec3.transformMat4(brr, brr, m);
+        vec3.transformMat4(brl, brl, m);
+
+         this.line(tfr, tfl, false, color);
+         this.line(tfl, trl, false, color);
+         this.line(trl, trr, false, color);
+         this.line(trr, tfr, false, color);
+
+         this.line(bfr, bfl, false, color);
+         this.line(bfl, brl, false, color);
+         this.line(brl, brr, false, color);
+         this.line(brr, bfr, false, color);
+
+         this.line(tfr, bfr, false, color);
+         this.line(tfl, bfl, false, color);
+         this.line(trl, brl, false, color);
+         this.line(trr, brr, false, color);
+
+        if (centerCross) {
+            this.line(tfr, brl, false, color);
+            this.line(tfl, brr, false, color);
+            this.line(trl, bfr, false, color);
+            this.line(trr, bfl, false, color);
+        }
+        if (sideCross) {
+            this.line(tfr, bfl, false, color); //f
+            this.line(tfl, bfr, false, color);
+
+            this.line(tfr, brr, false, color); //ri
+            this.line(trr, bfr, false, color);
+
+            this.line(tfl, brl, false, color);//l
+            this.line(trl, bfl, false, color);
+
+            this.line(trl, brr, false, color);//re
+            this.line(trr, brl, false, color);
+
+            this.line(tfr, trl, false, color);//t
+            this.line(tfl, trr, false, color);
+
+            this.line(brl, bfr, false, color); //b
+            this.line(brr, bfl, false, color);
+        }
+        if (addCubeCD) {
+            m = mat4.create();
+            let x = [1/size[0], 0, 0];
+            let y = [0, 1/size[1], 0];
+            let z = [0, 0, 1/size[2]];
+            mat4.rotateZ(m, m, rot[2]);
+            mat4.rotateX(m, m, rot[0]);
+            mat4.rotateY(m, m, rot[1]);
+
+            vec3.transformMat4(x, x, m);
+            vec3.transformMat4(y, y, m);
+            vec3.transformMat4(z, z, m);
+
+            this.pushCD_cube(loc, x, y, z);
+        }
+    }
 
 
 }

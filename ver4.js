@@ -172,6 +172,14 @@ function initEngine() {
 
     testSph.addPlane([0, 0, 50], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
     testSph.addPlane([-50, -20, 25], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
+
+    testSph.addWireCube([0, 0, -50], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
+
+    testSph.addWireCube([0, 25, -50], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
+
+    testSph.addWireCube([0, 50, -50], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
+
+    testSph.addWireCube([0, 75, -50], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
 }
 
 
@@ -484,7 +492,27 @@ function shotgunAnim() {
                     }                     
                 } // end for each sph data of each entities with fPlane CD
 
+                if (this.scn.entities[entIdx].CD_cube > 0) 
+                for (var cdIdx = 0; cdIdx < this.scn.entities[entIdx].CD_cube; ++cdIdx) {
+                    nHitTest++;
+                    var offsetV0 = vec3.subtract([0,0,0], this.data.org[i], this.scn.entities[entIdx].CD_cube_p[cdIdx]);
+                    var offsetV1 = vec3.subtract([0,0,0], v1, this.scn.entities[entIdx].CD_cube_p[cdIdx]);
+                    // Detect v0 inside < 1
+                    // Detect v1 inside
+                    // Detect v0 and v1 on opposite sides >1 & <1 || <-1 & > -1
 
+
+                    /*
+                    var d0 = vec3.dot(offsetV0, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
+                    var d1 = vec3.dot(offsetV1, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
+                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) {
+                        var t = -d0 / (d1 - d0);
+                        var newloc = vec3.lerp([0,0,0], offsetV0, offsetV1, t);
+                        var xx1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_w[cdIdx]) );
+                        var yy1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_h[cdIdx]) );
+                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "cube", add3f(newloc,this.scn.entities[entIdx].CD_fPlane_d[cdIdx] )] );
+                    }         */            
+                } // end for each sph data of each entities with cube CD
             }
 
             if (colList.length > 0) {
