@@ -119,3 +119,90 @@ void main(void) {
         gl_FragColor = vColor;
     }
 }`;
+
+
+
+// cell shading tests
+
+const vertShader02_CS00 = `
+//from model
+attribute vec4 aVertexPosition;
+
+uniform mat4 uModelViewMatrix;
+uniform vec4 uStrokeColor;
+
+//from scene
+uniform mat4 uProjectionMatrix;
+
+//output to fragment shader
+//varying lowp vec4 vOrigColor;
+
+void main(void) {
+
+    // outputs
+    //vOrigColor = uStrokeColor;
+    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+
+}
+`;
+
+
+const fragShader02_CS00 = `
+
+//varying lowp vec4 vOrigColor;
+
+void main(void) {
+    gl_FragColor = vec4(1.0,1.0,1.0,1.0); // pass-trough
+}
+`;
+const attribList02_CS00 = ["aVertexPosition"];
+const uniformList02_CS00 = ["uModelViewMatrix", "uProjectionMatrix", "uStrokeColor"];
+
+const vertShader02_CS01 = `
+//from model
+attribute vec4 aVertexPosition;
+attribute vec4 aVertexColor;
+attribute vec3 aVertexNormal;
+
+uniform mat4 uModelViewMatrix;
+uniform mat4 uModelNormalMatrix;
+
+//from scene
+uniform mat4 uProjectionMatrix;
+uniform vec3 uLight;
+
+
+//output to fragment shader
+varying lowp float vFactDiffuse;
+varying lowp vec4 vOrigColor;
+
+void main(void) {
+    vec4 buf_normal;
+
+    buf_normal = normalize(uModelNormalMatrix * vec4(aVertexNormal, 1.0));	
+
+    // outputs
+    vFactDiffuse =  max(dot(buf_normal.xyz, uLight), 0.0);
+    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    vOrigColor = aVertexColor;
+}
+`;
+
+
+const fragShader02_CS01 = `
+varying lowp float vFactDiffuse;
+varying lowp vec4 vOrigColor;
+
+void main(void) {
+    if (vFactDiffuse > 0.66) {
+        gl_FragColor = vOrigColor;
+    } else if (vFactDiffuse < 0.33) {
+        gl_FragColor = vOrigColor * 0.2;
+    } else {
+        gl_FragColor = vOrigColor * 0.5;
+    }
+}
+`;
+const attribList02_CS01 = ["aVertexPosition", "aVertexColor", "aVertexNormal" ];
+const uniformList02_CS01 = ["uModelViewMatrix", "uModelNormalMatrix", "uProjectionMatrix", "uLight"];
+

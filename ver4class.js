@@ -1088,6 +1088,130 @@ class E3D_scene {
 
 }
 
+class E3D_scene_cell_shader extends E3D_scene {
+    constructor(id, context, width, height, vBackColor = vec4.fromValues(0.9, 0.9, 0.9, 1.0), fogLimit = -1) {
+        super(id, context, width, height, vBackColor, fogLimit);
+        this.strokeProgram = null ; // E3D_program for line strokes
+
+    }
+
+    render() {
+        this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
+      //  this.context.cullFace(this.context.FRONT);
+
+        this.context.useProgram(this.strokeProgram.shaderProgram);
+
+        this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());  
+      //  this.context.uniform4f(this.strokeProgram.shaderUniforms["uStrokeColor"], vec4.fromValues(1.0, 0.1, 0.1, 1.0));
+
+        this.drawnElemenets = 0;
+
+        for (let i = 0; i < this.entities.length; ++i) {
+            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i)) ) {
+
+                // Entity Attributes
+                if (this.entities[i].dynamic) {
+                    this.bindAndUpdate3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexPosition"], this.vertexBuffer, this.entities[i].vertexArray);
+                } else {
+                    this.bind3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
+                }
+                // Entity Uniforms
+                this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
+                
+                // Draw
+                this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
+                this.drawnElemenets += this.entities[i].numElements;
+            }
+        }
+        //const attribList02_CS00 = ["aVertexPosition"];
+        //const uniformList02_CS00 = ["uModelViewMatrix", "uProjectionMatrix", "uStrokeColor"];
+
+        //const attribList02_CS01 = ["aVertexPosition", "aVertexColor", "aVertexNormal", "uLight" ];
+        //const uniformList02_CS01 = ["uModelViewMatrix", "uModelNormalMatrix", "uProjectionMatrix"];
+
+/*
+        this.context.cullFace(this.context.BACK);
+        this.context.useProgram(this.program.shaderProgram);
+
+        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());  
+        this.context.uniform3fv(this.program.shaderUniforms["uLight"], this.lights.light0_adjusted);
+
+        for (let i = 0; i < this.entities.length; ++i) {
+            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i)) ) {
+
+                // Entity Attributes
+                if (this.entities[i].dynamic) {
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.vertexBuffer, this.entities[i].vertexArray);
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.normalBuffer, this.entities[i].normalArray);    
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.colorBuffer, this.entities[i].colorArray);  
+                } else {
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
+                }
+                // Entity Uniforms
+                this.context.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
+                this.context.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, this.entities[i].normalMatrix);
+                
+                // Draw
+                this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
+                this.drawnElemenets += this.entities[i].numElements;
+            }
+        }
+*/
+
+
+//this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
+/*
+this.context.useProgram(this.program.shaderProgram);
+
+this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());     
+
+this.context.uniform3fv(this.program.shaderUniforms["uLightA_Color"], this.lights.ambiant_color);
+
+this.context.uniform3fv(this.program.shaderUniforms["uLight0_Color"], this.lights.light0_color);
+this.context.uniform3fv(this.program.shaderUniforms["uLight0_Direction"], this.lights.light0_adjusted);
+
+this.context.uniform3fv(this.program.shaderUniforms["uLight1_Color"], this.lights.light1_color);
+this.context.uniform3fv(this.program.shaderUniforms["uLight1_Direction"], this.lights.light1_adjusted);
+
+this.context.uniform4fv(this.program.shaderUniforms["uFogColor"], this.clearColor);
+this.context.uniform1f(this.program.shaderUniforms["uFogLimit"], this.fogLimit);
+this.context.uniform1f(this.program.shaderUniforms["uFogFactor"], this.fogFactor);
+
+//this.drawnElemenets = 0;
+
+for (let i = 0; i < this.entities.length; ++i) {
+    if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i)) ) {
+
+        // Entity Attributes
+        if (this.entities[i].dynamic) {
+            this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.vertexBuffer, this.entities[i].vertexArray);
+            this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.normalBuffer, this.entities[i].normalArray);    
+            this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.colorBuffer, this.entities[i].colorArray);  
+        } else {
+            this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
+            this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
+            this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
+        }
+        // Entity Uniforms
+        this.context.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
+        this.context.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, this.entities[i].normalMatrix);
+        
+        // Draw
+        this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
+        this.drawnElemenets += this.entities[i].numElements;
+    }
+}
+*/
+if (this.renderFunction) {
+    this.renderFunction(this);
+}
+    }
+    //override setup, pre render and render to use both program in same context
+    //add line stokrs to entities as additionnal data
+}
+
 class E3D_program {
     constructor(id, context) {
         this.id = id;
