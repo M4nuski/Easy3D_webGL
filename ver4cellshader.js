@@ -27,7 +27,7 @@ var usepct_smth=0;
 // Engine Components
 
 var gl; //
-var timer = new E3D_timing(false, 100, timerTick);
+var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true, true, true);
@@ -44,6 +44,7 @@ function winResize() {
     scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     inputs.clampPitch = true;
     inputs.allowPan = true;
+    scn.camera.move(0,0,5,0,0,0);
 }
 
 function initEngine() {
@@ -74,7 +75,7 @@ function initEngine() {
         log("Lighting Initialization", false);
         scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
         scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
-        scn.lights.setDirection0(vec3.fromValues(-0.0, -0.0, -1.0)); 
+        scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
         scn.lights.light0_lockToCamera = true;
 
         scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
@@ -97,7 +98,9 @@ function initEngine() {
      
     resMngr.addRessource("ST.raw", "Storm Trooper", "Model");
     resMngr.addRessource("DEER.raw", "Deer Horns", "Model");
-    resMngr.addRessource("FALCON.raw", "Millenium Falcon", "Model");
+ //   resMngr.addRessource("FALCON.raw", "Millenium Falcon", "Model");
+    resMngr.addRessource("SSHIP.raw", "Space Ship", "Model");
+    resMngr.addRessource("M9.raw", "B M9", "Model");
     resMngr.loadAll("models");
 
     timer.run();
@@ -137,17 +140,26 @@ function onRessource(name, msg) {
 
         if (resMngr.getRessourceType(name) == "Model") {
             if (name == "Deer Horns") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0, 0.2, 0.2 ]);
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 8, [1.0, 0.2, 0.2 ]);
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.resetMatrix();
-            } else   if (name == "Storm Trooper") {
+            } else if (name == "Storm Trooper") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [ 1.0,1.0,1.0 ]);
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.resetMatrix();
-            } else {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.5, [ 0.8 ,0.8, 0.8]);
+            } else if (name == "B M9") {
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.2,0.2,0.3 ]);
+                scn.addEntity(nm);  
+                nm.position = [-15, 0, 0];
+                nm.rotation = [0, 3.1415, 0];
+                nm.visible = true;
+                nm.resetMatrix();
+            }      else {
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.5 ,0.5, 1.0]);
+                nm.position = [5, 15, -25];
+                nm.rotation = [0, 3.1415, 0];
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.resetMatrix();

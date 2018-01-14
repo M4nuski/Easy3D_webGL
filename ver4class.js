@@ -1178,13 +1178,7 @@ class E3D_scene_cell_shader extends E3D_scene {
             this.renderFunction(this);
         }
     }
-
-    addEntity(ent, visibility_culling = true) {
-        // Initialize context data buffers
-        super.addEntity(ent, visibility_culling);
-        this.addStrokeData(ent);
-    }
-
+/*
     addStrokeData(entity)  {
         // static only for now
         let indices = new Uint16Array(entity.numElements * 2);
@@ -1204,7 +1198,7 @@ class E3D_scene_cell_shader extends E3D_scene {
         this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, indices, this.context.STATIC_DRAW); 
         
         this.entitiesStrokeIndices.push(bfr);
-    }
+    }*/
 }
 
 class E3D_program {
@@ -1382,18 +1376,32 @@ class E3D_camera_persp extends E3D_camera { // basic perspective based matrix vi
 class E3D_camera_model extends E3D_camera_persp { // perspective view around center point
     constructor(id, width, height, fov, near, far) {
         super(id, width, height, fov, near, far);
+        this.nvx = vec3.create();
+        this.nvy = vec3.create();
+        this.zDist = 0; // position is now pivot point for rotation
+        this.inverseRotationMatrix = mat4.create();
+
     }
     updateInternal() {
         // update matrix per internal data
-        mat4.translate(this.matrix, this.baseMatrix, vec3.negate(vec3_dummy , this.position) );
+        if (this.zDist) {
+            mat4.translate(this.matrix, this.baseMatrix,  [0, 0, this.zDist]);
 
-        mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
-        mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
-    //    mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );        
+            mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
+            mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
+
+            mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
+            
+            mat4.rotate(this.inverseRotationMatrix, mat4_identity, -this.rotation[0], vec3_x);
+            mat4.rotate(this.inverseRotationMatrix, this.inverseRotationMatrix ,-this.rotation[1], vec3_y);
+        }
     }
 
-    move(tx, ty, tz, rx, ry, rz) {
-        this.update(this.position[0] + tx, this.position[1] + ty, this.position[2] + tz, rx, ry, rz);
+    move(tx, ty, tz, rx, ry, rz) { // tx and ty pan and move the pivot point, z is always away from that point
+        let t = vec3.fromValues(tx, ty, 0);
+        vec3.transformMat4(t, t, this.inverseRotationMatrix);
+        this.zDist += tz;
+        this.update(this.position[0] + t[0], this.position[1] + t[1], this.position[2] + t[2], rx, ry, rz);
     }
 }
 
