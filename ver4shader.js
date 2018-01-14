@@ -38,15 +38,14 @@ void main(void) {
     gl_FragColor = vColor;
 }
 `;
-
 const attribList00 = ["aVertexPosition", "aVertexColor", "aVertexNormal"];
 const uniformList00 = ["uModelViewMatrix", "uModelNormalMatrix", "uProjectionMatrix", "uLight"];
 
 
-const attribList01 = ["aVertexPosition", "aVertexColor", "aVertexNormal"];
-const uniformList01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", 
-"uLightA_Color", "uLight0_Color", "uLight1_Color", "uLight0_Direction", "uLight1_Direction",
-"uFogColor", "uFogLimit", "uFogFactor"];
+
+
+
+
 
 const vertShader01 = `
 //from model
@@ -119,57 +118,101 @@ void main(void) {
         gl_FragColor = vColor;
     }
 }`;
+const attribList01 = ["aVertexPosition", "aVertexColor", "aVertexNormal"];
+const uniformList01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", 
+"uLightA_Color", "uLight0_Color", "uLight1_Color", "uLight0_Direction", "uLight1_Direction",
+"uFogColor", "uFogLimit", "uFogFactor"];
+
+
+
+
+
+
+
+
+const vertShader01p = `
+//from model
+attribute vec4 aVertexPosition;
+attribute vec3 aVertexColor;
+attribute vec3 aVertexNormal;
+
+uniform mat4 uModelMatrix;
+uniform mat4 uNormalMatrix;
+
+//from scene
+uniform mat4 uProjectionMatrix;
+
+
+//output to fragment shader
+varying lowp vec4 vColor;
+  
+
+void main(void) {
+    vColor = vec4(aVertexColor, 1.0);
+    gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
+}
+`;
+
+const fragShader01p = `
+varying lowp vec4 vColor;
+
+void main(void) {
+    gl_FragColor = vColor;
+}`;
+const attribList01p = ["aVertexPosition", "aVertexColor", "aVertexNormal"];
+const uniformList01p = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix"];
+
+
+
+
+
 
 
 
 // cell shading tests
 
 const vertShader02_CS00 = `
-//from model
-attribute vec4 aVertexPosition;
+attribute vec3 aVertexPosition;
+attribute vec3 aVertexNormal;
 
-uniform mat4 uModelViewMatrix;
-uniform vec4 uStrokeColor;
-
-//from scene
+uniform mat4 uModelMatrix;
 uniform mat4 uProjectionMatrix;
 
-//output to fragment shader
-//varying lowp vec4 vOrigColor;
+uniform float uStrokeDepth;
 
 void main(void) {
-
-    // outputs
-    //vOrigColor = uStrokeColor;
-    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-
+    vec4 extent = uProjectionMatrix * uModelMatrix * vec4(aVertexPosition, 1.0);
+    //float zFact = extent.z * 0.05;
+    extent = vec4(aVertexPosition + (aVertexNormal * uStrokeDepth * extent.z), 1.0);
+    gl_Position = uProjectionMatrix * uModelMatrix * extent;
 }
 `;
-
 
 const fragShader02_CS00 = `
-
-//varying lowp vec4 vOrigColor;
+uniform lowp vec4 uStrokeColor;
 
 void main(void) {
-    gl_FragColor = vec4(1.0,1.0,1.0,1.0); // pass-trough
+    gl_FragColor = uStrokeColor;
 }
 `;
-const attribList02_CS00 = ["aVertexPosition"];
-const uniformList02_CS00 = ["uModelViewMatrix", "uProjectionMatrix", "uStrokeColor"];
+
+const attribList02_CS00 = ["aVertexPosition", "aVertexNormal"];
+const uniformList02_CS00 = ["uModelMatrix", "uProjectionMatrix", "uStrokeColor", "uStrokeDepth"];
+
+
 
 const vertShader02_CS01 = `
 //from model
 attribute vec4 aVertexPosition;
 attribute vec4 aVertexColor;
-attribute vec3 aVertexNormal;
+attribute vec4 aVertexNormal;
 
-uniform mat4 uModelViewMatrix;
-uniform mat4 uModelNormalMatrix;
+uniform mat4 uModelMatrix;
+uniform mat4 uNormalMatrix;
 
 //from scene
 uniform mat4 uProjectionMatrix;
-uniform vec3 uLight;
+uniform lowp vec3 uLight;
 
 
 //output to fragment shader
@@ -177,13 +220,13 @@ varying lowp float vFactDiffuse;
 varying lowp vec4 vOrigColor;
 
 void main(void) {
+    
     vec4 buf_normal;
-
-    buf_normal = normalize(uModelNormalMatrix * vec4(aVertexNormal, 1.0));	
-
+    buf_normal = normalize(uNormalMatrix * aVertexNormal);	
+    
     // outputs
-    vFactDiffuse =  max(dot(buf_normal.xyz, uLight), 0.0);
-    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    vFactDiffuse = max(dot(buf_normal.xyz, uLight), 0.0);
+    gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
     vOrigColor = aVertexColor;
 }
 `;
@@ -194,15 +237,18 @@ varying lowp float vFactDiffuse;
 varying lowp vec4 vOrigColor;
 
 void main(void) {
-    if (vFactDiffuse > 0.66) {
-        gl_FragColor = vOrigColor;
-    } else if (vFactDiffuse < 0.33) {
-        gl_FragColor = vOrigColor * 0.2;
+   lowp vec4 baseColor = vec4(0.0,0.0,0.0,1.0); // todo replace/ mix with texture
+
+    if (vFactDiffuse > 0.5) {
+        gl_FragColor =  vOrigColor;
+    } else if (vFactDiffuse > 0.25) {
+        gl_FragColor = mix(baseColor, vOrigColor, 0.50);
     } else {
-        gl_FragColor = vOrigColor * 0.5;
+        gl_FragColor = mix(baseColor, vOrigColor, 0.25);
     }
+
 }
 `;
 const attribList02_CS01 = ["aVertexPosition", "aVertexColor", "aVertexNormal" ];
-const uniformList02_CS01 = ["uModelViewMatrix", "uModelNormalMatrix", "uProjectionMatrix", "uLight"];
+const uniformList02_CS01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", "uLight"];
 

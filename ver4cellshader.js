@@ -42,7 +42,6 @@ function winResize() {
     winHeight = gl.canvas.clientHeight;
     
     scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    scn.lights.light0_lockToCamera = false;
     inputs.clampPitch = true;
     inputs.allowPan = true;
 }
@@ -60,28 +59,27 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene_cell_shader("mainScene_CS", gl, winWidth, winHeight, vec4.fromValues(0.15, 0.15, 0.15, 1.0), 300);
+        scn = new E3D_scene_cell_shader("mainScene_CS", gl, winWidth, winHeight, vec4.fromValues(1.0, 1.0, 1.0, 1.0), 300);
 
         log("Shader Program Initialization", false);
-       // scn.program = new E3D_program("mainProgram", gl);
-       // scn.program.compile(vertShader01, fragShader01);
-       // scn.program.bindLocations(attribList01, uniformList01);
+
+        scn.program = new E3D_program("mainProgram", gl);
+        scn.program.compile(vertShader02_CS01, fragShader02_CS01);
+        scn.program.bindLocations(attribList02_CS01, uniformList02_CS01);
 
         scn.strokeProgram = new E3D_program("strokeProgram", gl);
         scn.strokeProgram.compile(vertShader02_CS00, fragShader02_CS00);
         scn.strokeProgram.bindLocations(attribList02_CS00, uniformList02_CS00);
 
-
-
         log("Lighting Initialization", false);
         scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
         scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
-        scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
+        scn.lights.setDirection0(vec3.fromValues(-0.0, -0.0, -1.0)); 
         scn.lights.light0_lockToCamera = true;
 
         scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
         scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
-        scn.lights.light1_lockToCamera = false;
+        scn.lights.light1_lockToCamera = true;
 
         log("Camera Initialization", false);
         winResize();
@@ -99,6 +97,7 @@ function initEngine() {
      
     resMngr.addRessource("ST.raw", "Storm Trooper", "Model");
     resMngr.addRessource("DEER.raw", "Deer Horns", "Model");
+    resMngr.addRessource("FALCON.raw", "Millenium Falcon", "Model");
     resMngr.loadAll("models");
 
     timer.run();
@@ -137,18 +136,23 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-           // if (name == "ST") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, vec3.fromValues(1,1,1));
-                //scn.addEntity(nm);  
-                //nm.visible = true;
-                //nm.resetMatrix();
-
-            //} else {
-               // let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [ 1 ,1, 1]);
+            if (name == "Deer Horns") {
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0, 0.2, 0.2 ]);
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.resetMatrix();
-            //}
+            } else   if (name == "Storm Trooper") {
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [ 1.0,1.0,1.0 ]);
+                scn.addEntity(nm);  
+                nm.visible = true;
+                nm.resetMatrix();
+            } else {
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.5, [ 0.8 ,0.8, 0.8]);
+                scn.addEntity(nm);  
+                nm.visible = true;
+                nm.resetMatrix();
+            }
+
         }  
     } // msg loaded
 }
