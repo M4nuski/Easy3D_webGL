@@ -1113,9 +1113,12 @@ class E3D_scene_cell_shader extends E3D_scene {
         this.context.depthFunc(this.context.LEQUAL);
 
         this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());     
+        this.context.uniform4f(this.strokeProgram.shaderUniforms["uFarColor"], 0.75, 0.75, 0.75, 1.0 );  
         this.context.uniform4f(this.strokeProgram.shaderUniforms["uStrokeColor"], 0.0, 0.0, 0.0, 1.0 );  
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], -0.01);  
 
+        this.context.uniform1f(this.strokeProgram.shaderUniforms["uFar"], this.camera.far);  
+        
         for (let i = 0; i < this.entities.length; ++i)
             if ((this.entities[i].visible) && (this.entities[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
 

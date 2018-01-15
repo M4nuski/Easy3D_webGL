@@ -178,26 +178,32 @@ attribute vec3 aVertexNormal;
 uniform mat4 uModelMatrix;
 uniform mat4 uProjectionMatrix;
 
+uniform float uFar;
 uniform float uStrokeDepth;
+
+varying lowp float zFact;
 
 void main(void) {
     vec4 extent = uProjectionMatrix * uModelMatrix * vec4(aVertexPosition, 1.0);
-    //float zFact = extent.z * 0.05;
-    extent = vec4(aVertexPosition + (aVertexNormal * uStrokeDepth * extent.z), 1.0);
+    zFact = 0.5 * (uFar - extent.z) / (uFar/2.0) ;
+    extent = vec4(aVertexPosition + (aVertexNormal * uStrokeDepth * extent.z * zFact), 1.0);
     gl_Position = uProjectionMatrix * uModelMatrix * extent;
 }
 `;
 
 const fragShader02_CS00 = `
 uniform lowp vec4 uStrokeColor;
+uniform lowp vec4 uFarColor;
+
+varying lowp float zFact;
 
 void main(void) {
-    gl_FragColor = uStrokeColor;
+    gl_FragColor = mix(uFarColor, uStrokeColor, zFact);
 }
 `;
 
 const attribList02_CS00 = ["aVertexPosition", "aVertexNormal"];
-const uniformList02_CS00 = ["uModelMatrix", "uProjectionMatrix", "uStrokeColor", "uStrokeDepth"];
+const uniformList02_CS00 = ["uModelMatrix", "uProjectionMatrix", "uStrokeColor", "uStrokeDepth", "uFar", "uFarColor"];
 
 
 
