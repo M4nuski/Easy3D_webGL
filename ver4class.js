@@ -1117,7 +1117,7 @@ class E3D_scene_cell_shader extends E3D_scene {
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], -0.01);  
 
         for (let i = 0; i < this.entities.length; ++i)
-            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) ) {
+            if ((this.entities[i].visible) && (this.entities[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
 
             // Entity Attributes
             if (this.entities[i].dynamic) {
@@ -1152,7 +1152,7 @@ class E3D_scene_cell_shader extends E3D_scene {
         this.context.uniform3fv(this.program.shaderUniforms["uLight"], this.lights.light0_adjusted);
         
         for (let i = 0; i < this.entities.length; ++i)
-            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) ) { //&& (this.cull_check_visible(i))
+            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i) ) ) {
 
                 // Entity Attributes
                 if (this.entities[i].dynamic) {
@@ -1199,6 +1199,7 @@ class E3D_scene_cell_shader extends E3D_scene {
         
         this.entitiesStrokeIndices.push(bfr);
     }*/
+
 }
 
 class E3D_program {
@@ -1384,7 +1385,7 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
     }
     updateInternal() {
         // update matrix per internal data
-        if (this.zDist) {
+        if (this.zDist != undefined) {
             mat4.translate(this.matrix, this.baseMatrix,  [0, 0, this.zDist]);
 
             mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
@@ -1400,9 +1401,20 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
     move(tx, ty, tz, rx, ry, rz) { // tx and ty pan and move the pivot point, z is always away from that point
         let t = vec3.fromValues(tx, ty, 0);
         vec3.transformMat4(t, t, this.inverseRotationMatrix);
-        this.zDist += tz;
+        this.zDist -= tz;
+        if (this.zDist > 0) {
+            this.zDist = 0;
+        }
         this.update(this.position[0] + t[0], this.position[1] + t[1], this.position[2] + t[2], rx, ry, rz);
     }
+
+    negateCamera(vect) {
+        vec3.rotateX(vect, vect, vec3_origin, this.rotation[0]); 
+        vec3.rotateY(vect, vect, vec3_origin, this.rotation[1]); 
+        vect[2] += this.zDist;
+    }  
+
+
 }
 
 class E3D_camera_space extends E3D_camera_persp { // free 3D view incremental direction and position

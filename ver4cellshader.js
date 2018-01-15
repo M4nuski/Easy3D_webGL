@@ -44,7 +44,7 @@ function winResize() {
     scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     inputs.clampPitch = true;
     inputs.allowPan = true;
-    scn.camera.move(0,0,5,0,0,0);
+    scn.camera.move(0,7.5,15,0,0,0);
 }
 
 function initEngine() {
@@ -60,7 +60,7 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene_cell_shader("mainScene_CS", gl, winWidth, winHeight, vec4.fromValues(1.0, 1.0, 1.0, 1.0), 300);
+        scn = new E3D_scene_cell_shader("mainScene_CS", gl, winWidth, winHeight, vec4.fromValues(0.95, 0.95, 0.95, 1.0), 300);
 
         log("Shader Program Initialization", false);
 
@@ -101,6 +101,7 @@ function initEngine() {
  //   resMngr.addRessource("FALCON.raw", "Millenium Falcon", "Model");
     resMngr.addRessource("SSHIP.raw", "Space Ship", "Model");
     resMngr.addRessource("M9.raw", "B M9", "Model");
+    resMngr.addRessource("GTR.raw", "Nissan GTR", "Model");
     resMngr.loadAll("models");
 
     timer.run();
@@ -139,32 +140,27 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
+            let nm;
             if (name == "Deer Horns") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 8, [1.0, 0.2, 0.2 ]);
-                scn.addEntity(nm);  
-                nm.visible = true;
-                nm.resetMatrix();
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 8, [1.0, 0.2, 0.2 ]);
             } else if (name == "Storm Trooper") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [ 1.0,1.0,1.0 ]);
-                scn.addEntity(nm);  
-                nm.visible = true;
-                nm.resetMatrix();
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [ 1.0,1.0,1.0 ]);
             } else if (name == "B M9") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.2,0.2,0.3 ]);
-                scn.addEntity(nm);  
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.2,0.2,0.3 ]);
                 nm.position = [-15, 0, 0];
                 nm.rotation = [0, 3.1415, 0];
-                nm.visible = true;
-                nm.resetMatrix();
-            }      else {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.5 ,0.5, 1.0]);
+            } else if (name == "Nissan GTR") {
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 1.0 ,1.0, 0.25]);
+                nm.position = [25, -5, 0];
+                nm.rotation = [0, 0, 0];
+            }  else {
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.5 ,0.5, 1.0]);
                 nm.position = [5, 15, -25];
                 nm.rotation = [0, 3.1415, 0];
-                scn.addEntity(nm);  
-                nm.visible = true;
-                nm.resetMatrix();
             }
-
+            scn.addEntity(nm);  
+            nm.visible = true;
+            nm.resetMatrix();
         }  
     } // msg loaded
 }
