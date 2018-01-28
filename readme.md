@@ -5,6 +5,7 @@ Yet another JS 3D/game engine test
 Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
 
 * ver4.html for current status/WIP
+* ver4cellshader.html for toon shading render test and demo
 * ver3.txt for engine target structure.
 * tuto1.html basic re-transcript of webGL tutorial.
 * tuto2.html added a lot of controls abstraction.
@@ -30,6 +31,7 @@ Current work-in-progress
 
 Next Steps
 -----------
+* Remove scaling from matrix and entity except on load, or make separate to avoid dealing with it repeatidly. Mostly useless.
 * Replace per-vertex colors with textures
 * Sprites
 * Other type of physics mechanic for controls.

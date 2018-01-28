@@ -72,7 +72,8 @@ class E3D_entity {
 
         // fustrum culling
         this.cull_dist = 0; // 0 disable
-        this.cull_dist_scale = 1.0;
+        this.cull_dist2 = 0; // square of cull_dist for collision detection culling
+        this.cull_dist_scale = 1.0; // computed from actual matrix
         
         // Computed matrix
         this.modelMatrix = mat4.create();
@@ -161,6 +162,7 @@ class E3D_entity {
         }
 
         this.cull_dist = entity.cull_dist;
+        this.cull_dist2 = entity.cull_dist2;
 
         if (entity.CD_vec > 0) {
             this.CD_vec = entity.CD_vec;
@@ -221,7 +223,7 @@ class E3D_entity {
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
         
-        this.cull_dist_scale = vec3.length(this.scale)/1.732;
+        this.cull_dist_scale = vec3.length(this.scale)/1.732; // cube corrected max vertex distance
 
         for (var i = 0; i < this.CD_vec; ++i) {
             vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
@@ -326,7 +328,7 @@ class E3D_entity {
 class E3D_entity_vector extends E3D_entity {
     constructor (id, showAxis, vectorScale, normalize) {
         super(id, "E3D_entity_vector/" + id, true);
-        this.showAxis = showAxis; // todo
+
         this.vectorScale = vectorScale;
         this.normalize = normalize;
         this.drawMode = 1; // gl.LINES;
@@ -342,8 +344,7 @@ class E3D_entity_vector extends E3D_entity {
                                             1, 1, 1, 1, 1, 1 ]);
 
         this.normalArray = new Float32Array(24);
-
-        this.numElements = 8;
+        this.numElements = (showAxis) ? 8 : 6;
     }
 
     updateVector(vec) {
@@ -816,7 +817,7 @@ class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
         super(id, true);
 
         this.numElements = 0;
-        this.cull_dist = 0;
+        //this.cull_dist = 0;
         this.drawMode = 4;//gl.TRIANGLES;
 
         this.srcVertex = new Float32Array(sourceEntity.vertexArray);
@@ -1030,8 +1031,10 @@ class E3D_scene {
         ent.resetMatrix();
 
         if (visibility_culling) {
-            ent.cull_dist = E3D_scene.cull_calculate_max_dist(ent.vertexArray);
+            ent.cull_dist2 = E3D_scene.cull_calculate_max_dist2(ent.vertexArray);
+            ent.cull_dist = Math.sqrt(ent.cull_dist2);
         } else {
+            ent.cull_dist2 = 0;
             ent.cull_dist = 0;
         }
 
@@ -1065,10 +1068,10 @@ class E3D_scene {
         }    
     }
 
-    static cull_calculate_max_dist(vertArray) {
+    static cull_calculate_max_dist2(vertArray) {
         let result = 0;
         for (let i = 0; i < vertArray.length; i += 3) {
-            var currentDist = vec3.length([vertArray[i], vertArray[i+1], vertArray[i+2] ]);
+            var currentDist = vec3.squaredLength([vertArray[i], vertArray[i+1], vertArray[i+2] ]);
             if (currentDist > result) result = currentDist;
         }
         return result;
@@ -1079,7 +1082,7 @@ class E3D_scene {
             var pos = [0, 0, 0];
             vec3.subtract(pos, this.entities[idx].position, this.camera.position);
             this.camera.negateCamera(pos);
-            var dist = -pos[2];
+            var dist = -pos[2]; // only check for Z
             return (((dist - (this.entities[idx].cull_dist*this.entities[idx].cull_dist_scale)) < this.camera.far) && 
             ((dist + (this.entities[idx].cull_dist*this.entities[idx].cull_dist_scale)) > this.camera.near) );
         }
@@ -1092,30 +1095,28 @@ class E3D_scene_cell_shader extends E3D_scene {
     constructor(id, context, width, height, vBackColor = vec4.fromValues(0.9, 0.9, 0.9, 1.0), fogLimit = -1) {
         super(id, context, width, height, vBackColor, fogLimit);
         this.strokeProgram = null ; // E3D_program for line strokes
-        this.entitiesStrokeIndices = [];
+    //    this.entitiesStrokeIndices = [];
 
+        this.strokeColor = [0.0, 0.0, 0.0, 1.0];
+        this.farColor = [0.75, 0.75, 0.75, 1.0]; // color of stroke line at zFar 
+        this.strokeDepth = -0.01; // offset width for stroke generation
     }
-
-
 
     render() {
 
         this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
-
         this.drawnElemenets = 0;
-
 
         // Line strokes 
         this.context.useProgram(this.strokeProgram.shaderProgram);
-
 
         this.context.cullFace(this.context.FRONT);
         this.context.depthFunc(this.context.LEQUAL);
 
         this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());     
-        this.context.uniform4f(this.strokeProgram.shaderUniforms["uFarColor"], 0.75, 0.75, 0.75, 1.0 );  
-        this.context.uniform4f(this.strokeProgram.shaderUniforms["uStrokeColor"], 0.0, 0.0, 0.0, 1.0 );  
-        this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], -0.01);  
+        this.context.uniform4fv(this.strokeProgram.shaderUniforms["uFarColor"], this.farColor );  
+        this.context.uniform4fv(this.strokeProgram.shaderUniforms["uStrokeColor"], this.strokeColor );  
+        this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], this.strokeDepth );  
 
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uFar"], this.camera.far);  
         
@@ -1141,10 +1142,6 @@ class E3D_scene_cell_shader extends E3D_scene {
            this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
            this.drawnElemenets += this.entities[i].numElements;
         }
-
-
-
-       
 
         this.context.cullFace(this.context.BACK);
         this.context.depthFunc(this.context.LESS);

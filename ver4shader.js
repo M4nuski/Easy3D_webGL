@@ -181,7 +181,7 @@ uniform mat4 uProjectionMatrix;
 uniform float uFar;
 uniform float uStrokeDepth;
 
-varying lowp float zFact;
+varying highp float zFact;
 
 void main(void) {
     vec4 extent = uProjectionMatrix * uModelMatrix * vec4(aVertexPosition, 1.0);
@@ -195,7 +195,7 @@ const fragShader02_CS00 = `
 uniform lowp vec4 uStrokeColor;
 uniform lowp vec4 uFarColor;
 
-varying lowp float zFact;
+varying highp float zFact;
 
 void main(void) {
     gl_FragColor = mix(uFarColor, uStrokeColor, zFact);
