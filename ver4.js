@@ -26,7 +26,7 @@ const _zFar = 500.0;
 var winWidth = 10, winHeight = 10;
 var usepct_smth=0;
 var l0v, l1v;// light entities index
-var testSph, splos;
+var testSph, splos, iplanes, fplanes, cubes, dev_CD;
 var cloned = false;
 var animations = [];
 var nHitTest = 0;
@@ -37,6 +37,7 @@ var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
+
 var inputs = new E3D_input(can, true, true, true, true, true, true);
 // virtual KB
 var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
@@ -140,15 +141,17 @@ function initEngine() {
     l0v.position = vec3.fromValues(-5, 20, -5);
     l0v.scale = vec3.fromValues(5, 5, 5);
     l0v.visible = true;
+    l0v.vis_culling = false;
     l0v.resetMatrix();
-    scn.addEntity(l0v, false);
+    scn.addEntity(l0v);
     
     l1v = new E3D_entity_vector("light1vect", true, 2.0, true);
     l1v.position = vec3.fromValues(5, 20, 5);
     l1v.scale = vec3.fromValues(5, 5, 5);
     l1v.visible = true;
+    l1v.vis_culling = false;
     l1v.resetMatrix();
-    scn.addEntity(l1v, false);
+    scn.addEntity(l1v);
 
     timer.run();
     scn.state = E3D_ACTIVE;
@@ -158,28 +161,48 @@ function initEngine() {
     testSph.addWireSphere([0,30,0], 20, [0,1,0], 24, true);
     testSph.addWireSphere([0,0,30], 20, [0,0,1], 24, true);
     testSph.visible = true;
-    scn.addEntity(testSph, false);
+    //testSph.cull_dist2 = 2500;
+    scn.addEntity(testSph);
 
     splos = new E3D_entity_dynamic("splosions");
     splos.visible = true;
     splos.arrayIncrement = 2700; 
-    scn.addEntity(splos, false);
+    splos.vis_culling = false;
+    scn.addEntity(splos);
 
-    testSph.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true, false);
-    testSph.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true, false);
-    testSph.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true, false);
-    testSph.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true, false);
+    iplanes = new E3D_entity_dynamic("infinitePlanes");
+    iplanes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true, false);
+    iplanes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true, false);
+    iplanes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true, false);
+    iplanes.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true, false);
+    iplanes.visible = true;
+    iplanes.vis_culling = false;
+    scn.addEntity(iplanes);
 
-    testSph.addPlane([0, 0, 50], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
-    testSph.addPlane([-50, -20, 25], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
+    fplanes = new E3D_entity_dynamic("finitePlanes");
+    fplanes.position = [25, -10, 25];
+    fplanes.addPlane([-25, 10, 25], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
+    fplanes.addPlane([25, -10, 0], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
+    fplanes.visible = true;
+    //fplanes.cull_dist2 = 4200;
+    scn.addEntity(fplanes);
 
-    testSph.addWireCube([0, 0, -50], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
+    cubes = new E3D_entity_dynamic("cubesTest");
+    cubes.position = [0, 50, -50];
+    cubes.addWireCube([0, -50, 0], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
+    cubes.addWireCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
+    cubes.addWireCube([0, 0, 0], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
+    cubes.addWireCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
+    cubes.visible = true;
+    //cubes.cull_dist2 = 4200;
+    scn.addEntity(cubes);
 
-    testSph.addWireCube([0, 25, -50], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
+    dev_CD = new E3D_entity_dynamic("DEV/CD_Display");
 
-    testSph.addWireCube([0, 50, -50], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
-
-    testSph.addWireCube([0, 75, -50], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
+    dev_CD.visible = true;
+    dev_CD.vis_culling = false;
+    scn.addEntity(dev_CD);
+    dev_CD.resetMatrix();
 }
 
 
@@ -192,12 +215,36 @@ function prepRender() {
         l0v.updateVector(scn.lights.light0_adjusted);
         l1v.updateVector(scn.lights.light1_adjusted);
     }
+
+    // Animate / Calculate Expected target position and state
+    // target orig, delta, dR2
     for (let i = animations.length -1; i >=0; --i) {
-        animations[i].animate();
         if (animations[i].state == E3D_DONE) {
             scn.removeEntity(animations[i].target.id);
             animations.splice(i, 1);
+        } else {
+            animations[i].animate(null); //if supported calculate next position but don't lock
         }
+    }
+    // Cull Collission Detection with pos vs dR2
+    let candidates = Array(scn.entities.length);
+    for (let i = 0; i < animations.length; ++i) { // animations are source
+        if (animations[i].delta2  > -1) for (let j = 0 ; j < scn.entities.length; ++j) // all entities are targets
+            if ((scn.entities[j].collisionDetection) && (animations[i].target.id != scn.entities[j].id) ) { 
+                var deltaP = vec3.distance( animations[i].target.position, scn.entities[j].position);
+                var deltaD = animations[i].delta2 + animations[i].target.cull_dist + scn.entities[j].cull_dist; 
+                candidates[j] = (scn.entities[j].CD_iPlane > 0) || ( deltaP  <= deltaD );  
+        }
+        animations[i].animate(candidates);
+    }
+    // Collistion Detection / get closest hit and reflection vector adjust with "t" and reflect vector
+
+ //   for (let i = 0; i < animations.length; ++i) { 
+  //      animations[i].animate(candidates); // resolve collision and lock final position
+   // }
+    dev_CD.numElements = 0;
+    for (let i = 0; i < scn.entities.length; ++i) {
+        if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
     }
 
 }
@@ -316,94 +363,100 @@ function cloneWar() {
 
 // animator functions
 
-function sphAnim() {
+function sphAnim(cand) {
 
     if (this.state == E3D_PLAY) {
-        this.data.last_CD_sph_p = this.target.CD_sph_p[0].slice();
-        vec3.scaleAndAdd(this.target.position, this.target.position, this.data.spd, this.timer.delta);
-        this.target.resetMatrix();
-    
-        testSph.line(this.data.last_CD_sph_p, this.target.CD_sph_p[0], true);
 
-        // for each other entity
-        for (let i = 0; i < this.scn.entities.length; ++i ) if (this.target.id != this.scn.entities[i].id) {
-        // TODO add CD events to array and pîck closest one
+        if (cand) { // test and lock (pass 2)
+        this.target.resetMatrix();  // update CD data  
+        splos.line(this.data.last_position, this.target.position, true);
 
-            if (this.scn.entities[i].CD_sph > 0) {  // collision detection - this.sph to other sph  
+            // for each other entity
+            for (let i = 0; i < cand.length; ++i ) if (cand[i]) {
+        //    for (let i = 0; i < this.scn.entities.length; ++i ) if (this.target.id != this.scn.entities[i].id) {
+            // TODO add CD events to array and pîck closest one
 
-                for (let j = 0; j < this.scn.entities[i].CD_sph; ++j) {
-                    nHitTest++;
-                    var d = vec3.squaredDistance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
-                    var minD = this.target.CD_sph_rs[0] + this.scn.entities[i].CD_sph_rs[j];
-                    if (d <= minD) {
-                      //  log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
-                        var penetration = Math.sqrt(minD) - Math.sqrt(d);
-                        var n = [this.target.CD_sph_p[0][0] - this.scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - this.scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - this.scn.entities[i].CD_sph_p[j][2] ];
-                        this.data.spd = reflect(this.data.spd, n);
-                            testSph.moveTo(this.target.position);
-                        vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
-                            testSph.lineTo(this.target.position, false);
-                        this.target.resetMatrix();
-                    }
-                }
-            } // sph
+                if (this.scn.entities[i].CD_sph > 0) {  // collision detection - this.sph to other sph  
 
-            if (this.scn.entities[i].CD_iPlane > 0) {  // collision detection - this.sph to infinite plane
-                var v = vec3.subtract([0, 0, 0], this.target.CD_sph_p[0], this.scn.entities[i].position);
-                var last_v = vec3.subtract([0, 0, 0], this.data.last_CD_sph_p, this.scn.entities[i].position);
-
-                for (let j = 0; j < this.scn.entities[i].CD_iPlane; ++j) {
-                    nHitTest++;
-
-                    var dist = vec3.dot(v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j] ;
-                    var last_Dist = vec3.dot(last_v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j];
-                                       
-                    var sgn = (dist > 0) ? 1 : -1;
-                    dist = Math.abs(dist) ;
-
-                    var last_sgn = (last_Dist > 0) ? 1 : -1;
-                    last_Dist = Math.abs(last_Dist) ;
-                
-                    if ( dist < this.target.CD_sph_r[0]) { 
-                    //    log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
-                        var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
-                        penetration *= last_sgn;
-                        this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
-                            testSph.moveTo(this.target.position);
-                        vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
-                            testSph.lineTo(this.target.position, false);
-                        this.target.resetMatrix();
-
-                    }  else { // if sph itself didn't hit plane, test for vector from last position to this one
-
-                        dist *= sgn;
-                        last_Dist *= last_sgn;
-                        if ( ( (dist > 0) && (last_Dist < 0) ) || ( (dist < 0) && (last_Dist > 0) ) ) {
-                          //  log("hit sph(vect)-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
-                            var penetration = ( Math.abs(last_Dist) +  Math.abs(dist)) * last_sgn;
-                            this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
-                              testSph.moveTo(this.target.position);
-                            vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
-                              testSph.lineTo(this.target.position, false);
+                    for (let j = 0; j < this.scn.entities[i].CD_sph; ++j) {
+                        nHitTest++;
+                        var d = vec3.squaredDistance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
+                        var minD = this.target.CD_sph_rs[0] + this.scn.entities[i].CD_sph_rs[j];
+                        if (d <= minD) {
+                        //  log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
+                            var penetration = Math.sqrt(minD) - Math.sqrt(d);
+                            var n = [this.target.CD_sph_p[0][0] - this.scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - this.scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - this.scn.entities[i].CD_sph_p[j][2] ];
+                            this.data.spd = reflect(this.data.spd, n);
+                            splos.moveTo(this.target.position);
+                            vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
+                            splos.lineTo(this.target.position, false);
                             this.target.resetMatrix();
                         }
-    
                     }
-                }         
-            } // iplane
+                } // sph
+
+                if (this.scn.entities[i].CD_iPlane > 0) {  // collision detection - this.sph to infinite plane
+                    var v = vec3.subtract([0, 0, 0], this.target.CD_sph_p[0], this.scn.entities[i].position);
+                    var last_v = vec3.subtract([0, 0, 0], this.data.last_position, this.scn.entities[i].position);
+
+                    for (let j = 0; j < this.scn.entities[i].CD_iPlane; ++j) {
+                        nHitTest++;
+
+                        var dist = vec3.dot(v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j] ;
+                        var last_Dist = vec3.dot(last_v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j];
+                                        
+                        var sgn = (dist > 0) ? 1 : -1;
+                        dist = Math.abs(dist) ;
+
+                        var last_sgn = (last_Dist > 0) ? 1 : -1;
+                        last_Dist = Math.abs(last_Dist) ;
+                    
+                        if ( dist < this.target.CD_sph_r[0]) { 
+                        //    log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
+                            var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
+                            penetration *= last_sgn;
+                            this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
+                            splos.moveTo(this.target.position);
+                            vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
+                            splos.lineTo(this.target.position, false);
+                            this.target.resetMatrix();
+
+                        }  else { // if sph itself didn't hit plane, test for vector from last position to this one
+
+                            dist *= sgn;
+                            last_Dist *= last_sgn;
+                            if ( ( (dist > 0) && (last_Dist < 0) ) || ( (dist < 0) && (last_Dist > 0) ) ) {
+                            //  log("hit sph(vect)-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
+                                var penetration = ( Math.abs(last_Dist) +  Math.abs(dist)) * last_sgn;
+                                this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
+                                splos.moveTo(this.target.position);
+                                vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
+                                splos.lineTo(this.target.position, false);
+                                this.target.resetMatrix();
+                            }
+        
+                        }
+                    }         
+                } // iplane
 
 
 
 
-        } // end for each other entity perform hit test
+            } // end for each other entity perform hit test
 
-        this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection
-        this.data.ttl -= this.timer.delta;
+            this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection
+            this.data.ttl -= this.timer.delta;
 
-        if (this.data.ttl < 0) {
-            this.state = E3D_DONE;
-            this.target.visible = false;
-        } 
+            if (this.data.ttl < 0) {
+                this.state = E3D_DONE;
+                this.target.visible = false;
+            } 
+        } else { // initial animation pass (pass 1)
+            this.data.last_position = this.target.position.slice();
+            var dlt = vec3.scale([0,0,0], this.data.spd, this.timer.delta);
+            vec3.add(this.target.position, this.target.position, dlt);
+            this.delta2 = vec3.length(dlt);
+        }
     }   // end state == PLAY
 
     if (this.state == E3D_RESTART) {
@@ -421,7 +474,7 @@ function sphAnim() {
         this.state = E3D_PLAY;
         this.target.visible = true;
         this.target.resetMatrix();
-        this.data.last_CD_sph_p = this.target.CD_sph_p[0].slice();
+        this.data.last_position = this.target.position.slice();
     } 
 
 }
@@ -434,7 +487,7 @@ function rot0() {
 }
 
 
-function shotgunAnim() {
+function shotgunAnim(cand) {
     let numPellets = 10;
 
     if (this.state == E3D_PLAY) {
@@ -530,7 +583,7 @@ function shotgunAnim() {
                     if (this.scn.entities[colList[0][0]].id.indexOf("sph") > -1) {
                         splode(newloc);
                     } else {
-                        testSph.addWireCross(newloc, 2, [1,1,1]);
+                        splos.addWireCross(newloc, 2, [1,1,1]);
                     } 
                 }
             }
@@ -582,7 +635,8 @@ function shotgunAnim() {
 
         this.state = E3D_PLAY;
         this.target.visible = true;
-        this.scn.addEntity(this.target, false);
+        this.target.vis_culling = false;
+        this.scn.addEntity(this.target);
         this.target.resetMatrix();
     } 
 

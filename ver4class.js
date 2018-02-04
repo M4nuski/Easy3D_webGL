@@ -71,9 +71,9 @@ class E3D_entity {
         this.scale = vec3.fromValues(1.0, 1.0, 1.0);
 
         // fustrum culling
-        this.cull_dist = 0; // 0 disable
-        this.cull_dist2 = 0; // square of cull_dist for collision detection culling
-        this.cull_dist_scale = 1.0; // computed from actual matrix
+        this.vis_culling = true;
+        this.cull_dist = 0;
+        this.cull_max_pos = [0, 0, 0]; // to compute max distance from matrix 
         
         // Computed matrix
         this.modelMatrix = mat4.create();
@@ -98,6 +98,7 @@ class E3D_entity {
         //this.textureID = ""; // todo        
         this.filename = filename;
 
+        this.collisionDetection = false;
         // Collision Detection / Hit Test Data (faster split in different array than accessing single array then object attributes)
             // Vector Source 
             this.CD_vec = 0;
@@ -150,6 +151,8 @@ class E3D_entity {
     cloneData(entity) {
         this.numElements = entity.numElements;
         this.drawMode = entity.drawMode;
+        this.vis_culling = entity.vis_culling;
+        this.collisionDetection = entity.collisionDetection;
 
         if (entity.dynamic) {
             this.vertexArray = new Float32Array(entity.vertexArray); 
@@ -162,7 +165,7 @@ class E3D_entity {
         }
 
         this.cull_dist = entity.cull_dist;
-        this.cull_dist2 = entity.cull_dist2;
+        this.cull_max_pos = entity.cull_max_pos.slice();
 
         if (entity.CD_vec > 0) {
             this.CD_vec = entity.CD_vec;
@@ -223,48 +226,49 @@ class E3D_entity {
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
         
-        this.cull_dist_scale = vec3.length(this.scale)/1.732; // cube corrected max vertex distance
+        this.cull_dist = vec3.length(vec3.multiply([0,0,0], this.cull_max_pos, this.scale));
 
-        for (var i = 0; i < this.CD_vec; ++i) {
-            vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
-            vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.modelMatrix);
-        }
-        for (var i = 0; i < this.CD_sph; ++i) {
-            vec3.transformMat4(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
-            this.CD_sph_r[i] = this.CD_sph_r0[i] * this.cull_dist_scale;
-            this.CD_sph_rs[i] = this.CD_sph_r[i] * this.CD_sph_r[i];
-        }
-        var invScale = vec3.inverse([0, 0, 0] ,this.scale);
-        for (var i = 0; i < this.CD_iPlane; ++i) {
-            vec3.transformMat4(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
-            vec3.multiply(this.CD_iPlane_n[i], this.CD_iPlane_n[i], invScale);
-        }
-        for (var i = 0; i < this.CD_fPlane; ++i) {
-            vec3.transformMat4(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
-            vec3.multiply(this.CD_fPlane_n[i], this.CD_fPlane_n[i], invScale);
+        if (this.collisionDetection) {
+            for (var i = 0; i < this.CD_vec; ++i) {
+                vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
+                vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.modelMatrix);
+            }
+            for (var i = 0; i < this.CD_sph; ++i) {
+                vec3.transformMat4(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
+                this.CD_sph_r[i] = this.CD_sph_r0[i] * vec3.length(this.scale)/1.73205;
+                this.CD_sph_rs[i] = this.CD_sph_r[i] * this.CD_sph_r[i];
+            }
+            var invScale = vec3.inverse([0, 0, 0] ,this.scale);
+            for (var i = 0; i < this.CD_iPlane; ++i) {
+                vec3.transformMat4(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
+                vec3.multiply(this.CD_iPlane_n[i], this.CD_iPlane_n[i], invScale);
+            }
+            for (var i = 0; i < this.CD_fPlane; ++i) {
+                vec3.transformMat4(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
+                vec3.multiply(this.CD_fPlane_n[i], this.CD_fPlane_n[i], invScale);
 
-            vec3.transformMat4(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.normalMatrix);
-            vec3.multiply(this.CD_fPlane_d[i], this.CD_fPlane_d[i], invScale);
+                vec3.transformMat4(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.normalMatrix);
+                vec3.multiply(this.CD_fPlane_d[i], this.CD_fPlane_d[i], invScale);
 
-            vec3.transformMat4(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
-            vec3.multiply(this.CD_fPlane_w[i], this.CD_fPlane_w[i], invScale);
+                vec3.transformMat4(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
+                vec3.multiply(this.CD_fPlane_w[i], this.CD_fPlane_w[i], invScale);
 
-            vec3.transformMat4(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
-            vec3.multiply(this.CD_fPlane_h[i], this.CD_fPlane_h[i], invScale);
-        }
+                vec3.transformMat4(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
+                vec3.multiply(this.CD_fPlane_h[i], this.CD_fPlane_h[i], invScale);
+            }
+            for (var i = 0; i < this.CD_cube; ++i) {
+                vec3.transformMat4(this.CD_cube_p[i], this.CD_cube_p0[i], this.normalMatrix);
+                vec3.multiply(this.CD_cube_p[i], this.CD_cube_p[i], invScale);
 
-        for (var i = 0; i < this.CD_cube; ++i) {
-            vec3.transformMat4(this.CD_cube_p[i], this.CD_cube_p0[i], this.normalMatrix);
-            vec3.multiply(this.CD_cube_p[i], this.CD_cube_p[i], invScale);
+                vec3.transformMat4(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
+                vec3.multiply(this.CD_cube_x[i], this.CD_cube_x[i], invScale);
 
-            vec3.transformMat4(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
-            vec3.multiply(this.CD_cube_x[i], this.CD_cube_x[i], invScale);
+                vec3.transformMat4(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
+                vec3.multiply(this.CD_cube_y[i], this.CD_cube_y[i], invScale);
 
-            vec3.transformMat4(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
-            vec3.multiply(this.CD_cube_y[i], this.CD_cube_y[i], invScale);
-
-            vec3.transformMat4(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
-            vec3.multiply(this.CD_cube_z[i], this.CD_cube_z[i], invScale);
+                vec3.transformMat4(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
+                vec3.multiply(this.CD_cube_z[i], this.CD_cube_z[i], invScale);
+            }
         }
     }
 
@@ -276,6 +280,7 @@ class E3D_entity {
         this.CD_vec_v[this.CD_vec] = p.slice(); 
         
         this.CD_vec += 1;
+        this.collisionDetection = true;
     }
     pushCD_sph(p, r) {
         this.CD_sph_p0[this.CD_sph] = p.slice();
@@ -286,6 +291,7 @@ class E3D_entity {
         this.CD_sph_rs[this.CD_sph] = r*r;
         
         this.CD_sph += 1;
+        this.collisionDetection = true;
     }
     pushCD_iPlane(d, n) {
         this.CD_iPlane_d0[this.CD_iPlane] = d; 
@@ -294,6 +300,7 @@ class E3D_entity {
         this.CD_iPlane_n[this.CD_iPlane] = n.slice();
 
         this.CD_iPlane += 1;
+        this.collisionDetection = true;
     }
     pushCD_fPlane(d, hw, hh, n) {
         this.CD_fPlane_n0[this.CD_fPlane] = n.slice();
@@ -306,6 +313,7 @@ class E3D_entity {
         this.CD_fPlane_h[this.CD_fPlane] = hh.slice();
         
         this.CD_fPlane += 1;
+        this.collisionDetection = true;
     }
 
     pushCD_cube(p, x, y, z) {
@@ -319,6 +327,7 @@ class E3D_entity {
         this.CD_cube_z[this.CD_cube] = z.slice();
 
         this.CD_cube += 1;
+        this.collisionDetection = true;
     }
 
 
@@ -332,6 +341,8 @@ class E3D_entity_vector extends E3D_entity {
         this.vectorScale = vectorScale;
         this.normalize = normalize;
         this.drawMode = 1; // gl.LINES;
+
+        this.vis_culling = false;
 
         this.vertexArray = new Float32Array([0, 0, 0, 1, 0, 0,
                                              0, 0, 0, 0, 1, 0,
@@ -364,8 +375,12 @@ class E3D_entity_dynamic extends E3D_entity {
     constructor(id) {
         super(id, "E3D_entity_dynamic/"+id, true);
         this.drawMode = 1; // gl.LINES;      
-        this.arraySize = 0;
+        this.arraySize = 128;
         this.arrayIncrement = 128 ;// 3 vertex * 128;
+
+        this.vertexArray = new Float32Array(this.arraySize*3);
+        this.colorArray = new Float32Array(this.arraySize*3);
+        this.normalArray = new Float32Array(this.arraySize*3);
 
         this.colSweep =  [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
         this.colSweepIndex = 0;
@@ -817,7 +832,6 @@ class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
         super(id, true);
 
         this.numElements = 0;
-        //this.cull_dist = 0;
         this.drawMode = 4;//gl.TRIANGLES;
 
         this.srcVertex = new Float32Array(sourceEntity.vertexArray);
@@ -845,11 +859,14 @@ class E3D_animation {
 
         this.state = E3D_RESET;
         this.data = {}; // to store data through the animation
+
+        this.delta2 = -1; // square of movement during animation step for culling, -1 anim target is not a source
+        
     }
 
-    animate() {
+    animate(CD_Candidate_list) {
         if (this.anim) {
-            this.anim();
+            this.anim(CD_Candidate_list);
         }
     }
 
@@ -1009,7 +1026,7 @@ class E3D_scene {
     }
 
 
-    addEntity(ent, visibility_culling = true) {
+    addEntity(ent) {
         // Initialize context data buffers
         
         if (!ent.dynamic) { // if static initialize context data buffers and assign data right away
@@ -1028,17 +1045,11 @@ class E3D_scene {
             this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.STATIC_DRAW);
         }
 
+        
+        ent.cull_max_pos = E3D_scene.cull_calculate_max_pos(ent.vertexArray);
+        
         ent.resetMatrix();
 
-        if (visibility_culling) {
-            ent.cull_dist2 = E3D_scene.cull_calculate_max_dist2(ent.vertexArray);
-            ent.cull_dist = Math.sqrt(ent.cull_dist2);
-        } else {
-            ent.cull_dist2 = 0;
-            ent.cull_dist = 0;
-        }
-
-        // Add entity to list
         this.entities.push(ent);
 
         return this.entities.length - 1; // return new index
@@ -1068,23 +1079,27 @@ class E3D_scene {
         }    
     }
 
-    static cull_calculate_max_dist2(vertArray) {
-        let result = 0;
+    static cull_calculate_max_pos(vertArray) {
+        let result = [0, 0, 0];
+        let r_dist2 = 0;
         for (let i = 0; i < vertArray.length; i += 3) {
             var currentDist = vec3.squaredLength([vertArray[i], vertArray[i+1], vertArray[i+2] ]);
-            if (currentDist > result) result = currentDist;
+            if (currentDist > r_dist2) {
+                result = [vertArray[i], vertArray[i+1], vertArray[i+2] ];
+                r_dist2 = currentDist;
+            }
         }
         return result;
     }
 
     cull_check_visible(idx) {
-        if (this.entities[idx].cull_dist > 0) {
+        if (this.entities[idx].vis_culling) {
             var pos = [0, 0, 0];
             vec3.subtract(pos, this.entities[idx].position, this.camera.position);
             this.camera.negateCamera(pos);
             var dist = -pos[2]; // only check for Z
-            return (((dist - (this.entities[idx].cull_dist*this.entities[idx].cull_dist_scale)) < this.camera.far) && 
-            ((dist + (this.entities[idx].cull_dist*this.entities[idx].cull_dist_scale)) > this.camera.near) );
+            return ( ((dist - this.entities[idx].cull_dist) < this.camera.far) && 
+            ((dist + this.entities[idx].cull_dist) > this.camera.near) );
         }
         return true;
     }
