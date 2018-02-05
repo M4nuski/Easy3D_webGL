@@ -142,7 +142,7 @@ function initEngine() {
     l0v.scale = vec3.fromValues(5, 5, 5);
     l0v.visible = true;
     l0v.vis_culling = false;
-    l0v.resetMatrix();
+
     scn.addEntity(l0v);
     
     l1v = new E3D_entity_vector("light1vect", true, 2.0, true);
@@ -150,7 +150,7 @@ function initEngine() {
     l1v.scale = vec3.fromValues(5, 5, 5);
     l1v.visible = true;
     l1v.vis_culling = false;
-    l1v.resetMatrix();
+
     scn.addEntity(l1v);
 
     timer.run();
@@ -202,7 +202,7 @@ function initEngine() {
     dev_CD.visible = true;
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
-    dev_CD.resetMatrix();
+
 }
 
 
@@ -301,30 +301,29 @@ function onRessource(name, msg) {
         if (resMngr.getRessourceType(name) == "Model") {
             if (name == "ST") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, vec3.fromValues(1,1,1));
-                scn.addEntity(nm);  
                 nm.position[2] = -120;
                 nm.visible = true;
-                nm.resetMatrix();
+
                 animations.push(new E3D_animation("ST rotate", rot0, nm, scn, timer));
                 animations[animations.length-1].play();
+                scn.addEntity(nm);  
 
                 if (!cloned) cloneWar();
 
             } else if (name == "CM") {
                 let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
-                scn.addEntity(nm);  
                 nm.position[1] = -80;
                 nm.scale[0] = 3;
                 nm.scale[2] = 3;
-                nm.resetMatrix();
                 nm.visible = true;
+                scn.addEntity(nm);  
 
                 nm = scn.cloneEntity("CM_top", "CM_bottom");
                 nm.position[1] = 80;
                 nm.scale[0] = 3;
                 nm.scale[2] = 3;
-                nm.resetMatrix();
                 nm.visible = true;
+                nm.resetMatrix();
 
             } else if (name == "sph") {
                 let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
@@ -491,23 +490,25 @@ function shotgunAnim(cand) {
     let numPellets = 10;
 
     if (this.state == E3D_PLAY) {
-
+        if (cand) { // pass 2, hit test and lock
         for (let i = 0; i < numPellets; ++i) if (this.data.act[i]) { // i is pallet index
-
-            // current tranlation vector
-            var vd = vec3.scale([0,0,0], this.data.vect[i], timer.delta); // vector delta
-            var so = [0, 0, 0]; // sphere origin
-            var v1 = vec3.add([0,0,0], this.data.org[i], vd); // vector end
 
             // translate pellet entity elements
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                var b = this.target.getVertex3f((i*this.target.srcNumElements) + j); // b is a view in float32array...
-                vec3.add(b, vd, b);
+                var b = this.target.getVertex3f((i*this.target.srcNumElements) + j); // b is a view in float32array
+                vec3.scaleAndAdd(b, b, this.data.vertOffset[i], timer.delta);
             }
+
+            // current tranlation vector, world coordinates
+            var vd = vec3.scale([0,0,0], this.data.vect[i], timer.delta); // vector delta
+            var so = [0, 0, 0]; // sphere origin
+            var v1 = vec3.add([0,0,0], this.data.org[i], vd); // vector end
+           // vec3.add(v1, this.data.delta_position, v1);
+
 
             var colList = [] ; // array of [entIdx, cdIdx, t, srcType, trgtType, newloc]
 
-            for (var entIdx = 0; entIdx < this.scn.entities.length; ++entIdx) {
+            for (var entIdx = 0; entIdx < cand.length; ++entIdx) if (cand[entIdx]) { // for each candidate entities
 
                 if (this.scn.entities[entIdx].CD_sph > 0) 
                 for (var cdIdx = 0; cdIdx < this.scn.entities[entIdx].CD_sph; ++cdIdx) {
@@ -589,25 +590,42 @@ function shotgunAnim(cand) {
             }
 
             // update pellet origin
-            vec3.add(this.data.org[i], this.data.org[i], vd);
+            vec3.scaleAndAdd(this.data.org[i], this.data.org[i], this.data.vect[i], timer.delta);
 
         } // end for each active pellet
+
+    } else { // pass 1 of active, offset
 
         this.data.ttl -= timer.delta;
         if (this.data.ttl  <= 0) {
             this.state = E3D_DONE;
             this.target.visible = false;
-        }  // ttl
+        } else // ttl 
+        {
+            this.data.last_position = this.target.position.slice();
+            this.data.delta_position = vec3.scale([0,0,0], this.data.mainVector, this.timer.delta);
+            vec3.add(this.target.position, this.target.position, this.data.delta_position);
+            this.delta2 = vec3.length(this.data.delta_position);
+
+            this.target.resetMatrix();
+            this.target.cull_dist = 30;// override calculated cull dist
+        }  
+    }
     }   // active
 
     if (this.state == E3D_RESTART) {
         vec3.copy(this.target.position, this.scn.camera.position);        
+        vec3.add(this.target.position, this.target.position, this.scn.camera.adjustToCamera([10, -10, 0])); // originate from bottom right corner of view
 
-        this.data.vect = Array(numPellets);
-        this.data.vectNorm = Array(numPellets);
-        this.data.act = Array(numPellets);
-        this.data.org = Array(numPellets);
+        this.data.vertOffset = Array(numPellets); // vect noise for vertex
+        this.data.vect = Array(numPellets); // mainVect + vect noise
+        this.data.vectNorm = Array(numPellets); //opt normalized vect for CD
+        this.data.org = Array(numPellets); // each pass org = org + vect, world coordinates
+
         this.data.ttl = 2.0;
+        this.data.act = Array(numPellets); // active
+
+        this.data.mainVector = this.scn.camera.adjustToCamera([ rndPM(2), rndPM(2), -500 - rndPM(2) ] );         
 
         this.target.setSize(this.target.srcNumElements * numPellets);
 
@@ -617,27 +635,26 @@ function shotgunAnim(cand) {
             this.data.act[i] = true;
             
             //pellet vector
-            this.data.vect[i] = this.scn.camera.adjustToCamera(vec3.fromValues(rndPM(20), rndPM(20), -500 - rndPM(10) ) );
+            this.data.vertOffset[i] = this.scn.camera.adjustToCamera([rndPM(10), rndPM(10), rndPM(3) ]); // some noise
+            this.data.org[i] = vec3.add([0,0,0], this.target.position, this.data.vertOffset[i]); // starting point is on noise.
+
+            this.data.vect[i] = vec3.add([0,0,0], this.data.vertOffset[i], this.data.mainVector); 
             this.data.vectNorm[i] = vec3.normalize([0,0,0], this.data.vect[i] );
 
-            //pellet origin (world coordinates)
-            var offset = this.scn.camera.adjustToCamera(vec3.fromValues(10 + rndPM(5), -10 - rndPM(5),  rndPM(2)));
-            this.data.org[i] = vec3.add([0, 0, 0], this.target.position, offset);
-            
             //offset pelets vertex by new origin and invalidate normal
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
                 var idx = (i*this.target.srcNumElements) + j;
                 var b = this.target.getVertex3f(idx);
-                vec3.add(b, offset, b)
+                vec3.add(b, this.data.vertOffset[i], b)
                 this.target.setNormal3f(idx, vec3_origin);
             }
         }
 
         this.state = E3D_PLAY;
         this.target.visible = true;
-        this.target.vis_culling = false;
+        this.target.vis_culling = true; // for now, to see vis and CD sphere
         this.scn.addEntity(this.target);
-        this.target.resetMatrix();
+        
     } 
 
 

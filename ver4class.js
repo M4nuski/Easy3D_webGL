@@ -247,8 +247,8 @@ class E3D_entity {
                 vec3.transformMat4(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
                 vec3.multiply(this.CD_fPlane_n[i], this.CD_fPlane_n[i], invScale);
 
-                vec3.transformMat4(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.normalMatrix);
-                vec3.multiply(this.CD_fPlane_d[i], this.CD_fPlane_d[i], invScale);
+                vec3.transformMat4(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.modelMatrix);
+                //vec3.multiply(this.CD_fPlane_d[i], this.CD_fPlane_d[i], invScale);
 
                 vec3.transformMat4(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
                 vec3.multiply(this.CD_fPlane_w[i], this.CD_fPlane_w[i], invScale);
@@ -1336,7 +1336,7 @@ class E3D_camera { // base camera, orthogonal
     }
 
     adjustToCamera(vect) {
-        let result = vec3.create();
+        let result = [0 ,0 ,0];
         vec3.rotateX(result, vect, vec3_origin, -this.rotation[0]); 
         vec3.rotateY(result, result, vec3_origin, -this.rotation[1]); 
         return result;
