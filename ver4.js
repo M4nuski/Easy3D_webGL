@@ -14,6 +14,7 @@ log("Set DOM Events");
 can.addEventListener("resize", winResize); // To reset camera matrix
 document.forms["moveTypeForm"].addEventListener("change", winResize); // To update camera matrix
 document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
+document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
 
 // Engine Config
 
@@ -242,9 +243,14 @@ function prepRender() {
  //   for (let i = 0; i < animations.length; ++i) { 
   //      animations[i].animate(candidates); // resolve collision and lock final position
    // }
-    dev_CD.numElements = 0;
-    for (let i = 0; i < scn.entities.length; ++i) {
-        if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
+    if (document.forms["displayForm"].CDP.checked) {
+        dev_CD.numElements = 0;
+        for (let i = 0; i < scn.entities.length; ++i) {
+            if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
+        }
+        dev_CD.visible = true;
+    } else {
+        dev_CD.visible = false;
     }
 
 }
