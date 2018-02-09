@@ -57,7 +57,7 @@ class E3D_input {
         this._rotateSpeed = 90 * DegToRad; // rad per sec
 
         this._mouseSpeed = 0.0025;
-        this._mouseWheelSpeed = 0.001;
+        this._mouseWheelSpeed = 0.1;
         this._smooth = 6.0;
 
         this._doubleTapDelay = 200;
@@ -281,9 +281,12 @@ class E3D_input {
     }
     
     mouseWheel(event) {    
-        if (event.deltaY != 0) {
-            this.pz += event.deltaY * this._mouseWheelSpeed * this._moveSpeed;
-        }    
+        if (event.deltaY > 0) {
+            this.pz += this._mouseWheelSpeed * this._moveSpeed;
+        } else if (event.deltaY < 0) {
+            this.pz -= this._mouseWheelSpeed * this._moveSpeed;
+        } 
+
         if (event.preventDefault) { event.preventDefault(); };
     }
     
