@@ -375,12 +375,9 @@ function sphAnim(cand) {
         if (cand) { // test and lock (pass 2)
         this.target.resetMatrix();  // update CD data  
         splos.line(this.data.last_position, this.target.position, true);
-
+        var colList = [] ; // array of [entIdx, cdIdx, penetration, srcType, trgtType, normal]
             // for each other entity
             for (let i = 0; i < cand.length; ++i ) if (cand[i]) {
-        //    for (let i = 0; i < this.scn.entities.length; ++i ) if (this.target.id != this.scn.entities[i].id) {
-            // TODO add CD events to array and pîck closest one
-
                 if (this.scn.entities[i].CD_sph > 0) {  // collision detection - this.sph to other sph  
 
                     for (let j = 0; j < this.scn.entities[i].CD_sph; ++j) {
@@ -391,11 +388,12 @@ function sphAnim(cand) {
                         //  log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
                             var penetration = Math.sqrt(minD) - Math.sqrt(d);
                             var n = [this.target.CD_sph_p[0][0] - this.scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - this.scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - this.scn.entities[i].CD_sph_p[j][2] ];
+                            //colList.push([i, j, penetration, "sph", "sph", n]);
+                              splos.moveTo(this.target.position);
                             this.data.spd = reflect(this.data.spd, n);
-                            splos.moveTo(this.target.position);
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
-                            splos.lineTo(this.target.position, false);
                             this.target.resetMatrix();
+                              splos.lineTo(this.target.position, false);
                         }
                     }
                 } // sph
@@ -420,34 +418,37 @@ function sphAnim(cand) {
                         //    log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
                             var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
                             penetration *= last_sgn;
+                          //  colList.push([i, j, penetration, "sph", "iPlane", this.scn.entities[i].CD_iPlane_n[j]])
+                              splos.moveTo(this.target.position);
                             this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
-                            splos.moveTo(this.target.position);
                             vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
-                            splos.lineTo(this.target.position, false);
                             this.target.resetMatrix();
+                              splos.lineTo(this.target.position, false);
 
-                        }  else { // if sph itself didn't hit plane, test for vector from last position to this one
-
+                        } else { // if sph itself didn't hit plane, test for vector from last position to this one
                             dist *= sgn;
                             last_Dist *= last_sgn;
                             if ( ( (dist > 0) && (last_Dist < 0) ) || ( (dist < 0) && (last_Dist > 0) ) ) {
                             //  log("hit sph(vect)-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
                                 var penetration = ( Math.abs(last_Dist) +  Math.abs(dist)) * last_sgn;
-                                this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
-                                splos.moveTo(this.target.position);
-                                vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
-                                splos.lineTo(this.target.position, false);
-                                this.target.resetMatrix();
+                                colList.push([i, j, penetration, "sph/vect", "iPlane", this.scn.entities[i].CD_iPlane_n[j]])
                             }
         
                         }
                     }         
                 } // iplane
 
-
-
-
             } // end for each other entity perform hit test
+
+            // Go trough colList and resolve CD for vect
+            if (colList.length > 0) {
+                  splos.moveTo(this.target.position);
+                colList.sort((a, b) => { return b[2] - a[2]; } );
+                this.data.spd = reflect(this.data.spd, colList[0][5]);
+                vec3.scaleAndAdd(this.target.position, this.target.position, colList[0][5], colList[0][2]);
+                this.target.resetMatrix();
+                  splos.lineTo(this.target.position, false);
+            }
 
             this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection
             this.data.ttl -= this.timer.delta;
