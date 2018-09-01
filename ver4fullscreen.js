@@ -10,6 +10,8 @@ const can = document.getElementById("GLCanvas");
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 
+const mainDiv = document.getElementById("mainDiv");
+
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
 document.forms["moveTypeForm"].addEventListener("change", winResize); // To update camera matrix
@@ -18,21 +20,45 @@ document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventD
 
 
 
-//can.addEventListener("dblclick", fs);
-document.getElementById("popDiv").addEventListener("click", fs);
 
+document.getElementById("screenSizeDiv").addEventListener("click", fullscreenToggle);
 
-function fs (event){
-    if (!document.webkitfullscreenElement) {
-        can.webkitRequestFullscreen();
+document.addEventListener("webkitfullscreenchange", fullscreenChange);
+document.addEventListener("mozfullscreenchange", fullscreenChange);
+document.addEventListener("MSFullscreenChange", fullscreenChange);
+
+document.exitFullscreen = document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+mainDiv.requestFullscreen = mainDiv.webkitRequestFullScreen || mainDiv.mozRequestFullScreen || mainDiv.msRequestFullscreen;
+
+function fullscreenChange() {
+
+    document.fullscreenElement = document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+    if (!document.fullscreenElement) {
+        // Not fs
+        pLockExit();        
+        document.getElementById("screenSizeImgFS").style.display = "block";
+        document.getElementById("screenSizeImgWS").style.display = "none";
+    } else {
+        // fs
+        document.getElementById("screenSizeImgFS").style.display = "none";
+        document.getElementById("screenSizeImgWS").style.display = "block";
+    }
+}
+
+function fullscreenToggle (){
+
+    document.fullscreenElement = document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    mainDiv.requestFullscreen = mainDiv.webkitRequestFullScreen || mainDiv.mozRequestFullScreen || mainDiv.msRequestFullscreen;
+
+   log("fullscreen toggle", true);
+    if (!document.fullscreenElement) {
+        // Not fs
+        mainDiv.requestFullscreen();
         pLockRequest(can);
     } else {
-
-        document.webkitExitFullscreen(); 
-        pLockExit();
-
+        //
     }
-    winResize();
 }
 
 // Engine Config

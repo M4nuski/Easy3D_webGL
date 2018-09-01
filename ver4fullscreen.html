@@ -16,27 +16,43 @@
             top:0px;
             display: block;
             position: absolute;
-        }
-        #mainDiv {
-            position: absolute;
-            top : 0px;
-            left : 0px;
-            bottom: 0px;
-            right: 0px;
-            z-index: 5;  
-        } 
+            z-index: 0;   
 
-        #popDiv {
+        }
+
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #mainDiv {
+            color:green;
+        }
+
+        #screenSizeDiv {
             position: absolute;
-            top : 5px;
-            left : 5px;
-            height : 320px;      
-            width : 240px;
+            right : 0px;
+            top : 0px;
+            border-radius: 0px 0px 0px 10px;
+            height : 54px;      
+            width : 96px;
             z-index: 10;    
-            background-color: rgba(0, 0, 0, 0.2);
-            color:greenyellow;
-            font-size: 20pt;
-            }
+            background-color: rgba(0, 0, 0, 0.3);            
+            overflow: hidden;
+        }
+
+        #configDiv {
+            position: absolute;
+            left : 0px;
+            top : 0px;
+            border-radius: 0px 00px 10px 0px;
+            height : 59px;      
+            width : 59px;
+            z-index: 10;    
+            background-color: rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
 
         #controlDiv {
             position: absolute;
@@ -123,14 +139,22 @@
 </head>
 
 <body>
+
     <div id="mainDiv">
-        <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
-        <div id="popDiv">Click/Tap pour Fullscreen<br />
-         Esc (Ech) pour quitter<br/>
-         Swipe bas ou haut ensuite back sur mobile</div>
+    <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
+
+    <div id="screenSizeDiv">
+        <img id="screenSizeImgFS" src="iconFS.svg" width="90" height="50" style="display:block; opacity: 0.75;" />
+        <img id="screenSizeImgWS" src="iconWS.svg" width="90" height="50" style="display:none; opacity: 0.75;" />
     </div>
 
+    <div id="configDiv">
+            <img id="screenSizeImg" src="iconCFG.svg" width="59" height="59" style="opacity: 0.75;" />
+    </div> 
+
+
     <div id="statusDiv">Status</div>
+
     <div id="logDiv"></div>
 
     <div id="controlDiv">LMB(touch) rotate, MouseWheel(pinch) zoom/pan, doubleclick Lock, Escape Remove Lock<br />
@@ -196,7 +220,7 @@
         </form>
     </div>
 
-
+</div>
 
 </body>
 

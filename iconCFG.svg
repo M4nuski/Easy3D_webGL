@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <!-- Created with SVG-edit - https://github.com/SVG-Edit/svgedit-->
+ <g class="layer">
+  <title>Layer 1</title>
+  <ellipse cx="100" cy="100.000002" fill="#000000" fill-opacity="0" id="svg_1" rx="50" ry="50" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="round" stroke-linejoin="null" stroke-width="29"/>
+  <g id="svg_9">
+   <line fill="none" id="svg_2" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" x1="10.5" x2="45.5" y1="100" y2="100"/>
+   <line fill="none" id="svg_4" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" x1="153.5" x2="188.5" y1="100" y2="100"/>
+   <line fill="none" id="svg_7" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" transform="rotate(90 99.5 28.5)" x1="82" x2="117" y1="28.5" y2="28.5"/>
+   <line fill="none" id="svg_8" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" transform="rotate(90 99.5 171.5)" x1="82" x2="117" y1="171.5" y2="171.5"/>
+  </g>
+  <g id="svg_10" transform="rotate(30 100 100)">
+   <line fill="none" id="svg_11" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" x1="11" x2="46" y1="100" y2="100"/>
+   <line fill="none" id="svg_12" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" x1="154" x2="189" y1="100" y2="100"/>
+   <line fill="none" id="svg_13" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" transform="rotate(90 100 28.5)" x1="82.5" x2="117.5" y1="28.5" y2="28.5"/>
+   <line fill="none" id="svg_14" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" transform="rotate(90 100 171.5)" x1="82.5" x2="117.5" y1="171.5" y2="171.5"/>
+  </g>
+  <g id="svg_15" transform="rotate(-30 100 100)">
+   <line fill="none" id="svg_16" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" x1="11" x2="46" y1="100" y2="100"/>
+   <line fill="none" id="svg_17" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" x1="154" x2="189" y1="100" y2="100"/>
+   <line fill="none" id="svg_18" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" transform="rotate(90 100 28.5)" x1="82.5" x2="117.5" y1="28.5" y2="28.5"/>
+   <line fill="none" id="svg_19" stroke="#00ff00" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="25" transform="rotate(90 100 171.5)" x1="82.5" x2="117.5" y1="171.5" y2="171.5"/>
+  </g>
+ </g>
+</svg>
