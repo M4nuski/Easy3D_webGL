@@ -11,10 +11,29 @@ const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 
 log("Set DOM Events");
-can.addEventListener("resize", winResize); // To reset camera matrix
+window.addEventListener("resize", winResize); // To reset camera matrix
 document.forms["moveTypeForm"].addEventListener("change", winResize); // To update camera matrix
 document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
 document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
+
+
+
+//can.addEventListener("dblclick", fs);
+document.getElementById("popDiv").addEventListener("click", fs);
+
+
+function fs (event){
+    if (!document.webkitfullscreenElement) {
+        can.webkitRequestFullscreen();
+        pLockRequest(can);
+    } else {
+
+        document.webkitExitFullscreen(); 
+        pLockExit();
+
+    }
+    winResize();
+}
 
 // Engine Config
 
@@ -56,9 +75,16 @@ initEngine();
 
 
 function winResize() {
-    winWidth = gl.canvas.clientWidth
-    winHeight = gl.canvas.clientHeight;
-    
+    gl.canvas.width  = gl.canvas.offsetWidth;
+    gl.canvas.height = gl.canvas.offsetHeight;
+
+    winWidth = gl.canvas.offsetWidth;
+    winHeight = gl.canvas.offsetHeight;
+
+    gl.viewport(0, 0, winWidth, winHeight);
+
+    log("Resize to " + winWidth + " x " + winHeight, true);
+   
     let vmode = document.forms["moveTypeForm"].moveType.value; 
 
     if (vmode == "model") {

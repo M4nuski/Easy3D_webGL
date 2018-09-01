@@ -63,7 +63,7 @@ class E3D_entity {
 
         this.id = id; // to find object in list
         this.visible = false;
-        this.dynamic = dynamic;
+        this.dynamic = dynamic; // dynamic entities have their data pushed to renderer every frame instead of once on load
 
         // Properties
         this.position = vec3.create();
@@ -72,8 +72,8 @@ class E3D_entity {
 
         // fustrum culling
         this.vis_culling = true;
-        this.cull_dist = 0;
-        this.cull_max_pos = [0, 0, 0]; // to compute max distance from matrix 
+        this.cull_dist = 0; // current distance along Z axis
+        this.cull_max_pos = [0, 0, 0]; // fartest vertex to compute max distance from matrix 
         
         // Computed matrix
         this.modelMatrix = mat4.create();
@@ -276,8 +276,8 @@ class E3D_entity {
         this.CD_vec_p0[this.CD_vec] = p.slice(); 
         this.CD_vec_p[this.CD_vec] = p.slice();
         
-        this.CD_vec_v0[this.CD_vec] = p.slice(); 
-        this.CD_vec_v[this.CD_vec] = p.slice(); 
+        this.CD_vec_v0[this.CD_vec] = v.slice(); 
+        this.CD_vec_v[this.CD_vec] = v.slice(); 
         
         this.CD_vec += 1;
         this.collisionDetection = true;
@@ -849,7 +849,7 @@ class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
 
 }
 
-class E3D_animation {
+class E3D_animation { // State container for animations
     constructor(id, animatorFunct, targetObject, sceneContext, timerclass) { // id ??
         this.id = id;
         this.anim = animatorFunct; // function delegate that perform the animation

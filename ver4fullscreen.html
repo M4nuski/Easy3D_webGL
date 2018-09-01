@@ -1,23 +1,52 @@
 <!DOCTYPE html>
 
 <head>
-    <title>Easy3D Engine webGL version 0.4</title>
+    <title>Easy3D Engine webGL version 0.4 FS</title>
     <meta charset="UTF-8">
     <style>
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            left:0px;
+            top:0px;
+            display: block;
+            position: absolute;
+        }
         #mainDiv {
+            position: absolute;
+            top : 0px;
+            left : 0px;
+            bottom: 0px;
+            right: 0px;
+            z-index: 5;  
+        } 
+
+        #popDiv {
             position: absolute;
             top : 5px;
             left : 5px;
-            width : 1280px;
-            height : 720px;
-        } 
+            height : 320px;      
+            width : 240px;
+            z-index: 10;    
+            background-color: rgba(0, 0, 0, 0.2);
+            color:greenyellow;
+            font-size: 20pt;
+            }
 
         #controlDiv {
             position: absolute;
             top: 460px;
             left : 10px;
-            width : 790px;            
+            width : 790px;      
+
+                        display: none;      
         }
+
 
         #statusDiv {
             position: absolute;
@@ -25,6 +54,8 @@
             left:850px;
             width:350px;
             height: 60px;      
+
+                        display: none;
         }
 
         #selectionDiv {
@@ -33,6 +64,8 @@
             left : 850px;
             width : 350px;
             height : 200px;
+
+                        display: none;
         }    
 
         #instructionsDiv {
@@ -40,6 +73,8 @@
             top: 280px;
             left: 850px;
             width: 600px;
+
+                        display: none;
         }
 
         #logDiv {
@@ -50,6 +85,9 @@
             height : 275px;
             overflow-x: wrap;
             overflow-y: scroll;
+
+
+            display: none;
         }
     
 
@@ -81,12 +119,15 @@
     <script type="text/javascript" src="ver4loader.js"></script>
     <script type="text/javascript" src="ver4shader.js"></script>
     <script type="text/javascript" src="ver4class.js"></script>
-    <script type="text/javascript" src="ver4.js"></script>
+    <script type="text/javascript" src="ver4fullscreen.js"></script>
 </head>
 
 <body>
     <div id="mainDiv">
-            <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
+        <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
+        <div id="popDiv">Click/Tap pour Fullscreen<br />
+         Esc (Ech) pour quitter<br/>
+         Swipe bas ou haut ensuite back sur mobile</div>
     </div>
 
     <div id="statusDiv">Status</div>
@@ -154,6 +195,9 @@
             <input type="radio" value= "plane"  name="moveType">Fly</input>(Not Implemented)<br />
         </form>
     </div>
+
+
+
 </body>
 
 </html>
