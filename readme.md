@@ -5,13 +5,14 @@ Yet another JS 3D/game engine test
 Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
 
 * ver4.html for current status/WIP
+* Works with mouse/keyboard in destktop browser, touch controls for mobile.
 * ver4cellshader.html for toon shading render test and demo
 * ver3.txt for engine target structure.
 * tuto1.html basic re-transcript of webGL tutorial.
 * tuto2.html added a lot of controls abstraction.
 * ver3.html working model loading and most of engine neatly packaged.
 * test1.html performance benchmarking for various JS and gl-matrix.js. 
-* Works with mouse/keyboard in destktop browser, touch controls for mobile.
+
 
 Current work-in-progress
 ----------
@@ -34,7 +35,7 @@ Next Steps
 * Remove scaling from matrix and entity except on load, or make separate to avoid dealing with it repeatidly. Mostly useless.
 * Replace per-vertex colors with textures
 * Sprites
-* Other type of physics mechanic for controls.
+* Other type of physics mechanic for controls. (chase camera/3rd person)
 * Sounds
 * Some kind of game :P
 * NetCode !

@@ -184,6 +184,7 @@ function initEngine() {
     fplanes.position = [25, -10, 25];
     fplanes.addPlane([-25, 10, 25], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
     fplanes.addPlane([25, -10, 0], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
+    fplanes.addPlane([0, 30, 0], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], false, true);
     fplanes.visible = true;
     //fplanes.cull_dist2 = 4200;
     scn.addEntity(fplanes);
@@ -544,7 +545,7 @@ function shotgunAnim(cand) {
                     var offsetV1 = vec3.subtract([0,0,0], v1, this.scn.entities[entIdx].CD_fPlane_d[cdIdx]);
                     var d0 = vec3.dot(offsetV0, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
                     var d1 = vec3.dot(offsetV1, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
-                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) {
+                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
                         var t = -d0 / (d1 - d0);
                         var newloc = vec3.lerp([0,0,0], offsetV0, offsetV1, t);
                         var xx1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_w[cdIdx]) );
@@ -558,21 +559,46 @@ function shotgunAnim(cand) {
                     nHitTest++;
                     var offsetV0 = vec3.subtract([0,0,0], this.data.org[i], this.scn.entities[entIdx].CD_cube_p[cdIdx]);
                     var offsetV1 = vec3.subtract([0,0,0], v1, this.scn.entities[entIdx].CD_cube_p[cdIdx]);
-                    // Detect v0 inside < 1
-                    // Detect v1 inside
-                    // Detect v0 and v1 on opposite sides >1 & <1 || <-1 & > -1
 
-
-                    /*
-                    var d0 = vec3.dot(offsetV0, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
-                    var d1 = vec3.dot(offsetV1, this.scn.entities[entIdx].CD_fPlane_n[cdIdx]);
-                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) {
+                    var d0 = vec3.dot(offsetV0, this.scn.entities[entIdx].CD_cube_x[cdIdx]);
+                    var d1 = vec3.dot(offsetV1, this.scn.entities[entIdx].CD_cube_x[cdIdx]);
+                    // Test inside X/Y
+                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
                         var t = -d0 / (d1 - d0);
                         var newloc = vec3.lerp([0,0,0], offsetV0, offsetV1, t);
-                        var xx1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_w[cdIdx]) );
-                        var yy1 = Math.abs(vec3.dot(newloc, this.scn.entities[entIdx].CD_fPlane_h[cdIdx]) );
-                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "cube", add3f(newloc,this.scn.entities[entIdx].CD_fPlane_d[cdIdx] )] );
-                    }         */            
+                        var xx1 = Math.abs(newloc[1]);
+                        var yy1 = Math.abs(newloc[2]);
+                        //Check if crossing point is inside the unity square of plane
+                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "CubeX", add3f(newloc,this.scn.entities[entIdx].CD_cube_p[cdIdx] )] );
+                    }   
+
+
+                    var d0 = vec3.dot(offsetV0, this.scn.entities[entIdx].CD_cube_y[cdIdx]);
+                    var d1 = vec3.dot(offsetV1, this.scn.entities[entIdx].CD_cube_y[cdIdx]);
+                    // Test inside X/Y
+                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
+                        var t = -d0 / (d1 - d0);
+                        var newloc = vec3.lerp([0,0,0], offsetV0, offsetV1, t);
+                        var xx1 = Math.abs(newloc[0]);
+                        var yy1 = Math.abs(newloc[2]);
+                        //Check if crossing point is inside the unity square of plane
+                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "CubeY", add3f(newloc,this.scn.entities[entIdx].CD_cube_p[cdIdx] )] );
+                    }   
+
+
+
+                    var d0 = vec3.dot(offsetV0, this.scn.entities[entIdx].CD_cube_z[cdIdx]);
+                    var d1 = vec3.dot(offsetV1, this.scn.entities[entIdx].CD_cube_z[cdIdx]);
+                    // Test inside X/Y
+                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
+                        var t = -d0 / (d1 - d0);
+                        var newloc = vec3.lerp([0,0,0], offsetV0, offsetV1, t);
+                        var xx1 = Math.abs(newloc[0]);
+                        var yy1 = Math.abs(newloc[1]);
+                        //Check if crossing point is inside the unity square of plane
+                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "CubeZ", add3f(newloc,this.scn.entities[entIdx].CD_cube_p[cdIdx] )] );
+                    }   
+    
                 } // end for each sph data of each entities with cube CD
             }
 

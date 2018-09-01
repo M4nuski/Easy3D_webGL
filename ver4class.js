@@ -303,13 +303,13 @@ class E3D_entity {
         this.collisionDetection = true;
     }
     pushCD_fPlane(d, hw, hh, n) {
-        this.CD_fPlane_n0[this.CD_fPlane] = n.slice();
+        this.CD_fPlane_n0[this.CD_fPlane] = n.slice(); // normal of plane face
         this.CD_fPlane_n[this.CD_fPlane] = n.slice();  
-        this.CD_fPlane_d0[this.CD_fPlane] = d.slice();  
+        this.CD_fPlane_d0[this.CD_fPlane] = d.slice(); // position offset of plane
         this.CD_fPlane_d[this.CD_fPlane] = d.slice();  
-        this.CD_fPlane_w0[this.CD_fPlane] = hw.slice();
+        this.CD_fPlane_w0[this.CD_fPlane] = hw.slice(); // width
         this.CD_fPlane_w[this.CD_fPlane] = hw.slice();
-        this.CD_fPlane_h0[this.CD_fPlane] = hh.slice();
+        this.CD_fPlane_h0[this.CD_fPlane] = hh.slice(); // height
         this.CD_fPlane_h[this.CD_fPlane] = hh.slice();
         
         this.CD_fPlane += 1;
