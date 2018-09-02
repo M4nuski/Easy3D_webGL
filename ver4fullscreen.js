@@ -9,7 +9,6 @@ log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
-
 const mainDiv = document.getElementById("mainDiv");
 
 log("Set DOM Events");
@@ -18,46 +17,15 @@ document.forms["moveTypeForm"].addEventListener("change", winResize); // To upda
 document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
 document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
 
+document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv) } );
 
-
-
-document.getElementById("screenSizeDiv").addEventListener("click", fullscreenToggle);
-
-document.addEventListener("webkitfullscreenchange", fullscreenChange);
-document.addEventListener("mozfullscreenchange", fullscreenChange);
-document.addEventListener("MSFullscreenChange", fullscreenChange);
-
-document.exitFullscreen = document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-mainDiv.requestFullscreen = mainDiv.webkitRequestFullScreen || mainDiv.mozRequestFullScreen || mainDiv.msRequestFullscreen;
-
-function fullscreenChange() {
-
-    document.fullscreenElement = document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-
-    if (!document.fullscreenElement) {
-        // Not fs
-        pLockExit();        
-        document.getElementById("screenSizeImgFS").style.display = "block";
-        document.getElementById("screenSizeImgWS").style.display = "none";
-    } else {
-        // fs
+fullscreenChangeCallback = function fullscreenChange(active, elem) {
+    if (active) {
         document.getElementById("screenSizeImgFS").style.display = "none";
         document.getElementById("screenSizeImgWS").style.display = "block";
-    }
-}
-
-function fullscreenToggle (){
-
-    document.fullscreenElement = document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-    mainDiv.requestFullscreen = mainDiv.webkitRequestFullScreen || mainDiv.mozRequestFullScreen || mainDiv.msRequestFullscreen;
-
-   log("fullscreen toggle", true);
-    if (!document.fullscreenElement) {
-        // Not fs
-        mainDiv.requestFullscreen();
-        pLockRequest(can);
     } else {
-        //
+        document.getElementById("screenSizeImgFS").style.display = "block";
+        document.getElementById("screenSizeImgWS").style.display = "none";
     }
 }
 
@@ -85,6 +53,8 @@ var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 
 var inputs = new E3D_input(can, true, true, true, true, true, true);
+inputs.onInput = onEngineInput;
+
 // virtual KB
 var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
 // virtual trackpad + thumbstick
@@ -95,8 +65,11 @@ var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thu
 var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "action0");
 
 
-log("Session Start", true);
+log("Session Start", false);
+
 initEngine();
+
+log("Engine Initialized", false);
 
 
 
@@ -109,7 +82,7 @@ function winResize() {
 
     gl.viewport(0, 0, winWidth, winHeight);
 
-    log("Resize to " + winWidth + " x " + winHeight, true);
+    log("Resize to " + winWidth + " x " + winHeight, false);
    
     let vmode = document.forms["moveTypeForm"].moveType.value; 
 
@@ -308,6 +281,23 @@ function prepRender() {
 
 }
 
+
+function onEngineInput() { // preprocess inputs out of game loop
+
+    if (inputs.checkCommand("togglePointerlock", true)) {
+        if (pLockActive) {
+            pLockExit();
+        } else if (pLockSupported) {
+            pLockRequest(can);
+        }
+    }
+
+    if (inputs.checkCommand("toggleFullscreen", true)) {
+        fullscreenToggle(mainDiv);
+    }
+}
+
+
 function timerTick() {  // Game Loop
     
     vTSinputRight.processInputs("rx", "ry", timer.delta);
@@ -342,6 +332,7 @@ function timerTick() {  // Game Loop
         scn.render();
         scn.postRender();
     }   
+
 }
 
 
@@ -826,7 +817,9 @@ function log(text, silent = true) {
     console.log("E3D[" + ts + "] " + text);
     if (!silent) {
         logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+        logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
     }
+
 }
 
 function updateStatus() {

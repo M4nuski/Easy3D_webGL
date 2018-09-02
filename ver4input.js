@@ -1,12 +1,12 @@
 class E3D_input {
-    constructor (element, supportMouse, supportKeyboard, supportTouch, lockMouse, clampPitch= true, allowPan = true) {
+    constructor (element, supportMouse, supportKeyboard, supportTouch, supportPointerLock, clampPitch= true, allowPan = true) {
 
         this.element = element;
 
         this.supportMouse = supportMouse;
         this.supportKeyboard = supportKeyboard;
         this.supportTouch = supportTouch;
-        this.lockMouse = lockMouse;
+        this.supportPointerLock = supportPointerLock;
         this.clampPitch = clampPitch;
         this.allowPan = allowPan;
 
@@ -35,7 +35,7 @@ class E3D_input {
             document.addEventListener("keyup",(e) => { this.keyUp(e) } );
         }
 
-        if (lockMouse) {
+        if (supportPointerLock) {
             if (pLockSupported) { 
                 pLockMoveEvent = (x, y) => { this.mouseLockedMove(x, y) } ; 
             }
@@ -58,27 +58,29 @@ class E3D_input {
 
         this._mouseSpeed = 0.0025;
         this._mouseWheelSpeed = 0.1;
-        this._smooth = 6.0;
+        this._smooth = 6.0; //sec for 1:1 inputs
 
-        this._doubleTapDelay = 200;
+        this._doubleTapDelay = 200; //ms
 
-        // Keyboard Controls
-        this.keyMap = {}; // this.keyMap[command name] = event.key
-        this.keyMap["moveUp"] = " ";
-        this.keyMap["moveDown"] = "c";
+        // Keyboard Controls, maps commands to keyboardEvent.code
+        this.keyMap = {}; 
+        this.keyMap["moveUp"] = "Space";
+        this.keyMap["moveDown"] = "KeyC";
 
-        this.keyMap["strafeLeft"] = "a";
-        this.keyMap["strafeRight"] = "d";
+        this.keyMap["strafeLeft"] = "KeyA";
+        this.keyMap["strafeRight"] = "KeyD";
 
-        this.keyMap["moveForward"] = "w";
-        this.keyMap["moveBackward"] = "s";
+        this.keyMap["moveForward"] = "KeyW";
+        this.keyMap["moveBackward"] = "KeyS";
 
-        this.keyMap["rollLeft"] = "q";
-        this.keyMap["rollRight"] = "e";
+        this.keyMap["rollLeft"] = "KeyQ";
+        this.keyMap["rollRight"] = "KeyE";
 
         this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch
-        this.keyMap["action1"] = "f";
+        this.keyMap["action1"] = "KeyF";
 
+        this.keyMap["togglePointerlock"] = "ControlRight";
+        this.keyMap["toggleFullscreen"] = "F11";
 
         // Mouse Controls
         this.panning = false;
@@ -90,6 +92,8 @@ class E3D_input {
         this.rx=0; this.rx_sum=0; this.rx_smth=0;
         this.ry=0; this.ry_sum=0; this.ry_smth=0;
         this.rz=0; this.rz_sum=0; this.rz_smth=0;
+
+        this.onInput = null; // callback for direct input change notification
 
     }
 
@@ -106,20 +110,29 @@ class E3D_input {
 
 
     keyDown(event) {
-        if ((this.inputDoneTable[event.key] == undefined) || (this.inputDoneTable[event.key] === true)) {
-            this.inputTable[event.key] = true;   
-            this.inputDoneTable[event.key] = false;
-        }    
-        if ((pLockActive) && (event.key == "Escape")) {
-            pLockExit();
+        if ((!event.metaKey) || (event.key != "F12")) {
+            event.preventDefault();
         }
-        if ((event.target) && (event.target == document.body) && (event.key == " ")) event.preventDefault(); 
+
+
+        if ((this.inputDoneTable[event.code] == undefined) || (this.inputDoneTable[event.code] === true)) {
+            this.inputTable[event.code] = true;   
+            this.inputDoneTable[event.code] = false;
+        }    
+
+
+        if (this.onInput) this.onInput(); // direct callback keydown preview
+
+       // if ((pLockActive) && (event.code == "Escape")) {
+       //     pLockExit();
+       // }
+   //     if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
     }
     
     keyUp(event) {    
-        if (this.inputTable[event.key] != undefined) {
-            this.inputTable[event.key] = false;
-            this.inputDoneTable[event.key] = true;
+        if (this.inputTable[event.code] != undefined) {
+            this.inputTable[event.code] = false;
+            this.inputDoneTable[event.code] = true;
         }    
     }
 
@@ -291,9 +304,9 @@ class E3D_input {
     }
     
     mouseDblClick(event) {
-        if (pLockSupported) {
-            pLockRequest(this.element);
-        }
+       // if (pLockSupported) {
+        //    pLockRequest(this.element);
+       // }
         if (event.preventDefault) { event.preventDefault(); };
     }
 
