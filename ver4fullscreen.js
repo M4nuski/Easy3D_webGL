@@ -18,14 +18,21 @@ document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.pre
 document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
 
 document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv) } );
+document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); can.focus(); } );
 
 fullscreenChangeCallback = function fullscreenChange(active, elem) {
+
     if (active) {
         document.getElementById("screenSizeImgFS").style.display = "none";
-        document.getElementById("screenSizeImgWS").style.display = "block";
+        document.getElementById("screenSizeImgWS").style.display = "inline-block";
     } else {
-        document.getElementById("screenSizeImgFS").style.display = "block";
+
+        document.getElementById("screenSizeImgFS").style.display = "inline-block";
         document.getElementById("screenSizeImgWS").style.display = "none";
+        if (pLockRequested) {
+            pLockRequest(mainDiv); // Restore pointerLock 
+        }
+
     }
 }
 
@@ -285,16 +292,17 @@ function prepRender() {
 function onEngineInput() { // preprocess inputs out of game loop
 
     if (inputs.checkCommand("togglePointerlock", true)) {
-        if (pLockActive) {
-            pLockExit();
-        } else if (pLockSupported) {
+        pLockToggle(can);
+    }
+
+    if (inputs.checkCommand("toggleFullscreen", true)) {
+        let pla = pLockActive();
+        fullscreenToggle(mainDiv);
+        if (pla) {
             pLockRequest(can);
         }
     }
 
-    if (inputs.checkCommand("toggleFullscreen", true)) {
-        fullscreenToggle(mainDiv);
-    }
 }
 
 
@@ -828,7 +836,5 @@ function updateStatus() {
     " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
     "nAnims: " + animations.length + " nHitTests: " + nHitTest;
 }
-
-
 
 });

@@ -35,11 +35,9 @@ class E3D_input {
             document.addEventListener("keyup",(e) => { this.keyUp(e) } );
         }
 
-        if (supportPointerLock) {
-            if (pLockSupported) { 
-                pLockMoveEvent = (x, y) => { this.mouseLockedMove(x, y) } ; 
-            }
-        } else console.log("Mouse lock requested but not supported");
+        if  ((supportPointerLock) && (pLockSupported)) { 
+            pLockMoveEvent = (x, y) => { this.mouseLockedMove(x, y) } ; 
+        }
 
         if (supportTouch) {
             element.addEventListener("touchstart", (e) => {this.touchStart(e) } );
@@ -110,8 +108,8 @@ class E3D_input {
 
 
     keyDown(event) {
-        if ((!event.metaKey) || (event.key != "F12")) {
-            event.preventDefault();
+        if ((!event.metaKey) && (event.code != "F12")  && (event.code != "ControlRight")) {
+            if (event.preventDefault) event.preventDefault();
         }
 
 
@@ -121,7 +119,7 @@ class E3D_input {
         }    
 
 
-        if (this.onInput) this.onInput(); // direct callback keydown preview
+        //if (this.onInput) this.onInput(); // direct callback keydown preview
 
        // if ((pLockActive) && (event.code == "Escape")) {
        //     pLockExit();
@@ -130,6 +128,9 @@ class E3D_input {
     }
     
     keyUp(event) {    
+
+        if (this.onInput) this.onInput(); // callback from event for user input dependant request to browser (fullscreen, pointerlock)
+
         if (this.inputTable[event.code] != undefined) {
             this.inputTable[event.code] = false;
             this.inputDoneTable[event.code] = true;
@@ -244,7 +245,7 @@ class E3D_input {
         }
 
         if (pLockActive) { 
-            this.keyDown( { key : this.keyMap["action0"] } );
+            this.keyDown( { code : this.keyMap["action0"] } );
         } 
 
         if (event.preventDefault) { event.preventDefault(); };
@@ -258,7 +259,7 @@ class E3D_input {
             this.rotating = false;
         }
         if (pLockActive) { 
-            this.keyUp( { key : this.keyMap["action0"] } );
+            this.keyUp( { code : this.keyMap["action0"] } );
         } 
     }
     
@@ -348,7 +349,7 @@ class E3D_input {
         }
 
         if (this.doubleTapping) {
-            this.keyDown( { key : this.keyMap["action0"] } );
+            this.keyDown( { code : this.keyMap["action0"] } );
             this.doubleTapping = false;
         } else {
             this.doubleTapping = true;

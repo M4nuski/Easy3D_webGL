@@ -4,6 +4,7 @@
     <title>Easy3D Engine webGL version 0.4 FS</title>
     <meta charset="UTF-8">
     <style>
+
         body {
             padding: 0px;
             margin: 0px;
@@ -16,30 +17,47 @@
             top:0px;
             display: block;
             position: absolute;
-            z-index: 0;   
-
+            z-index: 0;             
         }
 
         img {
-            display: block;
-          /*  margin-left: auto;*/
-          /*  margin-right: auto;*/
+            display: inline-block;
+            vertical-align: top;
         }
 
         #mainDiv {
-            color:green;
+            color:limegreen;
         }
 
-        #screenSizeDiv {
+        #displayConfigDiv {
             position: absolute;
             right : 0px;
             top : 0px;
             border-radius: 0px 0px 0px 10px;
-            height : 54px;      
-            width : 96px;
+            height : 50px;      
+            width : 50px;
             z-index: 10;    
             background-color: rgba(0, 0, 0, 0.3);            
             overflow: hidden;
+            transition: 250ms;
+            float: right;
+        }        
+        #displayConfigDiv:focus {
+            width : auto;
+            height : auto;
+            background-color: rgba(0, 0, 0, 0.9);
+            transition: 250ms;
+        }
+        .flr {
+            text-align: center;
+            float: left;
+        }
+
+
+
+        #screenSizeDiv {
+            height : 54px;      
+            width : 96px;   
         }
 
         #configDiv {
@@ -53,12 +71,24 @@
             background-color: rgba(0, 0, 0, 0.3);
             overflow: hidden;
             transition: 250ms;
+            display: flex;
         }
         #configDiv:hover {
-            width: 100%;
-            height:50%;
+            width: auto;
+            height:auto;
             transition: 250ms;
         }
+
+        #statusDiv {
+            width : 300px;
+            display: inline-block;
+        }
+
+
+
+
+
+
 
         #controlDiv {
             position: absolute;
@@ -67,17 +97,6 @@
             width : 790px;      
 
                         display: none;      
-        }
-
-
-        #statusDiv {
-            position: absolute;
-            top:0px;
-            left:850px;
-            width:350px;
-            height: 60px;      
-
-                        display: none;
         }
 
         #selectionDiv {
@@ -99,12 +118,9 @@
                         display: none;
         }
 
-
-
-.log::-webkit-scrollbar {
- display: none;
-}
-
+        .log::-webkit-scrollbar {
+            display: none;
+        }
         #logDiv {
             position: absolute;
             width: 300px;
@@ -114,17 +130,17 @@
             overflow-x: wrap;
             overflow-y: scroll;
 
-            color :green;
             background-color: rgba(0, 0, 0, 0.3);
-
-            transition: 250ms;      
-
+            transition: 250ms;
             border-radius: 0px 10px 0px 0px;
         }
-        #logDiv:hover :focus {
+        #logDiv:hover {
             background-color: rgba(0, 0, 0, 0.9);
             transition: 250ms;   
         }
+
+
+
 
 
         td {
@@ -166,22 +182,35 @@
 <body>
 
     <div id="mainDiv">
-    <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
 
-    <div id="screenSizeDiv">
-        <img id="screenSizeImgFS" src="iconFS.svg" width="90" height="50" style="display:block; opacity: 0.75;" />
-        <img id="screenSizeImgWS" src="iconWS.svg" width="90" height="50" style="display:none; opacity: 0.75;" />
-    </div>
+        <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
 
-    <div id="configDiv">
-            <img id="screenSizeImg" src="iconCFG.svg" width="59" height="59" style="opacity: 0.75;" />
-    </div> 
+        <div id="displayConfigDiv" >     
+
+            <img id="displaySettingsImg" src="iconDP.svg" width="50" height="50" style="opacity: 0.75;" />   
+
+            <div class="flr">
+                <img id="pointerLockImg" src="iconPL.svg" width="50" height="50" style="opacity: 0.75;" /><br/>R-Ctrl
+            </div>            
+
+            <div id="screenSizeDiv" class="flr">
+                <img id="screenSizeImgFS" src="iconFS.svg" width="90" height="50" style="opacity: 0.75;" />
+                <img id="screenSizeImgWS" src="iconWS.svg" width="90" height="50" style="display:none; opacity: 0.75;" /><br/>F11
+            </div>                
+
+              
+        </div>
 
 
-    <div id="statusDiv">Status</div>
+        <div id="configDiv">
+                <img id="" src="iconCFG.svg" width="59" height="59" style="opacity: 0.75;" />
+                <div id="statusDiv">Status</div>
+        </div> 
+
+        <div id="logDiv" class="log"></div>
 
 
-    <div id="logDiv" class="log"></div>
+
 
     <div id="controlDiv">LMB(touch) rotate, MouseWheel(pinch) zoom/pan, doubleclick Lock, Escape Remove Lock<br />
         vKeyboard (click/touch)<br />
@@ -225,9 +254,10 @@
         Trackpad de droit agit comme dans la fenetre. Double-tap action0(balle)<br />
         Double thumbstick - semblable aux controls de jeux sur mobile ou dual stick de console.
         <br />
-        We are using node <script>document.write(process.versions.node)</script>,
+        <!-- electron stuff         We are using node <script>document.write(process.versions.node)</script>,
         Chrome <script>document.write(process.versions.chrome)</script>,
-        and Electron <script>document.write(process.versions.electron)</script>.
+        and Electron <script>document.write(process.versions.electron)</script>.-->
+
     </div>
 
     <div id="selectionDiv">
