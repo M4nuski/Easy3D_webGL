@@ -34,20 +34,23 @@
             right : 0px;
             top : 0px;
             border-radius: 0px 0px 0px 10px;
-            height : 50px;      
-            width : 50px;
-            z-index: 10;    
-            background-color: rgba(0, 0, 0, 0.3);            
+            z-index: 10;             
             overflow: hidden;
-            transition: 250ms;
+            transition: .25s;
             float: right;
         }        
-        #displayConfigDiv:focus {
+        .displayConfigDiv_hover2off {
+            height : 50px;      
+            width : 50px; 
+            background-color: rgba(0, 0, 0, 0.3);  
+        }
+        .displayConfigDiv_hover2on {
             width : auto;
             height : auto;
             background-color: rgba(0, 0, 0, 0.9);
-            transition: 250ms;
         }
+
+
         .flr {
             text-align: center;
             float: left;
@@ -166,6 +169,7 @@
     <script type="text/javascript" src="gl-matrix-min.js"></script>
     <script type="text/javascript" src="pointerLock.js"></script>
     <script type="text/javascript" src="fullScreen.js"></script>
+    <script type="text/javascript" src="slickHover.js"></script>
 
     <!-- Engine Core -->
     <script type="text/javascript" src="ver4const.js"></script>
@@ -185,7 +189,7 @@
 
         <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
 
-        <div id="displayConfigDiv" >     
+        <div id="displayConfigDiv" class="hover2">     
 
             <img id="displaySettingsImg" src="iconDP.svg" width="50" height="50" style="opacity: 0.75;" />   
 

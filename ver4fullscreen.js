@@ -17,8 +17,8 @@ document.forms["moveTypeForm"].addEventListener("change", winResize); // To upda
 document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
 document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
 
-document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv) } );
-document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); can.focus(); } );
+document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv); hover2CollapseAll(); } );
+document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); hover2CollapseAll(); } );
 
 fullscreenChangeCallback = function fullscreenChange(active, elem) {
 
@@ -31,6 +31,7 @@ fullscreenChangeCallback = function fullscreenChange(active, elem) {
         document.getElementById("screenSizeImgWS").style.display = "none";
         if (pLockRequested) {
             pLockRequest(mainDiv); // Restore pointerLock 
+            hover2CollapseAll();
         }
 
     }
@@ -293,6 +294,7 @@ function onEngineInput() { // preprocess inputs out of game loop
 
     if (inputs.checkCommand("togglePointerlock", true)) {
         pLockToggle(can);
+        hover2CollapseAll();
     }
 
     if (inputs.checkCommand("toggleFullscreen", true)) {
@@ -300,6 +302,7 @@ function onEngineInput() { // preprocess inputs out of game loop
         fullscreenToggle(mainDiv);
         if (pla) {
             pLockRequest(can);
+            hover2CollapseAll();
         }
     }
 
