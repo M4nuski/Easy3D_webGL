@@ -116,6 +116,11 @@ function winResize() {
         scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
     }
 
+    vTSinput.onResize();
+    vTSinputLeft.onResize();
+    vTSinputRight.onResize();
+    //TODO move to class, also add scroll ??
+
 }
 
 function initEngine() {

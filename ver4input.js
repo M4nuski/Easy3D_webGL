@@ -380,7 +380,7 @@ class E3D_input {
             } 
             else console.log("(touchEnd) Touch Id not found");
         }
-        this.keyUp( { key : this.keyMap["action0"] } );
+        this.keyUp( { code : this.keyMap["action0"] } );
     }
 
     touchCancel(event) {
@@ -488,7 +488,7 @@ class E3D_input_virtual_kb {
     vKeyDown(event) {
         let k = event.target.getAttribute("vKey");
         if (k) {
-            this.inputClass.keyDown( { key : k } );
+            this.inputClass.keyDown( { code : k } );
         }
         event.preventDefault();
     }
@@ -496,7 +496,7 @@ class E3D_input_virtual_kb {
     vKeyUp(event) {
         let k = event.target.getAttribute("vKey");
         if (k) {
-            this.inputClass.keyUp( { key : k } );
+            this.inputClass.keyUp( { code : k } );
         }
     }
 
@@ -653,7 +653,7 @@ class E3D_input_virtual_thumbstick {
         this.y = event.changedTouches[0].pageY;
 
         if (this.doubleTapping) {
-            this.inputClass.keyDown( { key : this.inputClass.keyMap[this.doubleTapCommand] } );
+            this.inputClass.keyDown( { code : this.inputClass.keyMap[this.doubleTapCommand] } );
             this.doubleTapping = false;
         } else {
             this.doubleTapping = true;
@@ -666,7 +666,7 @@ class E3D_input_virtual_thumbstick {
         event.preventDefault();
         if (this.Touch == event.changedTouches[0].identifier) {
             this.Touch = -1;
-            this.inputClass.keyUp( { key : this.inputClass.keyMap[this.doubleTapCommand] } );
+            this.inputClass.keyUp( { code : this.inputClass.keyMap[this.doubleTapCommand] } );
         }
     }
 

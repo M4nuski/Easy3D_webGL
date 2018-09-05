@@ -127,7 +127,7 @@
         #logDiv {
             position: absolute;
             width: 300px;
-            left: 0px;
+            left: 125px;
             bottom: 0px;
             height : 125px;
             overflow-x: wrap;
@@ -135,7 +135,7 @@
 
             background-color: rgba(0, 0, 0, 0.3);
             transition: 250ms;
-            border-radius: 0px 10px 0px 0px;
+            border-radius: 10px 10px 0px 0px;
         }
         #logDiv:hover {
             background-color: rgba(0, 0, 0, 0.9);
@@ -160,8 +160,15 @@
         #thumb1Right {
             position: absolute;
             right: 0px;
+            bottom:0px;
+            opacity: 33%;
         }
-
+        #thumb1Left {
+            position: absolute;
+            left: 0px; 
+            bottom:0px;
+            opacity: 33%;
+        }
 
 
     </style>
@@ -230,9 +237,9 @@
         <img src="tp.svg" width= "200" height="200" id="thumb0"/> <img src="mp.svg" width= "300" height="200"id="track0" /><br />  
 
         vThumbSticks<br />
-        <img src="tp.svg" width= "200" height="200" id="thumb1Left" /> <img src="tp.svg" width= "200" height="200" id="thumb1Right"/><br />  
-    </div>
 
+    </div>
+    <img src="tp.svg" width= "125" height="125" id="thumb1Left" /> <img src="tp.svg" width= "125" height="125" id="thumb1Right"/><br />  
     <div id="instructionsDiv">
         Page de test pour game engine en Javascript / WebGL<br/>
         Testé sur Windows dans Chrome et Firefox<br />
@@ -271,8 +278,8 @@
         Movement/Physic Type:<br />
         <form id="moveTypeForm">
             <input type="checkbox" value= "invertY" name="invertY" />Invert Y<br />
-            <input type="radio" value= "space"  name="moveType" />Space<br />
-            <input type="radio" value= "free"  name="moveType" checked = "true" />Free Roam<br />
+            <input type="radio" value= "space"  name="moveType" checked = "true"  />Space<br />
+            <input type="radio" value= "free"  name="moveType" />Free Roam<br />
             <input type="radio" value= "model" name="moveType" />Model<br />
             <input type="radio" value= "walk"  name="moveType" />Walking( Not Implemented)<br />
             <input type="radio" value= "drive"  name="moveType" />Driving (Not Implemented)<br />
