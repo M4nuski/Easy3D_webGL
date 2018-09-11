@@ -136,7 +136,7 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.0, 0.0, 0.15, 1.0), 300);
+        scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.0, 0.0, 0.25, 1.0), 400);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -378,16 +378,16 @@ function onRessource(name, msg) {
 
             } else if (name == "CM") {
                 let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
-                nm.position[1] = -80;
-                nm.scale[0] = 3;
-                nm.scale[2] = 3;
+                nm.position[1] = -120;
+                nm.scale[0] = 5;
+                nm.scale[2] = 5;
                 nm.visible = true;
                 scn.addEntity(nm);  
 
                 nm = scn.cloneEntity("CM_top", "CM_bottom");
-                nm.position[1] = 80;
-                nm.scale[0] = 3;
-                nm.scale[2] = 3;
+                nm.position[1] = 120;
+                nm.scale[0] = 5;
+                nm.scale[2] = 5;
                 nm.visible = true;
                 nm.resetMatrix();
 
