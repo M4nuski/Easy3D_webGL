@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Easy3D Engine webGL version 0.4 STL viewer</title>
+    <meta charset="UTF-8">
+    <style>
+
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        canvas {
+            width: 80%;
+            height: 100%;            
+            left:20%;
+            top:0px;
+            display: block;
+            position: absolute;
+            z-index: 0;             
+        }
+
+        .log::-webkit-scrollbar {
+            display: none;
+        }
+
+        #logDiv {
+            position: absolute;
+            width: 20%;
+            left: 0px;
+            bottom: 0px;
+            height : 100%;
+            overflow-x: wrap;
+            overflow-y: scroll;
+        }
+
+</style>
+    <!-- Utilities -->
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
+    <script type="text/javascript" src="pointerLock.js"></script>
+    <script type="text/javascript" src="fullScreen.js"></script>
+    <script type="text/javascript" src="slickHover.js"></script>
+
+    <!-- Engine Core -->
+    <script type="text/javascript" src="ver4const.js"></script>
+    <script type="text/javascript" src="ver4input.js"></script>
+    <script type="text/javascript" src="ver4ressource.js"></script>
+    <script type="text/javascript" src="ver4loader.js"></script>
+    <script type="text/javascript" src="ver4shader.js"></script>
+    <script type="text/javascript" src="ver4class.js"></script>
+
+    <!-- Main Script -->
+    <script type="text/javascript" src="ver4stlv.js"></script>
+</head>
+
+<body>
+
+    <div id="mainDiv">
+
+        <canvas id="GLCanvas" width="1920" height="1080">Erreur - Canvas non supporté</canvas>
+
+        <div id="logDiv" class="log">
+            We are using node <script>document.write(process.versions.node)</script>,
+            Chrome <script>document.write(process.versions.chrome)</script>,
+            and Electron <script>document.write(process.versions.electron)</script>
+        </div>
+
+    </div>
+
+
+</body>
+
+</html>
