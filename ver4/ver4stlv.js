@@ -55,13 +55,14 @@ document.addEventListener("DOMContentLoaded", function () {
     
         log("Resize to " + winWidth + " x " + winHeight, false);
        
-    
-        scn.camera = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-        scn.lights.light0_lockToCamera = true;
-        inputs.clampPitch = true;
-        inputs.allowPan = false;    
+     // TODO replace by resize command to avoid reset of view every time
+     
+        scn.camera = new E3D_camera_model("model camera", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+     //   scn.lights.light0_lockToCamera = true;
+       // inputs.clampPitch = true;
+       // inputs.allowPan = false;    
 
-        scn.camera.move(0,0,-250,0,0,0);
+     //   scn.camera.move(0,0,100,30,30,30);
     }
     
     function initEngine() {
@@ -76,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         log("Scene Creation", false);
         try {
-            scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.0, 0.0, 0.25, 1.0), 400);
+            scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.0, 0.0, 0.25, 1.0), -1);
     
             log("Shader Program Initialization", false);
             scn.program = new E3D_program("mainProgram", gl);
@@ -87,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
             scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
             scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
             scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
-            scn.lights.light0_lockToCamera = true;
+          //  scn.lights.light0_lockToCamera = true;
     
             scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
             scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
@@ -125,6 +126,14 @@ document.addEventListener("DOMContentLoaded", function () {
         timer.run();
 
         scn.state = E3D_ACTIVE;
+
+        let l0v = new E3D_entity_vector("orig", false, 0.0, false);
+      //  l0v.position = vec3.fromValues(, 20, -5);
+        l0v.scale = vec3.fromValues(10, 10, 10);
+        l0v.visible = true;
+        l0v.vis_culling = false;
+    
+        scn.addEntity(l0v);
    
    
     }

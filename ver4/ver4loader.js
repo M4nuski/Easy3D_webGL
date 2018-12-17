@@ -257,17 +257,17 @@ class E3D_loader {
             color[1] = ((rawColor & 0x03E0) >> 5) / 31.0;
             color[2] = ((rawColor & 0x7C00) >> 10) / 31.0;
 
-            positions.push(p0);
-            positions.push(p1);
-            positions.push(p2);
+            positions.push(p0[0]); positions.push(p0[1]);positions.push(p0[2]);
+            positions.push(p1[0]); positions.push(p1[1]);positions.push(p1[2]);
+            positions.push(p2[0]); positions.push(p2[1]);positions.push(p2[2]);
 
-            colors.push(color);
-            colors.push(color);
-            colors.push(color);
+            colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
+            colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
+            colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
 
-            normals.push(normal);
-            normals.push(normal);
-            normals.push(normal);
+            normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);
+            normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);
+            normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);
 
         }
 
@@ -275,7 +275,7 @@ class E3D_loader {
         entity.vertexArray = new Float32Array(positions);
         entity.colorArray = new Float32Array(colors);
         entity.normalArray = new Float32Array(normals);
-        entity.numElements = NumTriangle;
+        entity.numElements = NumTriangle * 3;
 
 /*
 
