@@ -4,7 +4,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const can = document.getElementById("GLCanvas");
     const logElement = document.getElementById("logDiv");
+
+    const pLockActive = false; // global override, pointer lock module is not used
     
+    // electron interface with OS calls
+    var args = require('electron').remote.process.argv
+    var fs = require("fs");
+    //var arguments = remote.getGlobal('sharedObject').prop1;
+
+   log(args, false);
 
     window.addEventListener("resize", winResize); // To reset camera matrix
 
@@ -52,6 +60,8 @@ document.addEventListener("DOMContentLoaded", function () {
         scn.lights.light0_lockToCamera = true;
         inputs.clampPitch = true;
         inputs.allowPan = false;    
+
+        scn.camera.move(0,0,-250,0,0,0);
     }
     
     function initEngine() {
@@ -96,21 +106,27 @@ document.addEventListener("DOMContentLoaded", function () {
     
             return; 
         }
-         
-//        resMngr.addRessource("PYRA.raw", "pyra", "Model");
- //       resMngr.loadAll("models");
-    
+
+
+        if (fs.existsSync(args[1])) {
+            log("Loading model " + args[1], false);
+            var  data = fs.readFileSync(args[1]);    
+            if (data) {
+                let mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, "source");
+                mdl.visible = true;
+                mdl.vis_culling = false;
+                mdl.resetMatrix();
+                scn.addEntity(mdl);
+            }
+        }
+
+        log("Model loaded", false);
 
         timer.run();
 
         scn.state = E3D_ACTIVE;
    
-//        dev_CD = new E3D_entity_dynamic("DEV/CD_Display");
-    
-  //      dev_CD.visible = true;
-    //    dev_CD.vis_culling = false;
-      //  scn.addEntity(dev_CD);
-    
+   
     }
     
     
