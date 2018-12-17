@@ -167,11 +167,11 @@ function initEngine() {
         return; 
     }
      
-    resMngr.addRessource("ST.raw", "ST", "Model");
-    resMngr.addRessource("AXIS.raw", "Map", "Model");
-    resMngr.addRessource("CM.raw", "CM", "Model");
-    resMngr.addRessource("SPH.raw", "sph", "Model");
-    resMngr.addRessource("PYRA.raw", "pyra", "Model");
+    resMngr.addRessource("../Models/ST.raw", "ST", "Model");
+    resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
+    resMngr.addRessource("../Models/CM.raw", "CM", "Model");
+    resMngr.addRessource("../Models/SPH.raw", "sph", "Model");
+    resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
 
 

@@ -96,12 +96,12 @@ function initEngine() {
         return; 
     }
      
-    resMngr.addRessource("ST.raw", "Storm Trooper", "Model");
-    resMngr.addRessource("DEER.raw", "Deer Horns", "Model");
- //   resMngr.addRessource("FALCON.raw", "Millenium Falcon", "Model");
-    resMngr.addRessource("SSHIP.raw", "Space Ship", "Model");
-    resMngr.addRessource("M9.raw", "B M9", "Model");
-    resMngr.addRessource("GTR.raw", "Nissan GTR", "Model");
+    resMngr.addRessource("../Models/ST.raw", "Storm Trooper", "Model");
+    resMngr.addRessource("../Models/DEER.raw", "Deer Horns", "Model");
+ //   resMngr.addRessource("../Models/FALCON.raw", "Millenium Falcon", "Model");
+    resMngr.addRessource("../Models/SSHIP.raw", "Space Ship", "Model");
+    resMngr.addRessource("../Models/M9.raw", "B M9", "Model");
+    resMngr.addRessource("../Models/GTR.raw", "Nissan GTR", "Model");
     resMngr.loadAll("models");
 
     timer.run();

@@ -431,7 +431,7 @@ function reqListener() {
 function getModel() {
     var oReq = new XMLHttpRequest();
     oReq.addEventListener("load", reqListener);
-    oReq.open("GET", "AXIS.raw");//CM ST.raw");
+    oReq.open("GET", "../Models/AXIS.raw");//CM ST.raw");
     addLine("Loading Model Async");
     oReq.send();
 }

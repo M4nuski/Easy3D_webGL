@@ -119,9 +119,9 @@ function initEngine() {
         return; 
     }
      
-    resMngr.addRessource("ST.raw", "ST", "Model");
-    resMngr.addRessource("AXIS.raw", "Map", "Model");
-    resMngr.addRessource("CM.raw", "CM", "Model");
+    resMngr.addRessource("../Models/ST.raw", "ST", "Model");
+    resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
+    resMngr.addRessource("../Models/CM.raw", "CM", "Model");
     resMngr.loadAll("models");
 
 

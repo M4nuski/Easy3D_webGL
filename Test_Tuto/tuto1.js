@@ -289,7 +289,7 @@ function reqListener() {
 function getModel() {
     var oReq = new XMLHttpRequest();
     oReq.addEventListener("load", reqListener);
-    oReq.open("GET", "ST.raw");
+    oReq.open("GET", "../Models/ST.raw");
     addLine("Loading Model Async");
     oReq.send();
 }
