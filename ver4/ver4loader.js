@@ -147,7 +147,7 @@ class E3D_loader {
                 }
             }
 
-
+            console.log("Expanding...");
             for (var i = 0; i < numVert; ++i) {
                 var unique = true;
                 var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
@@ -188,29 +188,21 @@ class E3D_loader {
 
         console.log("Loading data for entity " + entity.id);
 
-        let numFloats = 0;
         let colors = [];
         let positions = [];
         let normals = [];
 
-        let colorSweep;
-        if (color === "sweep") {
-            colorSweep = [
+        let colorSweep = [
                 1.0, 0.5, 0.5,
                 0.5, 1.0, 0.5,
                 0.5, 0.5, 1.0
             ];
-        } else {
-            colorSweep = [
-                color[0], color[1], color[2],
-                color[0], color[1], color[2],
-                color[0], color[1], color[2]
-            ];   
-        }
+
+        let thiscolor = [0, 0, 0];
  
         // views into raw data
     //    let dataR = new ArrayBuffer(rawModelData.length);
-
+// TODO generalize for ajax loadiang
        // let dataV = ArrayBuffer.from(rawModelData);
         let NumTriangle = rawModelData.readUInt32LE(80);
 
@@ -233,37 +225,56 @@ class E3D_loader {
             let p2 = [0, 0, 0];
 
             normal[0] = rawModelData.readFloatLE(idx);  //x
-            normal[1] = rawModelData.readFloatLE(idx+4);//y
-            normal[2] = rawModelData.readFloatLE(idx+8);//z
+            normal[2] = -rawModelData.readFloatLE(idx+4);//y
+            normal[1] = rawModelData.readFloatLE(idx+8);//z
 
             p0[0] = rawModelData.readFloatLE(idx+12);//x
-            p0[1] = rawModelData.readFloatLE(idx+16);//y
-            p0[2] = rawModelData.readFloatLE(idx+20);//z
+            p0[2] = -rawModelData.readFloatLE(idx+16);//y
+            p0[1] = rawModelData.readFloatLE(idx+20);//z
 
             p1[0] = rawModelData.readFloatLE(idx+24);//x
-            p1[1] = rawModelData.readFloatLE(idx+28);//y
-            p1[2] = rawModelData.readFloatLE(idx+32);//z
+            p1[2] = -rawModelData.readFloatLE(idx+28);//y
+            p1[1] = rawModelData.readFloatLE(idx+32);//z
 
             p2[0] = rawModelData.readFloatLE(idx+36);//x
-            p2[1] = rawModelData.readFloatLE(idx+40);//y
-            p2[2] = rawModelData.readFloatLE(idx+44);//z 
+            p2[2] = -rawModelData.readFloatLE(idx+40);//y
+            p2[1] = rawModelData.readFloatLE(idx+44);//z 
 
             // color data
-            let color = [0, 0, 0];
-            let rawColor = rawModelData.readUInt16LE(idx+48);
+            if (color === "source") {
+                let rawColor = rawModelData.readUInt16LE(idx+48);
+                thiscolor[0] = (rawColor & 0x001F) / 31.0;
+                thiscolor[1] = ((rawColor & 0x03E0) >> 5) / 31.0;
+                thiscolor[2] = ((rawColor & 0x7C00) >> 10) / 31.0;
 
+                colors.push(thiscolor[0]);colors.push(thiscolor[1]);colors.push(thiscolor[2]);
+                colors.push(thiscolor[0]);colors.push(thiscolor[1]);colors.push(thiscolor[2]);
+                colors.push(thiscolor[0]);colors.push(thiscolor[1]);colors.push(thiscolor[2]);
+            } else if (color == "sweep") {
+                colors.push(colorSweep[0]);colors.push(colorSweep[1]);colors.push(colorSweep[2]);
+                colors.push(colorSweep[3]);colors.push(colorSweep[4]);colors.push(colorSweep[5]);
+                colors.push(colorSweep[6]);colors.push(colorSweep[7]);colors.push(colorSweep[8]);              
+            } else {
+                colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
+                colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
+                colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
 
-            color[0] = (rawColor & 0x001F) / 31.0;
-            color[1] = ((rawColor & 0x03E0) >> 5) / 31.0;
-            color[2] = ((rawColor & 0x7C00) >> 10) / 31.0;
+            }
 
             positions.push(p0[0]); positions.push(p0[1]);positions.push(p0[2]);
             positions.push(p1[0]); positions.push(p1[1]);positions.push(p1[2]);
             positions.push(p2[0]); positions.push(p2[1]);positions.push(p2[2]);
 
-            colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
-            colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
-            colors.push(color[0]);colors.push(color[1]);colors.push(color[2]);
+
+
+            if ((normal[0] == 0) && (normal[1] == 0) && (normal[2] == 0)) {
+                vec3.subtract(p1, p1, p0);
+                vec3.subtract(p2, p2, p0);
+                vec3.cross(normal, p2, p1);
+                vec3.normalize(normal, normal);
+                //TODO add smoothing
+                //TODO extract from all loaders 
+            }
 
             normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);
             normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);

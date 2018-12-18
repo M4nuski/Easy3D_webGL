@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         log("Scene Creation", false);
         try {
-            scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.0, 0.0, 0.25, 1.0), -1);
+            scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.85, 0.85, 0.85, 1.0), -1);
     
             log("Shader Program Initialization", false);
             scn.program = new E3D_program("mainProgram", gl);
@@ -84,13 +84,13 @@ document.addEventListener("DOMContentLoaded", function () {
             scn.program.bindLocations(attribList01, uniformList01);
     
             log("Lighting Initialization", false);
-            scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
+            scn.lights =  new E3D_lighting(vec3.fromValues(0.25, 0.25, 0.25));
             scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
-            scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
-          //  scn.lights.light0_lockToCamera = true;
+            scn.lights.setDirection0(vec3.fromValues(0.0, 0.0, 1.0)); 
+            scn.lights.light0_lockToCamera = true;
     
-            scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
-            scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
+            scn.lights.setColor1(vec3.fromValues(0.9, 0.9, 0.9));
+            scn.lights.setDirection1(vec3.fromValues(0.5, 1.0, 0.5));
             scn.lights.light1_lockToCamera = false;
 
             scn.camera = new E3D_camera_model("model camera", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
@@ -114,11 +114,23 @@ document.addEventListener("DOMContentLoaded", function () {
             log("Loading model " + args[1], false);
             var  data = fs.readFileSync(args[1]);    
             if (data) {
-                let mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, "source");
+                let mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, [1.0,1.0,1.0]);//"source"]);
                 mdl.visible = true;
                 mdl.vis_culling = false;
-                mdl.resetMatrix();
+
+                let bb = calculate_bounding_box(mdl.vertexArray);
+
+                // center object on top of origin
+                mdl.position = vec3.fromValues((bb.max[0] + bb.min[0]) / -2 , -bb.min[1], (bb.max[2] + bb.min[2]) / -2);
+
                 scn.addEntity(mdl);
+
+                let biggest = Math.max(bb.max[0] - bb.min[0],  bb.max[1] - bb.min[1] ) / 2;
+       
+                let backout = biggest / Math.tan(_fieldOfView/2); 
+
+                scn.camera.move( 0, (bb.max[1] - bb.min[1]) / 2, backout, 0, 0, 0); 
+
             }
         }
 
@@ -129,14 +141,34 @@ document.addEventListener("DOMContentLoaded", function () {
         scn.state = E3D_ACTIVE;
 
         let l0v = new E3D_entity_vector("orig", false, 0.0, false);
-      //  l0v.position = vec3.fromValues(, 20, -5);
         l0v.scale = vec3.fromValues(10, 10, 10);
         l0v.visible = true;
-        l0v.vis_culling = false;
-    
+        l0v.vis_culling = false;    
         scn.addEntity(l0v);
+
+        let buildbox = new E3D_entity_dynamic("building box");
+        buildbox.addWireCube([0,145/2,0], [0,0,0], [240,145,145], [0.75, 0.75, 0.75, 0.5], false, false, false);
+        buildbox.visible = true;
+        buildbox.vis_culling = false;
+        scn.addEntity(buildbox);
    
-   
+    }
+
+    function calculate_bounding_box(vertArray) {
+        let min_result = [Infinity, Infinity, Infinity];
+        let max_result = [-Infinity, -Infinity, -Infinity];
+
+        for (let i = 0; i < vertArray.length; i += 3) {
+            max_result[0] = Math.max(max_result[0], vertArray[i]);
+            min_result[0] = Math.min(min_result[0], vertArray[i]);
+
+            max_result[1] = Math.max(max_result[1], vertArray[i+1]);
+            min_result[1] = Math.min(min_result[1], vertArray[i+1]);
+
+            max_result[2] = Math.max(max_result[2], vertArray[i+2]);
+            min_result[2] = Math.min(min_result[2], vertArray[i+2]);
+        }
+        return { min: min_result, max: max_result };
     }
     
     

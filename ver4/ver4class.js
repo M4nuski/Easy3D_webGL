@@ -1423,6 +1423,12 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
         this.update(this.position[0] + t[0], this.position[1] + t[1], this.position[2] + t[2], rx, ry, rz);
     }
 
+    adjustToCamera(vect) {
+        let result = vec3.create();
+        vec3.transformMat4(result, vect, this.inverseRotationMatrix);
+        return result;
+    }  
+
     negateCamera(vect) {
         vec3.rotateX(vect, vect, vec3_origin, this.rotation[0]); 
         vec3.rotateY(vect, vect, vec3_origin, this.rotation[1]); 
