@@ -4,23 +4,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const can = document.getElementById("GLCanvas");
     const logElement = document.getElementById("logDiv");
-
-    const pLockActive = false; // global override, pointer lock module is not used
-    
+   
     // electron interface with OS calls
     var args = require('electron').remote.process.argv
     var fs = require("fs");
-    //var arguments = remote.getGlobal('sharedObject').prop1;
 
-   log(args, false);
+    log("args[1] " + args[1], false);
 
     window.addEventListener("resize", winResize); // To reset camera matrix
 
-   // todo add electron global var passers
-
-
-    // Engine Config
-    
+    // Engine Config    
     const _fieldOfView = 45 * DegToRad;
     const _zNear = 0.1;
     const _zFar = 2048.0;
@@ -35,10 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var scn;  // E3D_scene
     var timer = new E3D_timing(false, 20, timerTick); // target about 50 fps
 
-    // ? load directly ? var resMngr = new ressourceManager(onRessource);
-    
     var inputs = new E3D_input(can, true, true, false, false, false, true);
-    // (element, supportMouse, supportKeyboard, supportTouch, supportPointerLock, clampPitch= true, allowPan = true) 
 
     inputs.onInput = onEngineInput;
            
@@ -56,12 +46,6 @@ document.addEventListener("DOMContentLoaded", function () {
         log("Resize to " + winWidth + " x " + winHeight, false);
 
         scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-
-     //   scn.lights.light0_lockToCamera = true;
-       // inputs.clampPitch = true;
-       // inputs.allowPan = false;    
-
-     //   scn.camera.move(0,0,100,30,30,30);
     }
     
     function initEngine() {
@@ -130,11 +114,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 let backout = biggest / Math.tan(_fieldOfView/2); 
 
                 scn.camera.move( 0, (bb.max[1] - bb.min[1]) / 2, backout, 0, 0, 0); 
-
+                log("Model loaded", false);
             }
         }
 
-        log("Model loaded", false);
+
 
         timer.run();
 
