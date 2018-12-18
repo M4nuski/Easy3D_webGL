@@ -12,7 +12,7 @@ const status = document.getElementById("statusDiv");
 
 log("Set DOM Events");
 can.addEventListener("resize", winResize); // To reset camera matrix
-document.forms["moveTypeForm"].addEventListener("change", winResize); // To update camera matrix
+document.forms["moveTypeForm"].addEventListener("change", camChange); // To update camera matrix
 document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
 document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
 
@@ -62,6 +62,26 @@ function winResize() {
     let vmode = document.forms["moveTypeForm"].moveType.value; 
 
     if (vmode == "model") {
+        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+    } 
+    else if (vmode == "free") {
+        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+    } 
+    else if (vmode == "space") {
+        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+    }
+    else {
+        scn.camera.resize(winWidth, winHeight) 
+    }
+
+}
+
+
+function camChange() {
+
+    let vmode = document.forms["moveTypeForm"].moveType.value; 
+
+    if (vmode == "model") {
         scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = false;
         inputs.clampPitch = true;
@@ -82,8 +102,8 @@ function winResize() {
     else {
         scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
     }
-
 }
+
 
 function initEngine() {
 
@@ -116,6 +136,7 @@ function initEngine() {
         scn.lights.light1_lockToCamera = false;
 
         log("Camera Initialization", false);
+        camChange();
         winResize();
 
         log("Scene Initialization", false);

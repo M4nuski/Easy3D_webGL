@@ -54,10 +54,9 @@ document.addEventListener("DOMContentLoaded", function () {
         gl.viewport(0, 0, winWidth, winHeight);
     
         log("Resize to " + winWidth + " x " + winHeight, false);
-       
-     // TODO replace by resize command to avoid reset of view every time
-     
-        scn.camera = new E3D_camera_model("model camera", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+
+        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+
      //   scn.lights.light0_lockToCamera = true;
        // inputs.clampPitch = true;
        // inputs.allowPan = false;    
@@ -93,6 +92,8 @@ document.addEventListener("DOMContentLoaded", function () {
             scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
             scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
             scn.lights.light1_lockToCamera = false;
+
+            scn.camera = new E3D_camera_model("model camera", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     
             log("Camera Initialization", false);
             winResize();
