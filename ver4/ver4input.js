@@ -1,3 +1,8 @@
+// Easy3D_WebGL
+// Human interface input classes and handlers
+// Emmanuel Charette 2017-2019
+
+// Bind events to an element to capture and manage inputs
 class E3D_input {
     constructor (element, supportMouse, supportKeyboard, supportTouch, supportPointerLock, clampPitch= true, allowPan = true) {
 
@@ -7,19 +12,21 @@ class E3D_input {
         this.supportKeyboard = supportKeyboard;
         this.supportTouch = supportTouch;
         this.supportPointerLock = supportPointerLock;
-        this.clampPitch = clampPitch;
-        this.allowPan = allowPan;
+        this.clampPitch = clampPitch;//TODO should be in engine logic
+        this.allowPan = allowPan; //TODO should be in engine logic
 
-        this.doPan = true;
-        this.doRotate = true;
-        this.mouseMoveWhenLockedOnly = false;
+        this.doPan = true;//TODO should be in engine logic
+        this.doRotate = true;//TODO should be in engine logic
+        this.mouseMoveWhenLockedOnly = false;//TODO should be in engine logic
 
-        this.touchDist = 0;        
+        this.touchDist = 0; // distance between 2 touches
         this.ongoingTouches = [];
         this.doubleTapping = false;
 
         this.inputTable = {}; // keys that are pressed down
-        this.inputDoneTable = {}; // keys that got release to avoid keyboard auto-repeat
+        this.inputDoneTable = {}; // keys that got released but trigger again without keydown (keyboard auto-repeat)
+
+        this.onInput = null; // callback for direct input change notification
 
         if (supportMouse) {
             element.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
@@ -47,42 +54,108 @@ class E3D_input {
         }
 
         // Config
-        this._pinchHysteresis = 10;
-        this._rotateMouseButton = 0;
-        this._panMouseButton = 1;
+        this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
+        this._rotateMouseButton = 0; // TODO remove
+        this._panMouseButton = 1;// TODO remove
+
+        // TODO callback on pointer lock / unlock to allow to record current values
+
+        // button priority
+        //this.buttonPriority = [0, 1, 2]; // TODO implement, otherwise always last btn input
+
+        // mouse inputs:
+        // click, doubleClick
+
+        // mouse moves:
+        // no button: x, y, w
+        // lmb : x, y
+        // mmb : x, y
+        // rmb : x, y
+
+        // touch inputs:
+        // tap, doubleTap
+
+        // touch moves:
+        // tap-drag
+        // pinch
+        // pinch-drag
+
+        this.touchMap = {};
+        // ["tap"] = "0" // btn 0 1 2 ,  E3D_INP_MAP_prefix + E3D_INP_LMB
+        // ["doubleTap"] = "Click"; E3D_INP_MAP_prefix + event.button
+
+        this.pointerMap = {};
+
+        // pointer map buttons : disabled, always on, lmb/touch, mmb/double touch, rmb
+        // pointer map axis : x, y, w (wheel / pinch)
+        // can be assigned to whatever, the name are just easy placeholders
+        // (could have simply been axis0 to axis8 )
+
+        // p inputs, "position"
+        this.pointerMap["px_btn"] = E3D_INP_RMB;
+        this.pointerMap["px_axis"] = E3D_INP_X;
+
+        this.pointerMap["py_btn"] = E3D_INP_RMB;
+        this.pointerMap["py_axis"] = E3D_INP_Y;
+
+        this.pointerMap["pz_btn"] = E3D_INP_MMB;
+        this.pointerMap["pz_axis"] = E3D_INP_Y;
+
+        // r inputs, "rotation", clamped +/- 360 deg
+        this.pointerMap["rx_btn"] = E3D_INP_LMB;
+        this.pointerMap["rx_axis"] = E3D_INP_Y;
+
+        this.pointerMap["ry_btn"] = E3D_INP_LMB;
+        this.pointerMap["ry_axis"] = E3D_INP_X;
+
+        this.pointerMap["rz_btn"] = E3D_INP_MMB;
+        this.pointerMap["rz_axis"] = E3D_INP_X;
+
+        // key binds as rotation x/y/z +/- instead of premade aliases
 
         this._moveSpeed = 50; // units per sec
         this._rotateSpeed = 90 * DegToRad; // rad per sec
 
-        this._mouseSpeed = 0.0025;
-        this._mouseWheelSpeed = 0.1;
-        this._smooth = 6.0; //sec for 1:1 inputs
+        this._mouseSpeed = 0.0025; // units per mouse position delta 
+        this._mouseWheelSpeed = 0.1; // units per wheel rotation delta
+        this._smooth = 6.0; // _smooth * delta >= 1.0 : non smoothed inputs. 
 
         this._doubleTapDelay = 200; //ms
 
         // Keyboard Controls, maps commands to keyboardEvent.code
         this.keyMap = {}; 
-        this.keyMap["moveUp"] = "Space";
-        this.keyMap["moveDown"] = "KeyC";
+        // this.keyMap[command] = key.code;
 
-        this.keyMap["strafeLeft"] = "KeyA";
-        this.keyMap["strafeRight"] = "KeyD";
+        this.keyMap["px_dec"] = "KeyA";
+        this.keyMap["px_inc"] = "KeyD";
 
-        this.keyMap["moveForward"] = "KeyW";
-        this.keyMap["moveBackward"] = "KeyS";
+        this.keyMap["py_dec"] = "KeyC";
+        this.keyMap["py_inc"] = "Space";
 
-        this.keyMap["rollLeft"] = "KeyQ";
-        this.keyMap["rollRight"] = "KeyE";
+        this.keyMap["pz_dec"] = "KeyS";
+        this.keyMap["pz_inc"] = "KeyW";
 
-        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch
-        this.keyMap["action1"] = "KeyF";
+        this.keyMap["rx_dec"] = "KeyF";
+        this.keyMap["rx_inc"] = "KeyR";
+        
+        this.keyMap["ry_dec"] = "KeyQ";
+        this.keyMap["ry_inc"] = "KeyE";
+
+        this.keyMap["rz_dec"] = "KeyZ";
+        this.keyMap["rz_inc"] = "KeyC";
 
         this.keyMap["togglePointerlock"] = "ControlRight";
         this.keyMap["toggleFullscreen"] = "F11";
 
+        // "custom" actions, binds can be added for anything
+        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic
+        // tap, double tap, double click ?
+        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic
+        this.keyMap["action1"] = "KeyF";
+
         // Mouse Controls
-        this.panning = false;
-        this.rotating = false;
+       // this.panning = false;
+//        this.rotating = false;
 
         this.pinx=0;  this.px=0;  this.px_smth=0;
         this.piny=0;  this.py=0;  this.py_smth=0;
@@ -91,7 +164,34 @@ class E3D_input {
         this.ry=0; this.ry_sum=0; this.ry_smth=0;
         this.rz=0; this.rz_sum=0; this.rz_smth=0;
 
-        this.onInput = null; // callback for direct input change notification
+        // outputs :
+/*
+        .px_delta
+        .py_delta
+        .pz_delta
+        .px_abs
+        .py_abs
+        .pz_abs
+        .px_smth
+        .py_smth
+        .pz_smth
+
+        .rx_delta
+        .ry_delta
+        .rz_delta
+        .rx_abs
+        .ry_abs
+        .rz_abs
+        .rx_smth
+        .ry_smth
+        .rz_smth
+
+*/
+
+// clampR (min, max, x, y, z)
+// clampP (min, max, x, y, z)
+// smoothR (f, x, y, z)
+// smoothP (f, x, y, z)
 
     }
 
@@ -138,39 +238,55 @@ class E3D_input {
     }
 
     processInputs(delta = 1.0) {
-        if (this.inputTable[this.keyMap["moveUp"]]) {
-            this.py -= this._moveSpeed * delta;
-        }
-        if (this.inputTable[this.keyMap["moveDown"]]) {
-            this.py += this._moveSpeed * delta;
-        }
-
-        if (this.inputTable[this.keyMap["strafeLeft"]]) {
+        // Pos
+        if (this.inputTable[this.keyMap["px_dec"]]) {
             this.px -= this._moveSpeed * delta;
         }
-        if (this.inputTable[this.keyMap["strafeRight"]]) {
+        if (this.inputTable[this.keyMap["px_inc"]]) {
             this.px += this._moveSpeed * delta;
         }
 
-        if (this.inputTable[this.keyMap["moveForward"]]) {
+        if (this.inputTable[this.keyMap["py_dec"]]) {
+            this.py -= this._moveSpeed * delta;
+        }
+        if (this.inputTable[this.keyMap["py_inc"]]) {
+            this.py += this._moveSpeed * delta;
+        }
+
+        if (this.inputTable[this.keyMap["pz_dec"]]) {
             this.pz -= this._moveSpeed * delta;
         }
-        if (this.inputTable[this.keyMap["moveBackward"]]) {
+        if (this.inputTable[this.keyMap["pz_inc"]]) {
             this.pz += this._moveSpeed * delta;
         }    
 
-        if (this.inputTable[this.keyMap["rollRight"]]) {
-            this.rz += this._rotateSpeed * delta;
+        // Rot
+        if (this.inputTable[this.keyMap["rx_dec"]]) {
+            this.rx -= this._rotateSpeed * delta;
         }
-        if (this.inputTable[this.keyMap["rollLeft"]]) {
+        if (this.inputTable[this.keyMap["rx_inc"]]) {
+            this.rx += this._rotateSpeed * delta;
+        }    
+
+        if (this.inputTable[this.keyMap["ry_dec"]]) {
+            this.ry -= this._rotateSpeed * delta;
+        }
+        if (this.inputTable[this.keyMap["rz_inc"]]) {
+            this.ry += this._rotateSpeed * delta;
+        }    
+
+        if (this.inputTable[this.keyMap["rz_dec"]]) {
             this.rz -= this._rotateSpeed * delta;
+        }
+        if (this.inputTable[this.keyMap["rz_inc"]]) {
+            this.rz += this._rotateSpeed * delta;
         }    
         
         this.rx_sum += this.rx;
         this.ry_sum += this.ry;  
         this.rz_sum += this.rz;  
         
-        // some clamping and warping      
+        // some clamping and warping      // todo extract to own method
         if (this.clampPitch) {  
             if (this.ry_sum < -PIdiv2) { this.ry_sum = -PIdiv2; }
             if (this.ry_sum >  PIdiv2) { this.ry_sum =  PIdiv2; }
@@ -203,7 +319,7 @@ class E3D_input {
         }
 
         
-        // smooth controls
+        // smooth controls // TODO extract to own method
         let f = delta * this._smooth;
         if (f < 1.0) {
             this.rx_smth += (this.rx_sum - this.rx_smth) * f;
@@ -236,15 +352,19 @@ class E3D_input {
     mouseDown(event) {
         this.pinx = event.pageX; // store relative ref
         this.piny = event.pageY;
-    
+
+        this.keyDown( { code : this.keyMap[E3D_INP_MAP_prefix + event.button] } );
+
+/*    
         if (event.button == this._panMouseButton) {
             this.panning = this.allowPan;
         }
         if (event.button == this._rotateMouseButton) {
             this.rotating = true;
         }
+*/
 
-        if (pLockActive) { 
+        if (pLockActive) { // TODO re-evaluate
             this.keyDown( { code : this.keyMap["action0"] } );
         } 
 
@@ -252,20 +372,26 @@ class E3D_input {
     }
     
     mouseUp(event) {
+
+        this.keyUp( { code : this.keyMap[E3D_INP_MAP_prefix + event.button] } );
+        /*
         if (event.button == this._panMouseButton) {
             this.panning = false;
         }
         if (event.button == this._rotateMouseButton) {
             this.rotating = false;
         }
-        if (pLockActive) { 
+        */
+
+        if (pLockActive) { // TODO re-evaluate
             this.keyUp( { code : this.keyMap["action0"] } );
         } 
     }
     
-    mouseLeave(event) {
-        this.panning = false;
-        this.rotating = false;
+    mouseLeave() {
+        /*this.panning = false;
+        this.rotating = false;*/
+        // TODO : reset on leave ? keyup all mouse button inputs
     }
     
     mouseMove(event) {
@@ -288,7 +414,7 @@ class E3D_input {
     
     mouseLockedMove(x, y) {
         // de facto rotating
-        if (pLockActive) {
+        if (pLockActive) { // todo re-evaluate
             this.rx += x * this._mouseSpeed * this._rotateSpeed;
             this.ry += y * this._mouseSpeed * this._rotateSpeed;
         }
@@ -465,7 +591,7 @@ class E3D_input {
     }
 }
 
-// Bind event on element and transpose "vKey=" attribute value to keyboard input handler
+// Virtual keybaord: binds event on element and transpose "vKey=" DOM element attribute value to keyboard input handler
 class E3D_input_virtual_kb {
     constructor(element, inputClass, supportTouch) {
 
@@ -505,6 +631,7 @@ class E3D_input_virtual_kb {
     }
 }
 
+// Virtual trackpad handler from and DOM element
 class E3D_input_virtual_trackpad {
     constructor (element, inputClass) {
 
@@ -567,7 +694,7 @@ class E3D_input_virtual_trackpad {
 
 
 
-
+// Virtual thumb stick input from an DOM element
 class E3D_input_virtual_thumbstick {
     constructor (element, inputClass, doubleTapCommand = "action0") {
 
@@ -680,6 +807,7 @@ class E3D_input_virtual_thumbstick {
 
 }
 
+// Helper function to recursively find the absolute position of an element
 function getTotalPageOffset(element) {
     var xo = element.offsetLeft;
     var yo = element.offsetTop;

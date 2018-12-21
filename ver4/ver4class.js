@@ -1,3 +1,7 @@
+// TODO : header...
+// TODO specify move == moveBy | moveTo ?
+
+
 class E3D_timing {
     constructor(run, interval, onTick) {
 

@@ -160,23 +160,30 @@ document.addEventListener("DOMContentLoaded", function () {
         // move camera per inputs
         let yf = false ? -1.0 : 1.0; // option ?
         scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth*yf, inputs.rx_smth, inputs.rz_smth);
+
+
     }
     
     
     function onEngineInput() { // preprocess inputs out of game loop
+
+        // keys
+        // commands
+        
     }
     
     
     function timerTick() {  // Game Loop
   
         inputs.processInputs(timer.delta);
-
     
         if (inputs.checkCommand("action0", true)) {
         }
 
         if (inputs.checkCommand("action1", true)) {
         }
+
+        // Here should reside the code to assign the inputs state to the camera or whatever
 
         if (scn.state == E3D_ACTIVE) {
             scn.preRender();
@@ -186,13 +193,6 @@ document.addEventListener("DOMContentLoaded", function () {
     
     }
 
-                //    let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, vec3.fromValues(1,1,1));
-                 //   nm.position[2] = -120;
-                  //  nm.visible = true;
-    
-                   // animations.push(new E3D_animation("ST rotate", rot0, nm, scn, timer));
-                   // animations[animations.length-1].play();
-                   // scn.addEntity(nm);  
 
     // Logging and status information    
     function log(text, silent = true) {
