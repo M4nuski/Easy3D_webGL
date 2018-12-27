@@ -18,9 +18,11 @@ const E3D_RES_ALL = 2;
 // Pointer inputs (may be different in IE because IE)
 const E3D_INP_DISABLED = -2;
 const E3D_INP_ALWAYS = -1;
-const E3D_INP_LMB = 0; // single touch
-const E3D_INP_MMB = 1; // double touch
-const E3D_INP_RMB = 2;
+const E3D_INP_LMB = 0; // single touch drag
+const E3D_INP_MMB = 1; // double touch pinch
+const E3D_INP_RMB = 2; // double touch drag
+
+const E3D_INP_DOUBLE_PREFIX_CODE = "dbl";
 
 // Pointer axisesess
 const E3D_INP_X = 0; // left right

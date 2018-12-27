@@ -1,6 +1,6 @@
 
 class ressource {
-    constructor(path, name, type, cb) {
+    constructor(path, name, type, cb, binary) {
         this.path = path;
         this.name = name;
         this.type = type;
@@ -9,12 +9,15 @@ class ressource {
         this.ajax = null;
         this.data = null;
         this.new = true;
+
+        this.isBinaryData = binary;
     }
 
     load(){
         this.ajax = new XMLHttpRequest();
         this.ajax.addEventListener("load", (e) => this.onLoad(e) );    
         this.ajax.open("GET", this.path);
+        if (this.isBinaryData) this.ajax.responseType = "arraybuffer";
         this.ajax.send();
     }
 
@@ -22,7 +25,7 @@ class ressource {
         let xm = event.target;
         if (xm) {
             if (xm.status == 200) {
-                this.data = xm.responseText;
+                this.data = xm.response;
                 this.cb(this.name, E3D_RES_LOAD);
             } else {
                 this.data = null;
@@ -43,9 +46,9 @@ class ressourceManager {
         this.tag = "";
     }
 
-    addRessource(path, name, type) {
+    addRessource(path, name, type, binary = false) {
         if (this.getIndex(name) == -1) {
-            this.ressList.push( new ressource(path, name, type, (n, m) => this.cb(n, m)) );
+            this.ressList.push( new ressource(path, name, type, (n, m) => this.cb(n, m) , binary) );
         } else {
             this.cb(name, E3D_RES_LOAD, true); // return already if ressource in store
         }
@@ -117,6 +120,19 @@ class ressourceManager {
         let idx = this.getIndex(name);
         if (idx > -1) {
             return this.ressList[idx].data;
+        } else return null;
+    }
+
+    getBinaryData(name) {
+        var arrayBuffer;
+        let idx = this.getIndex(name);
+        if (idx > -1) {
+            var fileReader = new FileReader();
+            fileReader.onload = (event) => {
+                this.arrayBuffer = event.target.result;
+            };
+            fileReader.readAsArrayBuffer(this.ressList[idx].data);
+            return arrayBuffer;
         } else return null;
     }
 

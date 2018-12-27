@@ -177,10 +177,10 @@ class E3D_loader {
  *
  * @param {string} name / id of the new entity
  * @param {string} file / path of the new entity
- * @param {string} rawModelData the source data to parse
+ * @param {DataView} rawModelData the source data
  * @param {float} smoothShading if > 0.0 limit angle to perform smooth shading, otherwise flat shaded
  * @param {vec3} color if === "source" use source color, if === "sweep" per vertex r/g/b sweep, else single provided color is applied
- * @returns {E3D_entity} the resulting model and entity data
+ * @returns {E3D_entity} the resulting model E3D_Entity data
  */
     static loadModel_STL(name, file, rawModelData, smoothShading, color) {
             
@@ -193,21 +193,19 @@ class E3D_loader {
         let normals = [];
 
         let colorSweep = [
-                1.0, 0.5, 0.5,
-                0.5, 1.0, 0.5,
-                0.5, 0.5, 1.0
-            ];
+            1.0, 0.5, 0.5,
+            0.5, 1.0, 0.5,
+            0.5, 0.5, 1.0
+        ];
 
         let thiscolor = [0, 0, 0];
- 
-        // views into raw data
-    //    let dataR = new ArrayBuffer(rawModelData.length);
-// TODO generalize for ajax loadiang
-       // let dataV = ArrayBuffer.from(rawModelData);
-        let NumTriangle = rawModelData.readUInt32LE(80);
+
+        let mData = new DataView(rawModelData);
+
+        let NumTriangle = mData.getUint32(80, true);
 
         let header = "";
-        for (var i = 0; i < 80; ++i) header += String.fromCharCode(rawModelData.readUInt8(i));
+        for (var i = 0; i < 80; ++i) header += String.fromCharCode(mData.getUint8(i));
 
         console.log("Header " + header);
         console.log("num triangles 0x" + NumTriangle.toString(16) + " dec " + NumTriangle);
@@ -224,25 +222,25 @@ class E3D_loader {
             let p1 = [0, 0, 0];
             let p2 = [0, 0, 0];
 
-            normal[0] = rawModelData.readFloatLE(idx);  //x
-            normal[2] = -rawModelData.readFloatLE(idx+4);//y
-            normal[1] = rawModelData.readFloatLE(idx+8);//z
+            normal[0] = mData.getFloat32(idx, true);  //x
+            normal[2] = -mData.getFloat32(idx+4, true);//y
+            normal[1] = mData.getFloat32(idx+8, true);//z
 
-            p0[0] = rawModelData.readFloatLE(idx+12);//x
-            p0[2] = -rawModelData.readFloatLE(idx+16);//y
-            p0[1] = rawModelData.readFloatLE(idx+20);//z
+            p0[0] = mData.getFloat32(idx+12, true);//x
+            p0[2] = -mData.getFloat32(idx+16, true);//y
+            p0[1] = mData.getFloat32(idx+20, true);//z
 
-            p1[0] = rawModelData.readFloatLE(idx+24);//x
-            p1[2] = -rawModelData.readFloatLE(idx+28);//y
-            p1[1] = rawModelData.readFloatLE(idx+32);//z
+            p1[0] = mData.getFloat32(idx+24, true);//x
+            p1[2] = -mData.getFloat32(idx+28, true);//y
+            p1[1] = mData.getFloat32(idx+32, true);//z
 
-            p2[0] = rawModelData.readFloatLE(idx+36);//x
-            p2[2] = -rawModelData.readFloatLE(idx+40);//y
-            p2[1] = rawModelData.readFloatLE(idx+44);//z 
+            p2[0] = mData.getFloat32(idx+36, true);//x
+            p2[2] = -mData.getFloat32(idx+40, true);//y
+            p2[1] = mData.getFloat32(idx+44, true);//z 
 
             // color data
             if (color === "source") {
-                let rawColor = rawModelData.readUInt16LE(idx+48);
+                let rawColor = mData.getUint16(idx+48, true);
                 thiscolor[0] = (rawColor & 0x001F) / 31.0;
                 thiscolor[1] = ((rawColor & 0x03E0) >> 5) / 31.0;
                 thiscolor[2] = ((rawColor & 0x7C00) >> 10) / 31.0;
@@ -289,56 +287,6 @@ class E3D_loader {
         entity.numElements = NumTriangle * 3;
 
 /*
-
-
-
-        // remove empty and text lines
-        let data = rawModelData.split("\n");
-        rawModelData = [];
-        for (var i = 0; i < data.length; i++) {
-            if ((data[i] != "") && (data[i].split(" ").length != 1)) {
-                rawModelData.push(data[i]);
-            }
-        }
-
-        // parse locations
-        for (var i = 0; i < rawModelData.length; i++) {
-            var chunk = rawModelData[i].split(" ");
-            for (var j = 0; j < chunk.length; j++) {
-                var n = chunk[j].trim();
-                if (n != "") {
-                    positions.push(Number(chunk[j].trim()));
-                    colors.push(colorSweep[numFloats % 9]);
-                    numFloats++;
-                }
-            }
-        }
-
-        let newNormal = [0, 0, 0];
-        // create face normals
-        for (var i = 0; i < numFloats / 9; i++) { // for each face
-            var v1 = [positions[i * 9], positions[(i * 9) + 1], positions[(i * 9) + 2]];
-            var v2 = [positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]];
-            var v3 = [positions[(i * 9) + 6], positions[(i * 9) + 7], positions[(i * 9) + 8]];
-
-            v2 = vec3.subtract(v2, v2, v1);
-            v3 = vec3.subtract(v3, v3, v1);
-            vec3.cross(newNormal, v3, v2);
-            vec3.normalize(newNormal, newNormal);
-
-            normals.push(newNormal[0]); // flat shading
-            normals.push(newNormal[1]); 
-            normals.push(newNormal[2]); 
-
-            normals.push(newNormal[0]); // flat shading
-            normals.push(newNormal[1]); 
-            normals.push(newNormal[2]); 
-
-            normals.push(newNormal[0]); // flat shading
-            normals.push(newNormal[1]); 
-            normals.push(newNormal[2]); 
-        }
-
         if (smoothShading > 0.0) {
             console.log("Smooth Shading Normals");
             // group vertex by locality (list of unique location)
@@ -412,15 +360,7 @@ class E3D_loader {
             }
         }
 
-        console.log("Loaded " + numFloats + " float locations");
-        console.log((numFloats / 3) + " vertices");
-        console.log((numFloats / 9) + " triangles");
 
-        entity.vertexArray = new Float32Array(positions);
-        entity.colorArray = new Float32Array(colors);
-        entity.normalArray = new Float32Array(normals);
-
-        entity.numElements = numFloats / 3;
 */
         return entity;
     }

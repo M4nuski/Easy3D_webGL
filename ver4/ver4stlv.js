@@ -5,11 +5,33 @@ document.addEventListener("DOMContentLoaded", function () {
     const can = document.getElementById("GLCanvas");
     const logElement = document.getElementById("logDiv");
    
-    // electron interface with OS calls
-    var args = require('electron').remote.process.argv
-    var fs = require("fs");
+    var electron = false;
+    var userAgent = navigator.userAgent.toLowerCase();
+    if (userAgent.indexOf(' electron/') > -1) {
+        console.log("UA electron");
+        electron = true;
+    } else {
+        console.log("UA not electron");
+    }
 
-    log("args[1] " + args[1], false);
+    if (electron) {
+        // electron interface with OS calls
+        var args = require('electron').remote.process.argv
+        var fs = require("fs");
+
+        log("NodeJS: "  + process.versions.node, false);
+        log("Chrome: " + process.versions.chrome, false);
+        log("Electron: " + process.versions.electron, false);
+
+        if (args[1] != "") {
+            log("args[1] " + args[1], false);
+        } else {
+            log("Drag drop file on electron.exe to load stl", false);
+        }
+    } else {
+        log("Browser", false);
+        log("use this url?file=path to load stl", false);
+    }
 
     window.addEventListener("resize", winResize); // To reset camera matrix
 
@@ -20,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Engine State and stats
     
-    var winWidth = 10, winHeight = 10;
+    var winWidth = 320, winHeight = 200;
     
     // Engine Components
     
@@ -31,6 +53,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var inputs = new E3D_input(can, true, true, false, false, false, true);
 
     inputs.onInput = onEngineInput;
+
+    var resMngr = new ressourceManager(onRessource);
+    var mdl;
            
     initEngine();
     
@@ -93,29 +118,24 @@ document.addEventListener("DOMContentLoaded", function () {
             return; 
         }
 
-
-        if (fs.existsSync(args[1])) {
-            log("Loading model " + args[1], false);
-            var  data = fs.readFileSync(args[1]);    
-            if (data) {
-                let mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, [1.0,1.0,1.0]);//"source"]);
-                mdl.visible = true;
-                mdl.vis_culling = false;
-
-                let bb = calculate_bounding_box(mdl.vertexArray);
-
-                // center object on top of origin
-                mdl.position = vec3.fromValues((bb.max[0] + bb.min[0]) / -2 , -bb.min[1], (bb.max[2] + bb.min[2]) / -2);
-
-                scn.addEntity(mdl);
-
-                let biggest = Math.max(bb.max[0] - bb.min[0],  bb.max[1] - bb.min[1] ) / 2;
-       
-                let backout = biggest / Math.tan(_fieldOfView/2); 
-
-                scn.camera.move( 0, (bb.max[1] - bb.min[1]) / 2, backout, 0, 0, 0); 
-                log("Model loaded", false);
-            }
+        if (electron) {
+            // load from local file
+            if (fs.existsSync(args[1])) {
+                log("Loading model " + args[1], false);
+                var  data = fs.readFileSync(args[1]);    
+                if (data) {
+                    mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, "source");//][1.0,1.0,1.0]);//"source"]);
+                    onRessource("", "ELECTRON_LOAD");
+                }
+            } else log("File not found", false);
+        } else {
+            // load from url
+            let path = window.location.search.replace("?", "");
+            if (path != "") {
+                log("Loading model " + path, false);
+                resMngr.addRessource(path, "toView", "Model", true);
+                resMngr.loadAll();
+            } else log("URL not found", false);
         }
 
 
@@ -157,19 +177,16 @@ document.addEventListener("DOMContentLoaded", function () {
     
     
     function prepRender() {
-        // move camera per inputs
-        let yf = false ? -1.0 : 1.0; // option ?
-        scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth*yf, inputs.rx_smth, inputs.rz_smth);
+        inputs.smoothPosition(6);
+        inputs.smoothRotation(6);
+        scn.camera.move(inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.ry_smth, inputs.rx_smth, inputs.rz_smth);
 
 
     }
     
     
-    function onEngineInput() { // preprocess inputs out of game loop
-
-        // keys
-        // commands
-        
+    function onEngineInput() {
+        // preprocess inputs out of game loop
     }
     
     
@@ -183,8 +200,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (inputs.checkCommand("action1", true)) {
         }
 
-        // Here should reside the code to assign the inputs state to the camera or whatever
-
         if (scn.state == E3D_ACTIVE) {
             scn.preRender();
             scn.render();
@@ -192,6 +207,46 @@ document.addEventListener("DOMContentLoaded", function () {
         }   
     
     }
+
+
+    function onRessource(name, msg) {
+        if (msg == E3D_RES_FAIL) {
+            log("Failed to load ressource: " + name, false);        
+        }
+        if (msg == E3D_RES_ALL) {
+            log("All async ressources loaded for tag: " + name, true);       
+            resMngr.flushAll();   
+        }
+    
+        if (msg == E3D_RES_LOAD) {
+            log("Async ressource loaded: " + name, true);   
+            mdl = E3D_loader.loadModel_STL("toView", resMngr.getRessourcePath(name),  resMngr.getData(name), 0.0, "source");//[1.0,1.0,1.0]);//"source"]);
+        }
+
+
+
+        if ((msg == "ELECTRON_LOAD") || (mdl))
+        
+         {
+            mdl.visible = true;
+            mdl.vis_culling = false;
+
+            let bb = calculate_bounding_box(mdl.vertexArray);
+
+            // center object on top of origin
+            mdl.position = vec3.fromValues((bb.max[0] + bb.min[0]) / -2 , -bb.min[1], (bb.max[2] + bb.min[2]) / -2);
+
+            scn.addEntity(mdl);
+
+            let biggest = Math.max(bb.max[0] - bb.min[0],  bb.max[1] - bb.min[1] ) / 2;
+
+            let backout = biggest / Math.tan(_fieldOfView/2); 
+
+            scn.camera.move( 0, (bb.max[1] - bb.min[1]) / 2, backout, 0, 0, 0); 
+            log("Model loaded", false);
+        }
+    }
+
 
 
     // Logging and status information    

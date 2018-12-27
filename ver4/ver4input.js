@@ -4,34 +4,35 @@
 
 // Bind events to an element to capture and manage inputs
 class E3D_input {
-    constructor (element, supportMouse, supportKeyboard, supportTouch, supportPointerLock, clampPitch= true, allowPan = true) {
+    constructor (element, supportMouse, supportKeyboard, supportTouch, supportPointerLock) {
 
         this.element = element;
 
-        this.supportMouse = supportMouse;
-        this.supportKeyboard = supportKeyboard;
-        this.supportTouch = supportTouch;
-        this.supportPointerLock = supportPointerLock;
+        this.lastDelta = 1;
 
-        this.mouseMoveWhenLockedOnly = false;//TODO should be in engine logic
+        //this.mouseMoveWhenLockedOnly = false;//TODO should be in engine logic
 
+        // Touch properties
         this.touchDist = 0; // distance between 2 touches
         this.ongoingTouches = [];
         this.doubleTapping = false;
 
+        // Input states
         this.inputTable = {}; // keys that are pressed down
         this.inputDoneTable = {}; // keys that got released but trigger again without keydown (keyboard auto-repeat)
 
-        this.onInput = null; // callback for direct input change notification
+        // Callback
+        this.onInput = null;
 
+        // Setup element's events
         if (supportMouse) {
             element.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
             element.addEventListener("mouseup", (e) => { this.mouseUp(e) } );
             element.addEventListener("mousemove", (e) => {this.mouseMove(e) } );
             element.addEventListener("mouseleave",(e) => { this.mouseLeave(e) } );
             element.addEventListener("wheel", (e) => {this.mouseWheel(e) } );
+            element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
         }
-        element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
 
         if (supportKeyboard) {
             document.addEventListener("keydown",(e) => { this.keyDown(e) } );
@@ -50,8 +51,8 @@ class E3D_input {
         }
 
         // Config        
-        this._posSpeed = 50; // units per sec
-        this._rotSpeed = 90 * DegToRad; // rad per sec
+        this._posSpeed = 50; // units per sec for position outputs
+        this._rotSpeed = 90 * DegToRad; // rad per sec for rotation outputs
         
         this._mouseSpeed = 0.0025; // units per mouse position delta 
         this._mouseWheelSpeed = 0.1; // units per wheel rotation delta
@@ -59,40 +60,13 @@ class E3D_input {
         this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
 
-        this._smooth = 6.0; // _smooth * delta >= 1.0 : non smoothed inputs. // todo move to game config
+        // TODO: callback on pointer lock / unlock to allow to record current values
 
-        // TODO callback on pointer lock / unlock to allow to record current values
-
-        // button priority
-        //this.buttonPriority = [0, 1, 2]; // TODO implement, otherwise always last btn input
-
-        // mouse inputs:
-        // click, doubleClick
-
-        // mouse moves:
-        // no button: x, y, w
-        // lmb : x, y
-        // mmb : x, y
-        // rmb : x, y
-
-        // touch inputs:
-        // tap, doubleTap
-
-        // touch moves:
-        // tap-drag
-        // pinch
-        // pinch-drag
-
-        this.touchMap = {};
-        // ["tap"] = "0" // btn 0 1 2 ,   E3D_INP_LMB
-        // ["doubleTap"] = "Click";  event.button
-
-        this.pointerMap = {};
-
-        // pointer map buttons : disabled, always on, lmb/touch, mmb/double touch, rmb
-        // pointer map axis : x, y, w (wheel / pinch)
+        this.pointerMap = {}; // Map of inputs for pointer
+        // pointer map buttons : disabled, always on, lmb, mmb, rmb
+        // pointer map axis : x/y/w (wheel)
         // can be assigned to whatever, the name are just easy placeholders
-        // (could have simply been axis0 to axis8 or input0 to input8)
+        // (could have been axis0 to axis7 or input0 to input7)
 
         // p inputs, "position"
         this.pointerMap["px_btn"] = E3D_INP_RMB;
@@ -101,10 +75,10 @@ class E3D_input {
         this.pointerMap["py_btn"] = E3D_INP_RMB;
         this.pointerMap["py_axis"] = E3D_INP_Y;
 
-        this.pointerMap["pz_btn"] = E3D_INP_MMB;
-        this.pointerMap["pz_axis"] = E3D_INP_Y;
+        this.pointerMap["pz_btn"] = E3D_INP_ALWAYS;
+        this.pointerMap["pz_axis"] = E3D_INP_W;
 
-        // r inputs, "rotation", clamped +/- 360 deg
+        // r inputs, "rotation", warping around 0-2pi
         this.pointerMap["rx_btn"] = E3D_INP_LMB;
         this.pointerMap["rx_axis"] = E3D_INP_Y;
 
@@ -114,22 +88,29 @@ class E3D_input {
         this.pointerMap["rz_btn"] = E3D_INP_MMB;
         this.pointerMap["rz_axis"] = E3D_INP_X;
 
-        // key binds as rotation x/y/z +/- instead of premade aliases
 
+        this.touchMap = {}; // TODO: map touch events to mouse button events
+        // pinch distance delta is mapped to mouse wheel
+        this.touchMap["tap"] = E3D_INP_LMB;
+        this.touchMap["doubleTap"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB; // "double click"
+        this.touchMap["pinch"] = E3D_INP_MMB;
+        this.touchMap["doublePinch"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB;
 
 
         // Keyboard Controls, maps commands to keyboardEvent.code
         this.keyMap = {}; 
         // this.keyMap[command] = key.code;
-
+        // Could also be this.keyMap["px_dec"] = E3D_INP_RMB; to change a position input with a mouse button
+        
+        // internal default commands
         this.keyMap["px_dec"] = "KeyA";
         this.keyMap["px_inc"] = "KeyD";
 
         this.keyMap["py_dec"] = "KeyC";
         this.keyMap["py_inc"] = "Space";
 
-        this.keyMap["pz_dec"] = "KeyS";
-        this.keyMap["pz_inc"] = "KeyW";
+        this.keyMap["pz_dec"] = "KeyW";
+        this.keyMap["pz_inc"] = "KeyS";
 
         this.keyMap["rx_dec"] = "KeyF";
         this.keyMap["rx_inc"] = "KeyR";
@@ -143,13 +124,11 @@ class E3D_input {
         this.keyMap["togglePointerlock"] = "ControlRight";
         this.keyMap["toggleFullscreen"] = "F11";
 
-        // "custom" actions, binds can be added for anything
+        // "custom" commands, binds can be added for anything
         this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic, or constant defined
-        // tap, double tap, double click ?
-        this.keyMap["action2"] = "dblClick"; // click on mouse lock, double tap on touch //TODO should be in engine logic
         this.keyMap["action1"] = "KeyF";
-        // Could also be this.keyMap["px_dec"] = E3D_INP_RMB;
-
+        this.keyMap["action2"] = "dblClick"; // click on mouse lock, double tap on touch //TODO should be in engine logic
+        // E3D_INP_DOUBLE_PREFIX_CODE
 
 
         // Raw pointer data
@@ -158,8 +137,6 @@ class E3D_input {
         this.mx = 0;
         this.my = 0;
         this.mw = 0;
-
-        // no pin because wheel already gives delta
 
 // Outputs
     // Positions
@@ -192,8 +169,10 @@ class E3D_input {
     }
 
 
-    // Process keys and pointer inputs to get final output values
+// Methods 
 
+
+    // Process keys and pointer inputs to get final output values
     processInputs(delta = 1.0) {
 
         this.px_delta = 0; this.py_delta = 0; this.pz_delta = 0;
@@ -246,50 +225,59 @@ class E3D_input {
 
         // Pointer
         // Positions
-        if ((this.pointerMap["px_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["px_btn"]]) {
+        if ((this.pointerMap["px_btn"] == E3D_INP_ALWAYS) || this.inputTable[this.pointerMap["px_btn"]]) {
             if (this.pointerMap["px_axis"] == E3D_INP_X) this.px_delta += this.mx * this._posSpeed;
             if (this.pointerMap["px_axis"] == E3D_INP_Y) this.px_delta += this.my * this._posSpeed;
             if (this.pointerMap["px_axis"] == E3D_INP_W) this.px_delta += this.mw * this._posSpeed;
         }
 
-        if ((this.pointerMap["py_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["py_btn"]]) {
+        if ((this.pointerMap["py_btn"] == E3D_INP_ALWAYS) || this.inputTable[this.pointerMap["py_btn"]]) {
             if (this.pointerMap["py_axis"] == E3D_INP_X) this.py_delta += this.mx * this._posSpeed;
             if (this.pointerMap["py_axis"] == E3D_INP_Y) this.py_delta += this.my * this._posSpeed;
             if (this.pointerMap["py_axis"] == E3D_INP_W) this.py_delta += this.mw * this._posSpeed;
         }
 
-        if ((this.pointerMap["pz_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["pz_btn"]]) {
+        if ((this.pointerMap["pz_btn"] == E3D_INP_ALWAYS) || this.inputTable[this.pointerMap["pz_btn"]]) {
             if (this.pointerMap["pz_axis"] == E3D_INP_X) this.pz_delta += this.mx * this._posSpeed;
             if (this.pointerMap["pz_axis"] == E3D_INP_Y) this.pz_delta += this.my * this._posSpeed;
             if (this.pointerMap["pz_axis"] == E3D_INP_W) this.pz_delta += this.mw * this._posSpeed;
         }
 
         // Rotations
-        if ((this.pointerMap["rx_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["rx_btn"]]) {
+        if ((this.pointerMap["rx_btn"] == E3D_INP_ALWAYS) || (this.inputTable[this.pointerMap["rx_btn"]])) {
             if (this.pointerMap["rx_axis"] == E3D_INP_X) this.rx_delta += this.mx * this._rotSpeed;
             if (this.pointerMap["rx_axis"] == E3D_INP_Y) this.rx_delta += this.my * this._rotSpeed;
             if (this.pointerMap["rx_axis"] == E3D_INP_W) this.rx_delta += this.mw * this._rotSpeed;
         }
 
-        if ((this.pointerMap["ry_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["ry_btn"]]) {
+        if ((this.pointerMap["ry_btn"] == E3D_INP_ALWAYS) || (this.inputTable[this.pointerMap["ry_btn"]])) {
             if (this.pointerMap["ry_axis"] == E3D_INP_X) this.ry_delta += this.mx * this._rotSpeed;
             if (this.pointerMap["ry_axis"] == E3D_INP_Y) this.ry_delta += this.my * this._rotSpeed;
             if (this.pointerMap["ry_axis"] == E3D_INP_W) this.ry_delta += this.mw * this._rotSpeed;
         }
 
-        if ((this.pointerMap["rz_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["rz_btn"]]) {
+        if ((this.pointerMap["rz_btn"] == E3D_INP_ALWAYS) || (this.inputTable[this.pointerMap["rz_btn"]])) {
             if (this.pointerMap["rz_axis"] == E3D_INP_X) this.rz_delta += this.mx * this._rotSpeed;
             if (this.pointerMap["rz_axis"] == E3D_INP_Y) this.rz_delta += this.my * this._rotSpeed;
             if (this.pointerMap["rz_axis"] == E3D_INP_W) this.rz_delta += this.mw * this._rotSpeed;
         }
-        
-        this.px += this.px_delta * delta;
-        this.py += this.py_delta * delta; 
-        this.pz += this.pz_delta * delta;
 
-        this.rx += this.rx_delta * delta;
-        this.ry += this.ry_delta * delta;
-        this.rz += this.rz_delta * delta;
+
+        this.px_delta *= delta;
+        this.py_delta *= delta;
+        this.pz_delta *= delta;
+
+        this.rx_delta *= delta;
+        this.ry_delta *= delta;
+        this.rz_delta *= delta;
+        
+        this.px += this.px_delta;
+        this.py += this.py_delta; 
+        this.pz += this.pz_delta;
+
+        this.rx += this.rx_delta;
+        this.ry += this.ry_delta;
+        this.rz += this.rz_delta;
 
         // Warp rotations
         if (this.rx < 0) { 
@@ -319,7 +307,14 @@ class E3D_input {
             this.rz_smth -= PIx2; 
         }
 
+        this.lastDelta = delta;
 
+        this.mx = 0;
+        this.my = 0;
+        this.mw = 0;
+
+      //  console.log("p " + this.px + " " + this.py + " " + this.pz);
+      //  console.log("r " + this.rx + " " + this.ry + " " + this.rz);
     }
 
 
@@ -383,8 +378,8 @@ class E3D_input {
         }
     }
 
-    smoothRotation(f, x = true, y = true, z = true) {
-        let f = delta * this._smooth;
+    smoothRotation(smoothFactor, x = true, y = true, z = true) {
+        let f = this.lastDelta * smoothFactor;
 
         if (f < 1.0) {
             if (x) this.rx_smth += (this.rx - this.rx_smth) * f;
@@ -397,8 +392,8 @@ class E3D_input {
         }
     }
 
-    smoothPosition(f, x = true, y = true, z = true) {
-        let f = delta * this._smooth;
+    smoothPosition(smoothFactor, x = true, y = true, z = true) {
+        let f = this.lastDelta * smoothFactor;
 
         if (f < 1.0) {
             if (x) this.px_smth += (this.px - this.px_smth) * f;
@@ -435,6 +430,8 @@ class E3D_input {
             this.inputDoneTable[event.code] = false;
         }    
 
+        console.log("dn " + event.code);
+
 
         //if (this.onInput) this.onInput(); // direct callback keydown preview
 
@@ -451,7 +448,8 @@ class E3D_input {
         if (this.inputTable[event.code] != undefined) {
             this.inputTable[event.code] = false;
             this.inputDoneTable[event.code] = true;
-        }    
+        }   
+        console.log("up " + event.code); 
     }
 
 
@@ -494,14 +492,14 @@ class E3D_input {
        //     this.ry += y * this._mouseSpeed * this._rotSpeed;
        // }
 
-        this.mx += x * this._mouseSpeed;
-        this.my += y * this._mouseSpeed;
+       // this.mx += x * this._mouseSpeed;
+       // this.my += y * this._mouseSpeed;
 
     }
     
     mouseWheel(event) {   
         // Override cross browser/OS wheel delta discrepencies
-        this.nw += (event.deltaY > 0) ? this._mouseWheelSpeed : -this._mouseWheelSpeed;
+        this.mw += (event.deltaY > 0) ? this._mouseWheelSpeed : -this._mouseWheelSpeed;
 
         if (event.preventDefault) { event.preventDefault(); };
     }
@@ -511,7 +509,7 @@ class E3D_input {
         //    pLockRequest(this.element);
        // }
 
-        this.keyDown( { code : "dbl" + event.button } );
+        this.keyDown( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
 
         if (event.preventDefault) { event.preventDefault(); };
     }
