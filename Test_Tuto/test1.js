@@ -11,19 +11,20 @@ var log = document.getElementById("logDiv");
 var status = document.getElementById("statusDiv");
 
 // events
-document.getElementById("test1").addEventListener("click", test1);
-document.getElementById("test2").addEventListener("click", test2);
-document.getElementById("test3").addEventListener("click", test3);
-document.getElementById("test4").addEventListener("click", test4);
-document.getElementById("test5").addEventListener("click", test5);
-document.getElementById("test6").addEventListener("click", test6);
-document.getElementById("test7").addEventListener("click", test7);
-document.getElementById("test8").addEventListener("click", test8);
+var testers = document.querySelectorAll(".test");
+for (var i = 0; i < testers.length; ++i) testers[i].addEventListener("click", starttest);
+
+function starttest(event) {
+    addLine("");
+    addLine(event.target.id + " running");
+    setTimeout( t[event.target.id], 10);
+}
 
 function addLine(text) {
     log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
-}
 
+    log.scrollTop = log.scrollHeight;
+}
 
 
 const gco = [0 ,0 ,0];
@@ -34,7 +35,9 @@ const gcv  = vec3.create();
 let glv  = vec3.create();
 var gvv  = vec3.create();
 
-function test1(event) {
+const t = {};
+
+t.test1 = function() {
     const lco = [0 ,0 ,0];
     let llo = [0,0 ,0];
     var lvo = [0, 0, 0];
@@ -50,12 +53,8 @@ function test1(event) {
     //cast from new vec3.create();
     //cast from new vec3.fromValues(0, 0, 0);
 
-    const numtst = 5000000;
+    const numtst = 25000000;
     addLine("Num iter: " + numtst);
-
-
-
-
     addLine("Premade vec3, local");
 
     let dt = Date.now();
@@ -212,13 +211,14 @@ function test1(event) {
 
 
 
-
+    addLine("End Test 1");
 }
 
-function test2(event) {
+t.test2 = function() {
 
     let sum = 0;
-    const numtst = 1000000;
+    const numtst = 25000000;
+    addLine("Num iter: " + numtst);
 
     let dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
@@ -226,7 +226,7 @@ function test2(event) {
     }
     let et = Date.now();
 
-    addLine("Date.now() x" + numtst + ": " + (et-dt));
+    addLine("Date.now(): " + (et-dt));
 
 
     dt = Date.now();
@@ -235,18 +235,18 @@ function test2(event) {
     }
     et = Date.now();
 
-    addLine("new Date().getTime() x" + numtst + ": " + (et-dt));
+    addLine("new Date().getTime() x: " + (et-dt));
+
+    addLine("End Test 2");
 }
 
 
-function test3(event) {
+t.test3 = function() {
 
-    const numtst = 5000000;
+    const numtst = 25000000;
     var d = vec3.create();
 
     addLine("Num iter: " + numtst);
-
-    addLine("");
 
     let dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
@@ -277,20 +277,18 @@ function test3(event) {
         d[2] = gvv[2];
     }
     et = Date.now();
-    addLine("d[] = s[]" + " : " + (et-dt));
+    addLine("i in range [0..2] d[i] = s[i]" + " : " + (et-dt));
+
+    addLine("End Test 3");
 }
 
-function test4(event) {
+t.test4 = function() {
     let ms = mat4.create();
     let md = mat4.create();
     let v = vec3.create();
 
-
-    const numtst = 5000000;
-    
+    const numtst = 5000000;    
     addLine("Num iter: " + numtst);
-    
-    addLine("");
     
     let dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
@@ -331,13 +329,13 @@ function test4(event) {
     et = Date.now();
     addLine("translate(md, ms, negate(dummy, v)) : " + (et-dt));
 
-
+    addLine("End Test 4");
 }
 
 
 
 
-function test5() {
+t.test5 = function() {
     const numtst = 100000;
     const numItem = 5000;
 
@@ -403,12 +401,13 @@ function test5() {
     et = Date.now();
    addLine("array search by indexOf: " + (et-dt));
 
+   addLine("End Test 5");
 }
 
 
 
 
-function test6() {
+t.test6 = function() {
     const numtst = 5000000;
     var vec3_dummy = [0, 0, 0];
 
@@ -480,12 +479,7 @@ function test6() {
     et = Date.now();
     addLine("VectSphHit_quad: " + (et-dt));
 
-
-
-
-
-
-
+    addLine("End Test 6");
 }
 
 function reflect1(inc, norm) {
@@ -565,7 +559,7 @@ function VectSphHit_quad(v, so, sr) {
 }
 
 
-function test7(event) {
+t.test7 = function() {
     const numtst = 5000000;
     
     addLine("Num iter: " + numtst);
@@ -629,7 +623,6 @@ function test7(event) {
     }
     et = Date.now();
     addLine("access o.a0 o.a1, o.a2: " + (et-dt));
-
 
 
 
@@ -730,9 +723,11 @@ function test7(event) {
     }
     et = Date.now();
     addLine("create FloatArray(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
+
+    addLine("End Test 7");
 }
 
-function test8 (event){
+t.test8 = function() {
     const numtst = 5000000;    
     addLine("Num iter: " + numtst);
 
@@ -807,47 +802,155 @@ function test8 (event){
     et = Date.now();
     addLine("concat(array(inc)) : " + (et-dt));
 */
-addLine("concat(array(inc)) : NOPE");
+    addLine("concat(array(inc)) : NOPE");
 
 
-idx = 0;
-inc = 1000000;
-var x = 0;
-s = Array(inc);
-dt = Date.now();
-for (let i = 0; i < numtst; ++i) {
-    s[idx] = [1, 2, 3, 4, 5];
-    x += s[idx][0] + s[idx][1] + s[idx][2] + s[idx][3] + s[idx][4] ; 
-    idx++;
+    idx = 0;
+    inc = 1000000;
+    var x = 0;
+    s = Array(inc);
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s[idx] = [1, 2, 3, 4, 5];
+        x += s[idx][0] + s[idx][1] + s[idx][2] + s[idx][3] + s[idx][4] ; 
+        idx++;
+    }
+    et = Date.now();
+    addLine("s[a,b,c] read s[0]+s[1]+s[2] " + (et-dt));
+
+    idx = 0;
+    inc = 1000000;
+    var x = 0;
+    var s0 = Array(inc);
+    var s1 = Array(inc);
+    var s2 = Array(inc);
+    var s3 = Array(inc);
+    var s4 = Array(inc);
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        s0[idx] = 1;
+        s1[idx] = 2;
+        s2[idx] = 3;
+        s3[idx] = 4;
+        s4[idx] = 5;
+        x += s0[idx] + s1[idx] + s2[idx] + s3[idx] + s4[idx]; 
+        idx++;
+    }
+    et = Date.now();
+    addLine("s0=a, s1=b, s2=c read s0+s1+s2 " + (et-dt));
+
+    addLine("End Test 8");
 }
-et = Date.now();
-addLine("s[a,b,c] read s[0]+s[1]+s[2] " + (et-dt));
 
-idx = 0;
-inc = 1000000;
-var x = 0;
-var s0 = Array(inc);
-var s1 = Array(inc);
-var s2 = Array(inc);
-var s3 = Array(inc);
-var s4 = Array(inc);
-dt = Date.now();
-for (let i = 0; i < numtst; ++i) {
-    s0[idx] = 1;
-    s1[idx] = 2;
-    s2[idx] = 3;
-    s3[idx] = 4;
-    s4[idx] = 5;
-    x += s0[idx] + s1[idx] + s2[idx] + s3[idx] + s4[idx]; 
-    idx++;
+
+t.test9 = function() {
+
+    const numtst = 2500000;    
+    addLine("Num iter: " + numtst);
+
+    let obj1 = {};   
+    let obj2 = {prop: []};
+/*
+    for (var i = 0 ; i < 1000; ++i) {
+        var val = rand(1000);
+        obj1["prop0"] = val;
+        obj2.prop.push(val);
+    }
+*/
+    obj1["prop0"] = 0;
+    obj1["prop1"] = 1;
+    obj1["prop2"] = 2;
+    obj1["prop3"] = 3;
+    obj1["prop4"] = 4;
+    obj1["prop5"] = 5;
+    obj1["prop6"] = 6;
+    obj1["prop7"] = 7;
+    obj1["prop8"] = 8;
+    obj1["prop9"] = 9;
+
+    obj2.prop.push(0);
+    obj2.prop.push(1);
+    obj2.prop.push(2);
+    obj2.prop.push(3);
+    obj2.prop.push(4);
+    obj2.prop.push(5);
+    obj2.prop.push(6);
+    obj2.prop.push(7);
+    obj2.prop.push(8);
+    obj2.prop.push(9);
+
+
+    var mo = 0;
+    var le = 0;
+    var dt = Date.now();
+    for (var iter = 0; iter < numtst; ++iter)
+        for (var x= 0; x < 10; ++x) {
+        if ( obj1["prop" + x] >= 5) mo++;
+        if ( obj1["prop" + x] < 5) le++;
+    }
+    var et = Date.now();
+    addLine("prop list, concat string : " + (et-dt) + " mo: " + mo + " le: " + le);
+
+
+
+    mo = 0;
+    le = 0;
+    var dt = Date.now();
+    for (var iter = 0; iter < numtst; ++iter) {
+        if ( obj1["prop0"] >= 5) mo++;
+        if ( obj1["prop0"] < 5) le++;
+
+        if ( obj1["prop1"] >= 5) mo++;
+        if ( obj1["prop1"] < 5) le++;
+
+        if ( obj1["prop2"] >= 5) mo++;
+        if ( obj1["prop2"] < 5) le++;
+
+        if ( obj1["prop3"] >= 5) mo++;
+        if ( obj1["prop3"] < 5) le++;
+
+        if ( obj1["prop4"] >= 5) mo++;
+        if ( obj1["prop4"] < 5) le++;
+
+        if ( obj1["prop5"] >= 5) mo++;
+        if ( obj1["prop5"] < 5) le++;
+
+        if ( obj1["prop6"] >= 5) mo++;
+        if ( obj1["prop6"] < 5) le++;
+
+        if ( obj1["prop7"] >= 5) mo++;
+        if ( obj1["prop7"] < 5) le++;
+
+        if ( obj1["prop8"] >= 5) mo++;
+        if ( obj1["prop8"] < 5) le++;
+
+        if ( obj1["prop9"] >= 5) mo++;
+        if ( obj1["prop9"] < 5) le++;
+
+    }
+    var et = Date.now();
+    addLine("prop list, direct string : " + (et-dt) + " mo: " + mo + " le: " + le);
+
+
+
+    
+    mo = 0;
+    le = 0;    
+    dt = Date.now();
+    for (var iter = 0; iter < numtst; ++iter) for (var x= 0; x < 10; ++x) { 
+        if ( obj2.prop[x] >= 5) mo++;
+        if ( obj2.prop[x] < 5) le++;
+    }
+
+    et = Date.now();
+    addLine("array sweep : " + (et-dt) + " mo: " + mo + " le: " + le);
+
+
+    addLine("End Test 9");
 }
-et = Date.now();
-addLine("s0=a, s1=b, s2=c read s0+s1+s2 " + (et-dt));
 
-
-
-
-
+function rand(x) {
+    return Math.floor(Math.random() * x);
 }
 
 
