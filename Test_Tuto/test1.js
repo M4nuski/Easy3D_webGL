@@ -850,8 +850,9 @@ t.test9 = function() {
     const numtst = 2500000;    
     addLine("Num iter: " + numtst);
 
-    let obj1 = {};   
-    let obj2 = {prop: []};
+    let obj1 = {};  
+    let obj2 = { prop: [] }; 
+    let obj3 = [];
 /*
     for (var i = 0 ; i < 1000; ++i) {
         var val = rand(1000);
@@ -880,6 +881,17 @@ t.test9 = function() {
     obj2.prop.push(7);
     obj2.prop.push(8);
     obj2.prop.push(9);
+
+    obj3.push(0);
+    obj3.push(1);
+    obj3.push(2);
+    obj3.push(3);
+    obj3.push(4);
+    obj3.push(5);
+    obj3.push(6);
+    obj3.push(7);
+    obj3.push(8);
+    obj3.push(9);
 
 
     var mo = 0;
@@ -934,6 +946,44 @@ t.test9 = function() {
     addLine("prop list, direct string : " + (et-dt) + " mo: " + mo + " le: " + le);
 
 
+    mo = 0;
+    le = 0;
+    var dt = Date.now();
+    for (var iter = 0; iter < numtst; ++iter) {
+        if ( obj1.prop0 >= 5) mo++;
+        if ( obj1.prop0 < 5) le++;
+
+        if ( obj1.prop1 >= 5) mo++;
+        if ( obj1.prop1 < 5) le++;
+
+        if ( obj1.prop2 >= 5) mo++;
+        if ( obj1.prop2 < 5) le++;
+
+        if ( obj1.prop3 >= 5) mo++;
+        if ( obj1.prop3 < 5) le++;
+
+        if ( obj1.prop4 >= 5) mo++;
+        if ( obj1.prop4 < 5) le++;
+
+        if ( obj1.prop5 >= 5) mo++;
+        if ( obj1.prop5 < 5) le++;
+
+        if ( obj1.prop6 >= 5) mo++;
+        if ( obj1.prop6 < 5) le++;
+
+        if ( obj1.prop7 >= 5) mo++;
+        if ( obj1.prop7 < 5) le++;
+
+        if ( obj1.prop8 >= 5) mo++;
+        if ( obj1.prop8 < 5) le++;
+
+        if ( obj1.prop9 >= 5) mo++;
+        if ( obj1.prop9 < 5) le++;
+
+    }
+    var et = Date.now();
+    addLine("prop normal access : " + (et-dt) + " mo: " + mo + " le: " + le);
+
 
     
     mo = 0;
@@ -945,8 +995,18 @@ t.test9 = function() {
     }
 
     et = Date.now();
-    addLine("array sweep : " + (et-dt) + " mo: " + mo + " le: " + le);
+    addLine("obj.array[iter] : " + (et-dt) + " mo: " + mo + " le: " + le);
 
+    mo = 0;
+    le = 0;    
+    dt = Date.now();
+    for (var iter = 0; iter < numtst; ++iter) for (var x= 0; x < 10; ++x) { 
+        if ( obj3[x] >= 5) mo++;
+        if ( obj3[x] < 5) le++;
+    }
+
+    et = Date.now();
+    addLine("obj[iter] : " + (et-dt) + " mo: " + mo + " le: " + le);
 
     addLine("End Test 9");
 }

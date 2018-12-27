@@ -12,11 +12,7 @@ class E3D_input {
         this.supportKeyboard = supportKeyboard;
         this.supportTouch = supportTouch;
         this.supportPointerLock = supportPointerLock;
-        this.clampPitch = clampPitch;//TODO should be in engine logic
-        this.allowPan = allowPan; //TODO should be in engine logic
 
-        this.doPan = true;//TODO should be in engine logic
-        this.doRotate = true;//TODO should be in engine logic
         this.mouseMoveWhenLockedOnly = false;//TODO should be in engine logic
 
         this.touchDist = 0; // distance between 2 touches
@@ -53,10 +49,17 @@ class E3D_input {
             element.addEventListener("touchmove", (e) => {this.touchMove(e) } );
         }
 
-        // Config
+        // Config        
+        this._posSpeed = 50; // units per sec
+        this._rotSpeed = 90 * DegToRad; // rad per sec
+        
+        this._mouseSpeed = 0.0025; // units per mouse position delta 
+        this._mouseWheelSpeed = 0.1; // units per wheel rotation delta
+        
+        this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
-        this._rotateMouseButton = 0; // TODO remove
-        this._panMouseButton = 1;// TODO remove
+
+        this._smooth = 6.0; // _smooth * delta >= 1.0 : non smoothed inputs. // todo move to game config
 
         // TODO callback on pointer lock / unlock to allow to record current values
 
@@ -81,15 +84,15 @@ class E3D_input {
         // pinch-drag
 
         this.touchMap = {};
-        // ["tap"] = "0" // btn 0 1 2 ,  E3D_INP_MAP_prefix + E3D_INP_LMB
-        // ["doubleTap"] = "Click"; E3D_INP_MAP_prefix + event.button
+        // ["tap"] = "0" // btn 0 1 2 ,   E3D_INP_LMB
+        // ["doubleTap"] = "Click";  event.button
 
         this.pointerMap = {};
 
         // pointer map buttons : disabled, always on, lmb/touch, mmb/double touch, rmb
         // pointer map axis : x, y, w (wheel / pinch)
         // can be assigned to whatever, the name are just easy placeholders
-        // (could have simply been axis0 to axis8 )
+        // (could have simply been axis0 to axis8 or input0 to input8)
 
         // p inputs, "position"
         this.pointerMap["px_btn"] = E3D_INP_RMB;
@@ -113,14 +116,7 @@ class E3D_input {
 
         // key binds as rotation x/y/z +/- instead of premade aliases
 
-        this._moveSpeed = 50; // units per sec
-        this._rotateSpeed = 90 * DegToRad; // rad per sec
 
-        this._mouseSpeed = 0.0025; // units per mouse position delta 
-        this._mouseWheelSpeed = 0.1; // units per wheel rotation delta
-        this._smooth = 6.0; // _smooth * delta >= 1.0 : non smoothed inputs. 
-
-        this._doubleTapDelay = 200; //ms
 
         // Keyboard Controls, maps commands to keyboardEvent.code
         this.keyMap = {}; 
@@ -148,53 +144,274 @@ class E3D_input {
         this.keyMap["toggleFullscreen"] = "F11";
 
         // "custom" actions, binds can be added for anything
-        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic
+        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic, or constant defined
         // tap, double tap, double click ?
-        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic
+        this.keyMap["action2"] = "dblClick"; // click on mouse lock, double tap on touch //TODO should be in engine logic
         this.keyMap["action1"] = "KeyF";
+        // Could also be this.keyMap["px_dec"] = E3D_INP_RMB;
 
-        // Mouse Controls
-       // this.panning = false;
-//        this.rotating = false;
 
-        this.pinx=0;  this.px=0;  this.px_smth=0;
-        this.piny=0;  this.py=0;  this.py_smth=0;
-                      this.pz=0;  this.pz_smth=0; // no pin because wheel already gives delta
-        this.rx=0; this.rx_sum=0; this.rx_smth=0;
-        this.ry=0; this.ry_sum=0; this.ry_smth=0;
-        this.rz=0; this.rz_sum=0; this.rz_smth=0;
 
-        // outputs :
-/*
-        .px_delta
-        .py_delta
-        .pz_delta
-        .px_abs
-        .py_abs
-        .pz_abs
-        .px_smth
-        .py_smth
-        .pz_smth
+        // Raw pointer data
+        this.pinx = 0;
+        this.piny = 0; 
+        this.mx = 0;
+        this.my = 0;
+        this.mw = 0;
 
-        .rx_delta
-        .ry_delta
-        .rz_delta
-        .rx_abs
-        .ry_abs
-        .rz_abs
-        .rx_smth
-        .ry_smth
-        .rz_smth
+        // no pin because wheel already gives delta
 
-*/
+// Outputs
+    // Positions
+        // Delta
+        this.px_delta = 0;
+        this.py_delta = 0;
+        this.pz_delta = 0;
+        // Sums
+        this.px = 0;
+        this.py = 0;
+        this.pz = 0;
+        // Smoothed sums
+        this.px_smth = 0;
+        this.py_smth = 0;
+        this.pz_smth = 0;
 
-// clampR (min, max, x, y, z)
-// clampP (min, max, x, y, z)
-// smoothR (f, x, y, z)
-// smoothP (f, x, y, z)
+    // Rotations
+        // Delta
+        this.rx_delta = 0;
+        this.ry_delta = 0;
+        this.rz_delta = 0;
+        // Sums
+        this.rx = 0;
+        this.ry = 0;
+        this.rz = 0;
+        // Smoothed sums
+        this.rx_smth = 0;
+        this.ry_smth = 0;
+        this.rz_smth = 0;
+    }
+
+
+    // Process keys and pointer inputs to get final output values
+
+    processInputs(delta = 1.0) {
+
+        this.px_delta = 0; this.py_delta = 0; this.pz_delta = 0;
+        this.rx_delta = 0; this.ry_delta = 0; this.rz_delta = 0;
+
+        // Keyboard
+        // Position
+        if (this.inputTable[this.keyMap["px_dec"]]) {
+            this.px_delta -= this._posSpeed;
+        }
+        if (this.inputTable[this.keyMap["px_inc"]]) {
+            this.px_delta += this._posSpeed;
+        }
+
+        if (this.inputTable[this.keyMap["py_dec"]]) {
+            this.py_delta -= this._posSpeed;
+        }
+        if (this.inputTable[this.keyMap["py_inc"]]) {
+            this.py_delta += this._posSpeed;
+        }
+
+        if (this.inputTable[this.keyMap["pz_dec"]]) {
+            this.pz_delta -= this._posSpeed;
+        }
+        if (this.inputTable[this.keyMap["pz_inc"]]) {
+            this.pz_delta += this._posSpeed;
+        }    
+
+        // Rotation
+        if (this.inputTable[this.keyMap["rx_dec"]]) {
+            this.rx_delta -= this._rotSpeed;
+        }
+        if (this.inputTable[this.keyMap["rx_inc"]]) {
+            this.rx_delta += this._rotSpeed;
+        }    
+
+        if (this.inputTable[this.keyMap["ry_dec"]]) {
+            this.ry_delta -= this._rotSpeed;
+        }
+        if (this.inputTable[this.keyMap["rz_inc"]]) {
+            this.ry_delta += this._rotSpeed;
+        }    
+
+        if (this.inputTable[this.keyMap["rz_dec"]]) {
+            this.rz_delta -= this._rotSpeed;
+        }
+        if (this.inputTable[this.keyMap["rz_inc"]]) {
+            this.rz_delta += this._rotSpeed;
+        }
+
+        // Pointer
+        // Positions
+        if ((this.pointerMap["px_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["px_btn"]]) {
+            if (this.pointerMap["px_axis"] == E3D_INP_X) this.px_delta += this.mx * this._posSpeed;
+            if (this.pointerMap["px_axis"] == E3D_INP_Y) this.px_delta += this.my * this._posSpeed;
+            if (this.pointerMap["px_axis"] == E3D_INP_W) this.px_delta += this.mw * this._posSpeed;
+        }
+
+        if ((this.pointerMap["py_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["py_btn"]]) {
+            if (this.pointerMap["py_axis"] == E3D_INP_X) this.py_delta += this.mx * this._posSpeed;
+            if (this.pointerMap["py_axis"] == E3D_INP_Y) this.py_delta += this.my * this._posSpeed;
+            if (this.pointerMap["py_axis"] == E3D_INP_W) this.py_delta += this.mw * this._posSpeed;
+        }
+
+        if ((this.pointerMap["pz_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["pz_btn"]]) {
+            if (this.pointerMap["pz_axis"] == E3D_INP_X) this.pz_delta += this.mx * this._posSpeed;
+            if (this.pointerMap["pz_axis"] == E3D_INP_Y) this.pz_delta += this.my * this._posSpeed;
+            if (this.pointerMap["pz_axis"] == E3D_INP_W) this.pz_delta += this.mw * this._posSpeed;
+        }
+
+        // Rotations
+        if ((this.pointerMap["rx_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["rx_btn"]]) {
+            if (this.pointerMap["rx_axis"] == E3D_INP_X) this.rx_delta += this.mx * this._rotSpeed;
+            if (this.pointerMap["rx_axis"] == E3D_INP_Y) this.rx_delta += this.my * this._rotSpeed;
+            if (this.pointerMap["rx_axis"] == E3D_INP_W) this.rx_delta += this.mw * this._rotSpeed;
+        }
+
+        if ((this.pointerMap["ry_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["ry_btn"]]) {
+            if (this.pointerMap["ry_axis"] == E3D_INP_X) this.ry_delta += this.mx * this._rotSpeed;
+            if (this.pointerMap["ry_axis"] == E3D_INP_Y) this.ry_delta += this.my * this._rotSpeed;
+            if (this.pointerMap["ry_axis"] == E3D_INP_W) this.ry_delta += this.mw * this._rotSpeed;
+        }
+
+        if ((this.pointerMap["rz_btn"] == E3D_INP_ALWAYS) || this.keyMap[this.pointerMap["rz_btn"]]) {
+            if (this.pointerMap["rz_axis"] == E3D_INP_X) this.rz_delta += this.mx * this._rotSpeed;
+            if (this.pointerMap["rz_axis"] == E3D_INP_Y) this.rz_delta += this.my * this._rotSpeed;
+            if (this.pointerMap["rz_axis"] == E3D_INP_W) this.rz_delta += this.mw * this._rotSpeed;
+        }
+        
+        this.px += this.px_delta * delta;
+        this.py += this.py_delta * delta; 
+        this.pz += this.pz_delta * delta;
+
+        this.rx += this.rx_delta * delta;
+        this.ry += this.ry_delta * delta;
+        this.rz += this.rz_delta * delta;
+
+        // Warp rotations
+        if (this.rx < 0) { 
+            this.rx += PIx2;
+            this.rx_smth += PIx2;
+        }
+        if (this.rx > PIx2) { 
+            this.rx -= PIx2; 
+            this.rx_smth -= PIx2; 
+        }
+
+        if (this.ry < 0) { 
+            this.ry += PIx2;
+            this.ry_smth += PIx2;
+        }
+        if (this.ry > PIx2) { 
+            this.ry -= PIx2; 
+            this.ry_smth -= PIx2; 
+        }
+
+        if (this.rz < 0) { 
+            this.rz += PIx2;
+            this.rz_smth += PIx2;
+        }
+        if (this.rz > PIx2) { 
+            this.rz -= PIx2; 
+            this.rz_smth -= PIx2; 
+        }
+
 
     }
 
+
+    clampRotation(min, max, x = true, y = true, z = true) {
+        if (x) {
+            if (this.rx > max) {
+                this.rx = max;
+                this.rx_smth = max;
+            } else if (this.rx < min) {
+                this.rx = min;
+                this.rx_smth = min;
+            }
+        }
+        if (y) {
+            if (this.ry > max) {
+                this.ry = max;
+                this.ry_smth = max;
+            } else if (this.ry < min) {
+                this.ry = min;
+                this.ry_smth = min;
+            }
+        }
+        if (z) {
+            if (this.rz > max) {
+                this.rz = max;
+                this.rz_smth = max;
+            } else if (this.rz < min) {
+                this.rz = min;
+                this.rz_smth = min;
+            }
+        }
+    }
+
+    clampPosition(min, max, x = true, y = true, z = true) {
+        if (x) {
+            if (this.px > max) {
+                this.px = max;
+                this.px_smth = max;
+            } else if (this.px < min) {
+                this.px = min;
+                this.px_smth = min;
+            }
+        }
+        if (y) {
+            if (this.py > max) {
+                this.py = max;
+                this.py_smth = max;
+            } else if (this.py < min) {
+                this.py = min;
+                this.py_smth = min;
+            }
+        }
+        if (z) {
+            if (this.pz > max) {
+                this.pz = max;
+                this.pz_smth = max;
+            } else if (this.pz < min) {
+                this.pz = min;
+                this.pz_smth = min;
+            }
+        }
+    }
+
+    smoothRotation(f, x = true, y = true, z = true) {
+        let f = delta * this._smooth;
+
+        if (f < 1.0) {
+            if (x) this.rx_smth += (this.rx - this.rx_smth) * f;
+            if (y) this.ry_smth += (this.ry - this.ry_smth) * f;
+            if (z) this.rz_smth += (this.rz - this.rz_smth) * f;
+        } else {
+            this.rx_smth = this.rx;
+            this.ry_smth = this.ry;
+            this.rz_smth = this.rz;
+        }
+    }
+
+    smoothPosition(f, x = true, y = true, z = true) {
+        let f = delta * this._smooth;
+
+        if (f < 1.0) {
+            if (x) this.px_smth += (this.px - this.px_smth) * f;
+            if (y) this.py_smth += (this.py - this.py_smth) * f;
+            if (z) this.pz_smth += (this.pz - this.pz_smth) * f;
+        } else {
+            this.px_smth = this.px;
+            this.py_smth = this.py;
+            this.pz_smth = this.pz;
+        }
+    }
+
+    // Check if a command has been triggered, and reset it if needed
     checkCommand(cmd, reset = false) {
         if (this.inputTable[this.keyMap[cmd]]) {
             if (reset) this.inputTable[this.keyMap[cmd]] = false;
@@ -208,7 +425,7 @@ class E3D_input {
 
 
     keyDown(event) {
-        if ((!event.metaKey) && (event.code != "F12")  && (event.code != "ControlRight")) {
+        if ((!event.metaKey) && (event.code != "F12") && (event.code != "ControlRight")) {
             if (event.preventDefault) event.preventDefault();
         }
 
@@ -237,195 +454,54 @@ class E3D_input {
         }    
     }
 
-    processInputs(delta = 1.0) {
-        // Pos
-        if (this.inputTable[this.keyMap["px_dec"]]) {
-            this.px -= this._moveSpeed * delta;
-        }
-        if (this.inputTable[this.keyMap["px_inc"]]) {
-            this.px += this._moveSpeed * delta;
-        }
-
-        if (this.inputTable[this.keyMap["py_dec"]]) {
-            this.py -= this._moveSpeed * delta;
-        }
-        if (this.inputTable[this.keyMap["py_inc"]]) {
-            this.py += this._moveSpeed * delta;
-        }
-
-        if (this.inputTable[this.keyMap["pz_dec"]]) {
-            this.pz -= this._moveSpeed * delta;
-        }
-        if (this.inputTable[this.keyMap["pz_inc"]]) {
-            this.pz += this._moveSpeed * delta;
-        }    
-
-        // Rot
-        if (this.inputTable[this.keyMap["rx_dec"]]) {
-            this.rx -= this._rotateSpeed * delta;
-        }
-        if (this.inputTable[this.keyMap["rx_inc"]]) {
-            this.rx += this._rotateSpeed * delta;
-        }    
-
-        if (this.inputTable[this.keyMap["ry_dec"]]) {
-            this.ry -= this._rotateSpeed * delta;
-        }
-        if (this.inputTable[this.keyMap["rz_inc"]]) {
-            this.ry += this._rotateSpeed * delta;
-        }    
-
-        if (this.inputTable[this.keyMap["rz_dec"]]) {
-            this.rz -= this._rotateSpeed * delta;
-        }
-        if (this.inputTable[this.keyMap["rz_inc"]]) {
-            this.rz += this._rotateSpeed * delta;
-        }    
-        
-        this.rx_sum += this.rx;
-        this.ry_sum += this.ry;  
-        this.rz_sum += this.rz;  
-        
-        // some clamping and warping      // todo extract to own method
-        if (this.clampPitch) {  
-            if (this.ry_sum < -PIdiv2) { this.ry_sum = -PIdiv2; }
-            if (this.ry_sum >  PIdiv2) { this.ry_sum =  PIdiv2; }
-        } else {
-            if (this.ry_sum < 0) { 
-                this.ry_sum += PIx2;
-                this.ry_smth += PIx2;
-            }
-            if (this.ry_sum > PIx2) { 
-                this.ry_sum -= PIx2; 
-                this.ry_smth -= PIx2; 
-            }
-        }
-        if (this.rx_sum < 0) { 
-            this.rx_sum += PIx2;
-            this.rx_smth += PIx2;
-        }
-        if (this.rx_sum > PIx2) { 
-            this.rx_sum -= PIx2; 
-            this.rx_smth -= PIx2; 
-        }
-
-        if (this.rz_sum < 0) { 
-            this.rz_sum += PIx2;
-            this.rz_smth += PIx2;
-        }
-        if (this.rz_sum > PIx2) { 
-            this.rz_sum -= PIx2; 
-            this.rz_smth -= PIx2; 
-        }
-
-        
-        // smooth controls // TODO extract to own method
-        let f = delta * this._smooth;
-        if (f < 1.0) {
-            this.rx_smth += (this.rx_sum - this.rx_smth) * f;
-            this.ry_smth += (this.ry_sum - this.ry_smth) * f;
-            this.rz_smth += (this.rz_sum - this.rz_smth) * f;
-            
-            this.px_smth += (this.px - this.px_smth) * f;
-            this.py_smth += (this.py - this.py_smth) * f;
-            this.pz_smth += (this.pz - this.pz_smth) * f;
-        } else {
-            this.rx_smth = this.rx_sum;
-            this.ry_smth = this.ry_sum;
-            this.rz_smth = this.rz_sum;
-            
-            this.px_smth = this.px;
-            this.py_smth = this.py;
-            this.pz_smth = this.pz;
-        }
-
-            // clean up state changes
-        this.px = 0; this.py = 0; this.pz = 0;
-        this.rx = 0; this.ry = 0; this.rz = 0;
-    }
-
-
 
     // Mouse Inputs
 
 
     mouseDown(event) {
-        this.pinx = event.pageX; // store relative ref
-        this.piny = event.pageY;
+        this.pinx = event.pageX; // store relative position
+        this.piny = event.pageY; // TODO evaluate page vs screen
 
-        this.keyDown( { code : this.keyMap[E3D_INP_MAP_prefix + event.button] } );
+        this.keyDown( { code : event.button } );
 
-/*    
-        if (event.button == this._panMouseButton) {
-            this.panning = this.allowPan;
-        }
-        if (event.button == this._rotateMouseButton) {
-            this.rotating = true;
-        }
-*/
-
-        if (pLockActive) { // TODO re-evaluate
-            this.keyDown( { code : this.keyMap["action0"] } );
-        } 
+        //if (pLockActive) { // TODO re-evaluate
+        //    this.keyDown( { code : this.keyMap["action0"] } );
+        //} 
 
         if (event.preventDefault) { event.preventDefault(); };
     }
     
     mouseUp(event) {
-
-        this.keyUp( { code : this.keyMap[E3D_INP_MAP_prefix + event.button] } );
-        /*
-        if (event.button == this._panMouseButton) {
-            this.panning = false;
-        }
-        if (event.button == this._rotateMouseButton) {
-            this.rotating = false;
-        }
-        */
-
-        if (pLockActive) { // TODO re-evaluate
-            this.keyUp( { code : this.keyMap["action0"] } );
-        } 
+        this.keyUp( { code : event.button } );
     }
     
     mouseLeave() {
-        /*this.panning = false;
-        this.rotating = false;*/
-        // TODO : reset on leave ? keyup all mouse button inputs
+        for (let i = 0; i < 3; ++i) this.keyUp( { code : i } );
     }
     
     mouseMove(event) {
-        const mx = event.pageX;
-        const my = event.pageY;
-        
-        if (this.panning) {
-            this.px -= (mx - this.pinx) * this._mouseSpeed * this._moveSpeed;
-            this.py -= (my - this.piny) * this._mouseSpeed * this._moveSpeed;
-        }
-        
-        if (this.rotating) {
-            this.rx += (mx - this.pinx) * this._mouseSpeed * this._rotateSpeed;
-            this.ry += (my - this.piny) * this._mouseSpeed * this._rotateSpeed;
-        }
-        
-        this.pinx = mx;
-        this.piny = my;
+        this.mx += (event.pageX - this.pinx) * this._mouseSpeed;
+        this.my += (event.pageY - this.piny) * this._mouseSpeed;
+
+        this.pinx = event.pageX; // TODO evaluate page vs screen
+        this.piny = event.pageY;
     }
     
     mouseLockedMove(x, y) {
         // de facto rotating
-        if (pLockActive) { // todo re-evaluate
-            this.rx += x * this._mouseSpeed * this._rotateSpeed;
-            this.ry += y * this._mouseSpeed * this._rotateSpeed;
-        }
+       // if (pLockActive) { // todo re-evaluate
+       //     this.rx += x * this._mouseSpeed * this._rotSpeed;
+       //     this.ry += y * this._mouseSpeed * this._rotSpeed;
+       // }
+
+        this.mx += x * this._mouseSpeed;
+        this.my += y * this._mouseSpeed;
+
     }
     
-    mouseWheel(event) {    
-        if (event.deltaY > 0) {
-            this.pz += this._mouseWheelSpeed * this._moveSpeed;
-        } else if (event.deltaY < 0) {
-            this.pz -= this._mouseWheelSpeed * this._moveSpeed;
-        } 
+    mouseWheel(event) {   
+        // Override cross browser/OS wheel delta discrepencies
+        this.nw += (event.deltaY > 0) ? this._mouseWheelSpeed : -this._mouseWheelSpeed;
 
         if (event.preventDefault) { event.preventDefault(); };
     }
@@ -434,6 +510,9 @@ class E3D_input {
        // if (pLockSupported) {
         //    pLockRequest(this.element);
        // }
+
+        this.keyDown( { code : "dbl" + event.button } );
+
         if (event.preventDefault) { event.preventDefault(); };
     }
 
@@ -590,6 +669,9 @@ class E3D_input {
         return -1;    // not found
     }
 }
+
+
+
 
 // Virtual keybaord: binds event on element and transpose "vKey=" DOM element attribute value to keyboard input handler
 class E3D_input_virtual_kb {

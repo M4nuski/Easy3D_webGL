@@ -22,8 +22,6 @@ const E3D_INP_LMB = 0; // single touch
 const E3D_INP_MMB = 1; // double touch
 const E3D_INP_RMB = 2;
 
-const E3D_INP_MAP_prefix = "MouseButton"
-
 // Pointer axisesess
 const E3D_INP_X = 0; // left right
 const E3D_INP_Y = 1; // up down
