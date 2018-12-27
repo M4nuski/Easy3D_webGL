@@ -21,7 +21,9 @@ function starttest(event) {
 }
 
 function addLine(text) {
-    log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
+    if (text != "") {
+        log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
+    } else log.innerHTML += "<br />"; 
 
     log.scrollTop = log.scrollHeight;
 }
@@ -336,7 +338,7 @@ t.test4 = function() {
 
 
 t.test5 = function() {
-    const numtst = 100000;
+    const numtst = 1500000;
     const numItem = 5000;
 
     addLine("Num iter: " + numtst);
