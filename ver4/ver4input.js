@@ -32,7 +32,6 @@ class E3D_input {
             element.addEventListener("mouseleave",(e) => { this.mouseLeave(e) } );
             element.addEventListener("wheel", (e) => {this.mouseWheel(e) } );
             element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
-            element.addEventListener("onContextMenu", (e) => {this.mouseContext(e) } );
         }
 
         if (supportKeyboard) {
@@ -213,7 +212,7 @@ class E3D_input {
         if (this.inputTable[this.keyMap["ry_dec"]]) {
             this.ry_delta -= this._rotSpeed;
         }
-        if (this.inputTable[this.keyMap["rz_inc"]]) {
+        if (this.inputTable[this.keyMap["ry_inc"]]) {
             this.ry_delta += this._rotSpeed;
         }    
 
@@ -428,13 +427,14 @@ class E3D_input {
             this.inputDoneTable[event.code] = false;
         }    
 
-        return false;
-        //if (this.onInput) this.onInput(); // direct callback keydown preview
 
-       // if ((pLockActive) && (event.code == "Escape")) {
-       //     pLockExit();
-       // }
-   //     if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
+        if (this.onInput) this.onInput(); // direct callback keydown preview
+
+        if ((pLockActive) && (event.code == "Escape")) {
+            pLockExit();
+        }
+
+        if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
     }
     
     keyUp(event) {    
@@ -446,8 +446,8 @@ class E3D_input {
             this.inputDoneTable[event.code] = true;
         }   
 
-        if (event.preventDefault) event.preventDefault();
-        return false;
+
+
     }
 
 
@@ -459,10 +459,6 @@ class E3D_input {
         this.piny = event.pageY; // TODO evaluate page vs screen
 
         this.keyDown( { code : event.button } );
-
-        //if (pLockActive) { // TODO re-evaluate
-        //    this.keyDown( { code : this.keyMap["action0"] } );
-        //} 
 
         if (event.preventDefault) { event.preventDefault(); };
         return false;
@@ -487,15 +483,8 @@ class E3D_input {
     }
     
     mouseLockedMove(x, y) {
-        // de facto rotating
-       // if (pLockActive) { // todo re-evaluate
-       //     this.rx += x * this._mouseSpeed * this._rotSpeed;
-       //     this.ry += y * this._mouseSpeed * this._rotSpeed;
-       // }
-
-       // this.mx += x * this._mouseSpeed;
-       // this.my += y * this._mouseSpeed;
-
+        this.mx += x * this._mouseSpeed;
+        this.my += y * this._mouseSpeed;
     }
     
     mouseWheel(event) {   
@@ -513,12 +502,6 @@ class E3D_input {
         this.keyDown( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
 
         if (event.preventDefault) { event.preventDefault(); };
-    }
-
-    mouseContext(event) {
-        stopEvent(event);
-        if (event.preventDefault) { event.preventDefault(); };
-        return false;
     }
 
 

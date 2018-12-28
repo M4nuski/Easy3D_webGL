@@ -28,16 +28,28 @@
             position: absolute;
             width: 20%;
             left: 0px;
-            bottom: 0px;
-            height : 100%;
+            top: 0px;
+            height : 90%;
             overflow-x: wrap;
             overflow-y: scroll;
+        }
+
+        #statDiv {
+            position: absolute;
+            width: 20%;
+            left: 0px;
+            bottom: 0px;
+            height : 10%;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            font-family: 'Courier New', Courier, monospace;
         }
 
 </style>
     <!-- Utilities -->
     <script type="text/javascript" src="gl-matrix-min.js"></script>
     <script type="text/javascript" src="pointerLock.js"></script>
+    <script type="text/javascript" src="fullScreen.js"></script>
 
     <!-- Engine Core -->
     <script type="text/javascript" src="ver4const.js"></script>
@@ -59,6 +71,8 @@
 
         <div id="logDiv" class="log">
         </div>
+
+        <div id="statDiv"></div>
 
     </div>
 

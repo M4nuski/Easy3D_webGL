@@ -4,8 +4,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const can = document.getElementById("GLCanvas");
     const logElement = document.getElementById("logDiv");
+    const mainDiv = document.getElementById("mainDiv");
+    const statDiv = document.getElementById("statDiv");
    
     var electron = false;
+try {
     var userAgent = navigator.userAgent.toLowerCase();
     if (userAgent.indexOf(' electron/') > -1) {
         console.log("UA electron");
@@ -13,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.log("UA not electron");
     }
+} catch (ex) { console.log(ex);}
 
     if (electron) {
         // electron interface with OS calls
@@ -111,6 +115,8 @@ document.addEventListener("DOMContentLoaded", function () {
             scn.initialize();
     
             scn.preRenderFunction = prepRender; // callback to do some custom stuff
+
+            scn.postRenderFunction = postRender;
     
         } catch (e) {
             log(e, false);
@@ -187,6 +193,9 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function onEngineInput() {
         // preprocess inputs out of game loop
+        if (inputs.checkCommand("toggleFullscreen", true)) {
+            fullscreenToggle(mainDiv);
+        }
     }
     
     
@@ -194,11 +203,11 @@ document.addEventListener("DOMContentLoaded", function () {
   
         inputs.processInputs(timer.delta);
     
-        if (inputs.checkCommand("action0", true)) {
-        }
+      //  if (inputs.checkCommand("action0", true)) {
+      //  }
 
-        if (inputs.checkCommand("action1", true)) {
-        }
+       // if (inputs.checkCommand("action1", true)) {
+       // }
 
         if (scn.state == E3D_ACTIVE) {
             scn.preRender();
@@ -206,6 +215,19 @@ document.addEventListener("DOMContentLoaded", function () {
             scn.postRender();
         }   
     
+    }
+
+    function p4(t) {
+        let s = String(Math.floor(t));
+        s = s.padStart(4);
+        return s;
+    }
+
+    function postRender() {
+        let s = "px: " + p4(inputs.px_smth) + " py: " + p4(inputs.py_smth) + " pz: " + p4(inputs.pz_smth) + "<br/>"+
+        "rx: " + p4(inputs.rx_smth * RadToDeg) + " ry: " + p4(inputs.ry_smth * RadToDeg) + " rz: " + p4(inputs.rz_smth * RadToDeg);
+        s = s.split(" ").join("&nbsp;");
+        statDiv.innerHTML = s;
     }
 
 
@@ -243,7 +265,6 @@ document.addEventListener("DOMContentLoaded", function () {
             let backout = biggest / Math.tan(_fieldOfView/2); 
 
             scn.camera.move( 0, (bb.max[1] - bb.min[1]) / 2, backout, 0, 0, 0); 
-            log("Model loaded", false);
         }
     }
 
