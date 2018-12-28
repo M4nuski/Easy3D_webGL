@@ -59,7 +59,8 @@ try {
     inputs.onInput = onEngineInput;
 
     var resMngr = new ressourceManager(onRessource);
-    var mdl;
+    var mdl; // model to show
+    var l0v; // pivot point axis origin
            
     initEngine();
     
@@ -140,7 +141,7 @@ try {
             if (path != "") {
                 log("Loading model " + path, false);
                 resMngr.addRessource(path, "toView", "Model", true);
-                resMngr.loadAll();
+                resMngr.loadAll("Single obj load useless tag");
             } else log("URL not found", false);
         }
 
@@ -150,8 +151,8 @@ try {
 
         scn.state = E3D_ACTIVE;
 
-        let l0v = new E3D_entity_vector("orig", false, 0.0, false);
-        l0v.scale = vec3.fromValues(10, 10, 10);
+        l0v = new E3D_entity_vector("orig", false, 0.0, false);
+        l0v.scale = vec3.fromValues(3, 3, 3);
         l0v.visible = true;
         l0v.vis_culling = false;    
         scn.addEntity(l0v);
@@ -187,7 +188,8 @@ try {
         inputs.smoothRotation(6);
         scn.camera.move(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
 
-
+        vec3.copy(l0v.position, scn.camera.position);
+        l0v.resetMatrix();
     }
     
     
@@ -264,7 +266,7 @@ try {
 
             let backout = biggest / Math.tan(_fieldOfView/2); 
 
-            scn.camera.move( 0, (bb.max[1] - bb.min[1]) / 2, backout, 0, 0, 0); 
+            scn.camera.move( 0,  (bb.max[1] - bb.min[1]) / 4, backout, 0, 0, 0); //  (bb.max[1] - bb.min[1]) / 2
         }
     }
 

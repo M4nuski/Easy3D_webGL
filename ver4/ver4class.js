@@ -1,7 +1,11 @@
-// TODO : header...
-// TODO specify move == moveBy | moveTo ?
+// Easy3D_WebGL
+// Main engine classes for timing, entities, scene, camera, shaders and lighting
+// Emmanuel Charette 2017-2019
 
+// TODO: specify move == moveBy | moveTo ?
+// TODO: add frre gibal mode for model view camera
 
+// Main timer class for synchronisation, smoothing and basic engine running
 class E3D_timing {
     constructor(run, interval, onTick) {
 
@@ -61,7 +65,7 @@ class E3D_timing {
 
 }
 
-
+// Base class for static entity containing mesh data, hit testing and matrix controls
 class E3D_entity {
     constructor(id, filename, dynamic = false) {
 
@@ -338,6 +342,7 @@ class E3D_entity {
 }
 
 
+// 3 axis shown with optionnal vector. Wireframe rendering.
 class E3D_entity_vector extends E3D_entity {
     constructor (id, showAxis, vectorScale, normalize) {
         super(id, "E3D_entity_vector/" + id, true);
@@ -375,6 +380,7 @@ class E3D_entity_vector extends E3D_entity {
 }
 
 
+// Entity which data is re-processed each frame, can be modified on the fly in code. Wireframe rendering.
 class E3D_entity_dynamic extends E3D_entity {
     constructor(id) {
         super(id, "E3D_entity_dynamic/"+id, true);
@@ -831,6 +837,8 @@ class E3D_entity_dynamic extends E3D_entity {
 
 }
 
+
+// Dynamic copy of entity
 class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
     constructor (id, sourceEntity) {
         super(id, true);
@@ -853,6 +861,7 @@ class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
 
 }
 
+// Base animation class, to handle callbacks and state
 class E3D_animation { // State container for animations
     constructor(id, animatorFunct, targetObject, sceneContext, timerclass) { // id ??
         this.id = id;
@@ -891,7 +900,7 @@ class E3D_animation { // State container for animations
     }
 }
 
-
+// Scene class, gathering all state and entities, shaders, lights and camera
 class E3D_scene {
     constructor(id, context, width, height, vBackColor = vec4.fromValues(0.0, 0.0, 0.1, 1.0), fogLimit = -1) {
         this.id = id;
@@ -1110,6 +1119,7 @@ class E3D_scene {
 
 }
 
+// Entension to allow dual shaders for toon/cell shading of mesh
 class E3D_scene_cell_shader extends E3D_scene {
     constructor(id, context, width, height, vBackColor = vec4.fromValues(0.9, 0.9, 0.9, 1.0), fogLimit = -1) {
         super(id, context, width, height, vBackColor, fogLimit);
@@ -1221,6 +1231,7 @@ class E3D_scene_cell_shader extends E3D_scene {
 
 }
 
+// Base class container for GLSL shader program loading and compiling
 class E3D_program {
     constructor(id, context) {
         this.id = id;
@@ -1277,7 +1288,8 @@ class E3D_program {
 
 }
 
-class E3D_camera { // base camera, orthogonal
+// Base class for scene view matrix generation (orthogonal projection)
+class E3D_camera {
 
     constructor(id, width, height) {        
         this.id = id;
@@ -1331,7 +1343,7 @@ class E3D_camera { // base camera, orthogonal
         this.updateInternal();
     }
 
-    move(tx, ty, tz, rx, ry, rz) {
+    moveBy(tx, ty, tz, rx, ry, rz) {
         this.update(this.position[0]+tx, this.position[1]+ty, this.position[2]+tz, rx, ry, rz);
     }
 
@@ -1353,7 +1365,8 @@ class E3D_camera { // base camera, orthogonal
 
 }
 
-class E3D_camera_persp extends E3D_camera { // basic perspective based matrix view (free move)
+//  Basic free moving perspective camera view
+class E3D_camera_persp extends E3D_camera { 
     constructor(id, width, height, fov, near, far) {
         super(id, width, height);
 
@@ -1393,7 +1406,8 @@ class E3D_camera_persp extends E3D_camera { // basic perspective based matrix vi
 
 }
 
-class E3D_camera_model extends E3D_camera_persp { // perspective view around center point
+// Model view camera, perspective matrix rotating aroung a pivot point
+class E3D_camera_model extends E3D_camera_persp { 
     constructor(id, width, height, fov, near, far) {
         super(id, width, height, fov, near, far);
         this.nvx = vec3.create();
@@ -1442,7 +1456,8 @@ class E3D_camera_model extends E3D_camera_persp { // perspective view around cen
 
 }
 
-class E3D_camera_space extends E3D_camera_persp { // free 3D view incremental direction and position
+// Perspective matrix with incremental movements in 3D space
+class E3D_camera_space extends E3D_camera_persp { 
     constructor(id, width, height, fov, near, far) {
         super(id, width, height, fov, near, far);
 
@@ -1505,7 +1520,7 @@ class E3D_camera_space extends E3D_camera_persp { // free 3D view incremental di
 
 }
 
-
+// Base class for ambiant and 2 directional lights for current shader model
 class E3D_lighting {
     constructor(vAmbiant = vec3.fromValues(0.1, 0.1, 0.1)) {
         this.ambiant_color = vAmbiant;

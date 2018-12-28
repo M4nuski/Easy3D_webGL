@@ -1,3 +1,7 @@
+// Easy3D_WebGL
+// Common engine constants and some helper methods
+// Emmanuel Charette 2017-2019
+
 // Animation State and commands (exclusives)
 const E3D_RESET = 0; // initial, back to start and pause, animator function should build the stateData object if nec
 const E3D_PLAY = 1;  // play
