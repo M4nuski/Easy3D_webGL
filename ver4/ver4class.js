@@ -2,6 +2,8 @@
 // Main engine classes for timing, entities, scene, camera, shaders and lighting
 // Emmanuel Charette 2017-2019
 
+"use strict"
+
 // TODO: specify move == moveBy | moveTo ?
 // TODO: add frre gibal mode for model view camera
 

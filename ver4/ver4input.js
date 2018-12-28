@@ -128,6 +128,7 @@ class E3D_input {
         this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic, or constant defined
         this.keyMap["action1"] = "KeyF";
         this.keyMap["action2"] = "dblClick"; // click on mouse lock, double tap on touch //TODO should be in engine logic
+        this.keyMap["panPivot"] = E3D_INP_RMB;
         // E3D_INP_DOUBLE_PREFIX_CODE
 
 

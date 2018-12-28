@@ -1,4 +1,9 @@
+// Easy3D_WebGL
+// Pointer lock classes and handlers
+// Emmanuel Charette 2017-2019
+
 "use strict"
+
 // https://www.html5rocks.com/en/tutorials/pointerlock/intro/
 
 

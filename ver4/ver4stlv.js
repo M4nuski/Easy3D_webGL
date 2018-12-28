@@ -1,3 +1,7 @@
+// Easy3D_WebGL
+// STL viewer web app doubling as electron app using version 4
+// Emmanuel Charette 2017-2019
+
 "use strict"
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -22,10 +26,10 @@ try {
         // electron interface with OS calls
         var args = require('electron').remote.process.argv
         var fs = require("fs");
-
-        log("NodeJS: "  + process.versions.node, false);
-        log("Chrome: " + process.versions.chrome, false);
-        log("Electron: " + process.versions.electron, false);
+        log("Running in:", false);
+        log("NodeJS "  + process.versions.node, false);
+        log("Chrome " + process.versions.chrome, false);
+        log("Electron " + process.versions.electron, false);
 
         if (args[1] != "") {
             log("args[1] " + args[1], false);
@@ -33,8 +37,8 @@ try {
             log("Drag drop file on electron.exe to load stl", false);
         }
     } else {
-        log("Browser", false);
-        log("use this url?file=path to load stl", false);
+        log("running in Browser", false);
+        log("use thisurl?filepath to load stl", false);
     }
 
     window.addEventListener("resize", winResize); // To reset camera matrix
@@ -61,6 +65,9 @@ try {
     var resMngr = new ressourceManager(onRessource);
     var mdl; // model to show
     var l0v; // pivot point axis origin
+
+    var sc=0;
+    var sf=0;
            
     initEngine();
     
@@ -151,11 +158,19 @@ try {
 
         scn.state = E3D_ACTIVE;
 
-        l0v = new E3D_entity_vector("orig", false, 0.0, false);
+        // pivot vector
+        l0v = new E3D_entity_vector("pivot", false, 0.0, false);
         l0v.scale = vec3.fromValues(3, 3, 3);
         l0v.visible = true;
         l0v.vis_culling = false;    
         scn.addEntity(l0v);
+
+        // origin vector
+        let l1v = new E3D_entity_vector("orig", false, 0.0, false);
+        l1v.scale = vec3.fromValues(10, 10, 10);
+        l1v.visible = true;
+        l1v.vis_culling = false;    
+        scn.addEntity(l1v);
 
         let buildbox = new E3D_entity_dynamic("building box");
         buildbox.addWireCube([0,145/2,0], [0,0,0], [240,145,145], [0.75, 0.75, 0.75, 0.5], false, false, false);
@@ -189,6 +204,7 @@ try {
         scn.camera.move(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
 
         vec3.copy(l0v.position, scn.camera.position);
+        l0v.visible = inputs.checkCommand("panPivot", false);
         l0v.resetMatrix();
     }
     
@@ -227,7 +243,13 @@ try {
 
     function postRender() {
         let s = "px: " + p4(inputs.px_smth) + " py: " + p4(inputs.py_smth) + " pz: " + p4(inputs.pz_smth) + "<br/>"+
-        "rx: " + p4(inputs.rx_smth * RadToDeg) + " ry: " + p4(inputs.ry_smth * RadToDeg) + " rz: " + p4(inputs.rz_smth * RadToDeg);
+        "rx: " + p4(inputs.rx_smth * RadToDeg) + " ry: " + p4(inputs.ry_smth * RadToDeg) + " rz: " + p4(inputs.rz_smth * RadToDeg)+ "<br/>";
+
+        sc = timer.smooth(sc, timer.usage, 3);
+        sf = timer.smooth(sf, 1/timer.delta, 3);
+
+
+        s += "fr: " + p4(sf) + " cpu:"+ p4(sc) + "% <br/>"; 
         s = s.split(" ").join("&nbsp;");
         statDiv.innerHTML = s;
     }

@@ -1,4 +1,10 @@
 
+// Easy3D_WebGL
+// Polyfill and handler classes for fullscreen
+// Emmanuel Charette 2017-2019
+
+"use strict"
+
 document.exitFullscreen = document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
 
 document.addEventListener("webkitfullscreenchange", _fullscreenChange);
