@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function prepRender() {
         inputs.smoothPosition(6);
         inputs.smoothRotation(6);
-        scn.camera.move(inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.ry_smth, inputs.rx_smth, inputs.rz_smth);
+        scn.camera.move(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
 
 
     }

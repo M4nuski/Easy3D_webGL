@@ -32,6 +32,7 @@ class E3D_input {
             element.addEventListener("mouseleave",(e) => { this.mouseLeave(e) } );
             element.addEventListener("wheel", (e) => {this.mouseWheel(e) } );
             element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
+            element.addEventListener("onContextMenu", (e) => {this.mouseContext(e) } );
         }
 
         if (supportKeyboard) {
@@ -54,8 +55,8 @@ class E3D_input {
         this._posSpeed = 50; // units per sec for position outputs
         this._rotSpeed = 90 * DegToRad; // rad per sec for rotation outputs
         
-        this._mouseSpeed = 0.0025; // units per mouse position delta 
-        this._mouseWheelSpeed = 0.1; // units per wheel rotation delta
+        this._mouseSpeed = 0.05; // units per mouse position delta 
+        this._mouseWheelSpeed = 5.0; // units per wheel rotation delta
         
         this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
@@ -103,8 +104,8 @@ class E3D_input {
         // Could also be this.keyMap["px_dec"] = E3D_INP_RMB; to change a position input with a mouse button
         
         // internal default commands
-        this.keyMap["px_dec"] = "KeyA";
-        this.keyMap["px_inc"] = "KeyD";
+        this.keyMap["px_dec"] = "KeyD";
+        this.keyMap["px_inc"] = "KeyA";
 
         this.keyMap["py_dec"] = "KeyC";
         this.keyMap["py_inc"] = "Space";
@@ -119,7 +120,7 @@ class E3D_input {
         this.keyMap["ry_inc"] = "KeyE";
 
         this.keyMap["rz_dec"] = "KeyZ";
-        this.keyMap["rz_inc"] = "KeyC";
+        this.keyMap["rz_inc"] = "KeyX";
 
         this.keyMap["togglePointerlock"] = "ControlRight";
         this.keyMap["toggleFullscreen"] = "F11";
@@ -312,9 +313,6 @@ class E3D_input {
         this.mx = 0;
         this.my = 0;
         this.mw = 0;
-
-      //  console.log("p " + this.px + " " + this.py + " " + this.pz);
-      //  console.log("r " + this.rx + " " + this.ry + " " + this.rz);
     }
 
 
@@ -430,9 +428,7 @@ class E3D_input {
             this.inputDoneTable[event.code] = false;
         }    
 
-        console.log("dn " + event.code);
-
-
+        return false;
         //if (this.onInput) this.onInput(); // direct callback keydown preview
 
        // if ((pLockActive) && (event.code == "Escape")) {
@@ -449,7 +445,9 @@ class E3D_input {
             this.inputTable[event.code] = false;
             this.inputDoneTable[event.code] = true;
         }   
-        console.log("up " + event.code); 
+
+        if (event.preventDefault) event.preventDefault();
+        return false;
     }
 
 
@@ -467,10 +465,13 @@ class E3D_input {
         //} 
 
         if (event.preventDefault) { event.preventDefault(); };
+        return false;
     }
     
     mouseUp(event) {
         this.keyUp( { code : event.button } );
+        if (event.preventDefault) { event.preventDefault(); };
+        return false;
     }
     
     mouseLeave() {
@@ -512,6 +513,12 @@ class E3D_input {
         this.keyDown( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
 
         if (event.preventDefault) { event.preventDefault(); };
+    }
+
+    mouseContext(event) {
+        stopEvent(event);
+        if (event.preventDefault) { event.preventDefault(); };
+        return false;
     }
 
 
