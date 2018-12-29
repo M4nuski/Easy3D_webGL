@@ -10,17 +10,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const logElement = document.getElementById("logDiv");
     const mainDiv = document.getElementById("mainDiv");
     const statDiv = document.getElementById("statDiv");
-   
+    const colSel = document.getElementById("colSel");
+    const OverRideColor = document.getElementById("ORcolor");
+    colSel.addEventListener("change", changeColor);
+    OverRideColor.addEventListener("click", changeColor);
+
     var electron = false;
-try {
-    var userAgent = navigator.userAgent.toLowerCase();
-    if (userAgent.indexOf(' electron/') > -1) {
-        console.log("UA electron");
-        electron = true;
-    } else {
-        console.log("UA not electron");
-    }
-} catch (ex) { console.log(ex);}
+    try {
+        var userAgent = navigator.userAgent.toLowerCase();
+        if (userAgent.indexOf(' electron/') > -1) {
+            console.log("UA electron");
+            electron = true;
+        } else {
+            console.log("UA not electron");
+        }
+    } catch (ex) { console.log(ex);}
 
     if (electron) {
         // electron interface with OS calls
@@ -64,6 +68,7 @@ try {
 
     var resMngr = new ressourceManager(onRessource);
     var mdl; // model to show
+    var mdl_colors; // original model colors
     var l0v; // pivot point axis origin
 
     var sc=0;
@@ -138,7 +143,7 @@ try {
                 log("Loading model " + args[1], false);
                 var  data = fs.readFileSync(args[1]);    
                 if (data) {
-                    mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, "source");//][1.0,1.0,1.0]);//"source"]);
+                    mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, "source", true);
                     onRessource("", "ELECTRON_LOAD");
                 }
             } else log("File not found", false);
@@ -152,21 +157,17 @@ try {
             } else log("URL not found", false);
         }
 
-
-
         timer.run();
 
         scn.state = E3D_ACTIVE;
 
-        // pivot vector
         l0v = new E3D_entity_vector("pivot", false, 0.0, false);
         l0v.scale = vec3.fromValues(3, 3, 3);
         l0v.visible = true;
         l0v.vis_culling = false;    
         scn.addEntity(l0v);
 
-        // origin vector
-        let l1v = new E3D_entity_vector("orig", false, 0.0, false);
+        let l1v = new E3D_entity_vector("origin", false, 0.0, false);
         l1v.scale = vec3.fromValues(10, 10, 10);
         l1v.visible = true;
         l1v.vis_culling = false;    
@@ -199,8 +200,7 @@ try {
     
     
     function prepRender() {
-        inputs.smoothPosition(6);
-        inputs.smoothRotation(6);
+
         scn.camera.move(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
 
         vec3.copy(l0v.position, scn.camera.position);
@@ -220,6 +220,8 @@ try {
     function timerTick() {  // Game Loop
   
         inputs.processInputs(timer.delta);
+        inputs.smoothPosition(6);
+        inputs.smoothRotation(6);
     
       //  if (inputs.checkCommand("action0", true)) {
       //  }
@@ -262,18 +264,14 @@ try {
         if (msg == E3D_RES_ALL) {
             log("All async ressources loaded for tag: " + name, true);       
             resMngr.flushAll();   
-        }
-    
+        }    
         if (msg == E3D_RES_LOAD) {
             log("Async ressource loaded: " + name, true);   
-            mdl = E3D_loader.loadModel_STL("toView", resMngr.getRessourcePath(name),  resMngr.getData(name), 0.0, "source");//[1.0,1.0,1.0]);//"source"]);
+            mdl = E3D_loader.loadModel_STL("toView", resMngr.getRessourcePath(name),  resMngr.getData(name), 0.0, "source", true);
         }
 
-
-
-        if ((msg == "ELECTRON_LOAD") || (mdl))
-        
-         {
+        if ((msg == "ELECTRON_LOAD") || (mdl)) {
+            mdl_colors = new Float32Array(mdl.colorArray);
             mdl.visible = true;
             mdl.vis_culling = false;
 
@@ -281,17 +279,33 @@ try {
 
             // center object on top of origin
             mdl.position = vec3.fromValues((bb.max[0] + bb.min[0]) / -2 , -bb.min[1], (bb.max[2] + bb.min[2]) / -2);
-
             scn.addEntity(mdl);
 
             let biggest = Math.max(bb.max[0] - bb.min[0],  bb.max[1] - bb.min[1] ) / 2;
-
             let backout = biggest / Math.tan(_fieldOfView/2); 
 
             scn.camera.move( 0,  (bb.max[1] - bb.min[1]) / 4, backout, 0, 0, 0); //  (bb.max[1] - bb.min[1]) / 2
         }
     }
+    
 
+    function changeColor() {
+        if (OverRideColor.checked) {
+            let cs = colSel.value.replace("#", "");
+            let ca = [0 ,0 ,0 ];
+
+            ca[0] = parseInt(cs.substring(0,2), 16) / 255;
+            ca[1] = parseInt(cs.substring(2,4), 16) / 255;
+            ca[2] = parseInt(cs.substring(4,6), 16) / 255;
+
+            for (var i = 0; i < mdl.colorArray.length; i+=3) {
+                mdl.colorArray.set(ca, i);
+            }
+                
+        } else {
+            mdl.colorArray.set(mdl_colors, 0); 
+        }
+    }
 
 
     // Logging and status information    

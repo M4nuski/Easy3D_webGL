@@ -38,8 +38,20 @@
             position: absolute;
             width: 20%;
             left: 0px;
+            bottom: 2.5%;
+            height : 7.5%;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        
+        #ctrlDiv {
+            position: absolute;
+            width: 20%;
+            left: 0px;
             bottom: 0px;
-            height : 10%;
+            height : 2.5%;
             overflow-x: hidden;
             overflow-y: hidden;
             font-family: 'Courier New', Courier, monospace;
@@ -73,7 +85,10 @@
         </div>
 
         <div id="statDiv"></div>
-
+        <div id="ctrlDiv">
+            <input id="ORcolor" type="checkbox" name="ORcolor" /><label for="ORcolor">Override Color:</label>
+            <input id="colSel" type="color" value="#f0f0f0" />
+        </div>
     </div>
 
 

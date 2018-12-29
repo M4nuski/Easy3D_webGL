@@ -12,9 +12,9 @@ class E3D_loader {
  * @param {vec3} color the entity color, if === "sweep" per vertex r/g/b sweep applied
  * @returns {E3D_entity} the resulting model and entity data
  */
-    static loadModel_RAW(name, file, rawModelData, smoothShading, color) {
+    static loadModel_RAW(name, file, rawModelData, smoothShading, color, dynamic = false) {
         
-        let entity = new E3D_entity(name, file, false);
+        let entity = new E3D_entity(name, file, dynamic);
 
         console.log("Parsing data for entity " + entity.id);
 
@@ -182,9 +182,9 @@ class E3D_loader {
  * @param {vec3} color if === "source" use source color, if === "sweep" per vertex r/g/b sweep, else single provided color is applied
  * @returns {E3D_entity} the resulting model E3D_Entity data
  */
-    static loadModel_STL(name, file, rawModelData, smoothShading, color) {
+    static loadModel_STL(name, file, rawModelData, smoothShading, color, dynamic = false) {
             
-        let entity = new E3D_entity(name, file, false);
+        let entity = new E3D_entity(name, file, dynamic);
 
         console.log("Loading data for entity " + entity.id);
 
