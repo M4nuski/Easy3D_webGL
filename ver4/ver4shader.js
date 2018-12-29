@@ -1,3 +1,8 @@
+// Easy3D_WebGL
+// Container file for various WebGL GLSL shaders and their attribute lists
+// Emmanuel Charette 2017-2019
+
+"use strict"
 
 const vertShader00 = `
 //from model

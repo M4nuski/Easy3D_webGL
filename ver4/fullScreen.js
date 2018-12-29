@@ -1,4 +1,3 @@
-
 // Easy3D_WebGL
 // Polyfill and handler classes for fullscreen
 // Emmanuel Charette 2017-2019

@@ -1,9 +1,11 @@
-document.addEventListener("DOMContentLoaded", function () {
-log("DOMContentLoaded");
-
+// Easy3D_WebGL
+// Main demo program for full screen and pointer lock
+// Emmanuel Charette 2017-2019
 
 "use strict"
 
+document.addEventListener("DOMContentLoaded", function () {
+log("DOMContentLoaded");
 
 log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");

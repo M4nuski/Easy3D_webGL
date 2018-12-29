@@ -1,3 +1,8 @@
+// Easy3D_WebGL
+// Async ressource manager classes
+// Emmanuel Charette 2017-2019
+
+"use strict"
 
 class ressource {
     constructor(path, name, type, cb, binary) {

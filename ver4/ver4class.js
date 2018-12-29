@@ -6,6 +6,7 @@
 
 // TODO: specify move == moveBy | moveTo ?
 // TODO: add frre gimbal mode for model view camera
+// TODO: split into appropriate files
 
 // Main timer class for synchronisation, smoothing and basic engine running
 class E3D_timing {

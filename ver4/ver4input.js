@@ -2,6 +2,8 @@
 // Human interface input classes and handlers
 // Emmanuel Charette 2017-2019
 
+"use strict"
+
 // Bind events to an element to capture and manage inputs
 class E3D_input {
     constructor (element, supportMouse, supportKeyboard, supportTouch, supportPointerLock) {

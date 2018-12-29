@@ -1,3 +1,7 @@
+// Easy3D_WebGL
+// Polyfill and handler classes for "on pointer hover" css switching supporting mobile touch
+// Emmanuel Charette 2017-2019
+
 "use strict"
 
 var hover2elements;

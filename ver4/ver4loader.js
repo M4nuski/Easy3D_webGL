@@ -1,4 +1,8 @@
-// Helper class to load/parse data from ressource to classes/GL
+// Easy3D_WebGL
+// Helper class to load 3D model data into entities
+// Emmanuel Charette 2017-2019
+
+"use strict"
 
 class E3D_loader {
 
