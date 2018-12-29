@@ -74,6 +74,8 @@ document.addEventListener("DOMContentLoaded", function () {
     var sc=0;
     var sf=0;
     var polycount = 0;
+
+    var p_mode= 0;
            
     initEngine();
     
@@ -224,8 +226,17 @@ document.addEventListener("DOMContentLoaded", function () {
         inputs.smoothPosition(6);
         inputs.smoothRotation(6);
     
-      //  if (inputs.checkCommand("action0", true)) {
-      //  }
+        if (inputs.checkCommand("action2", true)) {
+            p_mode++;
+            let pmt = ["update data on change", "force buffer update", "force buffer reset"];
+            if (p_mode > 2) p_mode = 0;
+             log("p_mode " + p_mode + " " + pmt[p_mode], false);
+        }
+
+        // p_mode == 0, normal mode
+        if (p_mode == 1) mdl.dataContentChanged = true;        
+        if (p_mode == 2) mdl.dataSizeChanged = true;
+       
 
        // if (inputs.checkCommand("action1", true)) {
        // }
