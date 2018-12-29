@@ -4,15 +4,18 @@ Yet another JS 3D/game engine test
 
 Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
 
-* ver4.html for current status/WIP
-* Works with mouse/keyboard in destktop browser, touch controls for mobile.
-* ver4cellshader.html for toon shading render test and demo
-* ver3.txt for engine target structure.
-* tuto1.html basic re-transcript of webGL tutorial.
-* tuto2.html added a lot of controls abstraction.
-* ver3.html working model loading and most of engine neatly packaged.
-* test1.html performance benchmarking for various JS and gl-matrix.js. 
+* /ver4: current version 0.4 WIP
+* ver4.html: Works with mouse/keyboard in destktop browser, touch controls for mobile.
+* ver4cellshader.html: toon shading render test and demo
+* ver4fullscreen.html: pointer lock, full screen tests
+* ver4stl.html: binary STL loader/viewer app 
 
+* /Electron: content specific for Electron app
+* /Images: icons / sprites / images ressources
+* /Models: Meshs
+* /Tests: performance test for JS, gl-matrix and WebGL
+* /ver0: WebGL tutorial transcript and tests, controls abstraction and demo
+* /ver3: basic engine contorls, model loading
 
 Current work-in-progress
 ----------
@@ -21,6 +24,7 @@ Current work-in-progress
 * Collision target culling
 * Evaluate value of render culling on mobile
 * Model loading (ideally external tool should prepare model data for better load perf)
+* STL, OBJ, MS3D
 
 | Collisons     | Vertor  | Sphere | Plane | Cube | Traingle Mesh |
 |:------------- |:-------:|:------:|:-----:|:----:|:-------------:|
