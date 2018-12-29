@@ -73,6 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var sc=0;
     var sf=0;
+    var polycount = 0;
            
     initEngine();
     
@@ -153,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (path != "") {
                 log("Loading model " + path, false);
                 resMngr.addRessource(path, "toView", "Model", true);
-                resMngr.loadAll("Single obj load useless tag");
+                resMngr.loadAll("Single");
             } else log("URL not found", false);
         }
 
@@ -237,21 +238,21 @@ document.addEventListener("DOMContentLoaded", function () {
     
     }
 
-    function p4(t) {
+    function pad(t, n) {
         let s = String(Math.floor(t));
-        s = s.padStart(4);
+        s = s.padStart(n);
         return s;
     }
 
     function postRender() {
-        let s = "px: " + p4(inputs.px_smth) + " py: " + p4(inputs.py_smth) + " pz: " + p4(inputs.pz_smth) + "<br/>"+
-        "rx: " + p4(inputs.rx_smth * RadToDeg) + " ry: " + p4(inputs.ry_smth * RadToDeg) + " rz: " + p4(inputs.rz_smth * RadToDeg)+ "<br/>";
+        let s = "px: " + pad(inputs.px_smth, 4) + " py: " + pad(inputs.py_smth, 4) + " pz: " + pad(inputs.pz_smth, 4) + "<br/>"+
+        "rx: " + pad(inputs.rx_smth * RadToDeg, 4) + " ry: " + pad(inputs.ry_smth * RadToDeg, 4) + " rz: " + pad(inputs.rz_smth * RadToDeg ,4)+ "<br/>";
 
         sc = timer.smooth(sc, timer.usage, 3);
         sf = timer.smooth(sf, 1/timer.delta, 3);
 
 
-        s += "fr: " + p4(sf) + " cpu:"+ p4(sc) + "% <br/>"; 
+        s += "fps: " + pad(sf, 3) + " gpu:"+ pad(sc, 3) + "% poly: "+ polycount +"<br/>"; 
         s = s.split(" ").join("&nbsp;");
         statDiv.innerHTML = s;
     }
@@ -274,6 +275,8 @@ document.addEventListener("DOMContentLoaded", function () {
             mdl_colors = new Float32Array(mdl.colorArray);
             mdl.visible = true;
             mdl.vis_culling = false;
+
+            polycount = mdl_colors.length / 3;
 
             let bb = calculate_bounding_box(mdl.vertexArray);
 
@@ -305,6 +308,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             mdl.colorArray.set(mdl_colors, 0); 
         }
+        mdl.dataContentChanged = true;
     }
 
 

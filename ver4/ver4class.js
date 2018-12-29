@@ -5,7 +5,7 @@
 "use strict"
 
 // TODO: specify move == moveBy | moveTo ?
-// TODO: add frre gibal mode for model view camera
+// TODO: add frre gimbal mode for model view camera
 
 // Main timer class for synchronisation, smoothing and basic engine running
 class E3D_timing {
@@ -73,7 +73,11 @@ class E3D_entity {
 
         this.id = id; // to find object in list
         this.visible = false;
-        this.dynamic = dynamic; // dynamic entities have their data pushed to renderer every frame instead of once on load
+        this.dynamic = dynamic; // Static (non-dynamic) entities have their data pusehd to the GPU only once when added to scene.
+                                // Dynamic entities can have their data modified on the fly (with performance cost).
+
+        this.dataContentChanged = false; // GPU buffers will be updated  
+        this.dataSizeChanged = true; // GPU buffers will be reset and updated
 
         // Properties
         this.position = vec3.create();
@@ -90,17 +94,19 @@ class E3D_entity {
         this.normalMatrix = mat4.create();
 
         // Data
-        this.numElements = 0;
+        this.numElements = 0; // Actual number of vertices to draw.
         this.drawMode = 4;//gl.TRIANGLES;
 
         // GL buffer data stores
+        // TODO: combine to single data store (v1 v2 v3 n1 n2 n3 u v) 
         this.vertexBuffer;
         this.normalBuffer;
         this.colorBuffer; // todo replace by texture
         //this.uvBuffer; // todo
-        //this.indiceBuffer; // todo 
 
-        // float32Array of raw data for dynamic rendering
+
+        // float32Array of raw data, can be flushed for static entities 
+        // this.numElementStore = 1024 // Maximum number of vertices that the data arrays can hold.
         this.vertexArray; 
         this.normalArray;
         this.colorArray;
@@ -168,11 +174,11 @@ class E3D_entity {
             this.vertexArray = new Float32Array(entity.vertexArray); 
             this.normalArray = new Float32Array(entity.normalArray);
             this.colorArray = new Float32Array(entity.colorArray);
-        } else {
-            this.vertexBuffer = entity.vertexBuffer;
-            this.normalBuffer = entity.normalBuffer;
-            this.colorBuffer = entity.colorBuffer;
-        }
+        } 
+
+        this.vertexBuffer = entity.vertexBuffer;
+        this.normalBuffer = entity.normalBuffer;
+        this.colorBuffer = entity.colorBuffer;
 
         this.cull_dist = entity.cull_dist;
         this.cull_max_pos = entity.cull_max_pos.slice();
@@ -366,7 +372,7 @@ class E3D_entity_vector extends E3D_entity {
                                             1, 1, 1, 1, 1, 1 ]);
 
         this.normalArray = new Float32Array(24);
-        this.numElements = (showAxis) ? 8 : 6;
+        this.numElements = (showAxis) ? 8 : 6;        
     }
 
     updateVector(vec) {
@@ -378,6 +384,8 @@ class E3D_entity_vector extends E3D_entity {
         this.vertexArray[21] = nv[0];
         this.vertexArray[22] = nv[1];
         this.vertexArray[23] = nv[2];
+
+        this.dataContentChanged = true;
     }
 }
 
@@ -435,6 +443,7 @@ class E3D_entity_dynamic extends E3D_entity {
                 this.normalArray = new Float32Array(this.arraySize*3);
             }
         }
+        this.dataSizeChanged = true;
     }
     
     
@@ -443,6 +452,7 @@ class E3D_entity_dynamic extends E3D_entity {
     }    
     setColor3f(elem, col) {
         this.colorArray.set(col, elem*3);
+        this.dataContentChanged = true;
     }
     
     getNormal3f(elem) {
@@ -450,6 +460,7 @@ class E3D_entity_dynamic extends E3D_entity {
     }    
     setNormal3f(elem, norm) {
         this.normalArray.set(norm, elem*3);
+        this.dataContentChanged = true;
     }
     
     getVertex3f(elem) {
@@ -457,6 +468,7 @@ class E3D_entity_dynamic extends E3D_entity {
     }    
     setVertex3f(elem, vert) {
         this.vertexArray.set(vert, elem*3);
+        this.dataContentChanged = true;
     }
 
     addWireSphere(location, dia, color, sides, addSphCD = false) {
@@ -745,8 +757,6 @@ class E3D_entity_dynamic extends E3D_entity {
     }
 
     addWireCube(loc, rot, size, color, addCubeCD, centerCross = false, sideCross = false) {
-        let idx = this.numElements;
-
         size[0] = Math.abs(size[0]) / 2;
         size[1] = Math.abs(size[1]) / 2;
         size[2] = Math.abs(size[2]) / 2;
@@ -852,6 +862,8 @@ class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
         this.srcColor = new Float32Array(sourceEntity.colorArray);
         this.srcNormal = new Float32Array(sourceEntity.normalArray);
         this.srcNumElements = sourceEntity.numElements;
+        this.dataContentChanged = true;
+        this.dataSizeChanged = true;
     }
 
     copySource(offset) { // offset in elements     
@@ -925,12 +937,6 @@ class E3D_scene {
         this.postRenderFunction = null;
 
         this.drawnElemenets = 0; // some stats
-
-        // context data buffers for dynamic entities
-        this.vertexBuffer = context.createBuffer();
-        this.colorBuffer  = context.createBuffer();
-        this.normalBuffer = context.createBuffer();
-
     }
 
     initialize() {
@@ -996,10 +1002,29 @@ class E3D_scene {
 
                 // Entity Attributes
                 if (this.entities[i].dynamic) {
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.vertexBuffer, this.entities[i].vertexArray);
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.normalBuffer, this.entities[i].normalArray);    
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.colorBuffer, this.entities[i].colorArray);  
-                } else {
+                    if (this.entities[i].dataSizeChanged) { 
+                        // reset buffer
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
+                        this.entities[i].dataSizeChanged = false;
+
+                    } else if (this.entities[i].dataContentChanged) { 
+                        // update buffer
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
+                        this.entities[i].dataContentChanged = false;
+
+                    } else {
+                        // bind buffer
+                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
+                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
+                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
+                    }
+                                       
+
+                 } else { // static, bind only
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
@@ -1035,20 +1060,27 @@ class E3D_scene {
     
     bindAndUpdate3FloatBuffer(location, buffer, data) {
         this.context.bindBuffer(this.context.ARRAY_BUFFER, buffer);
-        this.context.bufferData(this.context.ARRAY_BUFFER, data, this.context.DYNAMIC_DRAW);
+        this.context.bufferSubData(this.context.ARRAY_BUFFER, 0, data);
+        this.context.vertexAttribPointer(location, 3, this.context.FLOAT, false, 0, 0);
+        this.context.enableVertexAttribArray(location);
+    }
+
+    bindAndReset3FloatBuffer(location, buffer, data) {
+        this.context.bindBuffer(this.context.ARRAY_BUFFER, buffer);
+        this.context.bufferData(this.context.ARRAY_BUFFER, data, this.context.DYNAMIC_DRAW); 
         this.context.vertexAttribPointer(location, 3, this.context.FLOAT, false, 0, 0);
         this.context.enableVertexAttribArray(location);
     }
 
 
     addEntity(ent) {
-        // Initialize context data buffers
-        
-        if (!ent.dynamic) { // if static initialize context data buffers and assign data right away
 
-            ent.vertexBuffer = this.context.createBuffer();
-            ent.colorBuffer = this.context.createBuffer();
-            ent.normalBuffer = this.context.createBuffer();
+        // Initialize context data buffers        
+        ent.vertexBuffer = this.context.createBuffer();
+        ent.colorBuffer = this.context.createBuffer();
+        ent.normalBuffer = this.context.createBuffer();
+
+        if (!ent.dynamic) { // if static initialize context data buffers and assign data right away
 
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
             this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.STATIC_DRAW);        
@@ -1058,7 +1090,19 @@ class E3D_scene {
         
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
             this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.STATIC_DRAW);
+
+        } else  { // if dynamic prepare buffers
+            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.DYNAMIC_DRAW);                
+        
+            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.DYNAMIC_DRAW);            
+
+            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
+            this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.DYNAMIC_DRAW);
+
         }
+
 
         
         ent.cull_max_pos = E3D_scene.cull_calculate_max_pos(ent.vertexArray);
@@ -1091,6 +1135,7 @@ class E3D_scene {
         let idx = this.getEntityIndexFromId(id);
         if (idx > -1) {
             this.entities.splice(idx, 1);
+            // TODO: delete GL data buffers
         }    
     }
 
