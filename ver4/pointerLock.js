@@ -9,9 +9,10 @@
 
 var pLockSupported = 'pointerLockElement' in document ||  'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
 var pLockMoveEvent; // callback for captured pointer movements
+var pLockCallback; // callback for lock/unlock/error
 var pLockRequested = false;
 var pLockElement; // element that captured the pointer
-const _pLockJitterLimit = 100; // max delta per event to avoid warp-around when browser place the cursor back into the center after exiting the client area
+const _pLockJitterLimit = 300; // max delta per event to avoid warp-around when browser place the cursor back into the center after exiting the client area
 
 function pLockRequest(element) {
     pLockElement = element;    
@@ -19,6 +20,7 @@ function pLockRequest(element) {
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock; 
         pLockRequested = true;
         element.requestPointerLock(); 
+        if (pLockCallback) pLockCallback("request");
     } 
 }
 
@@ -36,8 +38,7 @@ function pLockExit() {
 
 function pLockToggle(element) {
   // pLockElement = element;
-   console.log("active " + pLockActive());
-   console.log("pre requested " + pLockRequested);
+    if (pLockCallback) pLockCallback("toggle (was active: " + pLockActive() + ", was pre requested: " + pLockRequested + ")");
     pLockRequested = !pLockActive();
     if (pLockActive()) pLockExit();
     if (pLockRequested) {
@@ -55,23 +56,25 @@ document.addEventListener('pointerlockerror', pLockErrorCallback, false);
 document.addEventListener('mozpointerlockerror', pLockErrorCallback, false);
 document.addEventListener('webkitpointerlockerror', pLockErrorCallback, false);
 
-function pLockChangeCallback(event) {
+function pLockChangeCallback() {
     if (pLockActive()) {
-            // Lock successful, add event
-            pLockElement.addEventListener("mousemove", pLockInternalCallback, false);
+        // Lock successful, add event
+        pLockElement.addEventListener("mousemove", pLockInternalCallback, false);
+        if (pLockCallback) pLockCallback("lock");
     } else {
 
-            // Lock failed, reset event
-            pLockElement.removeEventListener("mousemove", pLockInternalCallback, false);
-            pLockElement = undefined;
-           // pLockExit();
+        // Lock failed, reset event
+        pLockElement.removeEventListener("mousemove", pLockInternalCallback, false);
+        pLockElement = undefined;
+        // pLockExit();
+        if (pLockCallback) pLockCallback("unlock");
     }
 }
 
-function pLockErrorCallback(event) {
+function pLockErrorCallback() {
     pLockElement.removeEventListener("mousemove", pLockInternalCallback, false);
     pLockElement = undefined;
-    console.log("pointerLock Error");
+    if (pLockCallback) pLockCallback("error");
     //pLockExit();
 }
 

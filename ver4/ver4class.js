@@ -175,11 +175,11 @@ class E3D_entity {
             this.vertexArray = new Float32Array(entity.vertexArray); 
             this.normalArray = new Float32Array(entity.normalArray);
             this.colorArray = new Float32Array(entity.colorArray);
-        } 
-
-        this.vertexBuffer = entity.vertexBuffer;
-        this.normalBuffer = entity.normalBuffer;
-        this.colorBuffer = entity.colorBuffer;
+        } else {
+            this.vertexBuffer = entity.vertexBuffer;
+            this.normalBuffer = entity.normalBuffer;
+            this.colorBuffer = entity.colorBuffer;
+        }
 
         this.cull_dist = entity.cull_dist;
         this.cull_max_pos = entity.cull_max_pos.slice();
@@ -1118,8 +1118,24 @@ class E3D_scene {
     cloneEntity(id, newId) {
         let idx = this.getEntityIndexFromId(id);
         if (idx > -1) {
+
             var ent = new E3D_entity(newId, this.entities[idx].filename, this.entities[idx].dynamic);
+
             ent.cloneData(this.entities[idx]);   
+
+            if (ent.dynamic) {
+                ent.vertexBuffer = this.context.createBuffer();
+                ent.colorBuffer = this.context.createBuffer();
+                ent.normalBuffer = this.context.createBuffer();
+                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
+                this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.DYNAMIC_DRAW);
+                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
+                this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.DYNAMIC_DRAW);
+                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
+                this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.DYNAMIC_DRAW);
+                ent.dataSizeChanged = true;
+            }
+
             this.entities.push(ent);    
             return ent; // return reference to new entity
         }        
@@ -1132,11 +1148,15 @@ class E3D_scene {
         return -1;
     }
 
-    removeEntity(id) {
+    removeEntity(id, deleteBuffers = true) {
         let idx = this.getEntityIndexFromId(id);
         if (idx > -1) {
+            if (deleteBuffers) {
+                this.context.deleteBuffer(this.entities[idx].vertexBuffer);
+                this.context.deleteBuffer(this.entities[idx].colorBuffer);
+                this.context.deleteBuffer(this.entities[idx].normalBuffer);
+            }
             this.entities.splice(idx, 1);
-            // TODO: delete GL data buffers
         }    
     }
 

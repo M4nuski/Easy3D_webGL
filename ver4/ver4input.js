@@ -127,10 +127,11 @@ class E3D_input {
         this.keyMap["toggleFullscreen"] = "F11";
 
         // "custom" commands, binds can be added for anything
-        this.keyMap["action0"] = "Click"; // click on mouse lock, double tap on touch //TODO should be in engine logic, or constant defined
+        this.keyMap["action0"] = E3D_INP_LMB;
         this.keyMap["action1"] = "KeyF";
-        this.keyMap["action2"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB ; // click on mouse lock, double tap on touch //TODO should be in engine logic
+        this.keyMap["action2"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB;
         this.keyMap["panPivot"] = E3D_INP_RMB;
+        //this.keyMap["exitLock"] = "Escape";
 
 
 
@@ -430,13 +431,9 @@ class E3D_input {
             this.inputDoneTable[event.code] = false;
         }    
 
-
         if (this.onInput) this.onInput(); // direct callback keydown preview
 
-        if ((pLockActive) && (event.code == "Escape")) {
-            pLockExit();
-        }
-
+        //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
     }
     

@@ -22,9 +22,17 @@ document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventD
 
 document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv); hover2CollapseAll(); } );
 document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); hover2CollapseAll(); } );
-
+pLockCallback = function(event) {
+    log(event, true);
+    if (event == "lock") {
+        inputs.pointerMap["rx_btn"] = E3D_INP_ALWAYS;
+        inputs.pointerMap["ry_btn"] = E3D_INP_ALWAYS;
+    } else if ((event == "unlock") || (event == "error")) {
+        inputs.pointerMap["rx_btn"] = E3D_INP_LMB;
+        inputs.pointerMap["ry_btn"] = E3D_INP_LMB;
+    }
+}
 fullscreenChangeCallback = function fullscreenChange(active, elem) {
-
     if (active) {
         document.getElementById("screenSizeImgFS").style.display = "none";
         document.getElementById("screenSizeImgWS").style.display = "inline-block";
@@ -36,7 +44,6 @@ fullscreenChangeCallback = function fullscreenChange(active, elem) {
             pLockRequest(mainDiv); // Restore pointerLock 
             hover2CollapseAll();
         }
-
     }
 }
 
@@ -197,7 +204,8 @@ function initEngine() {
     resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
 
-
+    inputs.keyMap["rx_dec"] = "null";
+    inputs.keyMap["rx_inc"] = "null";
     
     l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
@@ -214,9 +222,6 @@ function initEngine() {
     l1v.vis_culling = false;
 
     scn.addEntity(l1v);
-
-    timer.run();
-    scn.state = E3D_ACTIVE;
 
     testSph = new E3D_entity_dynamic("wireSphereTest");
     testSph.addWireSphere([30,0,0], 20, [1,0,0], 24, true);
@@ -266,13 +271,15 @@ function initEngine() {
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
+    timer.run();
+    scn.state = E3D_ACTIVE;
 }
 
 
 function prepRender() {
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
-    scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth*yf, inputs.rx_smth, inputs.rz_smth);
+    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         l0v.updateVector(scn.lights.light0_adjusted);
@@ -283,7 +290,7 @@ function prepRender() {
     // target orig, delta, dR2
     for (let i = animations.length -1; i >=0; --i) {
         if (animations[i].state == E3D_DONE) {
-            scn.removeEntity(animations[i].target.id);
+            scn.removeEntity(animations[i].target.id, false);
             animations.splice(i, 1);
         } else {
             animations[i].animate(null); //if supported calculate next position but don't lock
@@ -350,11 +357,13 @@ function timerTick() {  // Game Loop
     }
 
     inputs.processInputs(timer.delta);
+    inputs.smoothRotation(6);
+    inputs.smoothPosition(6);
 
     updateStatus();
     nHitTest = 0;
 
-    if (inputs.checkCommand("action0", true)) {
+    if ((pLockActive() && inputs.checkCommand("action0", true)) || (inputs.checkCommand("action2", true))) {
      //   log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
@@ -372,6 +381,10 @@ function timerTick() {  // Game Loop
         scn.postRender();
     }   
 
+    // reset abs inputs to use smoothing delta
+    inputs.px = 0;
+    inputs.py = 0;
+    inputs.pz = 0;
 }
 
 
@@ -687,7 +700,7 @@ function shotgunAnim(cand) {
             if (colList.length > 0) {
                 var vLen = vec3.length(vd);      
                 // remove out of range          
-                for (cl = colList.length-1; cl >= 0; --cl) if (colList[cl][2] > vLen) colList.splice(cl, 1);
+                for (var cl = colList.length-1; cl >= 0; --cl) if (colList[cl][2] > vLen) colList.splice(cl, 1);
                 // if nec sort ascending per item 2 (t)
                 if (colList.length > 0) {
                     if (colList.length > 1) colList.sort((a, b) => { return a[2] - b[2]; } );
@@ -814,21 +827,21 @@ function splode(loc) {
     var dim = 0.1;
     var dvect = Array(nvect);
     var vect = Array(nvect);
-    for (i = 0; i < nvect; ++i) {
+    for (let i = 0; i < nvect; ++i) {
         vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
         dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
     }
     var idx = 0;
-    for (i = 0; i < iter; ++i) {
+    for (let i = 0; i < iter; ++i) {
         var s = 2 - (dim * i);
-        for (j=0; j < nvect; ++j) {
+        for (let j=0; j < nvect; ++j) {
 
             splos.addWireCross(add3f(loc, vect[j]), s, col[idx]);
 
             idx++;
             if (idx >= col.length) idx = 0;
         }
-        for (j = 0; j < nvect; ++j) {
+        for (let j = 0; j < nvect; ++j) {
             vect[j][0] += dvect[j][0];
             vect[j][1] += dvect[j][1];
             vect[j][2] += dvect[j][2];
@@ -863,7 +876,7 @@ function log(text, silent = true) {
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.rx_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + "<br />" +
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + " pY:" + Math.floor(scn.camera.position[1]) + " pZ:" + Math.floor(scn.camera.position[2])+ " rX: " + Math.floor(inputs.rx * RadToDeg) + " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
     " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
     "nAnims: " + animations.length + " nHitTests: " + nHitTest;
 }

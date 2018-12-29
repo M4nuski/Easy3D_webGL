@@ -61,8 +61,8 @@ function winResize() {
     winWidth = gl.canvas.clientWidth
     winHeight = gl.canvas.clientHeight;
     
-    let vmode = document.forms["moveTypeForm"].moveType.value; 
-
+   // let vmode = document.forms["moveTypeForm"].moveType.value; 
+/*
     if (vmode == "model") {
         scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     } 
@@ -72,9 +72,9 @@ function winResize() {
     else if (vmode == "space") {
         scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     }
-    else {
-        scn.camera.resize(winWidth, winHeight) 
-    }
+    else {*/
+        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar); 
+   // }
 
 }
 
@@ -82,6 +82,12 @@ function winResize() {
 function camChange() {
 
     let vmode = document.forms["moveTypeForm"].moveType.value; 
+
+    inputs.keyMap["ry_dec"] = "KeyQ";
+    inputs.keyMap["ry_inc"] = "KeyE";
+
+    inputs.keyMap["rz_dec"] = "KeyZ";
+    inputs.keyMap["rz_inc"] = "KeyX";
 
     if (vmode == "model") {
         scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
@@ -100,6 +106,11 @@ function camChange() {
         scn.lights.light0_lockToCamera = true;
         inputs.clampPitch = false;
         inputs.allowPan = false;
+        inputs.keyMap["ry_dec"] = "KeyZ";
+        inputs.keyMap["ry_inc"] = "KeyX";
+
+        inputs.keyMap["rz_dec"] = "KeyQ";
+        inputs.keyMap["rz_inc"] = "KeyE";
     }
     else {
         scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
@@ -234,7 +245,7 @@ function initEngine() {
 function prepRender() {
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
-    scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth*yf, inputs.rx_smth, inputs.rz_smth);
+    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, -inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         l0v.updateVector(scn.lights.light0_adjusted);
@@ -245,7 +256,7 @@ function prepRender() {
     // target orig, delta, dR2
     for (let i = animations.length -1; i >=0; --i) {
         if (animations[i].state == E3D_DONE) {
-            scn.removeEntity(animations[i].target.id);
+            scn.removeEntity(animations[i].target.id, false);
             animations.splice(i, 1);
         } else {
             animations[i].animate(null); //if supported calculate next position but don't lock
@@ -292,6 +303,8 @@ function timerTick() {  // Game Loop
     }
 
     inputs.processInputs(timer.delta);
+    inputs.smoothPosition(6);
+    inputs.smoothRotation(6);
 
     updateStatus();
     nHitTest = 0;
@@ -313,6 +326,11 @@ function timerTick() {  // Game Loop
         scn.render();
         scn.postRender();
     }   
+
+    // reset abs inputs to use smoothing delta
+    inputs.px = 0;
+    inputs.py = 0;
+    inputs.pz = 0;
 }
 
 
