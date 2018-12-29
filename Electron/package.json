@@ -1,0 +1,16 @@
+{
+    "name": "electron-crap",
+    "version": "1.0.0",
+    "description": "Useless JSON to use electron",
+    "main": "main.js",
+    "scripts": {
+      "start": "electron ."
+    },
+    "repository": "",
+    "keywords": ["Electron" ],
+    "author": "M4nusk1",
+    "license": "CC0-1.0",
+    "devDependencies": {
+      "electron": "^3.0.7"
+    }
+  }

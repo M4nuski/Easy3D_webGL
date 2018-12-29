@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 log("Loading model " + args[1], false);
                 var  data = fs.readFileSync(args[1]);    
                 if (data) {
-                    mdl = E3D_loader.loadModel_STL("toView", args[1], data, 0.0, "source", true);
+                    mdl = E3D_loader.loadModel_STL("toView", args[1], data.buffer, 0.0, "source", true);
                     onRessource("", "ELECTRON_LOAD");
                 }
             } else log("File not found", false);

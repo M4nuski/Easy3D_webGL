@@ -4,8 +4,6 @@ app.commandLine.appendSwitch('ignore-gpu-blacklist', 'true')
 const path = require("path");
 const url = require("url");
 
-//global.sharedObject = {prop1: process.argv};
-
 let window;
 
 function createMainWindow() {
