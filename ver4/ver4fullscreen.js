@@ -24,12 +24,17 @@ document.getElementById("screenSizeDiv").addEventListener("click", () => { fulls
 document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); hover2CollapseAll(); } );
 pLockCallback = function(event) {
     log(event, true);
+
+    // remap controls
     if (event == "lock") {
         inputs.pointerMap["rx_btn"] = E3D_INP_ALWAYS;
         inputs.pointerMap["ry_btn"] = E3D_INP_ALWAYS;
+        inputs.keyMap["action0"] = E3D_INP_LMB;
+
     } else if ((event == "unlock") || (event == "error")) {
         inputs.pointerMap["rx_btn"] = E3D_INP_LMB;
         inputs.pointerMap["ry_btn"] = E3D_INP_LMB;
+        inputs.keyMap["action0"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB;
     }
 }
 fullscreenChangeCallback = function fullscreenChange(active, elem) {
@@ -196,6 +201,18 @@ function initEngine() {
 
         return; 
     }
+    
+        inputs.keyMap["rx_dec"] = "null";
+        inputs.keyMap["rx_inc"] = "null";
+        inputs.keyMap["ry_dec"] = "null";
+        inputs.keyMap["ry_inc"] = "null";
+        inputs.keyMap["rz_dec"] = "KeyQ";
+        inputs.keyMap["rz_inc"] = "KeyE";
+        inputs.pointerMap["px_btn"] = E3D_INP_DISABLED;
+        inputs.pointerMap["py_btn"] = E3D_INP_DISABLED;
+        inputs.pointerMap["pz_btn"] = E3D_INP_DISABLED;
+        inputs.pointerMap["rz_btn"] = E3D_INP_DISABLED;
+        pLockCallback("unlock"); // preset controls mapping
      
     resMngr.addRessource("../Models/ST.raw", "ST", "Model");
     resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
@@ -203,9 +220,6 @@ function initEngine() {
     resMngr.addRessource("../Models/SPH.raw", "sph", "Model");
     resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
-
-    inputs.keyMap["rx_dec"] = "null";
-    inputs.keyMap["rx_inc"] = "null";
     
     l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
@@ -363,7 +377,7 @@ function timerTick() {  // Game Loop
     updateStatus();
     nHitTest = 0;
 
-    if ((pLockActive() && inputs.checkCommand("action0", true)) || (inputs.checkCommand("action2", true))) {
+    if (inputs.checkCommand("action0", true)) {
      //   log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));

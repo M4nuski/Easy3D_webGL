@@ -9,7 +9,9 @@ log("DOMContentLoaded");
 
 log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
+const mainDiv = document.getElementById("mainDiv");
 const logElement = document.getElementById("logDiv");
+
 const status = document.getElementById("statusDiv");
 
 log("Set DOM Events");
@@ -41,7 +43,8 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 
-var inputs = new E3D_input(can, true, true, true, true, true, true);
+var inputs = new E3D_input(mainDiv, true, true, true, true, true, true);
+
 // virtual KB
 var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
 // virtual trackpad + thumbstick
@@ -61,21 +64,7 @@ function winResize() {
     winWidth = gl.canvas.clientWidth
     winHeight = gl.canvas.clientHeight;
     
-   // let vmode = document.forms["moveTypeForm"].moveType.value; 
-/*
-    if (vmode == "model") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    } 
-    else if (vmode == "free") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    } 
-    else if (vmode == "space") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    }
-    else {*/
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar); 
-   // }
-
+    scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar); 
 }
 
 
@@ -86,26 +75,26 @@ function camChange() {
     inputs.keyMap["ry_dec"] = "KeyQ";
     inputs.keyMap["ry_inc"] = "KeyE";
 
-    inputs.keyMap["rz_dec"] = "KeyZ";
+    inputs.keyMap["rz_dec"] = "KeyZ";    
     inputs.keyMap["rz_inc"] = "KeyX";
+
+    inputs.keyMap["rx_dec"] = "null";
+    inputs.keyMap["rx_inc"] = "null";
+
+    inputs.keyMap["action0"] = "KeyR";
 
     if (vmode == "model") {
         scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = false;
-        inputs.clampPitch = true;
-        inputs.allowPan = true;
     } 
     else if (vmode == "free") {
         scn.camera = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
-        inputs.clampPitch = true;
-        inputs.allowPan = false;
     } 
     else if (vmode == "space") {
         scn.camera = new E3D_camera_space("cam1s", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
-        inputs.clampPitch = false;
-        inputs.allowPan = false;
+
         inputs.keyMap["ry_dec"] = "KeyZ";
         inputs.keyMap["ry_inc"] = "KeyX";
 
@@ -245,7 +234,7 @@ function initEngine() {
 function prepRender() {
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
-    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, -inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
+    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         l0v.updateVector(scn.lights.light0_adjusted);
@@ -303,8 +292,9 @@ function timerTick() {  // Game Loop
     }
 
     inputs.processInputs(timer.delta);
-    inputs.smoothPosition(6);
     inputs.smoothRotation(6);
+    inputs.smoothPosition(6);
+    if (scn.camera.id == "cam1f") inputs.clampRotationSmooth(-PIdiv2, PIdiv2, true, false, false);
 
     updateStatus();
     nHitTest = 0;
@@ -646,7 +636,7 @@ function shotgunAnim(cand) {
             if (colList.length > 0) {
                 var vLen = vec3.length(vd);      
                 // remove out of range          
-                for (cl = colList.length-1; cl >= 0; --cl) if (colList[cl][2] > vLen) colList.splice(cl, 1);
+                for (var cl = colList.length-1; cl >= 0; --cl) if (colList[cl][2] > vLen) colList.splice(cl, 1);
                 // if nec sort ascending per item 2 (t)
                 if (colList.length > 0) {
                     if (colList.length > 1) colList.sort((a, b) => { return a[2] - b[2]; } );
@@ -778,16 +768,16 @@ function splode(loc) {
         dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
     }
     var idx = 0;
-    for (i = 0; i < iter; ++i) {
+    for (var i = 0; i < iter; ++i) {
         var s = 2 - (dim * i);
-        for (j=0; j < nvect; ++j) {
+        for (var j=0; j < nvect; ++j) {
 
             splos.addWireCross(add3f(loc, vect[j]), s, col[idx]);
 
             idx++;
             if (idx >= col.length) idx = 0;
         }
-        for (j = 0; j < nvect; ++j) {
+        for (var j = 0; j < nvect; ++j) {
             vect[j][0] += dvect[j][0];
             vect[j][1] += dvect[j][1];
             vect[j][2] += dvect[j][2];
@@ -820,7 +810,7 @@ function log(text, silent = true) {
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.rx_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + "<br />" +
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + " pY:" + Math.floor(scn.camera.position[1]) + " pZ:" + Math.floor(scn.camera.position[2])+ " rX: " + Math.floor(inputs.rx * RadToDeg) + " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
     " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
     "nAnims: " + animations.length + " nHitTests: " + nHitTest;
 }

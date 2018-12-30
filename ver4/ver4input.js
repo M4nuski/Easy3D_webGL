@@ -284,7 +284,7 @@ class E3D_input {
         this.rz += this.rz_delta;
 
         // Warp rotations
-        if (this.rx < 0) { 
+        if (this.rx < -PIx2) { 
             this.rx += PIx2;
             this.rx_smth += PIx2;
         }
@@ -293,7 +293,7 @@ class E3D_input {
             this.rx_smth -= PIx2; 
         }
 
-        if (this.ry < 0) { 
+        if (this.ry < -PIx2) { 
             this.ry += PIx2;
             this.ry_smth += PIx2;
         }
@@ -302,7 +302,7 @@ class E3D_input {
             this.ry_smth -= PIx2; 
         }
 
-        if (this.rz < 0) { 
+        if (this.rz < -PIx2) { 
             this.rz += PIx2;
             this.rz_smth += PIx2;
         }
@@ -343,6 +343,36 @@ class E3D_input {
                 this.rz = max;
                 this.rz_smth = max;
             } else if (this.rz < min) {
+                this.rz = min;
+                this.rz_smth = min;
+            }
+        }
+    }
+
+    clampRotationSmooth(min, max, x = true, y = true, z = true) {
+        if (x) {
+            if (this.rx_smth > max) {
+                this.rx = max;
+                this.rx_smth = max;
+            } else if (this.rx_smth < min) {
+                this.rx = min;
+                this.rx_smth = min;
+            }
+        }
+        if (y) {
+            if (this.ry_smth > max) {
+                this.ry = max;
+                this.ry_smth = max;
+            } else if (this.ry_smth < min) {
+                this.ry = min;
+                this.ry_smth = min;
+            }
+        }
+        if (z) {
+            if (this.rz_smth > max) {
+                this.rz = max;
+                this.rz_smth = max;
+            } else if (this.rz_smth < min) {
                 this.rz = min;
                 this.rz_smth = min;
             }
@@ -409,11 +439,9 @@ class E3D_input {
 
     // Check if a command has been triggered, and reset it if needed
     checkCommand(cmd, reset = false) {
-        if (this.inputTable[this.keyMap[cmd]]) {
-            if (reset) this.inputTable[this.keyMap[cmd]] = false;
-            return true;
-        } 
-        return false;
+        let res = this.inputTable[this.keyMap[cmd]];        
+        if (reset && res) this.inputTable[this.keyMap[cmd]] = false;
+        return res;
     }
 
 
@@ -431,7 +459,7 @@ class E3D_input {
             this.inputDoneTable[event.code] = false;
         }    
 
-        if (this.onInput) this.onInput(); // direct callback keydown preview
+        if (this.onInput) this.onInput(event); // direct callback keydown preview
 
         //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
@@ -439,7 +467,7 @@ class E3D_input {
     
     keyUp(event) {    
 
-        if (this.onInput) this.onInput(); // callback from event for user input dependant request to browser (fullscreen, pointerlock)
+        if (this.onInput) this.onInput(event); // callback from event for user input dependant request to browser (fullscreen, pointerlock)
 
         if (this.inputTable[event.code] != undefined) {
             this.inputTable[event.code] = false;

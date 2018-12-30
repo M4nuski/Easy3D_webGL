@@ -106,6 +106,10 @@ function initEngine() {
     resMngr.addRessource("../Models/GTR.raw", "Nissan GTR", "Model");
     resMngr.loadAll("models");
 
+
+    inputs._posSpeed /=2;
+    inputs._rotSpeed /=2; 
+
     timer.run();
     scn.state = E3D_ACTIVE;
 }
@@ -113,11 +117,13 @@ function initEngine() {
 
 function prepRender() {
     // move camera per inputs
-    scn.camera.move(inputs.px_smth, -inputs.py_smth, inputs.pz_smth, inputs.ry_smth, inputs.rx_smth, inputs.rz_smth);
+    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
 }
 
 function timerTick() {  // Game Loop
     inputs.processInputs(timer.delta);
+    inputs.smoothPosition(5);
+    inputs.smoothRotation(5);
 
     updateStatus();
 
@@ -126,6 +132,10 @@ function timerTick() {  // Game Loop
         scn.render();
         scn.postRender();
     }   
+
+    inputs.px = 0;
+    inputs.py = 0;
+    inputs.pz = 0;
 }
 
 
@@ -152,7 +162,7 @@ function onRessource(name, msg) {
                 nm.position = [-15, 0, 0];
                 nm.rotation = [0, 3.1415, 0];
             } else if (name == "Nissan GTR") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 1.0 ,1.0, 0.25]);
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.5, [ 1.0 ,1.0, 0.25]);
                 nm.position = [25, -5, 0];
                 nm.rotation = [0, 0, 0];
             }  else {
@@ -186,9 +196,8 @@ function log(text, silent = true) {
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.rx_sum * RadToDeg) + " rY:"+ Math.floor(inputs.ry_sum * RadToDeg) + "<br />" +
-    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
-    "nAnims: " + "0" + " nHitTests: " + "0";
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + "pY:" + Math.floor(scn.camera.position[1]) + "pZ:" + Math.floor(scn.camera.position[2])+ "rX: " + Math.floor(inputs.rx * RadToDeg) + " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
+    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets;
 }
 
 
