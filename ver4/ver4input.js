@@ -548,20 +548,20 @@ class E3D_input {
 
         if (this.ongoingTouches.length == 1) {
             //process as mouse down
-            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
             this.mouseDown(this.ongoingTouches[0]);
 
         } else if (this.ongoingTouches.length == 2) {
             //process as mouse up and then wheel / pan
 
-            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
 
-            this.ongoingTouches[0].button = this._panMouseButton;
+            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
 
             this.mouseDown( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
                                     (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
-                                    this._panMouseButton) );
+                                    this._panMouseButton) );// TODO: update for new mappings
 
             var tdx = this.ongoingTouches[1].pageX - this.ongoingTouches[0].pageX;
             var tdy = this.ongoingTouches[1].pageY - this.ongoingTouches[0].pageY;
@@ -585,12 +585,12 @@ class E3D_input {
         var touches = event.changedTouches;
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
         }
 
         if (this.ongoingTouches.length == 2) {
-            this.ongoingTouches[0].button = this._panMouseButton;
+            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
         }
 
@@ -609,12 +609,12 @@ class E3D_input {
         if (event.preventDefault) { event.preventDefault(); };
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
             this.mouseUp(ongoingTouches[0]);
         }
 
         if (this.ongoingTouches.length == 2) {
-            this.ongoingTouches[0].button = this._panMouseButton;
+            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
         }
 
@@ -640,7 +640,7 @@ class E3D_input {
 
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this._rotateMouseButton;
+            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
             this.mouseMove(this.ongoingTouches[0]);
 
         } else if (this.ongoingTouches.length == 2) {
@@ -650,7 +650,7 @@ class E3D_input {
             var newTouchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
 
             // pinch panning
-            this.ongoingTouches[0].button = this._panMouseButton;
+            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
             this.mouseMove( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
                                         (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
                                         this._panMouseButton) );
