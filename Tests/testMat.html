@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<head>
+    <style>
+        #mainDiv {
+            position: absolute;
+            top : 0px;
+            left : 0px;
+            width : 1280px;
+            height : 720px;
+        } 
+        #dataDiv {
+            position: absolute;
+            top:0px;
+            left:650px;
+            width:600px;         
+        }
+        #logDiv {
+            height : 300px;
+            overflow-x: wrap;
+            overflow-y: scroll;
+        }
+        #controlDiv {
+            position: absolute;
+            top: 370px;
+            left : 10px;
+            width : 640px;
+            
+        }
+        td {
+            width : 40px;
+            height : 20px;
+            text-align: center;
+            background-color: lightgray;
+        }
+    </style>
+    <script type="text/javascript" src="gl-matrix.js"></script>
+    <script type="text/javascript" src="testMat.js"></script>
+</head>
+
+<body>
+    <div id="mainDiv">
+        Click on test title below to start test : <br />
+        <div id="test1" class="test">1-Matrix Calcs</div>
+
+    </div>
+    <div id="dataDiv">
+        <div id="statusDiv">Status</div><br />
+        <div id="logDiv"></div>
+    </div>
+
+
+</body>
+
+</html>
