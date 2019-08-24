@@ -10,54 +10,7 @@ var canvas = document.getElementById("glCanvas");
 var log = document.getElementById("logDiv");
 
 // events
-document.getElementById("mainDiv").addEventListener("click", starttest1);
-document.getElementById("mainDiv2").addEventListener("click", starttest2);
-document.getElementById("mainDiv3").addEventListener("click", starttest3);
-document.getElementById("mainDiv4").addEventListener("click", starttest4);
-
-
-var triNum = 1000000;
-var entNum = 10;
-
-function starttest1() {
-    triNum = 1000000;
-    entNum = 10;
-    addLine("");
-    addLine("Test Started");
-    setTimeout( testShader, 10);
-}
-
-function starttest2() {
-    triNum = 10000000;
-    entNum = 10;
-    addLine("");
-    addLine("Test TRI MAG+1 Started");
-    setTimeout( testShader, 10);
-}
-
-function starttest3() {
-    triNum = 1000000;
-    entNum = 100;
-    addLine("");
-    addLine("Test ENT MAG+1 Started");
-    setTimeout( testShader, 10);
-}
-
-function starttest4() {
-    triNum = 10000000;
-    entNum = 100;
-    addLine("");
-    addLine("Test TRI+ENT MAG+1 Started");
-    setTimeout( testShader, 10);
-}
-
-function addLine(text) {
-    if (text != "") {
-        log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
-    } else log.innerHTML += "<br />"; 
-
-    log.scrollTop = log.scrollHeight;
-}
+document.getElementById("startTestSpan").addEventListener("click", starttest);
 
 var context; 
 var programA, programB, programC;
@@ -71,9 +24,27 @@ let mvpMat = mat4.create();
 let mvMat = mat4.create();
 mat4.perspective(projectionMat, 45, 320 / 240, 1, 1000);
 
+var vertexArray;
+
+var triNum = 1000000;
+var entNum = 10;
+
+var triDiv = 10;
+var entMult = 10;
+
+var triMin = 10;
+var entMax = 1000000;
+
+function starttest() {
+    triNum = document.getElementById("nbTriStart").value;
+    entNum = document.getElementById("nbEntStart").value;
+    triDiv = document.getElementById("ittTriDiv").value;
+    entMult = document.getElementById("ittEntMult").value;
+
+    triMin = document.getElementById("nbTriMin").value;
+    entMax = document.getElementById("nbEntMax").value;
 
 
-function testShader() {
     addLine("Context Initialization");
     context = canvas.getContext("webgl");
     canvas.style.display = "block";
@@ -85,10 +56,13 @@ function testShader() {
     }
     
     addLine("Shader Program Initialization");
+
+    addLine("program A (in-shader matrix mult)");
     programA = new E3D_program("test program A", context);
     programA.compile(vertShaderPerfTestA, fragShaderPerfTestA);
     programA.bindLocations(attribListPerfTestA, uniformListPerfTestA);
 
+    addLine("program B (in-code JS matrix mult)");
     programB = new E3D_program("test program B", context);
     programB.compile(vertShaderPerfTestB, fragShaderPerfTestB);
     programB.bindLocations(attribListPerfTestB, uniformListPerfTestB);
@@ -103,60 +77,81 @@ function testShader() {
     context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
 
     addLine("Buffer");
-    var vertexArray = new Float32Array(triNum * 3 * 4); // 1 million triangles * 3 vertex * 4 float
+    vertexArray = new Float32Array(triNum * 3 * 4); // 1 million triangles * 3 vertex * 4 float
     PosBuffer = context.createBuffer();
     context.bindBuffer(context.ARRAY_BUFFER, PosBuffer);
     context.bufferData(context.ARRAY_BUFFER, vertexArray, context.DYNAMIC_DRAW); 
 
     addLine("");
-    addLine("program A");
+    addLine("Test Starting...");
+
+
+
+    triNum = triNum * triDiv;
+    entNum = entNum / entMult;
+    setTimeout( testItterator, 10);
+}
+
+function testItterator() {
+    if ((triNum > triMin) && (entNum < entMax)) {
+
+        triNum = triNum / triDiv;
+        entNum = entNum * entMult;
+
+        addLine("Testing with nbEntities=" + entNum + " and nbTri=" + triNum);
+        setTimeout(testShader, 10);
+    } else {
+        addLine("Test Ended.");
+        addLine("");
+    }
+}
+
+function addLine(text) {
+    if (text != "") {
+        log.innerHTML += "[" + ((new Date()).getTime() - sessionStart) + "] " + text + "<br />";
+    } else log.innerHTML += "<br />"; 
+
+    log.scrollTop = log.scrollHeight;
+}
+
+
+
+
+function testShader() {
+  
     context.useProgram(programA.shaderProgram);
     context.bindBuffer(context.ARRAY_BUFFER, PosBuffer);
     context.vertexAttribPointer(programA.shaderAttributes["aVertexPosition"], 4, context.FLOAT, false, 0, 0);
     context.enableVertexAttribArray(programA.shaderAttributes["aVertexPosition"]);
   
-    var numEnt = entNum;
-    var numVert = triNum;
-    for (var testLoop = 0; testLoop < 6; ++testLoop) {
+
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
             st = Date.now();
-            renderA(numEnt, numVert);
+            renderA(entNum, triNum);
             et = Date.now();
             delta += (et - st);
         }
-        addLine("nbEntities: " + numEnt + " nbTri: " + numVert + " delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );
-        numEnt = numEnt * 10;
-        numVert = numVert / 10;
-    }
+        addLine("Program A delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );
 
 
-    addLine("");
-    addLine("program B");
+
     context.useProgram(programB.shaderProgram);
     context.bindBuffer(context.ARRAY_BUFFER, PosBuffer);
     context.vertexAttribPointer(programB.shaderAttributes["aVertexPosition"], 4, context.FLOAT, false, 0, 0);
     context.enableVertexAttribArray(programB.shaderAttributes["aVertexPosition"]);
-  
-    var numEnt = entNum;
-    var numVert = triNum;
-    for (var testLoop = 0; testLoop < 6; ++testLoop) {
+
+
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
             st = Date.now();
-            renderB(numEnt, numVert); 
+            renderB(entNum, triNum);
             et = Date.now();
             delta += (et - st);
         }
-        addLine("nbEntities: " + numEnt + " nbTri: " + numVert + " delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );
-        numEnt = numEnt * 10;
-        numVert = numVert / 10;
-    }
+        addLine("Program B delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );
 
-
-    canvas.style.display = "none";
-    addLine("");
-    addLine("End TestShader");
+    setTimeout(testItterator, 10);
 }
 
 function renderA(numEntities, numElements) {    

@@ -5,23 +5,11 @@
     <style>
         #mainDiv {
             top: 0px;
-            width: 600px;
-        }
-        #mainDiv2 {
-           /* top: 0px;*/
-            width: 600px;
-        }
-        #mainDiv3 {
-           /* top: 0px;*/
-            width: 600px;
-        }
-        #mainDiv4 {
-           /* top: 0px;*/
-            width: 600px;
+            width: 100%;
         }
         #logDiv {
-            width:600px;
-            height: 300px;
+            width:100%;
+            height: 100%;
             overflow-x: wrap;
             overflow-y: scroll;
         }
@@ -37,17 +25,18 @@
 
 <body>
     <div id="mainDiv">
-        [Click pour démarrer le test (peut prendre quelque minutes à rouler)] <br />
+        nbEntStart: <input id="nbEntStart" type="number" min="1" value="10"/>
+        ittEntMult: <input id="ittEntMult" type="number" min="1" value="10"/>
+        nbEntMax: <input id="nbEntMax" type="number" min="1" value="1000000"/> <br />
+
+        nbTriStart: <input id="nbTriStart" type="number" min="1" value="1000000"/>
+        ittTriDiv:  <input id="ittTriDiv" type="number" min="2" value="10"/> 
+        nbTriMin: <input id="nbTriMin" type="number" min="1" value="10"/> 
+        <br />
+         <span id="startTestSpan">[Click pour démarrer le test (peut prendre quelque minutes à rouler)]</span>
+        <br />
     </div>
-    <div id="mainDiv2">
-        [Click pour démarrer le test TRI MAG+1(peut prendre quelque minutes à rouler)] <br />
-    </div>
-    <div id="mainDiv3">
-        [Click pour démarrer le test ENT MAG+1(peut prendre quelque minutes à rouler)] <br />
-    </div>
-    <div id="mainDiv4">
-        [Click pour démarrer le test TRI+ENT MAG+1(peut prendre quelque minutes à rouler)] <br />
-    </div>
+
     <div id="logDiv"></div>
     <div>
         <canvas id="glCanvas" width="320" height="240">Erreur - Canvas non supporté</canvas>
