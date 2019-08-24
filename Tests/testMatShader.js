@@ -10,11 +10,44 @@ var canvas = document.getElementById("glCanvas");
 var log = document.getElementById("logDiv");
 
 // events
-document.getElementById("mainDiv").addEventListener("click", starttest);
+document.getElementById("mainDiv").addEventListener("click", starttest1);
+document.getElementById("mainDiv2").addEventListener("click", starttest2);
+document.getElementById("mainDiv3").addEventListener("click", starttest3);
+document.getElementById("mainDiv4").addEventListener("click", starttest4);
 
-function starttest(event) {
+
+var triNum = 1000000;
+var entNum = 10;
+
+function starttest1() {
+    triNum = 1000000;
+    entNum = 10;
     addLine("");
     addLine("Test Started");
+    setTimeout( testShader, 10);
+}
+
+function starttest2() {
+    triNum = 10000000;
+    entNum = 10;
+    addLine("");
+    addLine("Test TRI MAG+1 Started");
+    setTimeout( testShader, 10);
+}
+
+function starttest3() {
+    triNum = 1000000;
+    entNum = 100;
+    addLine("");
+    addLine("Test ENT MAG+1 Started");
+    setTimeout( testShader, 10);
+}
+
+function starttest4() {
+    triNum = 10000000;
+    entNum = 100;
+    addLine("");
+    addLine("Test TRI+ENT MAG+1 Started");
     setTimeout( testShader, 10);
 }
 
@@ -37,6 +70,7 @@ let projectionMat = mat4.create();
 let mvpMat = mat4.create();
 let mvMat = mat4.create();
 mat4.perspective(projectionMat, 45, 320 / 240, 1, 1000);
+
 
 
 function testShader() {
@@ -69,7 +103,7 @@ function testShader() {
     context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
 
     addLine("Buffer");
-    var vertexArray = new Float32Array(1000000 * 3 * 4); // 1 million triangles * 3 vertex * 4 float
+    var vertexArray = new Float32Array(triNum * 3 * 4); // 1 million triangles * 3 vertex * 4 float
     PosBuffer = context.createBuffer();
     context.bindBuffer(context.ARRAY_BUFFER, PosBuffer);
     context.bufferData(context.ARRAY_BUFFER, vertexArray, context.DYNAMIC_DRAW); 
@@ -81,8 +115,8 @@ function testShader() {
     context.vertexAttribPointer(programA.shaderAttributes["aVertexPosition"], 4, context.FLOAT, false, 0, 0);
     context.enableVertexAttribArray(programA.shaderAttributes["aVertexPosition"]);
   
-    var numEnt = 10;
-    var numVert = 1000000;
+    var numEnt = entNum;
+    var numVert = triNum;
     for (var testLoop = 0; testLoop < 6; ++testLoop) {
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
@@ -104,8 +138,8 @@ function testShader() {
     context.vertexAttribPointer(programB.shaderAttributes["aVertexPosition"], 4, context.FLOAT, false, 0, 0);
     context.enableVertexAttribArray(programB.shaderAttributes["aVertexPosition"]);
   
-    var numEnt = 10;
-    var numVert = 1000000;
+    var numEnt = entNum;
+    var numVert = triNum;
     for (var testLoop = 0; testLoop < 6; ++testLoop) {
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
