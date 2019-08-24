@@ -37,7 +37,7 @@ Current work-in-progress
 Next Steps
 -----------
 * Remove scaling from matrix and entity except on load, or make separate to avoid dealing with it repeatidly. Mostly useless.
-* Replace per-vertex colors with textures
+* Replace per-vertex colors with textures, using a LUT texture and LUT data set if nothing else.
 * Sprites
 * Other type of physics mechanic for controls. (chase camera/3rd person)
 * Sounds

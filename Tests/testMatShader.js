@@ -10,13 +10,12 @@ var canvas = document.getElementById("glCanvas");
 var log = document.getElementById("logDiv");
 
 // events
-var testers = document.querySelectorAll(".test");
-for (var i = 0; i < testers.length; ++i) testers[i].addEventListener("click", starttest);
+document.getElementById("mainDiv").addEventListener("click", starttest);
 
 function starttest(event) {
     addLine("");
-    addLine(event.target.id + " running");
-    setTimeout( t[event.target.id], 10);
+    addLine("Test Started");
+    setTimeout( testShader, 10);
 }
 
 function addLine(text) {
@@ -26,151 +25,6 @@ function addLine(text) {
 
     log.scrollTop = log.scrollHeight;
 }
-
-function addText(text) {
-    log.innerHTML += text; 
-    log.scrollTop = log.scrollHeight;
-}
-
-function rand(x) {
-    return Math.floor(Math.random() * x);
-}
-
-
-function drawMatrix(m) {
-    addLine("Matrix:");
-
-    var l = "<table><tr><td>";
-    l += Math.floor(m[0] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[4] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[8] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[12] * 100) / 100;
-    l += "</td></tr>";
-
-    l += "<tr><td>";
-    l += Math.floor(m[1] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[5] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[9] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[13] * 100) / 100;
-    l += "</td></tr>";
-
-    l += "<tr><td>";
-    l += Math.floor(m[2] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[6] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[10] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[14] * 100) / 100;
-    l += "</td></tr>";
-
-    l += "<tr><td>";
-    l += Math.floor(m[3] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[7] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[11] * 100) / 100;
-    l += "</td><td>";
-    l += Math.floor(m[15] * 100) / 100;
-    l += "</td></tr></table>";
-
-    addText(l);
-    addLine("");
-}
-
-
-const t = {};
-
-t.test1 = function() {
-    let m1 = mat4.create();
-    mat4.scale(m1, m1, [1.1, 2.2, 3.3, 4.4]);
-    drawMatrix(m1);
-    let m2 = mat4.create();
-    mat4.translate(m2, m2, [10, 20, 30, 40]);
-    drawMatrix(m2);
-
-    let m3 = mat4.create();
-    mat4.multiply(m3, m2, m1);
-    addLine("m2 X m1");
-    drawMatrix(m3);
-
-    mat4.multiply(m3, m1, m2);
-    addLine("m1 X m2");
-    drawMatrix(m3);
-    
-    let m4 = mat4.create();
-    mat4.invert(m4, m3);
-    addLine("inverse");
-    drawMatrix(m4);
-
-    mat4.transpose(m4, m3);
-    addLine("transpose");
-    drawMatrix(m4);
-
-    mat4.rotateZ(m3, m1, 3.141592/2);
-    addLine("rotate m1 z 90d");
-    drawMatrix(m3);
-
-    mat4.invert(m4, m3);
-    addLine("inverse");
-    drawMatrix(m4);
-
-    mat4.transpose(m4, m3);
-    addLine("transpose");
-    drawMatrix(m4);
-
-    addLine("End Test 1");
-}
-
-
-
-
-
-t.test2 = function() {
-    let m1 = mat4.create();
-    mat4.scale(m1, m1, [1.1, 2.2, 3.3, 1.0]);
-    mat4.translate(m1, m1, [100, 200, 300, 0]);
-    addLine("m1");
-    drawMatrix(m1);
-
-    let m2 = mat4.create();
-    mat4.translate(m2, m2, [10, 20, 30, 0]);
-    mat4.scale(m2, m2, [11.11, 22.22, 33.33, 1.0]);
-    addLine("m2");
-    drawMatrix(m2);
-
-    let m3 = mat4.create();
-    mat4.rotate(m3, m3, 3.141592/4, [0, 0, 1]);
-    mat4.translate(m3, m3, [10, 20, 30, 0]);
-    mat4.rotate(m3, m3, 3.141592/4, [0, 1, 0]);
-    addLine("m3");
-    drawMatrix(m3);
-    
-    let m4 = mat4.create();
-    mat4.multiply(m4, m2, m1);
-    addLine("m2 * m1");
-    drawMatrix(m4);
-
-    mat4.multiply(m4, m4, m3);
-    addLine("(m2 * m1) * m3");
-    drawMatrix(m4);
-
-    let m5 = mat4.create();
-    mat4.multiply(m5, m2, m1);
-
-    mat4.multiply(m5, m3, m5);
-    addLine("m3 * (m2 * m1)");
-    drawMatrix(m4);
-  
-    addLine("End Test 2");
-}
-
 
 var context; 
 var programA, programB, programC;
@@ -185,10 +39,10 @@ let mvMat = mat4.create();
 mat4.perspective(projectionMat, 45, 320 / 240, 1, 1000);
 
 
-t.test3 = function() {
+function testShader() {
     addLine("Context Initialization");
     context = canvas.getContext("webgl");
-    canvas.style.visibility = "visible";
+    canvas.style.display = "block";
 
     if (!context) {
         addLine("Unable to initialize WebGL. Your browser or machine may not support it.");
@@ -212,6 +66,7 @@ t.test3 = function() {
     context.depthFunc(context.LEQUAL);
     context.cullFace(context.BACK);
     context.enable(context.CULL_FACE);
+    context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
 
     addLine("Buffer");
     var vertexArray = new Float32Array(1000000 * 3 * 4); // 1 million triangles * 3 vertex * 4 float
@@ -219,12 +74,7 @@ t.test3 = function() {
     context.bindBuffer(context.ARRAY_BUFFER, PosBuffer);
     context.bufferData(context.ARRAY_BUFFER, vertexArray, context.DYNAMIC_DRAW); 
 
-    addLine("Draw Loop");
-    // Draw
-    context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
- 
-
-
+    addLine("");
     addLine("program A");
     context.useProgram(programA.shaderProgram);
     context.bindBuffer(context.ARRAY_BUFFER, PosBuffer);
@@ -237,7 +87,7 @@ t.test3 = function() {
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
             st = Date.now();
-            renderA(numEnt, numVert); // view, projection, model as uniform; normal, modelView, modelViewProjection in shader
+            renderA(numEnt, numVert);
             et = Date.now();
             delta += (et - st);
         }
@@ -270,8 +120,9 @@ t.test3 = function() {
     }
 
 
-    canvas.style.visibility = "hidden";
-    addLine("End Test 3");
+    canvas.style.display = "none";
+    addLine("");
+    addLine("End TestShader");
 }
 
 function renderA(numEntities, numElements) {    
@@ -298,21 +149,6 @@ function renderB(numEntities, numElements) {
         context.drawArrays(4, 0, numElements*3);
     }
 }
-
-function renderC(numEntities, numElements) {    
-    // Scene uniforms
-    context.uniformMatrix4fv(programC.shaderUniforms["uViewProjectionMatrix"], false, viewMat);
-
-    for (let i = 0; i < numEntities; ++i) {
-        // Entity uniforms
-        context.uniformMatrix4fv(programC.shaderUniforms["uModelViewMatrix"], false, modelMat);
-        //context.uniformMatrix4fv(program.shaderUniforms["uNormalMatrix"], false, normalMat);            
-        // Draw
-        context.drawArrays(4, 0, numElements*3);
-    }
-}
-
-
 
 class E3D_program {
     constructor(id, context) {
@@ -373,11 +209,15 @@ class E3D_program {
 
 const vertShaderPerfTestA = `
 #version 100
+
 attribute vec4 aVertexPosition;
+
 uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uProjectionMatrix;
+
 varying highp vec4 position;
+
 void main(void) {
     mat4 modelView = uViewMatrix * uModelMatrix;
     position = modelView * aVertexPosition;
@@ -385,7 +225,10 @@ void main(void) {
 }
 `;
 const fragShaderPerfTestA = `
+#version 100
+
 varying highp vec4 position;
+
 void main(void) {
     gl_FragColor = position; 
 }
@@ -395,17 +238,24 @@ const uniformListPerfTestA = ["uModelMatrix", "uViewMatrix", "uProjectionMatrix"
 
 const vertShaderPerfTestB = `
 #version 100
+
 attribute vec4 aVertexPosition;
+
 uniform mat4 uModelViewMatrix;
 uniform mat4 uModelViewProjectionMatrix;
+
 varying highp vec4 position;
+
 void main(void) {
     position = uModelViewMatrix * aVertexPosition;
     gl_Position = uModelViewProjectionMatrix * aVertexPosition;
 }
 `;
 const fragShaderPerfTestB = `
+#version 100
+
 varying highp vec4 position;
+
 void main(void) {
     gl_FragColor = position; 
 }

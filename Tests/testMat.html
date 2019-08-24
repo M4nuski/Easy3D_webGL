@@ -3,29 +3,20 @@
 <head>
     <style>
         #mainDiv {
-            position: absolute;
-            top : 0px;
-            left : 0px;
-            width : 1280px;
-            height : 720px;
-        } 
+            top: 0px;
+            width: 600px;
+        }
         #dataDiv {
-            position: absolute;
-            top:0px;
-            left:650px;
-            width:600px;         
+            width: 600px;      
         }
         #logDiv {
-            height : 300px;
+            width:600px;
+            height: 300px;
             overflow-x: wrap;
             overflow-y: scroll;
         }
         #controlDiv {
-            position: absolute;
-            top: 370px;
-            left : 10px;
-            width : 640px;
-            
+            width:600px;
         }
         td {
             width : 40px;
@@ -33,8 +24,12 @@
             text-align: center;
             background-color: lightgray;
         }
+        #glCanvas {
+            position: absolute;
+            bottom : 0px;
+        }
     </style>
-    <script type="text/javascript" src="gl-matrix.js"></script>
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
     <script type="text/javascript" src="testMat.js"></script>
 </head>
 
@@ -42,13 +37,16 @@
     <div id="mainDiv">
         Click on test title below to start test : <br />
         <div id="test1" class="test">1-Matrix Calcs</div>
-
+        <div id="test2" class="test">2-Matrix Ass</div>
+        <div id="test3" class="test">3-MVPM shader vs js</div>
     </div>
     <div id="dataDiv">
         <div id="statusDiv">Status</div><br />
         <div id="logDiv"></div>
     </div>
-
+    <div>
+        <canvas id="glCanvas" width="320" height="240">Erreur - Canvas non supporté</canvas>
+    </div>
 
 </body>
 
