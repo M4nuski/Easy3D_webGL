@@ -5,7 +5,8 @@
 "use strict"
 
 // TODO: specify move == moveBy | moveTo ?
-// TODO: add frre gimbal mode for model view camera
+// TODO: REMOVE ALL SCALE EXCEPT ON MESH LOAD/COPY (raw data only)
+// TODO: add free gimbal mode for model view camera
 // TODO: split into appropriate files
 
 // Main timer class for synchronisation, smoothing and basic engine running
@@ -229,7 +230,7 @@ class E3D_entity {
 
     }
 
-
+    // TODO normal matrix in shader, or copy of model matrix with scale and translation reset
     resetMatrix(){
         // recreate matrices from scale, rotation and position
         mat4.rotateZ(this.normalMatrix, mat4_identity, this.rotation[2] );
@@ -255,7 +256,7 @@ class E3D_entity {
                 this.CD_sph_r[i] = this.CD_sph_r0[i] * vec3.length(this.scale)/1.73205;
                 this.CD_sph_rs[i] = this.CD_sph_r[i] * this.CD_sph_r[i];
             }
-            var invScale = vec3.inverse([0, 0, 0] ,this.scale);
+            var invScale = vec3.inverse([0, 0, 0], this.scale);
             for (var i = 0; i < this.CD_iPlane; ++i) {
                 vec3.transformMat4(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
                 vec3.multiply(this.CD_iPlane_n[i], this.CD_iPlane_n[i], invScale);

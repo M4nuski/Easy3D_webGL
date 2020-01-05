@@ -235,7 +235,7 @@ function mouseWheel(event) {
 }
 
 function mouseDblClick(event) {
-    // TODO capture cursor
+
     if (event.preventDefault) { event.preventDefault(); };
 }
 
