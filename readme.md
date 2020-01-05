@@ -21,6 +21,7 @@ Current work-in-progress and next steps
 ----------
 * Collision detection (vector, sphere/elipsoid, plane/cuboid)
 * Remove scaling from matrix and entity except on load, or implement in shader to avoid dealing with it repeatidly. Mostly useless.
+* Update functions name to specify if move are relative or absolute
 * Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine
 * Validate Input model flexibility
 * Validate Input scheme switching / UI / UX
@@ -44,7 +45,7 @@ Current work-in-progress and next steps
 Overview of collistion detection possibilities and implementation difficulty
 -----------
 
-| Collisons     | Vertor  | Sphere | Plane | Cube | Traingle Mesh |
+| Entity Type   | Vertor  | Sphere | Plane | Cube | Traingle Mesh |
 |:------------- |:-------:|:------:|:-----:|:----:|:-------------:|
 | Vector        | useless |  Easy  | Easy  |  ok  |  hmm |
 | Sphere        |         |  Easy  |  ok   |  hmm | nope |

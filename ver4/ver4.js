@@ -55,6 +55,17 @@ var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thu
 var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "action0");
 
 
+try {
+if (process) {
+    var info = document.getElementById("processInfo");
+    if (info) {
+        info.innerHTML = "We are using node " + process.versions.node +
+        ", Chrome " + process.versions.chrome + 
+        ", and Electron " + process.versions.electron; 
+    }
+}
+} catch (ex) { console.log("Running in browser (not Electron)"); }
+
 log("Session Start", true);
 initEngine();
 
@@ -161,17 +172,17 @@ function initEngine() {
 
 
     
-    l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
+    l0v = new E3D_entity_vector("light0vect", true, 10.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
-    l0v.scale = vec3.fromValues(5, 5, 5);
+    //l0v.scale = vec3.fromValues(5, 5, 5);
     l0v.visible = true;
     l0v.vis_culling = false;
 
     scn.addEntity(l0v);
     
-    l1v = new E3D_entity_vector("light1vect", true, 2.0, true);
+    l1v = new E3D_entity_vector("light1vect", true, 10.0, true);
     l1v.position = vec3.fromValues(5, 20, 5);
-    l1v.scale = vec3.fromValues(5, 5, 5);
+    //l1v.scale = vec3.fromValues(5, 5, 5);
     l1v.visible = true;
     l1v.vis_culling = false;
 
@@ -349,17 +360,17 @@ function onRessource(name, msg) {
                 if (!cloned) cloneWar();
 
             } else if (name == "CM") {
-                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
+                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep", false, vec3.fromValues(3.0, 1.0, 3.0));
                 nm.position[1] = -80;
-                nm.scale[0] = 3;
-                nm.scale[2] = 3;
+                //nm.scale[0] = 3;
+                //nm.scale[2] = 3;
                 nm.visible = true;
                 scn.addEntity(nm);  
 
                 nm = scn.cloneEntity("CM_top", "CM_bottom");
                 nm.position[1] = 80;
-                nm.scale[0] = 3;
-                nm.scale[2] = 3;
+                //nm.scale[0] = 3;
+                //nm.scale[2] = 3;
                 nm.visible = true;
                 nm.resetMatrix();
 

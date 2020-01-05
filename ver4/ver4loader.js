@@ -14,9 +14,11 @@ class E3D_loader {
  * @param {string} rawModelData the source data to parse
  * @param {float} smoothShading if > 0.0 limit angle to perform smooth shading, otherwise flat shaded
  * @param {vec3} color the entity color, if === "sweep" per vertex r/g/b sweep applied
+ * @param {bool} dynamic default == false, dynamic entities are not optimally store in GPU ram so that their data can be modified
+ * @param {vec3} scale scale modifier of the entity data
  * @returns {E3D_entity} the resulting model and entity data
  */
-    static loadModel_RAW(name, file, rawModelData, smoothShading, color, dynamic = false) {
+    static loadModel_RAW(name, file, rawModelData, smoothShading, color, dynamic = false, scale = vec3_unit) {
         
         let entity = new E3D_entity(name, file, dynamic);
 
@@ -61,6 +63,15 @@ class E3D_loader {
                     colors.push(colorSweep[numFloats % 9]);
                     numFloats++;
                 }
+            }
+        }
+
+        // apply scale
+        if (scale != vec3_unit) {
+            for (var i = 0; i < numFloats / 3; i++) { // for each vertex                
+               positions[(i * 3)] =     positions[(i * 3)]     * scale[0];
+               positions[(i * 3) + 1] = positions[(i * 3) + 1] * scale[1];
+               positions[(i * 3) + 2] = positions[(i * 3) + 2] * scale[2];
             }
         }
 
@@ -177,16 +188,18 @@ class E3D_loader {
 
    
  /**
- * Load entity from raw stl data
+ * Load entity from BINARY STL file
  *
  * @param {string} name / id of the new entity
  * @param {string} file / path of the new entity
  * @param {DataView} rawModelData the source data
  * @param {float} smoothShading if > 0.0 limit angle to perform smooth shading, otherwise flat shaded
  * @param {vec3} color if === "source" use source color, if === "sweep" per vertex r/g/b sweep, else single provided color is applied
+ * @param {bool} dynamic default == false, dynamic entities are not optimally store in GPU ram so that their data can be modified
+ * @param {vec3} scale scale modifier of the entity data
  * @returns {E3D_entity} the resulting model E3D_Entity data
  */
-    static loadModel_STL(name, file, rawModelData, smoothShading, color, dynamic = false) {
+    static loadModel_STL(name, file, rawModelData, smoothShading, color, dynamic = false, scale = vec3_unit) {
             
         let entity = new E3D_entity(name, file, dynamic);
 
@@ -230,17 +243,18 @@ class E3D_loader {
             normal[2] = -mData.getFloat32(idx+4, true);//y
             normal[1] = mData.getFloat32(idx+8, true);//z
 
-            p0[0] = mData.getFloat32(idx+12, true);//x
-            p0[2] = -mData.getFloat32(idx+16, true);//y
-            p0[1] = mData.getFloat32(idx+20, true);//z
+            // Load positions and apply scale
+            p0[0] =  mData.getFloat32(idx+12, true) * scale[0];//x
+            p0[2] = -mData.getFloat32(idx+16, true) * scale[1];//y
+            p0[1] =  mData.getFloat32(idx+20, true) * scale[2];//z
 
-            p1[0] = mData.getFloat32(idx+24, true);//x
-            p1[2] = -mData.getFloat32(idx+28, true);//y
-            p1[1] = mData.getFloat32(idx+32, true);//z
+            p1[0] =  mData.getFloat32(idx+24, true) * scale[0];//x
+            p1[2] = -mData.getFloat32(idx+28, true) * scale[1];//y
+            p1[1] =  mData.getFloat32(idx+32, true) * scale[2];//z
 
-            p2[0] = mData.getFloat32(idx+36, true);//x
-            p2[2] = -mData.getFloat32(idx+40, true);//y
-            p2[1] = mData.getFloat32(idx+44, true);//z 
+            p2[0] =  mData.getFloat32(idx+36, true) * scale[0];//x
+            p2[2] = -mData.getFloat32(idx+40, true) * scale[1];//y
+            p2[1] =  mData.getFloat32(idx+44, true) * scale[2];//z 
 
             // color data
             if (color === "source") {
@@ -291,6 +305,7 @@ class E3D_loader {
         entity.numElements = NumTriangle * 3;
 
 /*
+// TODO smooth shading for STL binary files
         if (smoothShading > 0.0) {
             console.log("Smooth Shading Normals");
             // group vertex by locality (list of unique location)
