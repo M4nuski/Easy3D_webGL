@@ -46,7 +46,8 @@ function winResize() {
     scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
     inputs.clampPitch = true;
     inputs.allowPan = true;
-    scn.camera.move(0,7.5,15,0,0,0);
+
+    scn.camera.moveTo(0, 7.5, 15, 0, 0, 0);
 }
 
 function initEngine() {
@@ -117,7 +118,7 @@ function initEngine() {
 
 function prepRender() {
     // move camera per inputs
-    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
+    scn.camera.moveBy(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
 }
 
 function timerTick() {  // Game Loop

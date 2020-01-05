@@ -164,14 +164,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         scn.state = E3D_ACTIVE;
 
-        l0v = new E3D_entity_vector("pivot", false, 0.0, false);
-        l0v.scale = vec3.fromValues(3, 3, 3);
+        l0v = new E3D_entity_vector("pivot", false, 3.0, false);
+        //l0v.scale = vec3.fromValues(3, 3, 3);
         l0v.visible = true;
         l0v.vis_culling = false;    
         scn.addEntity(l0v);
 
-        let l1v = new E3D_entity_vector("origin", false, 0.0, false);
-        l1v.scale = vec3.fromValues(10, 10, 10);
+        let l1v = new E3D_entity_vector("origin", false, 3.0, false);
+        //l1v.scale = vec3.fromValues(10, 10, 10);
         l1v.visible = true;
         l1v.vis_culling = false;    
         scn.addEntity(l1v);
@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function prepRender() {
 
-        scn.camera.move(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
+        scn.camera.moveBy(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
 
         vec3.copy(l0v.position, scn.camera.position);
         l0v.visible = inputs.checkCommand("panPivot", false);
@@ -297,8 +297,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             let biggest = Math.max(bb.max[0] - bb.min[0],  bb.max[1] - bb.min[1] ) / 2;
             let backout = biggest / Math.tan(_fieldOfView/2); 
-
-            scn.camera.move( 0,  (bb.max[1] - bb.min[1]) / 4, backout, 0, 0, 0); //  (bb.max[1] - bb.min[1]) / 2
+         //   scn.camera.position = vec3_origin;
+            scn.camera.moveTo( 0,  (bb.max[1] - bb.min[1]) / 4, backout, 0, 0, 0); //  (bb.max[1] - bb.min[1]) / 2
         }
     }
     

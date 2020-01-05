@@ -4,8 +4,6 @@
 
 "use strict"
 
-// TODO: specify move == moveBy | moveTo ?
-
 // TODO: add free gimbal mode for model view camera
 // TODO: split into appropriate files
 
@@ -1416,6 +1414,10 @@ class E3D_camera {
         this.update(this.position[0]+tx, this.position[1]+ty, this.position[2]+tz, rx, ry, rz);
     }
 
+    moveTo(tx, ty, tz, rx, ry, rz) {
+        this.update(tx, ty, tz, rx, ry, rz);
+    }
+
     getViewMatrix() {
         return this.matrix;
     }
@@ -1463,7 +1465,7 @@ class E3D_camera_persp extends E3D_camera {
         mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
     }
 
-    move(tx, ty, tz, rx, ry, rz) {
+    moveBy(tx, ty, tz, rx, ry, rz) {
         // adjust translation to current rotation
         const t = vec3.fromValues(tx , ty, tz);
    //     vec3.rotateZ(t, t, vec3_origin, -rz);
@@ -1500,7 +1502,7 @@ class E3D_camera_model extends E3D_camera_persp {
         }
     }
 
-    move(tx, ty, tz, rx, ry, rz) { // tx and ty pan and move the pivot point, z is always away from that point
+    moveBy(tx, ty, tz, rx, ry, rz) { // tx and ty pan and move the pivot point, z is always away from that point
         let t = vec3.fromValues(tx, ty, 0);
         vec3.transformMat4(t, t, this.inverseRotationMatrix);
         this.zDist -= tz;
@@ -1564,7 +1566,7 @@ class E3D_camera_space extends E3D_camera_persp {
         }
     }
 
-    move(tx, ty, tz, rx, rz, ry) { // rotation are now used with delta
+    moveBy(tx, ty, tz, rx, rz, ry) { // rotation are now used with delta
 
         const t = vec3.fromValues(tx , ty, tz);
         vec3.transformMat4(t, t, this.inverseRotationMatrix);

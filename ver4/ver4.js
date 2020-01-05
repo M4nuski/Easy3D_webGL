@@ -245,7 +245,7 @@ function initEngine() {
 function prepRender() {
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
-    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
+    scn.camera.moveBy(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         l0v.updateVector(scn.lights.light0_adjusted);

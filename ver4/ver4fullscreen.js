@@ -221,17 +221,17 @@ function initEngine() {
     resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
     
-    l0v = new E3D_entity_vector("light0vect", true, 2.0, true);
+    l0v = new E3D_entity_vector("light0vect", true, 10.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
-    l0v.scale = vec3.fromValues(5, 5, 5);
+    //l0v.scale = vec3.fromValues(5, 5, 5);
     l0v.visible = true;
     l0v.vis_culling = false;
 
     scn.addEntity(l0v);
     
-    l1v = new E3D_entity_vector("light1vect", true, 2.0, true);
+    l1v = new E3D_entity_vector("light1vect", true, 10.0, true);
     l1v.position = vec3.fromValues(5, 20, 5);
-    l1v.scale = vec3.fromValues(5, 5, 5);
+    //l1v.scale = vec3.fromValues(5, 5, 5);
     l1v.visible = true;
     l1v.vis_culling = false;
 
@@ -293,7 +293,7 @@ function initEngine() {
 function prepRender() {
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
-    scn.camera.move(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
+    scn.camera.moveBy(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         l0v.updateVector(scn.lights.light0_adjusted);
@@ -427,17 +427,17 @@ function onRessource(name, msg) {
                 if (!cloned) cloneWar();
 
             } else if (name == "CM") {
-                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
+                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep", false, vec3.fromValues(5, 1, 5));
                 nm.position[1] = -120;
-                nm.scale[0] = 5;
-                nm.scale[2] = 5;
+                //nm.scale[0] = 5;
+                //nm.scale[2] = 5;
                 nm.visible = true;
                 scn.addEntity(nm);  
 
                 nm = scn.cloneEntity("CM_top", "CM_bottom");
                 nm.position[1] = 120;
-                nm.scale[0] = 5;
-                nm.scale[2] = 5;
+                //nm.scale[0] = 5;
+                //nm.scale[2] = 5;
                 nm.visible = true;
                 nm.resetMatrix();
 
