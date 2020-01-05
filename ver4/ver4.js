@@ -305,7 +305,19 @@ function timerTick() {  // Game Loop
     inputs.processInputs(timer.delta);
     inputs.smoothRotation(6);
     inputs.smoothPosition(6);
-    if (scn.camera.id == "cam1f") inputs.clampRotationSmooth(-PIdiv2, PIdiv2, true, false, false);
+    if (scn.camera.id == "cam1f") {
+     //   inputs.clampRotationSmooth(-PIdiv2, PIdiv2, true, false, false);
+        if (scn.camera.rotation[0] < -PIdiv2)  {
+            scn.camera.rotation[0] = -PIdiv2;
+            if (inputs.rx_smth < 0) inputs.rx_smth = 0;
+        }
+
+        if (scn.camera.rotation[0] >  PIdiv2) {
+            scn.camera.rotation[0] =  PIdiv2;
+            if (inputs.rx_smth > 0) inputs.rx_smth = 0;
+        }
+
+    } 
 
     updateStatus();
     nHitTest = 0;
@@ -332,6 +344,9 @@ function timerTick() {  // Game Loop
     inputs.px = 0;
     inputs.py = 0;
     inputs.pz = 0;
+    inputs.rx = 0;
+    inputs.ry = 0;
+    inputs.rz = 0;
 }
 
 

@@ -82,12 +82,10 @@ class E3D_entity {
         // Properties
         this.position = vec3.create();
         this.rotation = vec3.create();
-        //this.scale = vec3.fromValues(1.0, 1.0, 1.0);
 
         // fustrum culling
         this.vis_culling = true;
-        this.cull_dist = 0; // current distance along Z axis
-        //this.cull_max_pos = [0, 0, 0]; // fartest vertex to compute max distance from matrix 
+        this.cull_dist = 0; // maximum vertex distance from object center for culling
         
         // Computed matrix
         this.modelMatrix = mat4.create();
@@ -127,16 +125,14 @@ class E3D_entity {
             this.CD_sph = 0;
             this.CD_sph_p0 = []; // original to model space
             this.CD_sph_p  = []; // transformed to world space
-            this.CD_sph_r = []; // radius
-         //   this.CD_sph_r  = []; // transformed to world space
+            this.CD_sph_r  = []; // radius
             this.CD_sph_rs = []; // radius squared
 
             // Infinite Plane Target, on X-Y plane
             this.CD_iPlane = 0;
             this.CD_iPlane_n0 = []; // normal original to model space
             this.CD_iPlane_n  = []; // normal transformed to world space (rotation)
-            this.CD_iPlane_d = []; // z distance original to model space
-           // this.CD_iPlane_d  = []; // transformed to world space (scale)
+            this.CD_iPlane_d  = []; // z distance original to model space
 
             // Finite Plane Target, X-Y plane 
             this.CD_fPlane = 0;
@@ -181,7 +177,6 @@ class E3D_entity {
         }
 
         this.cull_dist = entity.cull_dist;
-        //this.cull_max_pos = entity.cull_max_pos.slice();
 
         if (entity.CD_vec > 0) {
             this.CD_vec = entity.CD_vec;
@@ -192,13 +187,11 @@ class E3D_entity {
             this.CD_sph = entity.CD_sph;
             this.CD_sph_p0 = copy3fArray(entity.CD_sph_p0);
             this.CD_sph_p = copy3fArray(entity.CD_sph_p);
-        //    this.CD_sph_r0 = entity.CD_sph_r0.slice();
             this.CD_sph_r = entity.CD_sph_r.slice();
             this.CD_sph_rs = entity.CD_sph_rs.slice();
         }
         if (entity.CD_iPlane > 0) {
             this.CD_iPlane = entity.CD_iPlane;
-         //   this.CD_iPlane_d0 = entity.CD_iPlane_d0.slice();
             this.CD_iPlane_d  = entity.CD_iPlane_d.slice();
             this.CD_iPlane_n0 = copy3fArray(entity.CD_iPlane_n0);
             this.CD_iPlane_n  = copy3fArray(entity.CD_iPlane_n);
@@ -232,19 +225,15 @@ class E3D_entity {
 
     resetMatrix(){
         // recreate matrices from rotation and position
-        mat4.rotateZ(this.normalMatrix, mat4_identity, this.rotation[2] );
+        mat4.rotateZ(this.normalMatrix, mat4_identity,     this.rotation[2] );
         mat4.rotateX(this.normalMatrix, this.normalMatrix, this.rotation[0] );
         mat4.rotateY(this.normalMatrix, this.normalMatrix, this.rotation[1] );
 
         mat4.translate(this.modelMatrix, mat4_identity, this.position);
-       // mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
         
         mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.rotation[2] );
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
-        
-      //  this.cull_dist = vec3.length(vec3.multiply([0,0,0], this.cull_max_pos, this.scale));
-        
 
         if (this.collisionDetection) {
             for (var i = 0; i < this.CD_vec; ++i) {
@@ -253,39 +242,21 @@ class E3D_entity {
             }
             for (var i = 0; i < this.CD_sph; ++i) {
                 vec3.transformMat4(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
-       //         this.CD_sph_r[i] = this.CD_sph_r0[i] * vec3.length(this.scale)/1.73205;
-         //       this.CD_sph_rs[i] = this.CD_sph_r[i] * this.CD_sph_r[i];
             }
-           // var invScale = vec3.inverse([0, 0, 0], this.scale);
             for (var i = 0; i < this.CD_iPlane; ++i) {
                 vec3.transformMat4(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
-           //     vec3.multiply(this.CD_iPlane_n[i], this.CD_iPlane_n[i], invScale);
             }
             for (var i = 0; i < this.CD_fPlane; ++i) {
                 vec3.transformMat4(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
-             //   vec3.multiply(this.CD_fPlane_n[i], this.CD_fPlane_n[i], invScale);
-
                 vec3.transformMat4(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.modelMatrix);
-                //vec3.multiply(this.CD_fPlane_d[i], this.CD_fPlane_d[i], invScale);
-
                 vec3.transformMat4(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
-              //  vec3.multiply(this.CD_fPlane_w[i], this.CD_fPlane_w[i], invScale);
-
                 vec3.transformMat4(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
-           //     vec3.multiply(this.CD_fPlane_h[i], this.CD_fPlane_h[i], invScale);
             }
             for (var i = 0; i < this.CD_cube; ++i) {
                 vec3.transformMat4(this.CD_cube_p[i], this.CD_cube_p0[i], this.normalMatrix);
-             //   vec3.multiply(this.CD_cube_p[i], this.CD_cube_p[i], invScale);
-
                 vec3.transformMat4(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
-              //  vec3.multiply(this.CD_cube_x[i], this.CD_cube_x[i], invScale);
-
                 vec3.transformMat4(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
-               // vec3.multiply(this.CD_cube_y[i], this.CD_cube_y[i], invScale);
-
                 vec3.transformMat4(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
-               // vec3.multiply(this.CD_cube_z[i], this.CD_cube_z[i], invScale);
             }
         }
     }
@@ -304,7 +275,6 @@ class E3D_entity {
         this.CD_sph_p0[this.CD_sph] = p.slice();
         this.CD_sph_p[this.CD_sph] = p.slice(); 
         
-       // this.CD_sph_r0[this.CD_sph] = r;
         this.CD_sph_r[this.CD_sph] = r;
         this.CD_sph_rs[this.CD_sph] = r*r;
         
@@ -312,7 +282,6 @@ class E3D_entity {
         this.collisionDetection = true;
     }
     pushCD_iPlane(d, n) {
-      //  this.CD_iPlane_d0[this.CD_iPlane] = d; 
         this.CD_iPlane_d[this.CD_iPlane] = d; 
         this.CD_iPlane_n0[this.CD_iPlane] = n.slice(); 
         this.CD_iPlane_n[this.CD_iPlane] = n.slice();
@@ -967,8 +936,6 @@ class E3D_scene {
             this.fogFactor = 1.0 / ((this.camera.far - this.camera.near) - this.fogLimit);
         };
 
-       // this.cull_view_axis = this.camera.adjustToCamera(vec3_nz);
-
         if (this.preRenderFunction) {
             this.preRenderFunction(this);
         }
@@ -977,13 +944,11 @@ class E3D_scene {
     render() {
         // entities, sprites, hud
 
-
-
         this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
 
         this.context.useProgram(this.program.shaderProgram);
 
-        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());     
+        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getProjectionViewMatrix());     
 
         this.context.uniform3fv(this.program.shaderUniforms["uLightA_Color"], this.lights.ambiant_color);
 
@@ -1209,7 +1174,7 @@ class E3D_scene_cell_shader extends E3D_scene {
         this.context.cullFace(this.context.FRONT);
         this.context.depthFunc(this.context.LEQUAL);
 
-        this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());     
+        this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uProjectionMatrix"], false, this.camera.getProjectionViewMatrix());     
         this.context.uniform4fv(this.strokeProgram.shaderUniforms["uFarColor"], this.farColor );  
         this.context.uniform4fv(this.strokeProgram.shaderUniforms["uStrokeColor"], this.strokeColor );  
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], this.strokeDepth );  
@@ -1244,7 +1209,7 @@ class E3D_scene_cell_shader extends E3D_scene {
 
         this.context.useProgram(this.program.shaderProgram);
         
-        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getViewMatrix());     
+        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getProjectionViewMatrix());     
         this.context.uniform3fv(this.program.shaderUniforms["uLight"], this.lights.light0_adjusted);
         
         for (let i = 0; i < this.entities.length; ++i)
@@ -1297,6 +1262,8 @@ class E3D_scene_cell_shader extends E3D_scene {
     }*/
 
 }
+
+
 
 // Base class container for GLSL shader program loading and compiling
 class E3D_program {
@@ -1355,6 +1322,9 @@ class E3D_program {
 
 }
 
+
+
+
 // Base class for scene view matrix generation (orthogonal projection)
 class E3D_camera {
 
@@ -1362,8 +1332,8 @@ class E3D_camera {
         this.id = id;
         this.rotation = vec3.create();
         this.position = vec3.create();
-        this.matrix = mat4.create();
-        this.baseMatrix = mat4.create(); 
+        this.matrix = mat4.create(); // viewProjection
+        this.projectionMatrix = mat4.create(); 
 
         this.near = -1.0;
         this.far = 1.0;
@@ -1371,9 +1341,10 @@ class E3D_camera {
         this.fov = -1;
 
         this.resize(width, height);
-        this.updateInternal();
+        this.updateMatrix();
     }
 
+    // recalculate projection (base) matrix
     resize(width, height) {
         let wd2 = width /2;
         let hd2 = height /2;
@@ -1383,23 +1354,34 @@ class E3D_camera {
             dd2 = hd2;
         }
  
-        mat4.ortho(this.baseMatrix, -wd2, wd2, hd2, -hd2, -dd2, dd2);  
+        mat4.ortho(this.projectionMatrix, -wd2, wd2, hd2, -hd2, -dd2, dd2);  
 
         this.near = -dd2;
         this.far = dd2;
     }
 
-    updateInternal() {
-        // create matrix per position and rotation
-        mat4.translate(this.matrix, this.baseMatrix, vec3.negate(vec3_dummy, this.position) );
+    // calculate viewProjection matrix per position and rotation
+    updateMatrix() {
+        mat4.translate(this.matrix, this.projectionMatrix, vec3.negate(vec3_dummy, this.position) );
 
         mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
     }
 
-    update(px, py, pz, rx, ry, rz) {
-        // update internal data then matrix
+    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
+        this.position[0] += tx;
+        this.position[1] += ty;
+        this.position[2] += tz;
+        
+        this.rotation[0] += rx;
+        this.rotation[1] += ry;
+        this.rotation[2] += rz;
+
+        this.updateMatrix();
+    }
+
+    moveTo(px, py, pz, rx = this.rotation[0], ry = this.rotation[1], rz = this.rotation[2]) {
         this.position[0] = px;
         this.position[1] = py;
         this.position[2] = pz;
@@ -1407,18 +1389,11 @@ class E3D_camera {
         this.rotation[0] = rx;
         this.rotation[1] = ry;
         this.rotation[2] = rz;
-        this.updateInternal();
+
+        this.updateMatrix();
     }
 
-    moveBy(tx, ty, tz, rx, ry, rz) {
-        this.update(this.position[0]+tx, this.position[1]+ty, this.position[2]+tz, rx, ry, rz);
-    }
-
-    moveTo(tx, ty, tz, rx, ry, rz) {
-        this.update(tx, ty, tz, rx, ry, rz);
-    }
-
-    getViewMatrix() {
+    getProjectionViewMatrix() {
         return this.matrix;
     }
 
@@ -1446,33 +1421,40 @@ class E3D_camera_persp extends E3D_camera {
         this.far = far;
 
         this.resize(width, height, fov, near, far);
-        this.updateInternal();
+        this.updateMatrix();
     }
 
     resize(width, height, fov, near, far) {
         this.fov = fov;
         this.near = near;
         this.far = far;
-        mat4.perspective(this.baseMatrix, fov, width / height, near, far);
+        mat4.perspective(this.projectionMatrix, fov, width / height, near, far);
     }
 
-    updateInternal() {
-        // update matrix per internal data        
-     //   mat4.rotateZ(this.matrix, this.baseMatrix, this.rotation[2] );
-        mat4.rotateX(this.matrix, this.baseMatrix, this.rotation[0] );
+    updateMatrix() {
+     //   mat4.rotateZ(this.matrix, this.projectionMatrix, this.rotation[2] ); // do not use Z
+        mat4.rotateX(this.matrix, this.projectionMatrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
 
         mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
     }
 
-    moveBy(tx, ty, tz, rx, ry, rz) {
+    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
         // adjust translation to current rotation
-        const t = vec3.fromValues(tx , ty, tz);
-   //     vec3.rotateZ(t, t, vec3_origin, -rz);
-        vec3.rotateX(t, t, vec3_origin, -rx);
-        vec3.rotateY(t, t, vec3_origin, -ry);
-        // update
-        this.update(this.position[0]+t[0], this.position[1]+t[1], this.position[2]+t[2], rx, ry, rz);
+        const t = vec3.fromValues(tx, ty, tz);
+   //     vec3.rotateZ(t, t, vec3_origin, -rz); // do not use Z
+        vec3.rotateX(t, t, vec3_origin, -this.rotation[0]);
+        vec3.rotateY(t, t, vec3_origin, -this.rotation[1]);
+
+        this.position[0] += t[0];
+        this.position[1] += t[1];
+        this.position[2] += t[2];
+        
+        this.rotation[0] += rx;
+        this.rotation[1] += ry;
+        this.rotation[2] += rz;
+
+        this.updateMatrix();
     }
 
 }
@@ -1487,10 +1469,10 @@ class E3D_camera_model extends E3D_camera_persp {
         this.inverseRotationMatrix = mat4.create();
 
     }
-    updateInternal() {
+    updateMatrix() {
         // update matrix per internal data
         if (this.zDist != undefined) {
-            mat4.translate(this.matrix, this.baseMatrix,  [0, 0, this.zDist]);
+            mat4.translate(this.matrix, this.projectionMatrix,  [0, 0, this.zDist]);
 
             mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
             mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
@@ -1502,14 +1484,24 @@ class E3D_camera_model extends E3D_camera_persp {
         }
     }
 
-    moveBy(tx, ty, tz, rx, ry, rz) { // tx and ty pan and move the pivot point, z is always away from that point
+    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) { // tx and ty pan and move the pivot point, z is always away from that point
         let t = vec3.fromValues(tx, ty, 0);
         vec3.transformMat4(t, t, this.inverseRotationMatrix);
         this.zDist -= tz;
         if (this.zDist > 0) {
             this.zDist = 0;
         }
-        this.update(this.position[0] + t[0], this.position[1] + t[1], this.position[2] + t[2], rx, ry, rz);
+
+        this.position[0] += t[0];
+        this.position[1] += t[1];
+        this.position[2] += t[2];
+        
+        this.rotation[0] += rx;
+        this.rotation[1] += ry;
+        this.rotation[2] += rz;
+
+        this.updateMatrix();
+
     }
 
     adjustToCamera(vect) {
@@ -1532,12 +1524,11 @@ class E3D_camera_space extends E3D_camera_persp {
     constructor(id, width, height, fov, near, far) {
         super(id, width, height, fov, near, far);
 
-        this.lastRx = 0;
-        this.lastRy = 0;
-        this.lastRz = 0;
+        // local references
         this.nvx = vec3.create();
         this.nvy = vec3.create();
         this.nvz = vec3.create();
+
         this.rotationMatrix = mat4.create();
         this.inverseRotationMatrix = mat4.create();
         // start with identity matrix
@@ -1546,7 +1537,7 @@ class E3D_camera_space extends E3D_camera_persp {
         // output matrix is mix of both tx and rotation matrix
     }
 
-    updateInternal() {
+    updateMatrix() {
         // update matrix per internal data
         // Set new axis reference system
         if (this.nvx) {
@@ -1554,11 +1545,11 @@ class E3D_camera_space extends E3D_camera_persp {
             vec3.transformMat4(this.nvy, vec3_y, this.inverseRotationMatrix);
             vec3.transformMat4(this.nvz, vec3_z, this.inverseRotationMatrix);
 
-            mat4.rotate(this.rotationMatrix,this.rotationMatrix,this.rotation[0] , this.nvx);
-            mat4.rotate(this.rotationMatrix,this.rotationMatrix, this.rotation[1] , this.nvy);
-            mat4.rotate(this.rotationMatrix,this.rotationMatrix,this.rotation[2] , this.nvz);
+            mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[0], this.nvx);
+            mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[1], this.nvy);
+            mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[2], this.nvz);
 
-            mat4.multiply(this.matrix, this.baseMatrix, this.rotationMatrix);     
+            mat4.multiply(this.matrix, this.projectionMatrix, this.rotationMatrix);     
 
             mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
 
@@ -1566,15 +1557,25 @@ class E3D_camera_space extends E3D_camera_persp {
         }
     }
 
-    moveBy(tx, ty, tz, rx, rz, ry) { // rotation are now used with delta
-
-        const t = vec3.fromValues(tx , ty, tz);
+    moveBy(tx, ty, tz, rx = 0, rz = 0, ry = 0) {
+        //transform translation to local
+        const t = vec3.fromValues(tx, ty, tz);
         vec3.transformMat4(t, t, this.inverseRotationMatrix);
 
-        this.update(this.position[0]+t[0], this.position[1]+t[1], this.position[2]+t[2], rx - this.lastRx, ry - this.lastRy, rz - this.lastRz);
-        this.lastRx = rx;
-        this.lastRy = ry;
-        this.lastRz = rz;
+        this.position[0] += t[0];
+        this.position[1] += t[1];
+        this.position[2] += t[2];
+
+        this.rotation[0] = rx;
+        this.rotation[1] = ry;
+        this.rotation[2] = rz;
+
+        this.updateMatrix();
+
+        //reset rotations, incremental
+        this.rotation[0] = 0;
+        this.rotation[1] = 0;
+        this.rotation[2] = 0;
     }
 
     adjustToCamera(vect) {
@@ -1584,12 +1585,13 @@ class E3D_camera_space extends E3D_camera_persp {
     }  
 
     negateCamera(vect) {
-    //    let result = vec3.create();
         return vec3.transformMat4(vect, vect, this.rotationMatrix);
-      //  return result;
     }  
 
 }
+
+
+
 
 // Base class for ambiant and 2 directional lights for current shader model
 class E3D_lighting {
