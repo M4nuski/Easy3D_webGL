@@ -50,10 +50,15 @@ var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), 
 // virtual trackpad + thumbstick
 var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") , inputs);
 var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs, "action1");
+vTSinput.Xspeed = inputs._rotSpeed;
+vTSinput.Yspeed = inputs._posSpeed; //pz
 // virtual dual sticks
 var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "action1");
+vTSinputLeft.Xspeed = inputs._rotSpeed;
+vTSinputLeft.Yspeed = inputs._posSpeed; //pz
 var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "action0");
-
+vTSinputRight.Xspeed = inputs._rotSpeed;
+vTSinputRight.Yspeed = inputs._rotSpeed;
 
 try {
 if (process) {
@@ -294,14 +299,15 @@ function prepRender() {
 
 function timerTick() {  // Game Loop
     
-    vTSinputRight.processInputs("rx", "ry", timer.delta);
+    vTSinputRight.processInputs("ry_offset", "rx_offset");
 
     if (scn.camera.id == "cam1s") {
-        vTSinput.processInputs("rz", "pz", timer.delta);
-        vTSinputLeft.processInputs("rz", "pz", timer.delta);
+        vTSinput.processInputs("rz_offset", "pz_offset");
+        vTSinputLeft.processInputs("rz_offset", "pz_offset");
     } else {
-        vTSinput.processInputs("px", "pz", timer.delta);
-        vTSinputLeft.processInputs("px", "pz", timer.delta);
+        vTSinput.processInputs("px_offset", "pz_offset");
+        vTSinputLeft.processInputs("px_offset", "pz_offset");
+
     }
 
     inputs.processInputs(timer.delta);

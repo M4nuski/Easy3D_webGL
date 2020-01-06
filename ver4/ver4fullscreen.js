@@ -79,14 +79,17 @@ var inputs = new E3D_input(can, true, true, true, true, true, true);
 inputs.onInput = onEngineInput;
 
 // virtual KB
-var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
+//var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
 // virtual trackpad + thumbstick
-var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") , inputs);
-var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs, "action1");
+//var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") , inputs);
+//var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs, "action1");
 // virtual dual sticks
 var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "action1");
+vTSinputLeft.Xspeed = inputs._rotSpeed;
+vTSinputLeft.Yspeed = inputs._posSpeed; //pz
 var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "action0");
-
+vTSinputRight.Xspeed = inputs._rotSpeed;
+vTSinputRight.Yspeed = inputs._rotSpeed;
 
 log("Session Start", false);
 
@@ -122,7 +125,7 @@ function winResize() {
         scn.camera.resize(winWidth, winHeight) 
     }
 
-    vTSinput.onResize();
+   // vTSinput.onResize();
     vTSinputLeft.onResize();
     vTSinputRight.onResize();
     //TODO move to class, also add scroll ??
@@ -361,17 +364,18 @@ function onEngineInput() { // preprocess inputs out of game loop
 
 function timerTick() {  // Game Loop
     
-    vTSinputRight.processInputs("rx", "ry", timer.delta);
+    vTSinputRight.processInputs("ry_offset", "rx_offset");
+    vTSinputLeft.processInputs("rz_offset", "pz_offset");
 
-    if (scn.camera.id == "cam1s") {
-        vTSinput.processInputs("rz", "pz", timer.delta);
-        vTSinputLeft.processInputs("rz", "pz", timer.delta);
+   /* if (scn.camera.id == "cam1s") {
+
     } else {
-        vTSinput.processInputs("px", "pz", timer.delta);
-        vTSinputLeft.processInputs("px", "pz", timer.delta);
-    }
+
+        vTSinputLeft.processInputs("px_offset", "pz_offset");
+    }*/
 
     inputs.processInputs(timer.delta);
+
     inputs.smoothRotation(6);
     inputs.smoothPosition(6);
 

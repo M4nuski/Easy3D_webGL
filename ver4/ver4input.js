@@ -92,9 +92,14 @@ class E3D_input {
         this.touchMap = {}; // TODO: map touch events to mouse button events
         // pinch distance delta is mapped to mouse wheel
         this.touchMap["tap"] = E3D_INP_LMB;
-        this.touchMap["doubleTap"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB; // "double click"
-        this.touchMap["pinch"] = E3D_INP_MMB;
-        this.touchMap["doublePinch"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB;
+        this.touchMap["doubleTap"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB;
+    //    this.touchMap["drag"] = E3D_INP_MMB;
+    //    this.touchMap["reverseDoubleTap"] = 
+        this.touchMap["pinch"] = E3D_INP_RMB;
+       // this.touchMap["pinchDrag"] = E3D_INP_RMB;
+      //  this.touchMap["doublePinch"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB;
+
+
 
 
         // Keyboard Controls, maps commands to keyboardEvent.code
@@ -139,6 +144,14 @@ class E3D_input {
         this.mx = 0;
         this.my = 0;
         this.mw = 0;
+
+        // Delta data injection
+        this.px_offset = 0;
+        this.py_offset = 0;
+        this.pz_offset = 0;
+        this.rx_offset = 0;
+        this.ry_offset = 0;
+        this.rz_offset = 0;
 
 // Outputs
     // Positions
@@ -185,9 +198,12 @@ class E3D_input {
     // Process keys and pointer inputs to get final output values
     processInputs(delta = 1.0) {
 
-        this.px_delta = 0; this.py_delta = 0; this.pz_delta = 0;
-        this.rx_delta = 0; this.ry_delta = 0; this.rz_delta = 0;
-
+        this.px_delta = this.px_offset; 
+        this.py_delta = this.py_offset; 
+        this.pz_delta = this.pz_offset;
+        this.rx_delta = this.rx_offset; 
+        this.ry_delta = this.ry_offset;
+        this.rz_delta = this.rz_offset;
         // Keyboard
         // Position
         if (this.inputTable[this.keyMap["px_dec"]]) {
@@ -322,6 +338,13 @@ class E3D_input {
         this.mx = 0;
         this.my = 0;
         this.mw = 0;
+        this.px_offset = 0;
+        this.py_offset = 0;
+        this.pz_offset = 0;
+        this.rx_offset = 0;
+        this.ry_offset = 0;
+        this.rz_offset = 0;
+
     }
 
 
@@ -580,20 +603,20 @@ class E3D_input {
 
         if (this.ongoingTouches.length == 1) {
             //process as mouse down
-            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
             this.mouseDown(this.ongoingTouches[0]);
 
         } else if (this.ongoingTouches.length == 2) {
             //process as mouse up and then wheel / pan
 
-            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];;// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
 
-            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
 
             this.mouseDown( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
                                     (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
-                                    this._panMouseButton) );// TODO: update for new mappings
+                                    this.touchMap["pinch"]) );// TODO: update for new mappings
 
             var tdx = this.ongoingTouches[1].pageX - this.ongoingTouches[0].pageX;
             var tdy = this.ongoingTouches[1].pageY - this.ongoingTouches[0].pageY;
@@ -602,7 +625,7 @@ class E3D_input {
         }
 
         if (this.doubleTapping) {
-            this.keyDown( { code : this.keyMap["action0"] } );
+            this.keyDown( { code : this.touchMap["doubleTap"] } ); // TODO map touch down key
             this.doubleTapping = false;
         } else {
             this.doubleTapping = true;
@@ -617,12 +640,12 @@ class E3D_input {
         var touches = event.changedTouches;
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
         }
 
         if (this.ongoingTouches.length == 2) {
-            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
         }
 
@@ -633,20 +656,20 @@ class E3D_input {
             } 
             else console.log("(touchEnd) Touch Id not found");
         }
-        this.keyUp( { code : this.keyMap["action0"] } );
+        this.keyUp( { code : this.touchMap["doubleTap"] } );  // TODO map touch up key
     }
 
     touchCancel(event) {
 
-        if (event.preventDefault) { event.preventDefault(); };
+        if (event.preventDefault && event.cancelable) { event.preventDefault(); };
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
-            this.mouseUp(ongoingTouches[0]);
+            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
+            this.mouseUp(this.ongoingTouches[0]);
         }
 
         if (this.ongoingTouches.length == 2) {
-            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
             this.mouseUp(this.ongoingTouches[0]);
         }
 
@@ -672,7 +695,7 @@ class E3D_input {
 
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this._rotateMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
             this.mouseMove(this.ongoingTouches[0]);
 
         } else if (this.ongoingTouches.length == 2) {
@@ -682,7 +705,7 @@ class E3D_input {
             var newTouchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
 
             // pinch panning
-            this.ongoingTouches[0].button = this._panMouseButton;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
             this.mouseMove( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
                                         (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
                                         this._panMouseButton) );
@@ -703,7 +726,7 @@ class E3D_input {
     }
 
     copyTouch(touch) {
-        return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY, button: this._rotateMouseButton };
+        return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY, button: this.touchMap["tap"] }; // TODO: update to new maps
     }
 
     ongoingTouchIndexById(idToFind) {
@@ -761,7 +784,7 @@ class E3D_input_virtual_kb {
     }
 }
 
-// Virtual trackpad handler from and DOM element
+// Virtual trackpad handler from a DOM element
 class E3D_input_virtual_trackpad {
     constructor (element, inputClass) {
 
@@ -783,7 +806,7 @@ class E3D_input_virtual_trackpad {
         this.onResize();
     } 
 
-    onResize(event) {
+    onResize() {
         this.xScale = this.inputClass.element.offsetWidth / this.element.offsetWidth;
         this.yScale = this.inputClass.element.offsetHeight / this.element.offsetHeight;
 
@@ -824,7 +847,7 @@ class E3D_input_virtual_trackpad {
 
 
 
-// Virtual thumb stick input from an DOM element
+// Virtual thumb stick input from a DOM element
 class E3D_input_virtual_thumbstick {
     constructor (element, inputClass, doubleTapCommand = "action0") {
 
@@ -835,13 +858,15 @@ class E3D_input_virtual_thumbstick {
         this._doubleTapDelay = 200;
         this.doubleTapping = false;
 
-        this.Speed = 0.015; // touch to mouse factor
+        this.Xspeed = 0.015; // touch to delta factor
+        this.Yspeed = 0.015; // touch to delta factor
         this.Touch = -1; // current touch to follow (1st hit)
 
         // Center of element in pageX/Y
         this.xMid = 0.5;
         this.yMid = 0.5;
 
+        // Edge distance of element
         this.xMax = 100;
         this.yMax = 100;
 
@@ -861,7 +886,7 @@ class E3D_input_virtual_thumbstick {
         //this.keyDown( { key : this.keyMap["action0"] } );
     } 
 
-    onResize(event) {
+    onResize() {
         let o = getTotalPageOffset(this.element);
 
         this.xMax = this.element.offsetWidth / 2;
@@ -871,18 +896,24 @@ class E3D_input_virtual_thumbstick {
         this.yMid = o.y + this.yMax;
     }
 
-    processInputs(xTarget = "rz", yTarget = "pz", delta = 1) {
+    // add values to input's delta offsets
+    processInputs(xTarget = "rx_offset", yTarget = "ry_offset") {
         if (this.Touch != -1) {
-            var dx = this.x - this.xMid;
-            var dy = this.y - this.yMid; 
 
-            if (dx < -this.xMax) dx = -this.xMax;
-            if (dx >  this.xMax) dx =  this.xMax;
-            if (dy < -this.yMax) dy = -this.yMax;
-            if (dy >  this.yMax) dy =  this.yMax;
- 
+            //delta
+            var dx = (this.x - this.xMid) / this.xMax;
+            var dy = (this.y - this.yMid) / this.yMax; 
 
-            var f = xTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed;  
+            //clamp
+            if (dx < -1.0) dx = -1.0;
+            if (dx >  1.0) dx =  1.0;
+            if (dy < -1.0) dy = -1.0;
+            if (dy >  1.0) dy =  1.0;
+
+            if (this.inputClass[xTarget] != undefined) this.inputClass[xTarget] += dx * this.Xspeed;
+            if (this.inputClass[yTarget] != undefined) this.inputClass[yTarget] += dy * this.Yspeed;
+
+          /*  var f = xTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed;  
             if (xTarget.indexOf("-") > -1) {
                 f = -f;
                 xTarget = xTarget.substring(1);
@@ -895,12 +926,9 @@ class E3D_input_virtual_thumbstick {
                 xTarget = xTarget.substring(1);
             }  
             this.inputClass[yTarget] += dy * this.Speed * delta * f;
-
+            */
         }
-        //injection targets :
-        //px : strafe left/right
-        //pz : move forward/backward
-        //rz : roll left/right
+
     }
 
     onTouchStart(event) {
