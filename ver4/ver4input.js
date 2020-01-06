@@ -60,8 +60,6 @@ class E3D_input {
         this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
 
-        // TODO: callback on pointer lock / unlock to allow to record current values
-
         this.pointerMap = {}; // Map of inputs for pointer
         // pointer map buttons : disabled, always on, lmb, mmb, rmb
         // pointer map axis : x/y/w (wheel)
@@ -89,17 +87,11 @@ class E3D_input {
         this.pointerMap["rz_axis"] = E3D_INP_X;
 
 
-        this.touchMap = {}; // TODO: map touch events to mouse button events
+        this.touchMap = {}; 
         // pinch distance delta is mapped to mouse wheel
         this.touchMap["tap"] = E3D_INP_LMB;
         this.touchMap["doubleTap"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB;
-    //    this.touchMap["drag"] = E3D_INP_MMB;
-    //    this.touchMap["reverseDoubleTap"] = 
         this.touchMap["pinch"] = E3D_INP_RMB;
-       // this.touchMap["pinchDrag"] = E3D_INP_RMB;
-      //  this.touchMap["doublePinch"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB;
-
-
 
 
         // Keyboard Controls, maps commands to keyboardEvent.code
@@ -204,6 +196,7 @@ class E3D_input {
         this.rx_delta = this.rx_offset; 
         this.ry_delta = this.ry_offset;
         this.rz_delta = this.rz_offset;
+
         // Keyboard
         // Position
         if (this.inputTable[this.keyMap["px_dec"]]) {
@@ -539,7 +532,7 @@ class E3D_input {
 
     mouseDown(event) {
         this.pinx = event.pageX; // store relative position
-        this.piny = event.pageY; // TODO evaluate page vs screen
+        this.piny = event.pageY;
 
         this.keyDown( { code : event.button } );
 
@@ -561,7 +554,7 @@ class E3D_input {
         this.mx += (event.pageX - this.pinx) * this._mouseSpeed;
         this.my += (event.pageY - this.piny) * this._mouseSpeed;
 
-        this.pinx = event.pageX; // TODO evaluate page vs screen
+        this.pinx = event.pageX;
         this.piny = event.pageY;
     }
     
@@ -578,9 +571,6 @@ class E3D_input {
     }
     
     mouseDblClick(event) {
-       // if (pLockSupported) {
-        //    pLockRequest(this.element);
-       // }
         this.keyUp( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
         this.keyDown( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
 
@@ -603,20 +593,20 @@ class E3D_input {
 
         if (this.ongoingTouches.length == 1) {
             //process as mouse down
-            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];
             this.mouseDown(this.ongoingTouches[0]);
 
         } else if (this.ongoingTouches.length == 2) {
             //process as mouse up and then wheel / pan
 
-            this.ongoingTouches[0].button = this.touchMap["tap"];;// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];
             this.mouseUp(this.ongoingTouches[0]);
 
-            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];
 
             this.mouseDown( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
                                     (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
-                                    this.touchMap["pinch"]) );// TODO: update for new mappings
+                                    this.touchMap["pinch"]) );
 
             var tdx = this.ongoingTouches[1].pageX - this.ongoingTouches[0].pageX;
             var tdy = this.ongoingTouches[1].pageY - this.ongoingTouches[0].pageY;
@@ -625,7 +615,7 @@ class E3D_input {
         }
 
         if (this.doubleTapping) {
-            this.keyDown( { code : this.touchMap["doubleTap"] } ); // TODO map touch down key
+            this.keyDown( { code : this.touchMap["doubleTap"] } );
             this.doubleTapping = false;
         } else {
             this.doubleTapping = true;
@@ -640,12 +630,12 @@ class E3D_input {
         var touches = event.changedTouches;
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];
             this.mouseUp(this.ongoingTouches[0]);
         }
 
         if (this.ongoingTouches.length == 2) {
-            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];
             this.mouseUp(this.ongoingTouches[0]);
         }
 
@@ -656,7 +646,7 @@ class E3D_input {
             } 
             else console.log("(touchEnd) Touch Id not found");
         }
-        this.keyUp( { code : this.touchMap["doubleTap"] } );  // TODO map touch up key
+        this.keyUp( { code : this.touchMap["doubleTap"] } );
     }
 
     touchCancel(event) {
@@ -664,12 +654,12 @@ class E3D_input {
         if (event.preventDefault && event.cancelable) { event.preventDefault(); };
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];
             this.mouseUp(this.ongoingTouches[0]);
         }
 
         if (this.ongoingTouches.length == 2) {
-            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];
             this.mouseUp(this.ongoingTouches[0]);
         }
 
@@ -689,13 +679,13 @@ class E3D_input {
         for (var i = 0; i < touches.length; i++) {
             var idx = this.ongoingTouchIndexById(touches[i].identifier);
             if (idx >= 0) {
-                this.ongoingTouches.splice(idx, 1, this.copyTouch(touches[i]));  // swap in the new touch record
+                this.ongoingTouches.splice(idx, 1, this.copyTouch(touches[i])); // swap in the new touch record
             } else console.log("(touchMove) Touch Id not found");
         }
 
 
         if (this.ongoingTouches.length == 1) {
-            this.ongoingTouches[0].button = this.touchMap["tap"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["tap"];
             this.mouseMove(this.ongoingTouches[0]);
 
         } else if (this.ongoingTouches.length == 2) {
@@ -705,7 +695,7 @@ class E3D_input {
             var newTouchDist = Math.sqrt((tdx * tdx) + (tdy * tdy));
 
             // pinch panning
-            this.ongoingTouches[0].button = this.touchMap["pinch"];// TODO: update for new mappings
+            this.ongoingTouches[0].button = this.touchMap["pinch"];
             this.mouseMove( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
                                         (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
                                         this._panMouseButton) );
@@ -726,7 +716,7 @@ class E3D_input {
     }
 
     copyTouch(touch) {
-        return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY, button: this.touchMap["tap"] }; // TODO: update to new maps
+        return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY, button: this.touchMap["tap"] };
     }
 
     ongoingTouchIndexById(idToFind) {
@@ -849,14 +839,17 @@ class E3D_input_virtual_trackpad {
 
 // Virtual thumb stick input from a DOM element
 class E3D_input_virtual_thumbstick {
-    constructor (element, inputClass, doubleTapCommand = "action0") {
+    constructor (element, inputClass, doubleTapCommand = "", liftTapCommand = "action0") {
 
         this.inputClass = inputClass;
         this.element = element;
 
-        this.doubleTapCommand = doubleTapCommand;
         this._doubleTapDelay = 200;
+        this.doubleTapCommand = doubleTapCommand;        
         this.doubleTapping = false;
+        this.liftTapCommand = liftTapCommand;     
+        this.liftTapping = false;
+        this.liftTimer = false;
 
         this.Xspeed = 0.015; // touch to delta factor
         this.Yspeed = 0.015; // touch to delta factor
@@ -913,22 +906,7 @@ class E3D_input_virtual_thumbstick {
             if (this.inputClass[xTarget] != undefined) this.inputClass[xTarget] += dx * this.Xspeed;
             if (this.inputClass[yTarget] != undefined) this.inputClass[yTarget] += dy * this.Yspeed;
 
-          /*  var f = xTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed;  
-            if (xTarget.indexOf("-") > -1) {
-                f = -f;
-                xTarget = xTarget.substring(1);
-            }  
-            this.inputClass[xTarget] += dx * this.Speed * delta * f;
-
-            f = yTarget.indexOf("p") > -1 ? this.inputClass._moveSpeed : this.inputClass._rotateSpeed; 
-            if (xTarget.indexOf("-") > -1) {
-                f = -f;
-                xTarget = xTarget.substring(1);
-            }  
-            this.inputClass[yTarget] += dy * this.Speed * delta * f;
-            */
         }
-
     }
 
     onTouchStart(event) {
@@ -938,11 +916,23 @@ class E3D_input_virtual_thumbstick {
         this.y = event.changedTouches[0].pageY;
 
         if (this.doubleTapping) {
-            this.inputClass.keyDown( { code : this.inputClass.keyMap[this.doubleTapCommand] } );
+            if (this.doubleTapCommand != "") this.inputClass.keyDown( { code : this.inputClass.keyMap[this.doubleTapCommand] } );
             this.doubleTapping = false;
         } else {
             this.doubleTapping = true;
             setTimeout( ()  => { this.doubleTapping = false; }, this._doubleTapDelay );
+        }
+
+        if (this.liftTapping) {
+            if (this.liftTapCommand != "") {
+                this.inputClass.keyUp( { code : this.inputClass.keyMap[this.liftTapCommand] } );
+                this.inputClass.keyDown( { code : this.inputClass.keyMap[this.liftTapCommand] } );
+            }
+            this.liftTapping = false;
+            if (this.liftTimer) { 
+                clearTimeout(this.liftTimer); 
+                this.liftTimer = false; 
+            }
         }
 
     }
@@ -951,7 +941,16 @@ class E3D_input_virtual_thumbstick {
         event.preventDefault();
         if (this.Touch == event.changedTouches[0].identifier) {
             this.Touch = -1;
-            this.inputClass.keyUp( { code : this.inputClass.keyMap[this.doubleTapCommand] } );
+            if (this.doubleTapCommand != "") this.inputClass.keyUp( { code : this.inputClass.keyMap[this.doubleTapCommand] } );
+        }
+
+        if (!this.liftTapping) {
+            this.liftTapping = true;
+            if (this.liftTimer) { 
+                clearTimeout(this.liftTimer); 
+                this.liftTimer = false; 
+            }
+            this.liftTimer = setTimeout( ()  => { this.liftTapping = false; }, this._doubleTapDelay );
         }
     }
 

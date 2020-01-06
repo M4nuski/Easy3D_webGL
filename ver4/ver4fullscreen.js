@@ -75,19 +75,14 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 
-var inputs = new E3D_input(can, true, true, true, true, true, true);
+var inputs = new E3D_input(can, true, true, true, true, false, true);
 inputs.onInput = onEngineInput;
 
-// virtual KB
-//var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
-// virtual trackpad + thumbstick
-//var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") , inputs);
-//var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs, "action1");
 // virtual dual sticks
-var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "action1");
+var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "", "action0");
 vTSinputLeft.Xspeed = inputs._rotSpeed;
 vTSinputLeft.Yspeed = inputs._posSpeed; //pz
-var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "action0");
+var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "", "action1");
 vTSinputRight.Xspeed = inputs._rotSpeed;
 vTSinputRight.Yspeed = inputs._rotSpeed;
 
@@ -125,11 +120,9 @@ function winResize() {
         scn.camera.resize(winWidth, winHeight) 
     }
 
-   // vTSinput.onResize();
+
     vTSinputLeft.onResize();
     vTSinputRight.onResize();
-    //TODO move to class, also add scroll ??
-
 }
 
 
@@ -367,13 +360,6 @@ function timerTick() {  // Game Loop
     vTSinputRight.processInputs("ry_offset", "rx_offset");
     vTSinputLeft.processInputs("rz_offset", "pz_offset");
 
-   /* if (scn.camera.id == "cam1s") {
-
-    } else {
-
-        vTSinputLeft.processInputs("px_offset", "pz_offset");
-    }*/
-
     inputs.processInputs(timer.delta);
 
     inputs.smoothRotation(6);
@@ -383,13 +369,13 @@ function timerTick() {  // Game Loop
     nHitTest = 0;
 
     if (inputs.checkCommand("action0", true)) {
-     //   log("action0", true);
+      //  console.log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
         animations[animations.length-1].restart();
     }
     if (inputs.checkCommand("action1", true)) {
-       // log("action1", true);      
+      //  console.log("action1", true);      
         let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
         animations.push(new E3D_animation("shotgun " + timer.lastTick, shotgunAnim, newPyra, scn, timer));
         animations[animations.length-1].restart();
