@@ -245,7 +245,9 @@ function initEngine() {
 function prepRender() {
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
-    scn.camera.moveBy(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
+    scn.camera.moveBy(-inputs.px_delta_smth,    inputs.py_delta_smth, inputs.pz_delta_smth, 
+                       inputs.rx_delta_smth*yf, inputs.ry_delta_smth, inputs.rz_delta_smth);
+
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         l0v.updateVector(scn.lights.light0_adjusted);
@@ -309,12 +311,12 @@ function timerTick() {  // Game Loop
      //   inputs.clampRotationSmooth(-PIdiv2, PIdiv2, true, false, false);
         if (scn.camera.rotation[0] < -PIdiv2)  {
             scn.camera.rotation[0] = -PIdiv2;
-            if (inputs.rx_smth < 0) inputs.rx_smth = 0;
+            if (inputs.rx_delta_smth < 0) inputs.rx_delta_smth = 0;
         }
 
         if (scn.camera.rotation[0] >  PIdiv2) {
             scn.camera.rotation[0] =  PIdiv2;
-            if (inputs.rx_smth > 0) inputs.rx_smth = 0;
+            if (inputs.rx_delta_smth > 0) inputs.rx_delta_smth = 0;
         }
 
     } 
@@ -340,13 +342,6 @@ function timerTick() {  // Game Loop
         scn.postRender();
     }   
 
-    // reset abs inputs to use smoothing delta
-    inputs.px = 0;
-    inputs.py = 0;
-    inputs.pz = 0;
-    inputs.rx = 0;
-    inputs.ry = 0;
-    inputs.rz = 0;
 }
 
 
@@ -377,15 +372,11 @@ function onRessource(name, msg) {
             } else if (name == "CM") {
                 let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep", false, vec3.fromValues(3.0, 1.0, 3.0));
                 nm.position[1] = -80;
-                //nm.scale[0] = 3;
-                //nm.scale[2] = 3;
                 nm.visible = true;
                 scn.addEntity(nm);  
 
                 nm = scn.cloneEntity("CM_top", "CM_bottom");
                 nm.position[1] = 80;
-                //nm.scale[0] = 3;
-                //nm.scale[2] = 3;
                 nm.visible = true;
                 nm.resetMatrix();
 

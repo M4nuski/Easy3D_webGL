@@ -118,7 +118,8 @@ function initEngine() {
 
 function prepRender() {
     // move camera per inputs
-    scn.camera.moveBy(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
+    scn.camera.moveBy(-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth, 
+                       inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
 }
 
 function timerTick() {  // Game Loop
@@ -134,9 +135,6 @@ function timerTick() {  // Game Loop
         scn.postRender();
     }   
 
-    inputs.px = 0;
-    inputs.py = 0;
-    inputs.pz = 0;
 }
 
 

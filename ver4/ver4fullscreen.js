@@ -293,7 +293,8 @@ function initEngine() {
 function prepRender() {
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
-    scn.camera.moveBy(-inputs.px_smth, inputs.py_smth, inputs.pz_smth, inputs.rx_smth*yf, inputs.ry_smth, inputs.rz_smth);
+    scn.camera.moveBy(-inputs.px_delta_smth,    inputs.py_delta_smth, inputs.pz_delta_smth, 
+                       inputs.rx_delta_smth*yf, inputs.ry_delta_smth, inputs.rz_delta_smth);
     // update some entities per current lights direction
     if (scn.entities.length >= 3) {
         l0v.updateVector(scn.lights.light0_adjusted);
@@ -395,10 +396,6 @@ function timerTick() {  // Game Loop
         scn.postRender();
     }   
 
-    // reset abs inputs to use smoothing delta
-    inputs.px = 0;
-    inputs.py = 0;
-    inputs.pz = 0;
 }
 
 

@@ -12,8 +12,6 @@ class E3D_input {
 
         this.lastDelta = 1;
 
-        //this.mouseMoveWhenLockedOnly = false;//TODO should be in engine logic
-
         // Touch properties
         this.touchDist = 0; // distance between 2 touches
         this.ongoingTouches = [];
@@ -147,7 +145,11 @@ class E3D_input {
         // Delta
         this.px_delta = 0;
         this.py_delta = 0;
-        this.pz_delta = 0;
+        this.pz_delta = 0;        
+        // Smoothed Delta
+        this.px_delta_smth = 0;
+        this.py_delta_smth = 0;
+        this.pz_delta_smth = 0;
         // Sums
         this.px = 0;
         this.py = 0;
@@ -162,6 +164,10 @@ class E3D_input {
         this.rx_delta = 0;
         this.ry_delta = 0;
         this.rz_delta = 0;
+        // Smoothed Delta
+        this.rx_delta_smth = 0;
+        this.ry_delta_smth = 0;
+        this.rz_delta_smth = 0;
         // Sums
         this.rx = 0;
         this.ry = 0;
@@ -413,13 +419,26 @@ class E3D_input {
         let f = this.lastDelta * smoothFactor;
 
         if (f < 1.0) {
-            if (x) this.rx_smth += (this.rx - this.rx_smth) * f;
-            if (y) this.ry_smth += (this.ry - this.ry_smth) * f;
-            if (z) this.rz_smth += (this.rz - this.rz_smth) * f;
+            if (x) {
+                this.rx_smth += (this.rx - this.rx_smth) * f;
+                this.rx_delta_smth += (this.rx_delta - this.rx_delta_smth) * f;
+            }            
+            if (y) {
+                this.ry_smth += (this.ry - this.ry_smth) * f;  
+                this.ry_delta_smth += (this.ry_delta - this.ry_delta_smth) * f; 
+            } 
+            if (z) {
+                this.rz_smth += (this.rz - this.rz_smth) * f;
+                this.rz_delta_smth += (this.rz_delta - this.rz_delta_smth) * f;
+            }
         } else {
             this.rx_smth = this.rx;
             this.ry_smth = this.ry;
             this.rz_smth = this.rz;
+
+            this.rx_delta_smth = this.rx_delta;
+            this.ry_delta_smth = this.ry_delta;
+            this.rz_delta_smth = this.rz_delta;
         }
     }
 
@@ -427,13 +446,26 @@ class E3D_input {
         let f = this.lastDelta * smoothFactor;
 
         if (f < 1.0) {
-            if (x) this.px_smth += (this.px - this.px_smth) * f;
-            if (y) this.py_smth += (this.py - this.py_smth) * f;
-            if (z) this.pz_smth += (this.pz - this.pz_smth) * f;
+            if (x) {
+                this.px_smth += (this.px - this.px_smth) * f;
+                this.px_delta_smth += (this.px_delta - this.px_delta_smth) * f;
+            }            
+            if (y) {
+                this.py_smth += (this.py - this.py_smth) * f;
+                this.py_delta_smth += (this.py_delta - this.py_delta_smth) * f;
+            }    
+            if (z) {
+                this.pz_smth += (this.pz - this.pz_smth) * f;
+                this.pz_delta_smth += (this.pz_delta - this.pz_delta_smth) * f;
+            }    
         } else {
             this.px_smth = this.px;
             this.py_smth = this.py;
             this.pz_smth = this.pz;
+
+            this.px_delta_smth = this.px_delta;
+            this.py_delta_smth = this.py_delta;
+            this.pz_delta_smth = this.pz_delta;
         }
     }
 
