@@ -786,12 +786,12 @@ class E3D_input_virtual_trackpad {
         this.xOffset = 0;
         this.yOffset = 0;
 
-        element.addEventListener("touchstart",  (e) => this.onTouchStart(e));
+        element.addEventListener("touchstart", (e) => this.onTouchStart(e));
         element.addEventListener("touchend", (e) => this.onTouchEnd(e));
         element.addEventListener("touchmove", (e) => this.onTouchMove(e));
-        element.addEventListener("touchcancel",  (e) => this.onTouchCancel(e));
+        element.addEventListener("touchcancel", (e) => this.onTouchCancel(e));
 
-        element.addEventListener("resize",  (e) => this.onResize(e));
+        element.addEventListener("resize", (e) => this.onResize(e));
 
         this.onResize();
     } 
@@ -855,6 +855,8 @@ class E3D_input_virtual_thumbstick {
         this.Yspeed = 0.015; // touch to delta factor
         this.Touch = -1; // current touch to follow (1st hit)
 
+        this.deadZone = 0.1;
+
         // Center of element in pageX/Y
         this.xMid = 0.5;
         this.yMid = 0.5;
@@ -868,15 +870,14 @@ class E3D_input_virtual_thumbstick {
         this.y = 0;
 
         // average touch, send mouse data
-        element.addEventListener("touchstart",  (e) => this.onTouchStart(e));
+        element.addEventListener("touchstart", (e) => this.onTouchStart(e));
         element.addEventListener("touchend", (e) => this.onTouchEnd(e));
         element.addEventListener("touchmove", (e) => this.onTouchMove(e));
-        element.addEventListener("touchcancel",  (e) => this.onTouchEnd(e));
+        element.addEventListener("touchcancel", (e) => this.onTouchEnd(e));
 
-        element.addEventListener("resize",  (e) => this.onResize(e));
+        element.addEventListener("resize", (e) => this.onResize(e));
 
         this.onResize();
-        //this.keyDown( { key : this.keyMap["action0"] } );
     } 
 
     onResize() {
@@ -895,17 +896,27 @@ class E3D_input_virtual_thumbstick {
 
             //delta
             var dx = (this.x - this.xMid) / this.xMax;
-            var dy = (this.y - this.yMid) / this.yMax; 
+            var dy = (this.y - this.yMid) / this.yMax;
 
             //clamp
             if (dx < -1.0) dx = -1.0;
             if (dx >  1.0) dx =  1.0;
             if (dy < -1.0) dy = -1.0;
-            if (dy >  1.0) dy =  1.0;
+            if (dy >  1.0) dy =  1.0;     
 
-            if (this.inputClass[xTarget] != undefined) this.inputClass[xTarget] += dx * this.Xspeed;
-            if (this.inputClass[yTarget] != undefined) this.inputClass[yTarget] += dy * this.Yspeed;
+            // X
+            if (Math.abs(dx) > this.deadZone) {
+                //Normalize
+                dx = (dx - this.deadZone) / (1.0 - this.deadZone);
+                //Inject
+                if (this.inputClass[xTarget] != undefined) this.inputClass[xTarget] += dx * this.Xspeed;
+            }
 
+            // Y
+            if (Math.abs(dy) > this.deadZone) {
+                dy = (dy - this.deadZone) / (1.0 - this.deadZone);
+                if (this.inputClass[yTarget] != undefined) this.inputClass[yTarget] += dy * this.Yspeed;
+            }
         }
     }
 
