@@ -19,6 +19,7 @@ window.addEventListener("resize", winResize); // To reset camera matrix
 document.forms["moveTypeForm"].addEventListener("change", camChange); // To update camera matrix
 document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
 document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
+/*
 // Try to figure out which of desktop or mobile control scheme should be used
 document.body.addEventListener("mousemove", callBackMouse);
 document.body.addEventListener("touchStart", callBackTouch);
@@ -35,6 +36,7 @@ function callBackTouch() {
     document.body.removeEventListener("mousemove", callBackTouch);
     document.body.addEventListener("touchStart", callBackMouse);
 }
+*/
 document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv); hover2CollapseAll(); } );
 document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); hover2CollapseAll(); } );
 pLockCallback = function(event) {
