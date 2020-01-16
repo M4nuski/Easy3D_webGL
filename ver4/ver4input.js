@@ -62,6 +62,7 @@ class E3D_input {
 
         this.pointerMap = {}; // Map of inputs for pointer
         // pointer map buttons : disabled, always on, lmb, mmb, rmb
+        // buttons are the trigger that activate the axis and position values changes
         // pointer map axis : x/y/w (wheel)
         // can be assigned to whatever, the name are just easy placeholders
         // (could have been axis0 to axis7 or input0 to input7)
@@ -87,12 +88,21 @@ class E3D_input {
         this.pointerMap["rz_axis"] = E3D_INP_X;
 
 
+        // Touch to pointer and key mappings
         this.touchMap = {}; 
-        // pinch distance delta is mapped to mouse wheel
-        this.touchMap["tap"] = E3D_INP_LMB;
-        this.touchMap["doubleTap"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB;
-        this.touchMap["pinch"] = E3D_INP_RMB;
+       // TODO replace by next block
+        this.touchMap["tap"] = E3D_INP_LMB; // single touch LMB down/up, single touch drag mouse move with LMB down
+        this.touchMap["doubleTap"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB; // LMB double click
+        this.touchMap["pinch"] = E3D_INP_RMB; // double touch RMB down/up, double touch drag mouse move with RMB down
 
+        // TODO change all texts and logic for: tap -> 1touch, pinch -> 2touch, pinch -> axis W, 
+        this.touchMap["touch_single"] = E3D_INP_LMB; // single touch point as LMB down or up, moves when down will affect pointer X Y axis
+        this.touchMap["touch_double"] = E3D_INP_RMB; // double touch points as RMB down or up, moves when down will affect pointer X Y axis
+        this.touchMap["pinch_axis"] = E3D_INP_W; // Distance between 2 touch points. mapped to pointer axis W (mouse wheel)
+        this.touchMap["doubleTap_single"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB; // trigger when single touch is up-down-up-down within _doubleTapDelay
+        this.touchMap["doubleTap_double"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_RMB; // trigger when both touches are up-down-up-down within _doubleTapDelay
+        this.touchMap["lift_single"] = E3D_INP_MMB; // "reverse doubleTap_single", trigger when single touch is lifted for less than _doubleTapDelay
+        this.touchMap["lift_double"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB; // "reverse doubleTap_double", trigger when both touches are lifted for less than _doubleTapDelay
 
         // Keyboard Controls, maps commands to keyboardEvent.code
         this.keyMap = {}; 
@@ -118,14 +128,13 @@ class E3D_input {
         this.keyMap["rz_dec"] = "KeyZ";
         this.keyMap["rz_inc"] = "KeyX";
 
-        this.keyMap["togglePointerlock"] = "ControlRight";
-        this.keyMap["toggleFullscreen"] = "F11";
-
         // "custom" commands, binds can be added for anything
         this.keyMap["action0"] = E3D_INP_LMB;
         this.keyMap["action1"] = "KeyF";
         this.keyMap["action2"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB;
         this.keyMap["panPivot"] = E3D_INP_RMB;
+        this.keyMap["togglePointerlock"] = "ControlRight";
+        this.keyMap["toggleFullscreen"] = "F11";
         //this.keyMap["exitLock"] = "Escape";
 
 
@@ -244,6 +253,7 @@ class E3D_input {
 
         // Pointer
         // Positions
+        // todo replace within inputTable E3D_INP_ALWAYS as true
         if ((this.pointerMap["px_btn"] == E3D_INP_ALWAYS) || this.inputTable[this.pointerMap["px_btn"]]) {
             if (this.pointerMap["px_axis"] == E3D_INP_X) this.px_delta += this.mx * this._posSpeed;
             if (this.pointerMap["px_axis"] == E3D_INP_Y) this.px_delta += this.my * this._posSpeed;
@@ -698,7 +708,7 @@ class E3D_input {
             this.ongoingTouches[0].button = this.touchMap["pinch"];
             this.mouseMove( E3D_input.touchToButton( (this.ongoingTouches[0].pageX + this.ongoingTouches[1].pageX) / 2,
                                         (this.ongoingTouches[0].pageY + this.ongoingTouches[1].pageY) / 2,
-                                        this._panMouseButton) );
+                                        this.touchMap["pinch"]) );
 
             if (Math.abs(this.touchDist - newTouchDist) > this._pinchHysteresis) {        
                 // mouse wheel zoom
