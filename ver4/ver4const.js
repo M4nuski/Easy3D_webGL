@@ -22,6 +22,7 @@ const E3D_RES_LOAD = 1;
 const E3D_RES_ALL = 2;
 
 // Pointer inputs (may be different in IE because IE)
+const E3D_INP_NONE = -3;
 const E3D_INP_DISABLED = -2;
 const E3D_INP_ALWAYS = -1;
 const E3D_INP_LMB = 0; // single touch drag
