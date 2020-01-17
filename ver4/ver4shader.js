@@ -1,8 +1,65 @@
 // Easy3D_WebGL
+// Base class container for GLSL shader program loading and compiling
 // Container file for various WebGL GLSL shaders and their attribute lists
 // Emmanuel Charette 2017-2019
 
 "use strict"
+
+class E3D_program {
+    constructor(id, context) {
+        this.id = id;
+        this.context = context;
+
+        this.shaderProgram = null;
+        this.shaderAttributes = {};
+        this.shaderUniforms = {};
+    }
+
+    compile(vertexSource, fragmentSource) {
+        const vs = E3D_program.loadShader(this.context, this.context.VERTEX_SHADER, vertexSource);
+        const fs = E3D_program.loadShader(this.context, this.context.FRAGMENT_SHADER, fragmentSource);
+
+        if ((vs != null) && (fs != null)) {
+            this.shaderProgram = this.context.createProgram();
+            this.context.attachShader(this.shaderProgram, vs);
+            this.context.attachShader(this.shaderProgram, fs);
+            this.context.linkProgram(this.shaderProgram);
+
+            if (!this.context.getProgramParameter(this.shaderProgram, this.context.LINK_STATUS)) {
+                console.log('Unable to initialize the shader program: ' + this.context.getProgramInfoLog(this.shaderProgram));
+                this.shaderProgram = null;
+            }
+        } else {
+            this.shaderProgram = null;
+        }
+    }
+
+
+    bindLocations(attribList, uniformList) {
+        for (let i = 0; i < attribList.length; ++i) {
+            this.shaderAttributes[attribList[i]] = this.context.getAttribLocation(this.shaderProgram, attribList[i]);
+        }
+
+        for (let i = 0; i < uniformList.length; ++i) {
+            this.shaderUniforms[uniformList[i]] = this.context.getUniformLocation(this.shaderProgram, uniformList[i]);
+        }
+    }
+
+    static loadShader(context, type, source) {
+        const shader = context.createShader(type);       
+        context.shaderSource(shader, source);
+        context.compileShader(shader);
+        if (!context.getShaderParameter(shader, context.COMPILE_STATUS)) {
+            console.log('An error occurred compiling the '+ type +' shaders: ' + context.getShaderInfoLog(shader));
+            context.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    }
+
+}
+
+
 
 const vertShader00 = `
 //from model
@@ -263,3 +320,5 @@ void main(void) {
 const attribList02_CS01 = ["aVertexPosition", "aVertexColor", "aVertexNormal" ];
 const uniformList02_CS01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", "uLight"];
 
+
+// TODO shader with shadows

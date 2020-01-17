@@ -101,6 +101,15 @@ class E3D_input {
         this.touchMap.set("doubleTap_double", "KeyF");// E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_RMB; // trigger when both touches are up-down-up-down within _doubleTapDelay
         this.touchMap.set("lift_single", E3D_INP_MMB); // "reverse doubleTap_single", trigger when single touch is lifted for less than _doubleTapDelay
         this.touchMap.set("lift_double", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB); // "reverse doubleTap_double", trigger when both touches are lifted for less than _doubleTapDelay
+        //mappings for testing
+        /*
+        this.touchMap.set("touch_single", 1001);
+        this.touchMap.set("touch_double", 1002);
+        this.touchMap.set("doubleTap_single", 2001);
+        this.touchMap.set("doubleTap_double", 2002);
+        this.touchMap.set("lift_single", 3001);
+        this.touchMap.set("lift_double", 3002);
+        */
 
         // Keyboard Controls, maps commands to keyboardEvent.code
         this.keyMap = new Map(); 
@@ -520,7 +529,7 @@ class E3D_input {
         //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
 
-        console.log("KD " + event.code);
+        //console.log("KD " + event.code);
     }
     
     keyUp(event) {    

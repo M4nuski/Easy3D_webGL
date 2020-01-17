@@ -459,3 +459,5 @@ internal struct VertexData
 
 
     */
+
+    // TODO add edge detection 
