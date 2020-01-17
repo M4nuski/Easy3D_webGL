@@ -98,13 +98,13 @@ class E3D_input {
        // this.touchMap.set("doubleTap", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB); // LMB double click
        // this.touchMap.set("pinch", E3D_INP_RMB); // double touch RMB down/up, double touch drag mouse move with RMB down
 
-        this.touchMap.set("touch_single", E3D_INP_LMB); // single touch point as LMB down or up, moves when down will affect pointer X Y axis
-        this.touchMap.set("touch_double", E3D_INP_RMB); // double touch points as RMB down or up, moves when down will affect pointer X Y axis
+        this.touchMap.set("touch_single", 1001);//E3D_INP_LMB); // single touch point as LMB down or up, moves when down will affect pointer X Y axis
+        this.touchMap.set("touch_double", 1002);//E3D_INP_RMB); // double touch points as RMB down or up, moves when down will affect pointer X Y axis
         //this.touchMap.set("pinch_axis", E3D_INP_W);  // Distance between 2 touch points. mapped to pointer axis W (mouse wheel)
-        this.touchMap.set("doubleTap_single", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB); // trigger when single touch is up-down-up-down within _doubleTapDelay
-        this.touchMap.set("doubleTap_double", "KeyF");// E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_RMB; // trigger when both touches are up-down-up-down within _doubleTapDelay
-        this.touchMap.set("lift_single", E3D_INP_MMB); // "reverse doubleTap_single", trigger when single touch is lifted for less than _doubleTapDelay
-        this.touchMap.set("lift_double", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB); // "reverse doubleTap_double", trigger when both touches are lifted for less than _doubleTapDelay
+        this.touchMap.set("doubleTap_single", 2001);//E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB); // trigger when single touch is up-down-up-down within _doubleTapDelay
+        this.touchMap.set("doubleTap_double", 2002);//"KeyF");// E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_RMB; // trigger when both touches are up-down-up-down within _doubleTapDelay
+        this.touchMap.set("lift_single", 3001);//E3D_INP_MMB); // "reverse doubleTap_single", trigger when single touch is lifted for less than _doubleTapDelay
+        this.touchMap.set("lift_double", 3002);//E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB); // "reverse doubleTap_double", trigger when both touches are lifted for less than _doubleTapDelay
 
         // Keyboard Controls, maps commands to keyboardEvent.code
         this.keyMap = new Map(); // {}; 
@@ -523,6 +523,8 @@ class E3D_input {
 
         //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
+
+        console.log("KD " + event.code);
     }
     
     keyUp(event) {    
@@ -602,14 +604,14 @@ class E3D_input {
 
         var touchesIter = this.ongoingTouches.values();
 
-        if (this.ongoingTouches.length == 1) {
+        if (this.ongoingTouches.size == 1) {
             var firstTouch = touchesIter.next();
 
             //process as mouse down with single touch code
             firstTouch.button = this.touchMap.get("touch_single");
             this.mouseDown(firstTouch);
 
-        } else if (this.ongoingTouches.length == 2) {
+        } else if (this.ongoingTouches.size == 2) {
             var firstTouch = touchesIter.next();
             var secondTouch = touchesIter.next();
 
@@ -631,7 +633,7 @@ class E3D_input {
 
 
         if (this.doubleTapping) {
-            var touchCode = (this.ongoingTouches.length == 1) ? this.touchMap.get("doubleTap_single") : this.touchMap.get("doubleTap_double")
+            var touchCode = (this.ongoingTouches.size == 1) ? this.touchMap.get("doubleTap_single") : this.touchMap.get("doubleTap_double")
             this.keyUp( { code : touchCode } );
             this.keyDown( { code : touchCode } );
             this.doubleTapping = false;
@@ -646,7 +648,7 @@ class E3D_input {
         }
 
         if (this.liftTapping) {
-            var touchCode = (this.ongoingTouches.length == 1) ? this.touchMap.get("lift_single") : this.touchMap.get("lift_double");
+            var touchCode = (this.ongoingTouches.size == 1) ? this.touchMap.get("lift_single") : this.touchMap.get("lift_double");
             this.keyUp( { code : touchCode } );
             this.keyDown( { code : touchCode } );
             this.liftTapping = false;
@@ -663,7 +665,7 @@ class E3D_input {
 
         if (event.preventDefault) { event.preventDefault(); };
         
-        if (this.ongoingTouches.length == 1) {
+        if (this.ongoingTouches.size == 1) {
             var firstTouch = this.ongoingTouches.get(event.changedTouches[0].identifier);
             if (firstTouch) {
                 firstTouch.button = this.touchMap.get("touch_single");
@@ -671,7 +673,7 @@ class E3D_input {
             }
         }
         
-        if (this.ongoingTouches.length == 2) {
+        if (this.ongoingTouches.size == 2) {
             var touchesIter = this.ongoingTouches.values();
             var firstTouch = touchesIter.next();
             var secondTouch = touchesIter.next();
@@ -701,14 +703,14 @@ class E3D_input {
         for (var i = 0; i < event.changedTouches.length; ++i) 
             this.ongoingTouches.set(event.changedTouches[i].identifier, this.copyTouch(event.changedTouches[i]) ); // update objects
 
-        if (this.ongoingTouches.length == 1) {
+        if (this.ongoingTouches.size == 1) {
             var firstTouch = this.ongoingTouches.get(event.changedTouches[0].identifier);
             if (firstTouch) {
                 firstTouch = this.touchMap.get("touch_single");
                 this.mouseMove(firstTouch);
             }
 
-        } else if (this.ongoingTouches.length == 2) {
+        } else if (this.ongoingTouches.size == 2) {
             var touchesIter = this.ongoingTouches.values();
             var firstTouch = touchesIter.next();
             var secondTouch = touchesIter.next();

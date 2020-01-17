@@ -44,14 +44,14 @@ pLockCallback = function(event) {
 
     // remap controls
     if (event == "lock") {
-        inputs.pointerMap["rx_btn"] = E3D_INP_ALWAYS;
-        inputs.pointerMap["ry_btn"] = E3D_INP_ALWAYS;
-        inputs.keyMap["action0"] = E3D_INP_LMB;
+        inputs.pointerMap.set("rx_btn", E3D_INP_ALWAYS);
+        inputs.pointerMap.set("ry_btn", E3D_INP_ALWAYS);
+        inputs.keyMap.set("action0", E3D_INP_LMB);
 
     } else if ((event == "unlock") || (event == "error")) {
-        inputs.pointerMap["rx_btn"] = E3D_INP_LMB;
-        inputs.pointerMap["ry_btn"] = E3D_INP_LMB;
-        inputs.keyMap["action0"] = E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB;
+        inputs.pointerMap.set("rx_btn", E3D_INP_LMB);
+        inputs.pointerMap.set("ry_btn", E3D_INP_LMB);
+        inputs.keyMap.set("action0", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
     }
 }
 fullscreenChangeCallback = function fullscreenChange(active, elem) {
@@ -92,7 +92,7 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 
-var inputs = new E3D_input(can, true, true, true, true, false, true);
+var inputs = new E3D_input(can, true, true, true, true);// all true for debug (can, true, true, false, true); // don't support touch in main element
 inputs.onInput = onEngineInput;
 
 // virtual dual sticks
@@ -215,16 +215,16 @@ function initEngine() {
         return; 
     }
     
-        inputs.keyMap["rx_dec"] = "null";
-        inputs.keyMap["rx_inc"] = "null";
-        inputs.keyMap["ry_dec"] = "null";
-        inputs.keyMap["ry_inc"] = "null";
-        inputs.keyMap["rz_dec"] = "KeyQ";
-        inputs.keyMap["rz_inc"] = "KeyE";
-        inputs.pointerMap["px_btn"] = E3D_INP_DISABLED;
-        inputs.pointerMap["py_btn"] = E3D_INP_DISABLED;
-        inputs.pointerMap["pz_btn"] = E3D_INP_DISABLED;
-        inputs.pointerMap["rz_btn"] = E3D_INP_DISABLED;
+        inputs.keyMap.set("rx_dec", "null");
+        inputs.keyMap.set("rx_inc", "null");
+        inputs.keyMap.set("ry_dec", "null");
+        inputs.keyMap.set("ry_inc", "null");
+        inputs.keyMap.set("rz_dec", "KeyQ");
+        inputs.keyMap.set("rz_inc", "KeyE");
+        inputs.pointerMap.set("px_btn", E3D_INP_DISABLED);
+        inputs.pointerMap.set("py_btn", E3D_INP_DISABLED);
+        inputs.pointerMap.set("pz_btn", E3D_INP_DISABLED);
+        inputs.pointerMap.set("rz_btn", E3D_INP_DISABLED);
         pLockCallback("unlock"); // preset controls mapping
      
     resMngr.addRessource("../Models/ST.raw", "ST", "Model");
