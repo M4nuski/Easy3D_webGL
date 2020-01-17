@@ -92,7 +92,7 @@ var timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 
-var inputs = new E3D_input(can, true, true, true, true);// all true for debug (can, true, true, false, true); // don't support touch in main element
+var inputs = new E3D_input(can, true, true, false, true);// don't support touch in main element, touch handling is done in virtual TS and TP
 inputs.onInput = onEngineInput;
 
 // virtual dual sticks

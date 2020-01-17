@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Human interface input classes and handlers
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 
@@ -14,15 +14,15 @@ class E3D_input {
 
         // Touch properties
         this.touchDist = 0; // distance between 2 touches
-        this.ongoingTouches = new Map(); //[];
+        this.ongoingTouches = new Map();
         this.doubleTapping = false;
         this.doubleTapTimer = false;
         this.liftTapping = false;
         this.liftTimer = false;
 
         // Input states
-        this.inputTable = new Map();//  {}; // keys that are pressed down
-        this.inputDoneTable = new Map(); // {}; // keys that got released but trigger again without keydown (keyboard auto-repeat)
+        this.inputTable = new Map(); // keys that are pressed down
+        this.inputDoneTable = new Map(); // keys that got released but trigger again without keydown (keyboard auto-repeat)
 
         // Callback
         this.onInput = null;
@@ -31,15 +31,15 @@ class E3D_input {
         if (supportMouse) {
             element.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
             element.addEventListener("mouseup", (e) => { this.mouseUp(e) } );
-            element.addEventListener("mousemove", (e) => {this.mouseMove(e) } );
-            element.addEventListener("mouseleave",(e) => { this.mouseLeave(e) } );
-            element.addEventListener("wheel", (e) => {this.mouseWheel(e) } );
-            element.addEventListener("dblclick", (e) => {this.mouseDblClick(e) } );
+            element.addEventListener("mousemove", (e) => { this.mouseMove(e) } );
+            element.addEventListener("mouseleave", (e) => { this.mouseLeave(e) } );
+            element.addEventListener("wheel", (e) => { this.mouseWheel(e) } );
+            element.addEventListener("dblclick", (e) => { this.mouseDblClick(e) } );
         }
 
         if (supportKeyboard) {
-            document.addEventListener("keydown",(e) => { this.keyDown(e) } );
-            document.addEventListener("keyup",(e) => { this.keyUp(e) } );
+            document.addEventListener("keydown", (e) => { this.keyDown(e) } );
+            document.addEventListener("keyup", (e) => { this.keyUp(e) } );
         }
 
         if  ((supportPointerLock) && (pLockSupported)) { 
@@ -47,10 +47,10 @@ class E3D_input {
         }
 
         if (supportTouch) {
-            element.addEventListener("touchstart", (e) => {this.touchStart(e) } );
-            element.addEventListener("touchend", (e) => {this.touchEnd(e) } );
-            element.addEventListener("touchcancel", (e) => {this.touchEnd(e) } );
-            element.addEventListener("touchmove", (e) => {this.touchMove(e) } );
+            element.addEventListener("touchstart", (e) => { this.touchStart(e) } );
+            element.addEventListener("touchend", (e) => { this.touchEnd(e) } );
+            element.addEventListener("touchcancel", (e) => { this.touchEnd(e) } );
+            element.addEventListener("touchmove", (e) => { this.touchMove(e) } );
         }
 
         // Config        
@@ -63,7 +63,7 @@ class E3D_input {
         this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
 
-        this.pointerMap = new Map();// = {}; // Map of inputs for pointer
+        this.pointerMap = new Map(); // Map of inputs for pointer
         // pointer map buttons : disabled, always on, lmb, mmb, rmb
         // buttons are the trigger that activate the axis and position values changes
         // pointer map axis : x/y/w (wheel)
@@ -92,24 +92,20 @@ class E3D_input {
 
 
         // Touch to pointer and key mappings
-        this.touchMap = new Map();// = {}; 
+        this.touchMap = new Map();
 
-       // this.touchMap.set("tap", E3D_INP_LMB;) // single touch LMB down/up, single touch drag mouse move with LMB down
-       // this.touchMap.set("doubleTap", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB); // LMB double click
-       // this.touchMap.set("pinch", E3D_INP_RMB); // double touch RMB down/up, double touch drag mouse move with RMB down
-
-        this.touchMap.set("touch_single", 1001);//E3D_INP_LMB); // single touch point as LMB down or up, moves when down will affect pointer X Y axis
-        this.touchMap.set("touch_double", 1002);//E3D_INP_RMB); // double touch points as RMB down or up, moves when down will affect pointer X Y axis
+        this.touchMap.set("touch_single", E3D_INP_LMB); // single touch point as LMB down or up, moves when down will affect pointer X Y axis
+        this.touchMap.set("touch_double", E3D_INP_RMB); // double touch points as RMB down or up, moves when down will affect pointer X Y axis
         //this.touchMap.set("pinch_axis", E3D_INP_W);  // Distance between 2 touch points. mapped to pointer axis W (mouse wheel)
-        this.touchMap.set("doubleTap_single", 2001);//E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB); // trigger when single touch is up-down-up-down within _doubleTapDelay
-        this.touchMap.set("doubleTap_double", 2002);//"KeyF");// E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_RMB; // trigger when both touches are up-down-up-down within _doubleTapDelay
-        this.touchMap.set("lift_single", 3001);//E3D_INP_MMB); // "reverse doubleTap_single", trigger when single touch is lifted for less than _doubleTapDelay
-        this.touchMap.set("lift_double", 3002);//E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB); // "reverse doubleTap_double", trigger when both touches are lifted for less than _doubleTapDelay
+        this.touchMap.set("doubleTap_single", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB); // trigger when single touch is up-down-up-down within _doubleTapDelay
+        this.touchMap.set("doubleTap_double", "KeyF");// E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_RMB; // trigger when both touches are up-down-up-down within _doubleTapDelay
+        this.touchMap.set("lift_single", E3D_INP_MMB); // "reverse doubleTap_single", trigger when single touch is lifted for less than _doubleTapDelay
+        this.touchMap.set("lift_double", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_MMB); // "reverse doubleTap_double", trigger when both touches are lifted for less than _doubleTapDelay
 
         // Keyboard Controls, maps commands to keyboardEvent.code
-        this.keyMap = new Map(); // {}; 
-        // this.keyMap.set(command, key.code;
-        // Could also be this.keyMap.set("px_dec", E3D_INP_RMB; to change a position input with a mouse button
+        this.keyMap = new Map(); 
+        // this.keyMap.set(command, key.code);
+        // Could also be this.keyMap.set("px_dec", E3D_INP_RMB); to change a position input with a mouse button
         
         // internal default commands
         this.keyMap.set("px_dec", "KeyD");
@@ -137,7 +133,7 @@ class E3D_input {
         this.keyMap.set("panPivot", E3D_INP_RMB);
         this.keyMap.set("togglePointerlock", "ControlRight");
         this.keyMap.set("toggleFullscreen", "F11");
-        //this.keyMap.set("exitLock", "Escape";
+        //this.keyMap.set("exitLock", "Escape");
 
 
 
@@ -726,9 +722,9 @@ class E3D_input {
                               pageY: (firstTouch.pageY + secondTouch) / 2,
                               button: secondTouch.button } );
 
-            if (Math.abs(this.touchDist - newTouchDist) > this._pinchHysteresis) { //Pinch "zoom"
+            if (Math.abs(this.touchDist - newTouchDist) > this._pinchHysteresis) {
                 //var delta = (this.touchDist - newTouchDist) * this._mouseSpeed;
-                this.mw += (this.touchDist - newTouchDist) * this._mouseSpeed; //delta;
+                this.mw += (this.touchDist - newTouchDist) * this._mouseSpeed;
                 this.touchDist = newTouchDist;
                 //if (this.touchMap.get("pinch_axis") == E3D_INP_X) this.mx += delta;
                 //if (this.touchMap.get("pinch_axis") == E3D_INP_Y) this.my += delta;
