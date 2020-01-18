@@ -10,7 +10,7 @@ class E3D_entity {
 
         this.id = id; // to find object in list
         this.visible = false;
-        this.dynamic = dynamic; // Static (non-dynamic) entities have their data pusehd to the GPU only once when added to scene.
+        this.dynamic = dynamic; // Static (non-dynamic) entities have their data pushedd to the GPU memory only once when added to scene.
                                 // Dynamic entities can have their data modified on the fly (with performance cost).
 
         this.dataContentChanged = false; // GPU buffers will be updated  
@@ -36,8 +36,8 @@ class E3D_entity {
         // TODO: combine to single data store (v1 v2 v3 n1 n2 n3 u v) 
         this.vertexBuffer;
         this.normalBuffer;
-        this.colorBuffer; // todo replace by texture
-        //this.uvBuffer; // todo
+        this.colorBuffer; // TODO replace by texture
+        //this.uvBuffer; // TODO textures into single data store
 
 
         // float32Array of raw data, can be flushed for static entities 
@@ -50,15 +50,23 @@ class E3D_entity {
         this.filename = filename;
 
         this.collisionDetection = false;
-        // Collision Detection / Hit Test Data (faster split in different array than accessing single array then object attributes)
-            // Vector Source 
+        // Collision Detection / Hit Test Data (faster split in different array than accessing single object[].property)
+            // Vector Source (arrow)
             this.CD_vec = 0;
             this.CD_vec_p0 = []; // original to model space
             this.CD_vec_p  = []; // transformed to world space
             this.CD_vec_v0 = []; // original to model space
             this.CD_vec_v  = []; // transformed to world space
 
+            // Vector Target (edge)
+            this.CD_edge = 0;
+            this.CD_edge_p0 = []; // original to model space
+            this.CD_edge_p  = []; // transformed to world space
+            this.CD_edge_v0 = []; // original to model space
+            this.CD_edge_v  = []; // transformed to world space
+
             // Sphere Source/Target
+            // TODO generalize as ellipsoid
             this.CD_sph = 0;
             this.CD_sph_p0 = []; // original to model space
             this.CD_sph_p  = []; // transformed to world space
@@ -82,7 +90,7 @@ class E3D_entity {
             this.CD_fPlane_h0 = []; // half height vector original to model space
             this.CD_fPlane_h  = []; // transformed to world space (rotation)
 
-            // TODO Cubic Target (/Source?)
+            // TODO Cuboid Target (/Source?)
             this.CD_cube = 0;
             this.CD_cube_p0 = []; // center position original to model space
             this.CD_cube_p  = []; // transformed to world space (rotation)
@@ -119,6 +127,11 @@ class E3D_entity {
             this.CD_vec = entity.CD_vec;
             this.CD_vec_v0 = copy3fArray(entity.CD_vec_v0);
             this.CD_vec_v  = copy3fArray(entity.CD_vec_v);
+        }
+        if (entity.CD_edge > 0) {
+            this.CD_edge = entity.CD_edge;
+            this.CD_edge_v0 = copy3fArray(entity.CD_edge_v0);
+            this.CD_edge_v  = copy3fArray(entity.CD_edge_v);
         }
         if (entity.CD_sph > 0) {
             this.CD_sph = entity.CD_sph;
@@ -177,6 +190,10 @@ class E3D_entity {
                 vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
                 vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.modelMatrix);
             }
+            for (var i = 0; i < this.CD_edge; ++i) {
+                vec3.transformMat4(this.CD_edge_p[i], this.CD_edge_p0[i], this.modelMatrix);
+                vec3.transformMat4(this.CD_edge_v[i], this.CD_edge_v0[i], this.modelMatrix);
+            }
             for (var i = 0; i < this.CD_sph; ++i) {
                 vec3.transformMat4(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
             }
@@ -206,6 +223,16 @@ class E3D_entity {
         this.CD_vec_v[this.CD_vec] = v.slice(); 
         
         this.CD_vec += 1;
+        this.collisionDetection = true;
+    }
+    pushCD_edge(p, v) {
+        this.CD_edge_p0[this.CD_edge] = p.slice(); 
+        this.CD_edge_p[this.CD_edge] = p.slice();
+        
+        this.CD_edge_v0[this.CD_edge] = v.slice(); 
+        this.CD_edge_v[this.CD_edge] = v.slice(); 
+        
+        this.CD_edge += 1;
         this.collisionDetection = true;
     }
     pushCD_sph(p, r) {
@@ -259,9 +286,9 @@ class E3D_entity {
 
 
 // 3 axis shown with optionnal vector. Wireframe rendering.
-class E3D_entity_vector extends E3D_entity {
+class E3D_entity_axis extends E3D_entity {
     constructor (id, showAxis, vectorScale, normalize) {
-        super(id, "E3D_entity_vector/" + id, true);
+        super(id, "E3D_entity_axis/" + id, true);
 
         this.vectorScale = vectorScale;
         this.normalize = normalize;
@@ -299,9 +326,9 @@ class E3D_entity_vector extends E3D_entity {
 
 
 // Entity which data is re-processed each frame, can be modified on the fly in code. Wireframe rendering.
-class E3D_entity_dynamic extends E3D_entity {
+class E3D_entity_wireframe_canvas extends E3D_entity {
     constructor(id) {
-        super(id, "E3D_entity_dynamic/"+id, true);
+        super(id, "E3D_entity_wireframe_canvas/"+id, true);
         this.drawMode = 1; // gl.LINES;      
         this.arraySize = 128;
         this.arrayIncrement = 128 ;// 3 vertex * 128;
@@ -759,7 +786,7 @@ class E3D_entity_dynamic extends E3D_entity {
 
 
 // Dynamic copy of entity
-class E3D_entity_dynamicCopy extends E3D_entity_dynamic {
+class E3D_entity_dynamicCopy extends E3D_entity_wireframe_canvas {
     constructor (id, sourceEntity) {
         super(id, true);
 

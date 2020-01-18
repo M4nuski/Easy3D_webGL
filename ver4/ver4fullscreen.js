@@ -80,7 +80,7 @@ const _zFar = 500.0;
 var winWidth = 10, winHeight = 10;
 var usepct_smth = 0; //usage pct smoothed value
 var l0v, l1v;// light vector entities 
-var testSph, splos, iplanes, fplanes, cubes, dev_CD; // entities
+var testSph, splos, iplanes, fplanes, cubes, dev_CD, targetVector; // entities
 var cloned = false;
 var animations = [];
 var nHitTest = 0;
@@ -234,7 +234,7 @@ function initEngine() {
     resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
     
-    l0v = new E3D_entity_vector("light0vect", true, 10.0, true);
+    l0v = new E3D_entity_axis("light0vect", true, 10.0, true);
     l0v.position = vec3.fromValues(-5, 20, -5);
     //l0v.scale = vec3.fromValues(5, 5, 5);
     l0v.visible = true;
@@ -242,7 +242,7 @@ function initEngine() {
 
     scn.addEntity(l0v);
     
-    l1v = new E3D_entity_vector("light1vect", true, 10.0, true);
+    l1v = new E3D_entity_axis("light1vect", true, 10.0, true);
     l1v.position = vec3.fromValues(5, 20, 5);
     //l1v.scale = vec3.fromValues(5, 5, 5);
     l1v.visible = true;
@@ -250,7 +250,7 @@ function initEngine() {
 
     scn.addEntity(l1v);
 
-    testSph = new E3D_entity_dynamic("wireSphereTest");
+    testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
     testSph.addWireSphere([30,0,0], 20, [1,0,0], 24, true);
     testSph.addWireSphere([0,30,0], 20, [0,1,0], 24, true);
     testSph.addWireSphere([0,0,30], 20, [0,0,1], 24, true);
@@ -258,13 +258,13 @@ function initEngine() {
     //testSph.cull_dist2 = 2500;
     scn.addEntity(testSph);
 
-    splos = new E3D_entity_dynamic("splosions");
+    splos = new E3D_entity_wireframe_canvas("splosions");
     splos.visible = true;
     splos.arrayIncrement = 2700; 
     splos.vis_culling = false;
     scn.addEntity(splos);
 
-    iplanes = new E3D_entity_dynamic("infinitePlanes");
+    iplanes = new E3D_entity_wireframe_canvas("infinitePlanes");
     iplanes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true, false);
     iplanes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true, false);
     iplanes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true, false);
@@ -273,7 +273,7 @@ function initEngine() {
     iplanes.vis_culling = false;
     scn.addEntity(iplanes);
 
-    fplanes = new E3D_entity_dynamic("finitePlanes");
+    fplanes = new E3D_entity_wireframe_canvas("finitePlanes");
     fplanes.position = [25, -10, 25];
     fplanes.addPlane([-25, 10, 25], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
     fplanes.addPlane([25, -10, 0], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
@@ -282,7 +282,15 @@ function initEngine() {
     //fplanes.cull_dist2 = 4200;
     scn.addEntity(fplanes);
 
-    cubes = new E3D_entity_dynamic("cubesTest");
+    targetVector = new E3D_entity_wireframe_canvas("vectorHitTest");
+    targetVector.position = [25, 25, 25];
+    targetVector.line([0, 0, 0], [0, 100, 0], false, [1,1,1]);
+    targetVector.pushCD_edge([0, 0, 0], [0, 100, 0]);
+    targetVector.visible = true;
+    scn.addEntity(targetVector);
+
+
+    cubes = new E3D_entity_wireframe_canvas("cubesTest");
     cubes.position = [0, 50, -50];
     cubes.addWireCube([0, -50, 0], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
     cubes.addWireCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
@@ -292,7 +300,7 @@ function initEngine() {
     //cubes.cull_dist2 = 4200;
     scn.addEntity(cubes);
 
-    dev_CD = new E3D_entity_dynamic("DEV/CD_Display");
+    dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
 
     dev_CD.visible = true;
     dev_CD.vis_culling = false;
@@ -814,6 +822,7 @@ function reflect(inc, norm) {
     return [ inc[0] - (norm[0] * dr2) , inc[1] - (norm[1] * dr2), inc[2] - (norm[2] * dr2) ];
 }
 
+// Intersection of vector and sphere, as vector advance into static sphere, arrow like
 function VectSphHit(v, so, sr2) { // translated to v origin
     var t0 = 0; 
     var t1 = 0;
@@ -834,6 +843,29 @@ function VectSphHit(v, so, sr2) { // translated to v origin
 
     return (t0 < t1) ? t0 : t1;
 }
+
+// Intersction of sphere and vector, as sphere advance into edge
+function SphEdgeHit(v, so, sr2) { // translated to v origin
+  //  var t0 = 0; 
+  //  var t1 = 0;
+   // var sr2 = sr * sr;
+    var tca = vec3.dot(so, v);
+
+    if  (tca < 0) return false;
+    // sph behind origin
+
+    var d2 = vec3.dot(so, so) - tca * tca;
+
+    if (d2 > sr2) return false;
+    // tangential point farther than radius
+
+   // var thc = Math.sqrt(sr2 - d2);
+   // t0 = tca - thc;
+   // t1 = tca + thc;
+
+    return tca;
+}
+
 
 
 function splode(loc) {
@@ -882,6 +914,7 @@ function log(text, silent = true) {
         ts = Date.now() - timer.start;
     } catch (e) {
         // timer was not yet defined
+        ts = "=";
     } 
 
     console.log("E3D[" + ts + "] " + text);
