@@ -22,7 +22,10 @@ class E3D_input {
 
         // Input states
         this.inputTable = new Map(); // keys that are pressed down
+        this.inputTable.set(E3D_INP_ALWAYS, true);
+
         this.inputDoneTable = new Map(); // keys that got released but trigger again without keydown (keyboard auto-repeat)
+        this.inputDoneTable.set(E3D_INP_ALWAYS, false);
 
         // Callback
         this.onInput = null;
@@ -136,12 +139,12 @@ class E3D_input {
         this.keyMap.set("rz_inc", "KeyX");
 
         // "custom" commands, binds can be added for anything
-        this.keyMap.set("action0", E3D_INP_LMB);
+        this.keyMap.set("action0", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
         this.keyMap.set("action1", "KeyF");
-        this.keyMap.set("action2", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
-        this.keyMap.set("panPivot", E3D_INP_RMB);
-        this.keyMap.set("togglePointerlock", "ControlRight");
-        this.keyMap.set("toggleFullscreen", "F11");
+      //  this.keyMap.set("action2", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
+      //  this.keyMap.set("panPivot", E3D_INP_RMB);
+        //this.keyMap.set("togglePointerlock", "ControlRight");
+        //this.keyMap.set("toggleFullscreen", "F11");
         //this.keyMap.set("exitLock", "Escape");
 
 
@@ -259,40 +262,39 @@ class E3D_input {
         }
 
         // Pointer
-        // Positions
-        // todo replace within inputTable E3D_INP_ALWAYS as true
-        if ((this.pointerMap.get("px_btn") == E3D_INP_ALWAYS) || this.inputTable.get(this.pointerMap.get("px_btn"))) {
+        // Position        
+        if (this.inputTable.get(this.pointerMap.get("px_btn"))) {
             if (this.pointerMap.get("px_axis") == E3D_INP_X) this.px_delta += this.mx * this._posSpeed;
             if (this.pointerMap.get("px_axis") == E3D_INP_Y) this.px_delta += this.my * this._posSpeed;
             if (this.pointerMap.get("px_axis") == E3D_INP_W) this.px_delta += this.mw * this._posSpeed;
         }
 
-        if ((this.pointerMap.get("py_btn") == E3D_INP_ALWAYS) || this.inputTable.get(this.pointerMap.get("py_btn"))) {
+        if (this.inputTable.get(this.pointerMap.get("py_btn"))) {
             if (this.pointerMap.get("py_axis") == E3D_INP_X) this.py_delta += this.mx * this._posSpeed;
             if (this.pointerMap.get("py_axis") == E3D_INP_Y) this.py_delta += this.my * this._posSpeed;
             if (this.pointerMap.get("py_axis") == E3D_INP_W) this.py_delta += this.mw * this._posSpeed;
         }
 
-        if ((this.pointerMap.get("pz_btn") == E3D_INP_ALWAYS) || this.inputTable.get(this.pointerMap.get("pz_btn"))) {
+        if (this.inputTable.get(this.pointerMap.get("pz_btn"))) {
             if (this.pointerMap.get("pz_axis") == E3D_INP_X) this.pz_delta += this.mx * this._posSpeed;
             if (this.pointerMap.get("pz_axis") == E3D_INP_Y) this.pz_delta += this.my * this._posSpeed;
             if (this.pointerMap.get("pz_axis") == E3D_INP_W) this.pz_delta += this.mw * this._posSpeed;
         }
 
         // Rotations
-        if ((this.pointerMap.get("rx_btn") == E3D_INP_ALWAYS) || this.inputTable.get(this.pointerMap.get("rx_btn"))) {
+        if (this.inputTable.get(this.pointerMap.get("rx_btn"))) {
             if (this.pointerMap.get("rx_axis") == E3D_INP_X) this.rx_delta += this.mx * this._rotSpeed;
             if (this.pointerMap.get("rx_axis") == E3D_INP_Y) this.rx_delta += this.my * this._rotSpeed;
             if (this.pointerMap.get("rx_axis") == E3D_INP_W) this.rx_delta += this.mw * this._rotSpeed;
         }
 
-        if ((this.pointerMap.get("ry_btn") == E3D_INP_ALWAYS) || this.inputTable.get(this.pointerMap.get("ry_btn"))) {
+        if (this.inputTable.get(this.pointerMap.get("ry_btn"))) {
             if (this.pointerMap.get("ry_axis") == E3D_INP_X) this.ry_delta += this.mx * this._rotSpeed;
             if (this.pointerMap.get("ry_axis") == E3D_INP_Y) this.ry_delta += this.my * this._rotSpeed;
             if (this.pointerMap.get("ry_axis") == E3D_INP_W) this.ry_delta += this.mw * this._rotSpeed;
         }
 
-        if ((this.pointerMap.get("rz_btn") == E3D_INP_ALWAYS) || this.inputTable.get(this.pointerMap.get("rz_btn"))) {
+        if (this.inputTable.get(this.pointerMap.get("rz_btn"))) {
             if (this.pointerMap.get("rz_axis") == E3D_INP_X) this.rz_delta += this.mx * this._rotSpeed;
             if (this.pointerMap.get("rz_axis") == E3D_INP_Y) this.rz_delta += this.my * this._rotSpeed;
             if (this.pointerMap.get("rz_axis") == E3D_INP_W) this.rz_delta += this.mw * this._rotSpeed;
@@ -503,6 +505,7 @@ class E3D_input {
     }
 
     // Check if a command has been triggered, and reset it if needed
+    // Make sure that no 2 commands or button inputs conflicts otherwise they might reset each others
     checkCommand(cmd, reset = false) {
         let res = this.inputTable.get(this.keyMap.get(cmd));        
         if (reset && res) this.inputTable.set(this.keyMap.get(cmd), false);
@@ -519,7 +522,7 @@ class E3D_input {
         }
 
         var inpDone = this.inputDoneTable.get(event.code);
-        if ((inpDone === undefined) || (inpDone === true)) {
+        if ((inpDone == undefined) || (inpDone == true)) {
             this.inputTable.set(event.code, true);   
             this.inputDoneTable.set(event.code, false);
         }    
@@ -528,21 +531,13 @@ class E3D_input {
 
         //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
-
-        //console.log("KD " + event.code);
     }
     
     keyUp(event) {    
-
         if (this.onInput) this.onInput(event); // callback from event for user input dependant request to browser (fullscreen, pointerlock)
 
-        if (this.inputTable.get(event.code) != undefined) {
-            this.inputTable.set(event.code, false);
-            this.inputDoneTable.set(event.code, true);
-        }   
-
-
-
+        this.inputTable.set(event.code, false);
+        this.inputDoneTable.set(event.code, true);
     }
 
 
@@ -561,6 +556,7 @@ class E3D_input {
     
     mouseUp(event) {
         this.keyUp( { code : event.button } );
+
         if (event.preventDefault) { event.preventDefault(); };
         return false;
     }

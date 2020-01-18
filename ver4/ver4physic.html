@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Easy3D Engine webGL version 0.4 Physics and Collision Detection</title>
+    <meta charset="UTF-8">
+    <style>
+
+        body {
+            padding: 0px;
+            margin: 0px;
+            font-family: "Courier", Courier, monospace;
+            color: white;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            left:0px;
+            top:0px;
+            display: block;
+            position: absolute;
+            z-index: 0;             
+        }
+
+        img {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        #mainDiv {
+            width : 100%;
+            height:  100%;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
+
+        #statusDiv {
+            width : 100%;
+            height: 50px;
+            position: absolute;
+            top: 0px;
+            left: 0px; 
+            
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+
+        #logDiv {
+            position: absolute;
+            left: 0px;
+            bottom: 0px;
+
+            height : 125px;
+            width: 100%;
+            overflow-x: wrap;
+            overflow-y: scroll;
+        }
+
+
+
+    </style>
+    <!-- Utilities -->
+    <script type="text/javascript" src="gl-matrix.js"></script><!-- for debug -->
+    <!--script type="text/javascript" src="gl-matrix-min.js"></script--><!-- for perf -->
+
+    <!-- Engine Core -->
+    <script type="text/javascript" src="ver4const.js"></script>
+    <script type="text/javascript" src="ver4input.js"></script>
+    <script type="text/javascript" src="ver4timing.js"></script>
+    <script type="text/javascript" src="ver4entity.js"></script>
+    <script type="text/javascript" src="ver4animation.js"></script>
+    <script type="text/javascript" src="ver4lighting.js"></script>
+    <script type="text/javascript" src="ver4camera.js"></script>
+    <script type="text/javascript" src="ver4scene.js"></script>
+    <script type="text/javascript" src="ver4ressource.js"></script>
+    <script type="text/javascript" src="ver4loader.js"></script>
+    <script type="text/javascript" src="ver4shader.js"></script>
+    <script type="text/javascript" src="ver4class.js"></script>
+
+    <!-- Main Script -->
+    <script type="text/javascript" src="ver4physic.js"></script>
+</head>
+
+<body>
+
+    <div id="mainDiv">
+        <canvas id="GLCanvas">Erreur - Canvas non supporté</canvas>
+        <div id="statusDiv">Status</div>
+        <div id="logDiv"></div>
+    </div>
+
+</body>
+
+</html>

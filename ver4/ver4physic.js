@@ -1,6 +1,6 @@
 // Easy3D_WebGL
-// Main demo program for full screen and pointer lock
-// Emmanuel Charette 2017-2019
+// Main testing program for physics and collisiion detection
+// Emmanuel Charette 2017-2020
 
 "use strict"
 
@@ -16,153 +16,90 @@ const mainDiv = document.getElementById("mainDiv");
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
 
-document.forms["moveTypeForm"].addEventListener("change", camChange); // To update camera matrix
-document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
-document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
-/*
-// Try to figure out which of desktop or mobile control scheme should be used
-document.body.addEventListener("mousemove", callBackMouse);
-document.body.addEventListener("touchStart", callBackTouch);
-document.body.removeEventListener
-
-function callBackMouse() {
-    console.log("Probably Desktop");
-    document.body.removeEventListener("mousemove", callBackMouse);
-    document.body.addEventListener("touchStart", callBackTouch);
-}
-
-function callBackTouch() {
-    console.log("Probably Mobile");
-    document.body.removeEventListener("mousemove", callBackTouch);
-    document.body.addEventListener("touchStart", callBackMouse);
-}
-*/
-document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv); hover2CollapseAll(); } );
-document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); hover2CollapseAll(); } );
-pLockCallback = function(event) {
-    log(event, true);
-
-    // remap controls
-    if (event == "lock") {
-        inputs.pointerMap.set("rx_btn", E3D_INP_ALWAYS);
-        inputs.pointerMap.set("ry_btn", E3D_INP_ALWAYS);
-        inputs.keyMap.set("action0", E3D_INP_LMB);
-
-    } else if ((event == "unlock") || (event == "error")) {
-        inputs.pointerMap.set("rx_btn", E3D_INP_LMB);
-        inputs.pointerMap.set("ry_btn", E3D_INP_LMB);
-        inputs.keyMap.set("action0", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
-    }
-}
-fullscreenChangeCallback = function fullscreenChange(active, elem) {
-    if (active) {
-        document.getElementById("screenSizeImgFS").style.display = "none";
-        document.getElementById("screenSizeImgWS").style.display = "inline-block";
-    } else {
-
-        document.getElementById("screenSizeImgFS").style.display = "inline-block";
-        document.getElementById("screenSizeImgWS").style.display = "none";
-        if (pLockRequested) {
-            pLockRequest(mainDiv); // Restore pointerLock 
-            hover2CollapseAll();
-        }
-    }
-}
 
 // Engine Config
 
+
 const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
-const _zFar = 500.0;
+const _zFar = 3200.0;
 
-// Engine State and stats
 
-var winWidth = 10, winHeight = 10;
+// Engine Stats
+
+
 var usepct_smth = 0; //usage pct smoothed value
-var l0v, l1v;// light vector entities 
-var testSph, splos, iplanes, fplanes, cubes, dev_CD, targetVector; // entities
-var cloned = false;
-var animations = [];
 var nHitTest = 0;
 
-// Engine Components
+
+// Engine Content and state
+
+
+var animations = [];
+var testSph, targetVector, iplanes, dev_CD; // entities
+var show_DEV_CD = false;
+
+
+// Engine Core Components
+
 
 var gl; // webGL canvas rendering context
-var timer = new E3D_timing(false, 100, timerTick);
+var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
-var resMngr = new ressourceManager(onRessource);
+var inputs = new E3D_input(can, true, true, false, false); // Mouse and Keyboard
 
-var inputs = new E3D_input(can, true, true, false, true);// don't support touch in main element, touch handling is done in virtual TS and TP
-inputs.onInput = onEngineInput;
-
-// virtual dual sticks
-var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "", "action0");
-vTSinputLeft.Xspeed = inputs._rotSpeed;
-vTSinputLeft.Yspeed = inputs._posSpeed; //pz
-var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "", "action1");
-vTSinputRight.Xspeed = inputs._rotSpeed;
-vTSinputRight.Yspeed = inputs._rotSpeed;
 
 log("Session Start", false);
 
+
 initEngine();
-
-log("Engine Initialized", false);
-
 
 
 function winResize() {
-    gl.canvas.width  = gl.canvas.offsetWidth;
-    gl.canvas.height = gl.canvas.offsetHeight;
-
-    winWidth = gl.canvas.offsetWidth;
-    winHeight = gl.canvas.offsetHeight;
-
-    gl.viewport(0, 0, winWidth, winHeight);
+    var winWidth  = gl.canvas.offsetWidth;
+    var winHeight = gl.canvas.offsetHeight;
 
     log("Resize to " + winWidth + " x " + winHeight, false);
-   
-    let vmode = document.forms["moveTypeForm"].moveType.value; 
 
-    if (vmode == "model") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    } 
-    else if (vmode == "free") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    } 
-    else if (vmode == "space") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    }
-    else {
-        scn.camera.resize(winWidth, winHeight) 
-    }
+    gl.canvas.width  = winWidth;
+    gl.canvas.height = winHeight;
 
-
-    vTSinputLeft.onResize();
-    vTSinputRight.onResize();
+    gl.viewport(0, 0, winWidth, winHeight);
+    scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
 }
 
 
-function camChange() {
-
-    let vmode = document.forms["moveTypeForm"].moveType.value; 
-
-    if (vmode == "model") {
-        scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-        scn.lights.light0_lockToCamera = false;
+function log(text, silent = true) {
+    let ts = 0;
+    try {
+        ts = Date.now() - timer.start;
+    } catch (e) {
+        // timer was not yet defined
+        ts = "=";
     } 
-    else if (vmode == "free") {
-        scn.camera = new E3D_camera_persp("cam1f", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-        scn.lights.light0_lockToCamera = true;
-    } 
-    else if (vmode == "space") {
-        scn.camera = new E3D_camera_space("cam1s", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-        scn.lights.light0_lockToCamera = true;
-    }
-    else {
-        scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
+
+    console.log("E3D[" + ts + "] " + text);
+    if (!silent) {
+        logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+        logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
     }
 }
+
+
+function updateStatus() {
+    usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
+    status.innerHTML = 
+    "pX:" + Math.floor(scn.camera.position[0]) + 
+    " pY:" + Math.floor(scn.camera.position[1]) + 
+    " pZ:" + Math.floor(scn.camera.position[2]) + 
+    " rX: " + Math.floor(inputs.rx * RadToDeg) + 
+    " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
+    " delta:" + timer.delta + 
+    "s usage:" + Math.floor(usepct_smth) +
+    "% nElements: " + scn.drawnElemenets + "<br />"+
+    "nAnims: " + animations.length + " nHitTests: " + nHitTest;
+}
+
 
 function initEngine() {
 
@@ -177,7 +114,7 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.0, 0.0, 0.25, 1.0), 400);
+        scn = new E3D_scene("mainScene", gl, can.offsetWidth, can.offsetHeight, vec4.fromValues(0.2, 0.2, 0.2, 1.0), 256);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -195,7 +132,9 @@ function initEngine() {
         scn.lights.light1_lockToCamera = false;
 
         log("Camera Initialization", false);
-        camChange();
+        scn.camera = new E3D_camera_persp("cam1f", can.offsetWidth, can.offsetHeight, _fieldOfView, _zNear, _zFar);
+        scn.lights.light0_lockToCamera = true;
+
         winResize();
 
         log("Scene Initialization", false);
@@ -203,92 +142,56 @@ function initEngine() {
 
         scn.preRenderFunction = prepRender; // callback to do some custom stuff
 
+        log("Engine Initialized", false);
     } catch (e) {
         log(e, false);
 
         return; 
     }
-    
-        inputs.keyMap.set("rx_dec", "null");
-        inputs.keyMap.set("rx_inc", "null");
-        inputs.keyMap.set("ry_dec", "null");
-        inputs.keyMap.set("ry_inc", "null");
-        inputs.keyMap.set("rz_dec", "KeyQ");
-        inputs.keyMap.set("rz_inc", "KeyE");
-        inputs.pointerMap.set("px_btn", E3D_INP_DISABLED);
-        inputs.pointerMap.set("py_btn", E3D_INP_DISABLED);
-        inputs.pointerMap.set("pz_btn", E3D_INP_DISABLED);
-        inputs.pointerMap.set("rz_btn", E3D_INP_DISABLED);
 
-        inputs.keyMap.set("togglePointerlock", "ControlRight");
-        inputs.keyMap.set("toggleFullscreen", "F11");
+    // Input configugarion // TODO in JSON config file
 
-        pLockCallback("unlock"); // preset controls mapping
-     
-    resMngr.addRessource("../Models/ST.raw", "ST", "Model");
-    resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
-    resMngr.addRessource("../Models/CM.raw", "CM", "Model");
-    resMngr.addRessource("../Models/SPH.raw", "sph", "Model");
-    resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
-    resMngr.loadAll("models");
-    
-    l0v = new E3D_entity_axis("light0vect", true, 10.0, true);
-    l0v.position = vec3.fromValues(-5, 20, -5);
-    //l0v.scale = vec3.fromValues(5, 5, 5);
-    l0v.visible = true;
-    l0v.vis_culling = false;
+    inputs.keyMap.set("action_toggle_CD", "#");
+    inputs.keyMap.set("action_switch_ctrl_player", "Digit1");
+    inputs.keyMap.set("action_switch_ctrl_sphere", "Digit2");
+    inputs.keyMap.set("action_switch_ctrl_vector", "Digit3");
+    inputs.keyMap.set("action_switch_ctrl_edge", "Digit4");
 
-    scn.addEntity(l0v);
-    
-    l1v = new E3D_entity_axis("light1vect", true, 10.0, true);
-    l1v.position = vec3.fromValues(5, 20, 5);
-    //l1v.scale = vec3.fromValues(5, 5, 5);
-    l1v.visible = true;
-    l1v.vis_culling = false;
+    //inputs.pointerMap.set("rx_btn", E3D_INP_LMB);
+    //inputs.pointerMap.set("ry_btn", E3D_INP_LMB);
 
-    scn.addEntity(l1v);
+    // Scene entity creation // TODO in JSON scene file
 
     testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
-    testSph.addWireSphere([30,0,0], 20, [1,0,0], 24, true);
-    testSph.addWireSphere([0,30,0], 20, [0,1,0], 24, true);
-    testSph.addWireSphere([0,0,30], 20, [0,0,1], 24, true);
+    testSph.addWireSphere([0,0,0], 50, [1,0,0], 24, true);
     testSph.visible = true;
-    //testSph.cull_dist2 = 2500;
     scn.addEntity(testSph);
 
-    splos = new E3D_entity_wireframe_canvas("splosions");
-    splos.visible = true;
-    splos.arrayIncrement = 2700; 
-    splos.vis_culling = false;
-    scn.addEntity(splos);
-
     iplanes = new E3D_entity_wireframe_canvas("infinitePlanes");
-    iplanes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true, false);
-    iplanes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true, false);
-    iplanes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true, false);
-    iplanes.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true, false);
+    iplanes.addPlane([0, -50, 0], [PIdiv2, 0, 0], 2048, 2048, 64, [1,1,0], true, false);
     iplanes.visible = true;
-    iplanes.vis_culling = false;
+    //iplanes.vis_culling = false;
     scn.addEntity(iplanes);
 
-    fplanes = new E3D_entity_wireframe_canvas("finitePlanes");
+   /* fplanes = new E3D_entity_wireframe_canvas("finitePlanes");
     fplanes.position = [25, -10, 25];
     fplanes.addPlane([-25, 10, 25], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
     fplanes.addPlane([25, -10, 0], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
     fplanes.addPlane([0, 30, 0], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], false, true);
     fplanes.visible = true;
     //fplanes.cull_dist2 = 4200;
-    scn.addEntity(fplanes);
+    scn.addEntity(fplanes);*/
 
     targetVector = new E3D_entity_wireframe_canvas("vectorHitTest");
     targetVector.position = [25, 25, 25];
     targetVector.line([0, 0, 0], [0, 100, 0], false, [1,1,1]);
     targetVector.pushCD_edge([0, 0, 0], [0, 100, 0]);
     targetVector.visible = true;
+    //targetVector.vis_culling = false;
     scn.addEntity(targetVector);
 
 
-    cubes = new E3D_entity_wireframe_canvas("cubesTest");
+    /*cubes = new E3D_entity_wireframe_canvas("cubesTest");
     cubes.position = [0, 50, -50];
     cubes.addWireCube([0, -50, 0], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
     cubes.addWireCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
@@ -296,13 +199,15 @@ function initEngine() {
     cubes.addWireCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
     cubes.visible = true;
     //cubes.cull_dist2 = 4200;
-    scn.addEntity(cubes);
+    scn.addEntity(cubes);*/
 
     dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
-
     dev_CD.visible = true;
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
+
+
+    // Activate timer and set scene as active
 
     timer.run();
     scn.state = E3D_ACTIVE;
@@ -310,28 +215,23 @@ function initEngine() {
 
 
 function prepRender() {
-    // move camera per inputs
-    let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
+
+    // Move camera per inputs
     scn.camera.moveBy(-inputs.px_delta_smth,    inputs.py_delta_smth, inputs.pz_delta_smth, 
-                       inputs.rx_delta_smth*yf, inputs.ry_delta_smth, inputs.rz_delta_smth);
-    // update some entities per current lights direction
-    if (scn.entities.length >= 3) {
-        l0v.updateVector(scn.lights.light0_adjusted);
-        l1v.updateVector(scn.lights.light1_adjusted);
-    }
+                       inputs.rx_delta_smth*1.0, inputs.ry_delta_smth, inputs.rz_delta_smth);
 
     // Animate / Calculate Expected target position and state
     // target orig, delta, dR2
-    for (let i = animations.length -1; i >=0; --i) {
+ /*   for (let i = animations.length -1; i >=0; --i) {
         if (animations[i].state == E3D_DONE) {
             scn.removeEntity(animations[i].target.id, false);
             animations.splice(i, 1);
         } else {
             animations[i].animate(null); //if supported calculate next position but don't lock
         }
-    }
+    }*/
     // Cull Collission Detection with pos vs dR2
-    let candidates = Array(scn.entities.length);
+ /*   let candidates = Array(scn.entities.length);
     for (let i = 0; i < animations.length; ++i) { // animations are source
         if (animations[i].delta2  > -1) for (let j = 0 ; j < scn.entities.length; ++j) // all entities are targets
             if ((scn.entities[j].collisionDetection) && (animations[i].target.id != scn.entities[j].id) ) { 
@@ -340,13 +240,16 @@ function prepRender() {
                 candidates[j] = (scn.entities[j].CD_iPlane > 0) || ( deltaP  <= deltaD );  
         }
         animations[i].animate(candidates);
-    }
+    }*/
     // Collistion Detection / get closest hit and reflection vector adjust with "t" and reflect vector
 
  //   for (let i = 0; i < animations.length; ++i) { 
   //      animations[i].animate(candidates); // resolve collision and lock final position
    // }
-    if (document.forms["displayForm"].CDP.checked) {
+
+
+
+    if (show_DEV_CD) {
         dev_CD.numElements = 0;
         for (let i = 0; i < scn.entities.length; ++i) {
             if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
@@ -355,36 +258,14 @@ function prepRender() {
     } else {
         dev_CD.visible = false;
     }
-
 }
 
 
-function onEngineInput() { // preprocess inputs out of game loop
-
-    if (inputs.checkCommand("togglePointerlock", true)) {
-        pLockToggle(can);
-        hover2CollapseAll();
-    }
-
-    if (inputs.checkCommand("toggleFullscreen", true)) {
-        let pla = pLockActive();
-        fullscreenToggle(mainDiv);
-        if (pla) {
-            pLockRequest(can);
-            hover2CollapseAll();
-        }
-    }
-
-}
 
 
 function timerTick() {  // Game Loop
-    
-    vTSinputRight.processInputs("ry_offset", "rx_offset");
-    vTSinputLeft.processInputs("rz_offset", "pz_offset");
 
     inputs.processInputs(timer.delta);
-
     inputs.smoothRotation(6);
     inputs.smoothPosition(6);
 
@@ -393,97 +274,31 @@ function timerTick() {  // Game Loop
 
     if (inputs.checkCommand("action0", true)) {
       //  console.log("action0", true);
-        let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
-        animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
-        animations[animations.length-1].restart();
+   //     let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
+   //     animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
+    //    animations[animations.length-1].restart();
     }
     if (inputs.checkCommand("action1", true)) {
       //  console.log("action1", true);      
-        let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
-        animations.push(new E3D_animation("shotgun " + timer.lastTick, shotgunAnim, newPyra, scn, timer));
-        animations[animations.length-1].restart();
+     //   let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
+      //  animations.push(new E3D_animation("shotgun " + timer.lastTick, shotgunAnim, newPyra, scn, timer));
+       // animations[animations.length-1].restart();
     }
+
+    if (inputs.checkCommand("action_toggle_CD", true)) show_DEV_CD = !show_DEV_CD;
+    if (inputs.checkCommand("action_switch_ctrl_player", true)) show_DEV_CD = !show_DEV_CD;
+    if (inputs.checkCommand("action_switch_ctrl_sphere", true)) show_DEV_CD = !show_DEV_CD;
+    if (inputs.checkCommand("action_switch_ctrl_vector", true)) show_DEV_CD = !show_DEV_CD;
+    if (inputs.checkCommand("action_switch_ctrl_edge", true)) show_DEV_CD = !show_DEV_CD;
+
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
         scn.render();
         scn.postRender();
     }   
-
 }
 
 
-function onRessource(name, msg) {
-    if (msg == E3D_RES_FAIL) {
-        log("Failed to load ressource: " + name, false);        
-    }
-    if (msg == E3D_RES_ALL) {
-        log("All async ressources loaded for tag: " + name, true);       
-        resMngr.flushAll();   
-    }
-
-    if (msg == E3D_RES_LOAD) {
-        log("Async ressource loaded: " + name, true); 
-
-        if (resMngr.getRessourceType(name) == "Model") {
-            if (name == "ST") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, vec3.fromValues(1,1,1));
-                nm.position[2] = -120;
-                nm.visible = true;
-
-                animations.push(new E3D_animation("ST rotate", rot0, nm, scn, timer));
-                animations[animations.length-1].play();
-                scn.addEntity(nm);  
-
-                if (!cloned) cloneWar();
-
-            } else if (name == "CM") {
-                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep", false, vec3.fromValues(5, 1, 5));
-                nm.position[1] = -120;
-                //nm.scale[0] = 5;
-                //nm.scale[2] = 5;
-                nm.visible = true;
-                scn.addEntity(nm);  
-
-                nm = scn.cloneEntity("CM_top", "CM_bottom");
-                nm.position[1] = 120;
-                //nm.scale[0] = 5;
-                //nm.scale[2] = 5;
-                nm.visible = true;
-                nm.resetMatrix();
-
-            } else if (name == "sph") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
-                nm.pushCD_sph(vec3_origin, 0.5);
-                scn.addEntity(nm);               
-
-            } else if (name == "pyra") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, [1.0,0.8,0.0]);
-                scn.addEntity(nm);   
-            } else {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
-                scn.addEntity(nm);  
-                nm.visible = true;
-                nm.pushCD_sph(vec3_origin, 7.0);
-            }
-
-        }  
-
-
-    } // msg loaded
-}
-
-
-function cloneWar() {
-    for (let j = 1; j < 36; ++j) {
-        var newGuy = scn.cloneEntity("ST", "ST" + j);
-        newGuy.rotation[1] = j * 10 * DegToRad;
-        newGuy.position[2] = -120;
-        vec3.rotateY(newGuy.position, newGuy.position, vec3_origin, j * 10 * DegToRad );
-        newGuy.resetMatrix();
-        newGuy.visible = true;
-    }
-    cloned = true;
-}
 
 
 // animator functions
@@ -558,16 +373,16 @@ function sphAnim(cand) {
                     }         
                 } // iplane
 
-                if (this.scn.entities[i].CD_edge > 0) {  // collision detection - this.sph to edge vector  
+               // if (this.scn.entities[i].CD_edge > 0) {  // collision detection - this.sph to edge vector  
 
-                    for (let j = 0; j < this.scn.entities[i].CD_edge; ++j) {
-                        nHitTest++;
+                 //   for (let j = 0; j < this.scn.entities[i].CD_edge; ++j) {
+                //        nHitTest++;
 
                         // subtract (out, a, b);// out = a - b
-                        var so = vec3.subtract(vec3_dummy, this.target.CD_sph_p[0], this.scn.entities[i].CD_edge_p[j]);
-                        var t = SphEdgeHit(this.scn.entities[i].CD_edge_v[j], so, this.target.CD_sph_rs[0]);                    
-                        if (t != false) colList.push( [i, j, t, "sph", "edge", vec3.normalize(vec3_dummy, this.scn.entities[i].CD_edge_v[j]) ] );    
-                       // var d = vec3.squaredDistance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
+                    //    var so = vec3.subtract(vec3_dummy, this.target.CD_sph_p[0], this.scn.entities[i].CD_edge_p[j]);
+                   //     var t = SphEdgeHit(this.scn.entities[i].CD_edge_v[j], so, this.target.CD_sph_rs[0]);                    
+                  //      if (t != false) colList.push( [i, j, t, "sph", "edge", vec3.normalize(vec3_dummy, this.scn.entities[i].CD_edge_v[j]) ] );    
+                 //      // var d = vec3.squaredDistance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
                        // var minD = this.target.CD_sph_rs[0] + this.scn.entities[i].CD_sph_rs[j];
                      /*   if (d <= minD) {
                         //  log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
@@ -580,9 +395,10 @@ function sphAnim(cand) {
                             this.target.resetMatrix();
                               splos.lineTo(this.target.position, false);
                         }*/
-                    } // target edges
+                 //   } // target edges
 
-                } // edge CD
+               // } // edge CD
+            
 
 
             } // end for each other entity perform hit test
@@ -840,6 +656,10 @@ function shotgunAnim(cand) {
 } 
 
 
+
+// Physics Methods
+
+// Reflection vector, incident vector vs normal of surface
 function reflect(inc, norm) {
     //r = v - 2.0 * dot(v, n) * n
     vec3.normalize(norm, norm);
@@ -900,7 +720,7 @@ function SphEdgeHit(v, so, sr2) { // translated to v origin
 }
 
 
-
+/*
 function splode(loc) {
   // log("sploded!", false);
   // log(splos.numElements);
@@ -935,34 +755,9 @@ function splode(loc) {
         }
     }
   //  log(splos.numElements);
-}
+}*/
 
 
-// Logging and status information
 
 
-function log(text, silent = true) {
-    let ts = 0;
-    try {
-        ts = Date.now() - timer.start;
-    } catch (e) {
-        // timer was not yet defined
-        ts = "=";
-    } 
-
-    console.log("E3D[" + ts + "] " + text);
-    if (!silent) {
-        logElement.innerHTML += "[" + ts + "] " + text + "<br />";
-        logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
-    }
-
-}
-
-function updateStatus() {
-    usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + " pY:" + Math.floor(scn.camera.position[1]) + " pZ:" + Math.floor(scn.camera.position[2])+ " rX: " + Math.floor(inputs.rx * RadToDeg) + " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
-    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
-    "nAnims: " + animations.length + " nHitTests: " + nHitTest;
-}
-
-});
+}); // DOMContentLoaded

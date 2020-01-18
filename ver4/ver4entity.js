@@ -188,11 +188,11 @@ class E3D_entity {
         if (this.collisionDetection) {
             for (var i = 0; i < this.CD_vec; ++i) {
                 vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
-                vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.modelMatrix);
+                vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_edge; ++i) {
                 vec3.transformMat4(this.CD_edge_p[i], this.CD_edge_p0[i], this.modelMatrix);
-                vec3.transformMat4(this.CD_edge_v[i], this.CD_edge_v0[i], this.modelMatrix);
+                vec3.transformMat4(this.CD_edge_v[i], this.CD_edge_v0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_sph; ++i) {
                 vec3.transformMat4(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
@@ -207,7 +207,7 @@ class E3D_entity {
                 vec3.transformMat4(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_cube; ++i) {
-                vec3.transformMat4(this.CD_cube_p[i], this.CD_cube_p0[i], this.normalMatrix);
+                vec3.transformMat4(this.CD_cube_p[i], this.CD_cube_p0[i], this.modelMatrix);
                 vec3.transformMat4(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
                 vec3.transformMat4(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
                 vec3.transformMat4(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
