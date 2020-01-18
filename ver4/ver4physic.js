@@ -11,7 +11,6 @@ log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
-const mainDiv = document.getElementById("mainDiv");
 
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
@@ -22,7 +21,7 @@ window.addEventListener("resize", winResize); // To reset camera matrix
 
 const _fieldOfView = 45 * DegToRad;
 const _zNear = 0.1;
-const _zFar = 3200.0;
+const _zFar = 1024.0;
 
 
 // Engine Stats
@@ -36,9 +35,10 @@ var nHitTest = 0;
 
 
 var animations = [];
-var testSph, targetVector, iplanes, dev_CD; // entities
+var testSph, targetVector, iplanes, dev_CD, hitsMarkers; // entities
 var show_DEV_CD = false;
-
+var moveTarget = "p";
+var hitPoints = [0,0,0];
 
 // Engine Core Components
 
@@ -89,15 +89,16 @@ function log(text, silent = true) {
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
     status.innerHTML = 
-    "pX:" + Math.floor(scn.camera.position[0]) + 
-    " pY:" + Math.floor(scn.camera.position[1]) + 
-    " pZ:" + Math.floor(scn.camera.position[2]) + 
-    " rX: " + Math.floor(inputs.rx * RadToDeg) + 
-    " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
-    " delta:" + timer.delta + 
-    "s usage:" + Math.floor(usepct_smth) +
-    "% nElements: " + scn.drawnElemenets + "<br />"+
-    "nAnims: " + animations.length + " nHitTests: " + nHitTest;
+    "pX:" + padStart(""+Math.floor(scn.camera.position[0]), " ", 6) + 
+    ", pY:" + padStart(""+Math.floor(scn.camera.position[1]), " ", 6) + 
+    ", pZ:" + padStart(""+Math.floor(scn.camera.position[2]), " ", 6) + 
+    ", rX: " + padStart(""+Math.floor(inputs.rx * RadToDeg), " ", 5) + 
+    ", rY:"+ padStart(""+Math.floor(inputs.ry * RadToDeg), " ", 5) + "<br />" +
+    "delta:" + padEnd(""+timer.delta, "0", 5) + 
+    "s, usage: " + padStart(""+Math.floor(usepct_smth), " ", 3) +
+    "%, nElements: " + scn.drawnElemenets + "<br />"+
+    "nAnims: " + padStart(""+animations.length, " ", 6) + ", nHitTests: " + nHitTest + "<br />" +
+    hitPoints[0] + " " +  hitPoints[1] + " " +  hitPoints[2];
 }
 
 
@@ -134,6 +135,7 @@ function initEngine() {
         log("Camera Initialization", false);
         scn.camera = new E3D_camera_persp("cam1f", can.offsetWidth, can.offsetHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
+        scn.camera.moveTo(-32, 64, 160, 20 * DegToRad, 10 * DegToRad, 0);
 
         winResize();
 
@@ -150,18 +152,13 @@ function initEngine() {
     }
 
     // Input configugarion // TODO in JSON config file
-
-    inputs.keyMap.set("action_toggle_CD", "#");
+    inputs.keyMap.set("action_toggle_CD", "Backquote"); // #
     inputs.keyMap.set("action_switch_ctrl_player", "Digit1");
     inputs.keyMap.set("action_switch_ctrl_sphere", "Digit2");
     inputs.keyMap.set("action_switch_ctrl_vector", "Digit3");
     inputs.keyMap.set("action_switch_ctrl_edge", "Digit4");
 
-    //inputs.pointerMap.set("rx_btn", E3D_INP_LMB);
-    //inputs.pointerMap.set("ry_btn", E3D_INP_LMB);
-
     // Scene entity creation // TODO in JSON scene file
-
     testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
     testSph.addWireSphere([0,0,0], 50, [1,0,0], 24, true);
     testSph.visible = true;
@@ -201,6 +198,13 @@ function initEngine() {
     //cubes.cull_dist2 = 4200;
     scn.addEntity(cubes);*/
 
+    hitsMarkers = new E3D_entity_wireframe_canvas("CD_hits_markers");
+    hitsMarkers.addWireSphere([0,0,0], 1, [1,1,1], 8, false);
+    hitsMarkers.visible = true;
+    hitsMarkers.vis_culling = false;
+    scn.addEntity(hitsMarkers);
+
+
     dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
     dev_CD.visible = true;
     dev_CD.vis_culling = false;
@@ -216,9 +220,53 @@ function initEngine() {
 
 function prepRender() {
 
-    // Move camera per inputs
-    scn.camera.moveBy(-inputs.px_delta_smth,    inputs.py_delta_smth, inputs.pz_delta_smth, 
-                       inputs.rx_delta_smth*1.0, inputs.ry_delta_smth, inputs.rz_delta_smth);
+    // Move per inputs
+    switch (moveTarget) {
+        case 'e':
+            targetVector.moveBy([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth]);
+            targetVector.rotateBy([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth]);
+            targetVector.resetMatrix();
+            break;
+        case 's':
+            testSph.moveBy([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth]);
+            testSph.rotateBy([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth]);
+            testSph.resetMatrix();
+            break;
+        default:
+            scn.camera.moveBy(-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth, 
+                               inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
+      }
+
+/*
+      targetVector.CD_edge_p[0]; // edge origin
+      targetVector.CD_edge_v[0]; // edge vector
+      testSph.CD_sph_p[0]; // sphere origin
+      testSph.CD_sph_r[0]; // sphere radius
+      testSph.CD_sph_rs[0]; // sphare radius squared
+*/
+    var so = [0,0,0];
+    var n = [0,0,0];
+    vec3.subtract(so, testSph.CD_sph_p[0], targetVector.CD_edge_p[0]);
+    vec3.normalize(n, targetVector.CD_edge_v[0]);
+    var hit = VectSphHit(n, so, testSph.CD_sph_rs[0])
+     // if (hit != false) {
+        hitsMarkers.clear();
+        // p = targetVector.CD_edge_p[0] + (targetVector.CD_edge_v[0] * d)
+
+        var p = vec3.scale([0, 0, 0], n, hitPoints[0]); 
+        vec3.add(p, p, targetVector.CD_edge_p[0]);
+        hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
+
+        p = vec3.scale([0, 0, 0], n, hitPoints[1]); 
+        vec3.add(p, p, targetVector.CD_edge_p[0]);
+        hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
+
+        p = vec3.scale([0, 0, 0],n, hitPoints[2]); 
+        vec3.add(p, p, targetVector.CD_edge_p[0]);
+        hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
+      //}
+
+
 
     // Animate / Calculate Expected target position and state
     // target orig, delta, dR2
@@ -286,10 +334,10 @@ function timerTick() {  // Game Loop
     }
 
     if (inputs.checkCommand("action_toggle_CD", true)) show_DEV_CD = !show_DEV_CD;
-    if (inputs.checkCommand("action_switch_ctrl_player", true)) show_DEV_CD = !show_DEV_CD;
-    if (inputs.checkCommand("action_switch_ctrl_sphere", true)) show_DEV_CD = !show_DEV_CD;
-    if (inputs.checkCommand("action_switch_ctrl_vector", true)) show_DEV_CD = !show_DEV_CD;
-    if (inputs.checkCommand("action_switch_ctrl_edge", true)) show_DEV_CD = !show_DEV_CD;
+    if (inputs.checkCommand("action_switch_ctrl_player", true)) moveTarget = "p";
+    if (inputs.checkCommand("action_switch_ctrl_sphere", true)) moveTarget = "s";
+    if (inputs.checkCommand("action_switch_ctrl_vector", true)) moveTarget = "v";
+    if (inputs.checkCommand("action_switch_ctrl_edge", true)) moveTarget = "e";
 
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
@@ -673,7 +721,9 @@ function VectSphHit(v, so, sr2) { // translated to v origin
     var t1 = 0;
    // var sr2 = sr * sr;
     var tca = vec3.dot(so, v);
-
+    hitPoints[0] = tca;
+    hitPoints[1] = 0;
+    hitPoints[2] = 0;
     if  (tca < 0) return false;
     // sph behind origin
 
@@ -685,6 +735,8 @@ function VectSphHit(v, so, sr2) { // translated to v origin
     var thc = Math.sqrt(sr2 - d2);
     t0 = tca - thc;
     t1 = tca + thc;
+    hitPoints[1] = t0;
+    hitPoints[2] = t1;
 
     return (t0 < t1) ? t0 : t1;
 }
@@ -699,7 +751,8 @@ function SphEdgeHit(v, so, sr2) { // translated to v origin
     
     // var sr2 = sr * sr;
     var tca = vec3.dot(so, v);
-    
+    hitPoints[0] = tca;
+
     if  (tca < 0) return false;
     // sph behind origin
     
@@ -709,12 +762,14 @@ function SphEdgeHit(v, so, sr2) { // translated to v origin
     if (d2 > (sr2/l )) return false;
     // tangential point farther than radius
     
-    log("edge tca " + tca);
+    //log("edge tca " + tca);
     var thc = Math.sqrt(sr2 - d2);
     t0 = tca - thc;
     t1 = tca + thc;
-    log("edge t0 " + t0);
-    log("edge t1 " + t1);
+    hitPoints[1] = t0;
+    hitPoints[2] = t1;
+   // log("edge t0 " + t0);
+   // log("edge t1 " + t1);
 
     return tca;
 }

@@ -444,7 +444,7 @@ function sphAnim(cand) {
                             var penetration = Math.sqrt(minD) - Math.sqrt(d);
                             var n = [this.target.CD_sph_p[0][0] - this.scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - this.scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - this.scn.entities[i].CD_sph_p[j][2] ];
                             //colList.push([i, j, penetration, "sph", "sph", n]);
-                              splos.moveTo(this.target.position);
+                              splos.moveCursorTo(this.target.position);
                             this.data.spd = reflect(this.data.spd, n);
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
                             this.target.resetMatrix();
@@ -474,7 +474,7 @@ function sphAnim(cand) {
                             var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
                             penetration *= last_sgn;
                           //  colList.push([i, j, penetration, "sph", "iPlane", this.scn.entities[i].CD_iPlane_n[j]])
-                              splos.moveTo(this.target.position);
+                              splos.moveCursorTo(this.target.position);
                             this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
                             vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
                             this.target.resetMatrix();
@@ -497,7 +497,7 @@ function sphAnim(cand) {
 
             // Go trough colList and resolve CD for vect
             if (colList.length > 0) {
-                  splos.moveTo(this.target.position);
+                  splos.moveCursorTo(this.target.position);
                 colList.sort((a, b) => { return b[2] - a[2]; } );
                 this.data.spd = reflect(this.data.spd, colList[0][5]);
                 vec3.scaleAndAdd(this.target.position, this.target.position, colList[0][5], colList[0][2]);

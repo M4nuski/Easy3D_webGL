@@ -31,6 +31,7 @@ Current work-in-progress and next steps
 * Better lights shaders (array of different types of ligts) (spot, point etc)
 * NetCode
 * --ver5:
+* Entity hierarchy (parents with n-childs, matrix propagation etc)
 * Abstraction of basic Collision physics (hit, bounce, move etc)
 * Evaluate value of render culling on mobile
 * Sprites (always facing viewer, shader with minimal inputs)

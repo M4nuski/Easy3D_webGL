@@ -76,4 +76,13 @@ function copy3fArray(a) {
     }
     return r;
 }
-
+function padStart(str, pad, len) {
+    if (pad.length < 1) return str;
+    while (str.length < len) str = pad[0] + str; 
+    return str;
+}
+function padEnd(str, pad, len) {
+    if (pad.length < 1) return str;
+    while (str.length < len) str = str + pad[0]; 
+    return str;
+}

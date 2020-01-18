@@ -50,20 +50,21 @@ class E3D_entity {
         this.filename = filename;
 
         this.collisionDetection = false;
+        // TODO use ref to external object from ver4physics.js
         // Collision Detection / Hit Test Data (faster split in different array than accessing single object[].property)
             // Vector Source (arrow)
             this.CD_vec = 0;
             this.CD_vec_p0 = []; // original to model space
             this.CD_vec_p  = []; // transformed to world space
             this.CD_vec_v0 = []; // original to model space
-            this.CD_vec_v  = []; // transformed to world space
+            this.CD_vec_v  = []; // transformed to world space (rotation)
 
             // Vector Target (edge)
             this.CD_edge = 0;
             this.CD_edge_p0 = []; // original to model space
             this.CD_edge_p  = []; // transformed to world space
             this.CD_edge_v0 = []; // original to model space
-            this.CD_edge_v  = []; // transformed to world space
+            this.CD_edge_v  = []; // transformed to world space (rotation)
 
             // Sphere Source/Target
             // TODO generalize as ellipsoid
@@ -127,11 +128,15 @@ class E3D_entity {
             this.CD_vec = entity.CD_vec;
             this.CD_vec_v0 = copy3fArray(entity.CD_vec_v0);
             this.CD_vec_v  = copy3fArray(entity.CD_vec_v);
+            this.CD_vec_p0 = copy3fArray(entity.CD_vec_p0);
+            this.CD_vec_p  = copy3fArray(entity.CD_vec_p);
         }
         if (entity.CD_edge > 0) {
             this.CD_edge = entity.CD_edge;
             this.CD_edge_v0 = copy3fArray(entity.CD_edge_v0);
             this.CD_edge_v  = copy3fArray(entity.CD_edge_v);
+            this.CD_edge_p0 = copy3fArray(entity.CD_edge_p0);
+            this.CD_edge_p  = copy3fArray(entity.CD_edge_p);
         }
         if (entity.CD_sph > 0) {
             this.CD_sph = entity.CD_sph;
@@ -171,7 +176,36 @@ class E3D_entity {
 
     }
 
-    // TODO normal matrix in shader
+
+    moveTo(p){
+        this.position = p.slice();
+    }
+    moveBy(p){
+        vec3.add(this.position, this.position, p);
+    }
+    moveByLocal(p){
+        var offset = vec3.transformMat4(vec3_dummy, p, this.normalMatrix);
+        vec3.add(this.position, this.position, offset);
+    }
+    moveByParent(p, parent){
+        var offset = vec3.transformMat4(vec3_dummy, p, parent.normalMatrix);
+        vec3.add(this.position, this.position, offset);
+    }
+    
+    rotateTo(r){
+        this.rotation = r.slice();
+    }
+    rotateBy(r) {
+        vec3.add(this.rotation, this.rotation, r);
+    }
+    rotateByLocal(r){
+        var offset = vec3.transformMat4(vec3_dummy, r, this.normalMatrix);
+        vec3.add(this.rotation, this.rotation, offset);
+    }
+    rotateByParent(r, parent){
+        var offset = vec3.transformMat4(vec3_dummy, r, parent.normalMatrix);
+        vec3.add(this.rotation, this.rotation, offset);
+    }
 
     resetMatrix(){
         // recreate matrices from rotation and position
@@ -381,7 +415,11 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.dataSizeChanged = true;
     }
     
-    
+    clear() {
+        this.numElements = 0;
+        this.dataContentChanged = true;
+    }
+
     getColor3f(elem) {
         return this.colorArray.subarray(elem*3, (elem+1)*3);
     }    
@@ -640,10 +678,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         return this.colSweep[this.colSweepIndex];
     }
 
-    moveTo (p) {
+    moveCursorTo (p) {
         this.currentPos = p.slice();
     }
-    moveBy (p) {
+    moveCursorBy (p) {
         vec3.add(this.currentPos, this.currentPos, p);
     }
 
