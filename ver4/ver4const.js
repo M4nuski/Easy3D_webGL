@@ -59,6 +59,7 @@ const PIx2 = Math.PI * 2.0;
 const RadToDeg = (180.0 / Math.PI);
 const DegToRad = (Math.PI / 180.0);
 
+// Randoms
 function rndPM(val) { // random between plus or minus "val"
     return (2*val*Math.random()) - val;
 }
@@ -66,11 +67,21 @@ function rndInt(val) { // integer random between 0 and val-1
     return Math.floor(Math.random() * val);
 }
 
+// Arrays of 3 floats
 function add3f(a, b) {
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2] ];
 }
 function sub3f(a, b) {
     return [a[0] - b[0], a[1] - b[1], a[2] - b[2] ];
+}
+function scale3f(a, f) {
+    return [a[0] * f, a[1] * f, a[2] * f];
+}
+function scaleAndAdd3f(a, b, f) {
+    return [a[0] + (b[0] * f), a[1] + (b[1] * f), a[2] + (b[2] * f)];
+}
+function scaleAndSub3f(a, b, f) {
+    return [a[0] - (b[0] * f), a[1] - (b[1] * f), a[2] - (b[2] * f)];
 }
 function copy3fArray(a) {
     var r = Array(a.length);
@@ -79,6 +90,8 @@ function copy3fArray(a) {
     }
     return r;
 }
+
+// Strings
 function padStart(str, pad, len) {
     if (pad.length < 1) return str;
     while (str.length < len) str = pad[0] + str; 

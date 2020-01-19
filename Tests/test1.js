@@ -1113,6 +1113,113 @@ t.test10 = function() {
 
 
 
+t.test11 = function() {
+
+    const numtst = 1000000;    
+    addLine("Num iter: " + numtst + " ()");
+
+    let arr = [];
+    let resarr = [];
+    let eps = 0.001; 
+    let inveps = 1.0 / eps; 
+    for (let i = 0; i < numtst; ++i) {
+        arr.push(rndPM(0.002));
+        resarr.push(false);
+    }
+
+
+
+    var dt = Date.now();
+        for (var i = 0; i < 1; ++i) 
+            for (var j = 0; j < numtst; ++j) resarr[j] = (Math.abs(arr[j]) < eps);
+    var et = Date.now();
+    addLine("(Math.abs(x) < eps) : " + (et-dt));
+
+    dt = Date.now();
+    for (var i = 0; i < 100; ++i) 
+        for (var j = 0; j < numtst; ++j) resarr[j] = (Math.round(arr[j] / eps) != 0);  
+    et = Date.now();
+    addLine("(Math.round(arr[j] / eps) != 0) : " + (et-dt));
+
+    dt = Date.now();
+    for (var i = 0; i < 100; ++i) 
+        for (var j = 0; j < numtst; ++j) resarr[j] = (Math.round(arr[j] * inveps) != 0);  
+    et = Date.now();
+    addLine("(Math.round(arr[j] * inveps) != 0) : " + (et-dt));
+/*
+    dt = Date.now();
+
+    for (var h = 0; h < numtst; ++h)
+        for (let i = 0; i < numtst; ++i)
+            for (let j = 0; j < numtst; ++j)
+                for (let k = 0; k < numtst; ++k) sum += arr[k];
+
+    et = Date.now();
+    addLine("let ++iter : " + (et-dt) + " sum: " + sum);
+
+
+    sum = 0;
+    var dt = Date.now();
+
+    for (var h = 0; h < numtst; h++)
+        for (var i = 0; i < numtst; i++)
+            for (var j = 0; j < numtst; j++)
+                for (var k = 0; k < numtst; k++) sum += arr[k];
+
+    var et = Date.now();
+    addLine("var iter++ : " + (et-dt) + " sum: " + sum);
+
+    sum = 0;
+    dt = Date.now();
+
+    for (var h = 0; h < numtst; h++) 
+        for (let i = 0; i < numtst; i++)
+            for (let j = 0; j < numtst; j++)
+                for (let k = 0; k < numtst; k++) sum += arr[k];
+
+    et = Date.now();
+    addLine("let iter++ : " + (et-dt) + " sum: " + sum);
+
+
+    sum = 0;
+
+    let l = 0;
+    let m = 0;
+    let n = 0;
+    let o = 0;
+    dt = Date.now();
+
+    for (l = 0; l < numtst; ++l) 
+        for (m = 0; m < numtst; ++m)
+            for (n = 0; n < numtst; ++n)
+                for (o = 0; o < numtst; ++o) sum += arr[o];
+
+    et = Date.now();
+    addLine("local let ++iter : " + (et-dt) + " sum: " + sum);
+
+
+    sum = 0;
+
+    dt = Date.now();
+
+    for (e = 0; e < numtst; ++e) 
+        for (f = 0; f < numtst; ++f)
+            for (g = 0; g < numtst; ++g)
+                for (h = 0; h < numtst; ++h) sum += arr[h];
+
+    et = Date.now();
+    addLine("global var ++iter : " + (et-dt) + " sum: " + sum);
+
+
+
+*/
+
+    addLine("End Test 11");
+}
+
+function rndPM(val) { // random between plus or minus "val"
+    return (2*val*Math.random()) - val;
+}
 
 function rand(x) {
     return Math.floor(Math.random() * x);

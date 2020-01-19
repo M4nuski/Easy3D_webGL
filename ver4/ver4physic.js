@@ -428,6 +428,7 @@ function sphAnim(cand) {
                              this.data.spd = reflect(this.data.spd, n);                            
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
                              // TODO CD as vect and inflated target sph for fast speed interpolation
+                             // sqr(target sph r + source sph r) and vect between last_position and position 
                          //   this..spd = reflect(this.data.spd, n);
                           //  vec3.scale(this.data.spd, this.data.spd, 0.8);
                            // vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
@@ -450,11 +451,14 @@ function sphAnim(cand) {
                         var dist = vec3.dot(v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j];
                         var last_Dist = vec3.dot(last_v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j];
                                         
-                        var sgn = (dist >= 0) ? 1 : -1;
-                        dist = Math.abs(dist) ;
+                        var sgn = (dist > 0) ? 1 : -1;
+                        var last_sgn = (last_Dist > 0) ? 1 : -1; 
+         
+                        dist = Math.abs(dist);
+                        last_Dist = Math.abs(last_Dist);
 
-                        var last_sgn = (last_Dist >= 0) ? 1 : -1;
-                        last_Dist = Math.abs(last_Dist) ;
+                        if (dist < 0.0001) { sgn = last_sgn; dist = 0; }
+                        if (last_Dist < 0.0001) { last_sgn = sgn; last_Dist = 0; }
                     
                         if ( dist < this.target.CD_sph_r[0]) { 
 

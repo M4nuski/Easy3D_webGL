@@ -9,7 +9,7 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 * ver4cellshader.html: toon shading render test and demo
 * ver4fullscreen.html: pointer lock, full screen tests
 * ver4stl.html: binary STL loader/viewer app 
-
+* ver4physic.html: CD and physics test app
 * /Electron: content specific for Electron app
 * /Images: icons / sprites / images ressources
 * /Models: Meshs
@@ -19,10 +19,9 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress and next steps
 ----------
-* Collision detection (vector, sphere/elipsoid, plane/cuboid)
-* Remove scaling from matrix and entity except on load, or implement in shader to avoid dealing with it repeatidly. Mostly useless.
+* Collision detection (vector/edge, sphere/elipsoid, plane/cuboid)
+* Fake physics as animations
 * Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine
-* Validate Input scheme switching / UI / UX
 * --Some kind of game:
 * Path interpolation for bots and animations.
 * Basic AI
@@ -30,13 +29,13 @@ Current work-in-progress and next steps
 * Sounds
 * Better lights shaders (array of different types of ligts) (spot, point etc)
 * NetCode
-* --ver5:
-* Entity hierarchy (parents with n-childs, matrix propagation etc)
-* Abstraction of basic Collision physics (hit, bounce, move etc)
-* Evaluate value of render culling on mobile
 * Sprites (always facing viewer, shader with minimal inputs)
 * STL, OBJ, MS3D to JSON or other ready-to-use format for mesh data and entities
 * Improved Entity loading (ideally external tool should prepare model data for better load perf)
+* --ver5:
+* Entity hierarchy (parents with n-childs, matrix propagation etc)
+* Basic Collision physics (hit, bounce, move etc) as body data attached to entity
+* Evaluate value of render culling on mobile
 * --ver6:
 * Replace per-vertex colors with textures, using a LUT texture and LUT data set if nothing else.
 * Other type of physics mechanic for controls. (chase camera/3rd person)
