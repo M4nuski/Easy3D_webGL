@@ -165,14 +165,14 @@ function initEngine() {
 
     // Scene entity creation // TODO in JSON scene file
     testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
-    testSph.addWireSphere([0,0,0], 50, [1,0,0], 24, true, 1);
-    testSph.addWireSphere([0,0,-50], 50, [0,1,0], 24, false, 2);
-    testSph.addWireSphere([0,0,-100], 50, [0,1,0], 24, false, 3);
-    testSph.addWireSphere([0,0,-150], 50, [0,1,0], 24, false, 4);
-    testSph.addWireSphere([0,0,-200], 50, [0,1,0], 25, false, 5);
-    testSph.addWireSphere([0,0,-250], 50, [0,1,0], 36, false, 6);
-    testSph.addWireSphere([0,0,-300], 50, [0,1,0], 48, false, 7);
-    testSph.addWireSphere([0,0,-350], 50, [0,1,0], 64, false, 8);
+    testSph.addWireSphere([0,0,0], 50, [1,0,0], 64, true, 8);
+    testSph.addWireSphere([0,0,-50], 50, [0,1,0], 48, true, 7);
+    testSph.addWireSphere([0,0,-100], 50, [0,1,0], 36, true, 6);
+    testSph.addWireSphere([0,0,-150], 50, [0,1,0], 25, true, 5);
+    testSph.addWireSphere([0,0,-200], 50, [0,1,0], 16, true, 4);
+    testSph.addWireSphere([0,0,-250], 50, [0,1,0], 16, true, 3);
+    testSph.addWireSphere([0,0,-300], 50, [0,1,0], 16, true, 2);
+    testSph.addWireSphere([0,0,-350], 50, [0,1,0], 16, true, 1);
     testSph.visible = true;
     scn.addEntity(testSph);
 
@@ -426,7 +426,7 @@ function sphAnim(cand) {
                                 log("slow hit target", false);
                              } else this.data.spd = reflect(this.data.spd, n);                            
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
-
+                             // TODO CD as vect and inflated target sph for fast speed interpolation
                          //   this..spd = reflect(this.data.spd, n);
                           //  vec3.scale(this.data.spd, this.data.spd, 0.8);
                            // vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
@@ -547,7 +547,7 @@ function sphAnim(cand) {
         this.target.rotation[0] = rndPM(PIx2);
         this.target.rotation[1] = rndPM(PIx2);
 
-        this.data.spd = this.scn.camera.adjustToCamera(vec3.scale(vec3_dummy, vec3_nz, 250));
+        this.data.spd = this.scn.camera.adjustToCamera(vec3.scale(vec3_dummy, vec3_nz, inputs.checkCommand("action_speed", false) ? 750 : 250));
         this.data.spd[0] += rndPM(1);
         this.data.spd[1] += rndPM(1);
         this.data.spd[2] += rndPM(1);
