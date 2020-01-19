@@ -129,8 +129,8 @@ class E3D_input {
         this.keyMap.set("pz_dec", "KeyW");
         this.keyMap.set("pz_inc", "KeyS");
 
-        this.keyMap.set("rx_dec", "KeyF");
-        this.keyMap.set("rx_inc", "KeyR");
+        this.keyMap.set("rx_dec", "KeyT");
+        this.keyMap.set("rx_inc", "KeyG");
         
         this.keyMap.set("ry_dec", "KeyQ");
         this.keyMap.set("ry_inc", "KeyE");

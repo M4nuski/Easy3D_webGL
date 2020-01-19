@@ -39,6 +39,9 @@ var testSph, targetVector, iplanes, dev_CD, hitsMarkers; // entities
 var show_DEV_CD = false;
 var moveTarget = "p";
 var hitPoints = [0,0,0];
+var DEV_anim_active = true;
+var vec1v, vec1e, vec2v, vec2e;
+
 
 // Engine Core Components
 
@@ -98,7 +101,7 @@ function updateStatus() {
     "s, usage: " + padStart(""+Math.floor(usepct_smth), " ", 3) +
     "%, nElements: " + scn.drawnElemenets + "<br />"+
     "nAnims: " + padStart(""+animations.length, " ", 6) + ", nHitTests: " + nHitTest + "<br />" +
-    hitPoints[0] + " " +  hitPoints[1] + " " +  hitPoints[2];
+    hitPoints[0] + " " +  hitPoints[1] + " " +  hitPoints[2] + " dotv1v2 " + vec3.dot(vec1v, vec2v);
 }
 
 
@@ -135,8 +138,8 @@ function initEngine() {
         log("Camera Initialization", false);
         scn.camera = new E3D_camera_persp("cam1f", can.offsetWidth, can.offsetHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
-        scn.camera.moveTo(-32, 64, 160, 20 * DegToRad, 10 * DegToRad, 0);
-
+       // scn.camera.moveTo(-32, 64, 160, 20 * DegToRad, 10 * DegToRad, 0);
+       scn.camera.moveTo(50, -40, 200, -0 * DegToRad, -0 * DegToRad, 0);
         winResize();
 
         log("Scene Initialization", false);
@@ -158,14 +161,30 @@ function initEngine() {
     inputs.keyMap.set("action_switch_ctrl_vector", "Digit3");
     inputs.keyMap.set("action_switch_ctrl_edge", "Digit4");
 
+    inputs.keyMap.set("action_speed", "ShiftLeft");
+
     // Scene entity creation // TODO in JSON scene file
     testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
-    testSph.addWireSphere([0,0,0], 50, [1,0,0], 24, true);
+    testSph.addWireSphere([0,0,0], 50, [1,0,0], 24, true, 1);
+    testSph.addWireSphere([0,0,-50], 50, [0,1,0], 24, false, 2);
+    testSph.addWireSphere([0,0,-100], 50, [0,1,0], 24, false, 3);
+    testSph.addWireSphere([0,0,-150], 50, [0,1,0], 24, false, 4);
+    testSph.addWireSphere([0,0,-200], 50, [0,1,0], 25, false, 5);
+    testSph.addWireSphere([0,0,-250], 50, [0,1,0], 36, false, 6);
+    testSph.addWireSphere([0,0,-300], 50, [0,1,0], 48, false, 7);
+    testSph.addWireSphere([0,0,-350], 50, [0,1,0], 64, false, 8);
     testSph.visible = true;
     scn.addEntity(testSph);
 
+    var sph = new E3D_entity_wireframe_canvas("sph");
+    sph.addWireSphere([0,0,0], 16, [1,1,0], 32, true, 8);
+    sph.visible = false;
+    scn.addEntity(sph);
+
     iplanes = new E3D_entity_wireframe_canvas("infinitePlanes");
     iplanes.addPlane([0, -50, 0], [PIdiv2, 0, 0], 2048, 2048, 64, [1,1,0], true, false);
+    iplanes.addPlane([50, -50, 0], [PIdiv2, 0, 0.5], 2048, 2048, 64, [1,0,1], true, false);
+    iplanes.addPlane([-50, -50, 0], [PIdiv2, 0, -0.5], 2048, 2048, 64, [0,1,1], true, false);
     iplanes.visible = true;
     //iplanes.vis_culling = false;
     scn.addEntity(iplanes);
@@ -210,6 +229,19 @@ function initEngine() {
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
+    vec1e = new E3D_entity_axis("reflected", true, 10, false);
+    vec1v = vec3.fromValues(0, 1, 0);
+    vec1e.updateVector(vec1v);
+    vec1e.visible = true;
+    scn.addEntity(vec1e);
+
+    vec2e = new E3D_entity_axis("incident", true, 10, false);
+    vec2v = vec3.fromValues(0, -1, 0);
+    vec2e.position = [0.5, 0, 0.5];
+    vec2e.resetMatrix();
+    vec2e.updateVector(vec2v);
+    vec2e.visible = true;
+    scn.addEntity(vec2e);
 
     // Activate timer and set scene as active
 
@@ -236,6 +268,11 @@ function prepRender() {
             scn.camera.moveBy(-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth, 
                                inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
       }
+
+      vec3.rotateX(vec2v, vec2v, vec3_origin, 0.2 * timer.delta);
+      vec2e.updateVector(vec2v);
+      vec1v = reflect(vec2v, [0, 1, 0]);
+      vec1e.updateVector(vec1v);
 
 /*
       targetVector.CD_edge_p[0]; // edge origin
@@ -266,20 +303,26 @@ function prepRender() {
         hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
       //}
 
+      hitsMarkers.line(testSph.position, [0,0,0], false, [1,0,0]);
+      vec1v = sub3f([0,0,0], testSph.position);
+      vec2v = [0, 1, 0];
+   //   vec1v = reflect(vec1v, [0, 1, 0]);
+      //vec3.scale(vec1v, vec1v, 10.0);
+    //  hitsMarkers.line(vec1v, [0,0,0], false, [0,1,0]);
 
-
+      if (DEV_anim_active) {
     // Animate / Calculate Expected target position and state
     // target orig, delta, dR2
- /*   for (let i = animations.length -1; i >=0; --i) {
+    for (let i = animations.length -1; i >=0; --i) {
         if (animations[i].state == E3D_DONE) {
             scn.removeEntity(animations[i].target.id, false);
             animations.splice(i, 1);
         } else {
             animations[i].animate(null); //if supported calculate next position but don't lock
         }
-    }*/
+    }
     // Cull Collission Detection with pos vs dR2
- /*   let candidates = Array(scn.entities.length);
+    let candidates = Array(scn.entities.length);
     for (let i = 0; i < animations.length; ++i) { // animations are source
         if (animations[i].delta2  > -1) for (let j = 0 ; j < scn.entities.length; ++j) // all entities are targets
             if ((scn.entities[j].collisionDetection) && (animations[i].target.id != scn.entities[j].id) ) { 
@@ -288,7 +331,7 @@ function prepRender() {
                 candidates[j] = (scn.entities[j].CD_iPlane > 0) || ( deltaP  <= deltaD );  
         }
         animations[i].animate(candidates);
-    }*/
+    }
     // Collistion Detection / get closest hit and reflection vector adjust with "t" and reflect vector
 
  //   for (let i = 0; i < animations.length; ++i) { 
@@ -296,7 +339,7 @@ function prepRender() {
    // }
 
 
-
+      }
     if (show_DEV_CD) {
         dev_CD.numElements = 0;
         for (let i = 0; i < scn.entities.length; ++i) {
@@ -312,7 +355,7 @@ function prepRender() {
 
 
 function timerTick() {  // Game Loop
-
+    inputs._posSpeed = inputs.checkCommand("action_speed", false) ? 250 : 50;
     inputs.processInputs(timer.delta);
     inputs.smoothRotation(6);
     inputs.smoothPosition(6);
@@ -320,14 +363,15 @@ function timerTick() {  // Game Loop
     updateStatus();
     nHitTest = 0;
 
-    if (inputs.checkCommand("action0", true)) {
-      //  console.log("action0", true);
-   //     let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
-   //     animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
-    //    animations[animations.length-1].restart();
-    }
     if (inputs.checkCommand("action1", true)) {
-      //  console.log("action1", true);      
+      //  console.log("action0", true);
+        let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
+        animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
+        animations[animations.length-1].restart();
+    }
+    if (inputs.checkCommand("action0", true)) {
+      //  console.log("action1", true);    
+      DEV_anim_active = true;  
      //   let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
       //  animations.push(new E3D_animation("shotgun " + timer.lastTick, shotgunAnim, newPyra, scn, timer));
        // animations[animations.length-1].restart();
@@ -357,26 +401,40 @@ function sphAnim(cand) {
 
         if (cand) { // test and lock (pass 2)
         this.target.resetMatrix();  // update CD data  
-        splos.line(this.data.last_position, this.target.position, true);
+        //splos.line(this.data.last_position, this.target.position, true);
         var colList = [] ; // array of [entIdx, cdIdx, penetration, srcType, trgtType, normal]
+        var colnum = 0;
             // for each other entity
             for (let i = 0; i < cand.length; ++i ) if (cand[i]) {
                 if (this.scn.entities[i].CD_sph > 0) {  // collision detection - this.sph to other sph  
 
                     for (let j = 0; j < this.scn.entities[i].CD_sph; ++j) {
                         nHitTest++;
-                        var d = vec3.squaredDistance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
-                        var minD = this.target.CD_sph_rs[0] + this.scn.entities[i].CD_sph_rs[j];
+                        var d = vec3.distance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
+                        var minD = this.target.CD_sph_r[0] + this.scn.entities[i].CD_sph_r[j];
                         if (d <= minD) {
                         //  log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
-                            var penetration = Math.sqrt(minD) - Math.sqrt(d);
+                    ++colnum;
+                            var penetration = (minD - d) / 2;// ???
                             var n = [this.target.CD_sph_p[0][0] - this.scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - this.scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - this.scn.entities[i].CD_sph_p[j][2] ];
                             //colList.push([i, j, penetration, "sph", "sph", n]);
-                              splos.moveTo(this.target.position);
-                            this.data.spd = reflect(this.data.spd, n);
+                            vec3.normalize(n, n);
+                             // splos.moveTo(this.target.position);
+                             vec3.scale(this.data.spd, this.data.spd, 0.8);
+                             if (vec3.distance(this.data.last_position, this.target.position) < 0.1) {
+                                vec3.scale(this.data.spd, -n, 2);
+                                log("slow hit target", false);
+                             } else this.data.spd = reflect(this.data.spd, n);                            
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
+
+                         //   this..spd = reflect(this.data.spd, n);
+                          //  vec3.scale(this.data.spd, this.data.spd, 0.8);
+                           // vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
+
+
+                        //    this.data.last_position = this.target.position.slice(); 
                             this.target.resetMatrix();
-                              splos.lineTo(this.target.position, false);
+                             // splos.lineTo(this.target.position, false);
                         }
                     }
                 } // sph
@@ -388,32 +446,35 @@ function sphAnim(cand) {
                     for (let j = 0; j < this.scn.entities[i].CD_iPlane; ++j) {
                         nHitTest++;
 
-                        var dist = vec3.dot(v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j] ;
+                        var dist = vec3.dot(v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j];
                         var last_Dist = vec3.dot(last_v, this.scn.entities[i].CD_iPlane_n[j]) - this.scn.entities[i].CD_iPlane_d[j];
                                         
-                        var sgn = (dist > 0) ? 1 : -1;
+                        var sgn = (dist >= 0) ? 1 : -1;
                         dist = Math.abs(dist) ;
 
-                        var last_sgn = (last_Dist > 0) ? 1 : -1;
+                        var last_sgn = (last_Dist >= 0) ? 1 : -1;
                         last_Dist = Math.abs(last_Dist) ;
                     
                         if ( dist < this.target.CD_sph_r[0]) { 
-                        //    log("hit sph-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
-                            var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
+
+                    ++colnum;
+                            var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);                            
                             penetration *= last_sgn;
-                          //  colList.push([i, j, penetration, "sph", "iPlane", this.scn.entities[i].CD_iPlane_n[j]])
-                              splos.moveTo(this.target.position);
-                            this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
+
+                            var d = vec3.dot(this.data.spd, this.scn.entities[i].CD_iPlane_n[j] );
+                            if (last_sgn * d < 0.0) this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
+    
+                            vec3.scale(this.data.spd, this.data.spd, 0.8);
                             vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
                             this.target.resetMatrix();
-                              splos.lineTo(this.target.position, false);
 
-                        } else { // if sph itself didn't hit plane, test for vector from last position to this one
+
+                        } else { // if sph itself didn't hit plane, test as vector from last position to this one
                             dist *= sgn;
                             last_Dist *= last_sgn;
                             if ( ( (dist > 0) && (last_Dist < 0) ) || ( (dist < 0) && (last_Dist > 0) ) ) {
-                            //  log("hit sph(vect)-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
-                                var penetration = ( Math.abs(last_Dist) +  Math.abs(dist)) * last_sgn;
+                     //         log("hit sph(vect)-iPlane: " + this.target.id + " - " + this.scn.entities[i].id);
+                                var penetration = (/*Math.abs(last_Dist) +*/ Math.abs(dist)) * last_sgn;
                                 colList.push([i, j, penetration, "sph/vect", "iPlane", this.scn.entities[i].CD_iPlane_n[j]])
                             }
         
@@ -452,22 +513,26 @@ function sphAnim(cand) {
             } // end for each other entity perform hit test
 
             // Go trough colList and resolve CD for vect
+            // [i, j, penetration, "sph/vect", "iPlane", this.scn.entities[i].CD_iPlane_n[j]]
             if (colList.length > 0) {
-                  splos.moveTo(this.target.position);
+           //       splos.moveTo(this.target.position);
                 colList.sort((a, b) => { return b[2] - a[2]; } );
                 this.data.spd = reflect(this.data.spd, colList[0][5]);
+                vec3.scale(this.data.spd, this.data.spd, 0.8);
                 vec3.scaleAndAdd(this.target.position, this.target.position, colList[0][5], colList[0][2]);
                 this.target.resetMatrix();
-                  splos.lineTo(this.target.position, false);
+             //     splos.lineTo(this.target.position, false);
             }
 
-            this.data.spd[1] -= this.timer.delta * 9.81; // or whatever is G in this scale and projection
+            this.data.spd[1] -= this.timer.delta * 386.22; //9.81; // or whatever is G in this scale and projection
             this.data.ttl -= this.timer.delta;
 
             if (this.data.ttl < 0) {
                 this.state = E3D_DONE;
                 this.target.visible = false;
             } 
+
+          //  if (colnum > 1) DEV_anim_active = false;
         } else { // initial animation pass (pass 1)
             this.data.last_position = this.target.position.slice();
             var dlt = vec3.scale([0,0,0], this.data.spd, this.timer.delta);
@@ -482,11 +547,11 @@ function sphAnim(cand) {
         this.target.rotation[0] = rndPM(PIx2);
         this.target.rotation[1] = rndPM(PIx2);
 
-        this.data.spd = this.scn.camera.adjustToCamera(vec3.scale(vec3_dummy, vec3_nz, 100));
+        this.data.spd = this.scn.camera.adjustToCamera(vec3.scale(vec3_dummy, vec3_nz, 250));
         this.data.spd[0] += rndPM(1);
         this.data.spd[1] += rndPM(1);
         this.data.spd[2] += rndPM(1);
-        this.data.ttl = 10;
+        this.data.ttl = 30;
         
         this.state = E3D_PLAY;
         this.target.visible = true;
@@ -496,12 +561,6 @@ function sphAnim(cand) {
 
 }
 
-function rot0() {
-    if (this.state == E3D_PLAY) {
-        this.target.rotation[1] += this.timer.delta;
-        this.target.resetMatrix();
-    }  
-}
 
 
 function shotgunAnim(cand) {
@@ -627,7 +686,7 @@ function shotgunAnim(cand) {
                     if (this.scn.entities[colList[0][0]].id.indexOf("sph") > -1) {
                         splode(newloc);
                     } else {
-                        splos.addWireCross(newloc, 2, [1,1,1]);
+                 //       splos.addWireCross(newloc, 2, [1,1,1]);
                     } 
                 }
             }
@@ -740,78 +799,6 @@ function VectSphHit(v, so, sr2) { // translated to v origin
 
     return (t0 < t1) ? t0 : t1;
 }
-
-// Intersction of sphere and vector, as sphere advance into edge
-function SphEdgeHit(v, so, sr2) { // translated to v origin
-    var t0 = 0; 
-    var t1 = 0;
-
-    var l = vec3.length(v);
-   // var vs = vec3.scale([0, 0, 0], v, 1.0/l);
-    
-    // var sr2 = sr * sr;
-    var tca = vec3.dot(so, v);
-    hitPoints[0] = tca;
-
-    if  (tca < 0) return false;
-    // sph behind origin
-    
-    var d2 = vec3.dot(so, so) - tca * tca;
-    
-   // log("edge l " + l);
-    if (d2 > (sr2/l )) return false;
-    // tangential point farther than radius
-    
-    //log("edge tca " + tca);
-    var thc = Math.sqrt(sr2 - d2);
-    t0 = tca - thc;
-    t1 = tca + thc;
-    hitPoints[1] = t0;
-    hitPoints[2] = t1;
-   // log("edge t0 " + t0);
-   // log("edge t1 " + t1);
-
-    return tca;
-}
-
-
-/*
-function splode(loc) {
-  // log("sploded!", false);
-  // log(splos.numElements);
-    var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
-    var nvect = 18;
-    var iter = 20;
-    var dim = 0.1;
-    var dvect = Array(nvect);
-    var vect = Array(nvect);
-    for (let i = 0; i < nvect; ++i) {
-        vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
-        dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
-    }
-    var idx = 0;
-    for (let i = 0; i < iter; ++i) {
-        var s = 2 - (dim * i);
-        for (let j=0; j < nvect; ++j) {
-
-            splos.addWireCross(add3f(loc, vect[j]), s, col[idx]);
-
-            idx++;
-            if (idx >= col.length) idx = 0;
-        }
-        for (let j = 0; j < nvect; ++j) {
-            vect[j][0] += dvect[j][0];
-            vect[j][1] += dvect[j][1];
-            vect[j][2] += dvect[j][2];
-            dvect[j][0] *= 0.9;
-            dvect[j][1] -= 1;
-            dvect[j][2] *= 0.9; 
-            
-        }
-    }
-  //  log(splos.numElements);
-}*/
-
 
 
 

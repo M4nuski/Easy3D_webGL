@@ -88,7 +88,7 @@ var nHitTest = 0;
 // Engine Components
 
 var gl; // webGL canvas rendering context
-var timer = new E3D_timing(false, 100, timerTick);
+var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 
@@ -511,6 +511,7 @@ function sphAnim(cand) {
                             //colList.push([i, j, penetration, "sph", "sph", n]);
                               splos.moveCursorTo(this.target.position);
                             this.data.spd = reflect(this.data.spd, n);
+                            vec3.scale(this.data.spd, this.data.spd, 0.8);
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
                             this.target.resetMatrix();
                               splos.lineTo(this.target.position, false);
@@ -541,6 +542,7 @@ function sphAnim(cand) {
                           //  colList.push([i, j, penetration, "sph", "iPlane", this.scn.entities[i].CD_iPlane_n[j]])
                               splos.moveCursorTo(this.target.position);
                             this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
+                            vec3.scale(this.data.spd, this.data.spd, 0.8);
                             vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
                             this.target.resetMatrix();
                               splos.lineTo(this.target.position, false);
@@ -609,6 +611,7 @@ function sphAnim(cand) {
             var dlt = vec3.scale([0,0,0], this.data.spd, this.timer.delta);
             vec3.add(this.target.position, this.target.position, dlt);
             this.delta2 = vec3.length(dlt);
+            // TODO if speed < limit process as static (target only) CD
         }
     }   // end state == PLAY
 
@@ -622,7 +625,7 @@ function sphAnim(cand) {
         this.data.spd[0] += rndPM(1);
         this.data.spd[1] += rndPM(1);
         this.data.spd[2] += rndPM(1);
-        this.data.ttl = 10;
+        this.data.ttl = 30;
         
         this.state = E3D_PLAY;
         this.target.visible = true;

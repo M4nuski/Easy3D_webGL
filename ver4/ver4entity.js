@@ -51,7 +51,7 @@ class E3D_entity {
 
         this.collisionDetection = false;
         // TODO use ref to external object from ver4physics.js
-        // Collision Detection / Hit Test Data (faster split in different array than accessing single object[].property)
+        // Collision Detection / Hit Test Data (faster split in different array than accessing single object.array[i].property)
             // Vector Source (arrow)
             this.CD_vec = 0;
             this.CD_vec_p0 = []; // original to model space
@@ -444,70 +444,111 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.dataContentChanged = true;
     }
 
-    addWireSphere(location, dia, color, sides, addSphCD = false) {
+    addWireSphere(location, dia, color, sides, addSphCD = false, numSegments = 1) {
         dia = dia / 2;
         if (addSphCD) this.pushCD_sph(location, dia);
 
         let idx = this.numElements;
-        this.increaseSize(sides*6);
-        var x=0, y=0, z=0;
+      //  var x=0, y=0, z=0;
 
-        var si = Math.sin(0) * dia;
-        var ci = Math.cos(0) * dia;
+      var baseOffset = PIdiv2 / numSegments;
+        
+        for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
+            this.increaseSize(sides*6);
+            var si = Math.sin(0) * dia;
+            var ci = Math.cos(0) * dia;
+            var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
+      //      offsetAngle += offsetAngle/2;
+            var matX = mat4.clone(mat4_identity);
+            var matY = mat4.clone(mat4_identity);
+            var matZ = mat4.clone(mat4_identity);
+            mat4.rotateX(matX, matX, offsetAngle);
+            mat4.rotateY(matY, matY, offsetAngle);
+            mat4.rotateZ(matZ, matZ, offsetAngle);
+       // vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
 
-        for (var i = 0; i< sides; ++i) { 
+            for (var i = 0; i < sides; ++i) { 
 
-            var sip = Math.sin((i+1) * PIx2 / sides) * dia;
-            var cip = Math.cos((i+1) * PIx2 / sides) * dia;
+                var sip = Math.sin((i+1) * PIx2 / sides) * dia;
+                var cip = Math.cos((i+1) * PIx2 / sides) * dia;
 
-            //x
-            x = location[0];
-            y = location[1] + si;
-            z = location[2] + ci;
-            this.setVertex3f(idx, [x, y, z]);
-            this.setColor3f(idx, color);
-            idx++;
+                //x
+             /*   x = location[0];
+                y = location[1] + si;
+                z = location[2] + ci;*/
+                var v = [0, si, ci];
+                vec3.transformMat4(v, v, matY);
+                this.setVertex3f(idx, add3f(v, location));
+                this.setColor3f(idx, color);
+                idx++;
             
-            x = location[0];
-            y = location[1] + sip;
-            z = location[2] + cip;
-            this.setVertex3f(idx, [x, y, z]);
-            this.setColor3f(idx, color);
-            idx++;
-            
-            //y
-            x = location[0] + si;
-            y = location[1];
-            z = location[2] + ci;
-            this.setVertex3f(idx, [x, y, z]);
-            this.setColor3f(idx, color);
-            idx++;
+              /*  x = location[0];
+                y = location[1] + sip;
+                z = location[2] + cip;*/
+                v = [0, sip, cip];
+                vec3.transformMat4(v, v, matY);
+                this.setVertex3f(idx, add3f(v, location));
+            // this.setVertex3f(idx, [x, y, z]);
+                this.setColor3f(idx, color);
+                idx++;
+                
+                //y
+               /* x = location[0] + si;
+                y = location[1];
+                z = location[2] + ci;*/
+                v = [si, 0, ci];
+                vec3.transformMat4(v, v, matZ);
+                this.setVertex3f(idx, add3f(v, location));
+            // this.setVertex3f(idx, [x, y, z]);
+                this.setColor3f(idx, color);
+                idx++;
 
-            x = location[0] + sip;
-            y = location[1];
-            z = location[2] + cip;
-            this.setVertex3f(idx, [x, y, z]);
-            this.setColor3f(idx, color);
-            idx++;
+             /*   x = location[0] + sip;
+                y = location[1];
+                z = location[2] + cip;*/
+                v = [sip, 0, cip];
+                vec3.transformMat4(v, v, matZ);
+                this.setVertex3f(idx, add3f(v, location));
+            // this.setVertex3f(idx, [x, y, z]);
+                this.setColor3f(idx, color);
+                idx++;
 
-            //z
-            x = location[0] + si;
-            y = location[1] + ci;
-            z = location[2];
-            this.setVertex3f(idx, [x, y, z]);
-            this.setColor3f(idx, color);
-            idx++;
+                //z
+             /*   x = location[0] + si;
+                y = location[1] + ci;
+                z = location[2];*/
+                v = [si, ci, 0];
+                vec3.transformMat4(v, v, matX);
+                this.setVertex3f(idx, add3f(v, location));
+            //   this.setVertex3f(idx, [x, y, z]);
+                this.setColor3f(idx, color);
+                idx++;
 
-            x = location[0] + sip;
-            y = location[1] + cip;
-            z = location[2];
-            this.setVertex3f(idx, [x, y, z]);
-            this.setColor3f(idx, color);
-            idx++;
+             /*   x = location[0] + sip;
+                y = location[1] + cip;
+                z = location[2];*/
+                v = [sip, cip, 0];
+                vec3.transformMat4(v, v, matX);
+                this.setVertex3f(idx, add3f(v, location));
+            //  this.setVertex3f(idx, [x, y, z]);
+                this.setColor3f(idx, color);
+                idx++;
 
-            si = sip;
-            ci = cip;
+                si = sip;
+                ci = cip;
+            }
         }
+
+       /* if (numSegments > 1) {
+            var offsetAngle = PIdiv2 / numSegments;
+            for (var i = 1; i < numSegments; ++i) {
+                this.increaseSize(sides * 6);
+       //         mat4.translate(this.modelMatrix, mat4_identity, this.position);        
+                mat4.rotateZ(this.modelMatrix, mat4_identity, this.rotation[2] );
+                vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
+
+            }
+        }*/
     }
         
     addWireCross(location, size, color = [1,1,1]) {
