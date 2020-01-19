@@ -118,7 +118,7 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene("mainScene", gl, can.offsetWidth, can.offsetHeight, vec4.fromValues(0.2, 0.2, 0.2, 1.0), 256);
+        scn = new E3D_scene("mainScene", gl, can.offsetWidth, can.offsetHeight, vec4.fromValues(0.2, 0.2, 0.2, 1.0), 512);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -363,7 +363,7 @@ function timerTick() {  // Game Loop
     updateStatus();
     nHitTest = 0;
 
-    if (inputs.checkCommand("action1", true)) {
+    if (inputs.checkCommand("action1", false)) {
       //  console.log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
