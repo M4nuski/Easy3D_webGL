@@ -260,7 +260,7 @@ function prepRender() {
             targetVector.resetMatrix();
             break;
         case 's':
-            testSph.moveBy([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth]);
+            testSph.moveByLocal([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth]);
             testSph.rotateBy([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth]);
             testSph.resetMatrix();
             break;
@@ -421,10 +421,11 @@ function sphAnim(cand) {
                             vec3.normalize(n, n);
                              // splos.moveTo(this.target.position);
                              vec3.scale(this.data.spd, this.data.spd, 0.8);
-                             if (vec3.distance(this.data.last_position, this.target.position) < 0.1) {
-                                vec3.scale(this.data.spd, -n, 2);
-                                log("slow hit target", false);
-                             } else this.data.spd = reflect(this.data.spd, n);                            
+                             //if (vec3.distance(this.data.last_position, this.target.position) < 0.1) {
+                              //  vec3.scale(this.data.spd, -n, 2);
+                              //  log("slow hit target", false);
+                             //} else 
+                             this.data.spd = reflect(this.data.spd, n);                            
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
                              // TODO CD as vect and inflated target sph for fast speed interpolation
                          //   this..spd = reflect(this.data.spd, n);
