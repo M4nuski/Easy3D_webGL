@@ -35,7 +35,7 @@ var nHitTest = 0;
 
 
 var animations = [];
-var testSph, targetVector, iplanes, dev_CD, hitsMarkers; // entities
+var testSph, targetVector, iplanes, dev_CD, hitsMarkers, phyTracers; // entities
 var show_DEV_CD = false;
 var moveTarget = "p";
 var hitPoints = [0,0,0];
@@ -223,6 +223,11 @@ function initEngine() {
     hitsMarkers.vis_culling = false;
     scn.addEntity(hitsMarkers);
 
+    phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces");
+    phyTracers.visible = true;
+    phyTracers.vis_culling = false;
+    scn.addEntity(phyTracers);
+
 
     dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
     dev_CD.visible = true;
@@ -363,7 +368,7 @@ function timerTick() {  // Game Loop
     updateStatus();
     nHitTest = 0;
 
-    if (inputs.checkCommand("action1", false)) {
+    if (inputs.checkCommand("action1", true)) {
       //  console.log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         animations.push(new E3D_animation("ball throw" + timer.lastTick, sphAnim, newSph, scn, timer));
@@ -401,42 +406,35 @@ function sphAnim(cand) {
 
         if (cand) { // test and lock (pass 2)
         this.target.resetMatrix();  // update CD data  
-        //splos.line(this.data.last_position, this.target.position, true);
+        phyTracers.line(this.data.last_position, this.target.position, false, [1, 1, 1]);
         var colList = [] ; // array of [entIdx, cdIdx, penetration, srcType, trgtType, normal]
-        var colnum = 0;
+
             // for each other entity
             for (let i = 0; i < cand.length; ++i ) if (cand[i]) {
                 if (this.scn.entities[i].CD_sph > 0) {  // collision detection - this.sph to other sph  
 
                     for (let j = 0; j < this.scn.entities[i].CD_sph; ++j) {
                         nHitTest++;
+                        // TODO CD as vect and inflated target sph for fast speed interpolation
                         var d = vec3.distance(this.scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
                         var minD = this.target.CD_sph_r[0] + this.scn.entities[i].CD_sph_r[j];
-                        if (d <= minD) {
-                        //  log("hit sph-sph: " + this.target.id + " - " + this.scn.entities[i].id);
-                    ++colnum;
-                            var penetration = (minD - d) / 2;// ???
-                            var n = [this.target.CD_sph_p[0][0] - this.scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - this.scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - this.scn.entities[i].CD_sph_p[j][2] ];
+                        if (d <= minD) {      
+                            var penetration = (minD - d);
+                            var n = sub3f(this.target.CD_sph_p[0], this.scn.entities[i].CD_sph_p[j]);
                             //colList.push([i, j, penetration, "sph", "sph", n]);
                             vec3.normalize(n, n);
-                             // splos.moveTo(this.target.position);
-                             vec3.scale(this.data.spd, this.data.spd, 0.8);
-                             //if (vec3.distance(this.data.last_position, this.target.position) < 0.1) {
-                              //  vec3.scale(this.data.spd, -n, 2);
-                              //  log("slow hit target", false);
-                             //} else 
-                             this.data.spd = reflect(this.data.spd, n);                            
+                            vec3.scale(this.data.spd, this.data.spd, 0.8);
+                            phyTracers.moveCursorTo(this.data.last_position);
+                            var d = vec3.dot(this.data.spd, n);
+                            if (d < 0.0) { 
+                                this.data.spd = reflect(this.data.spd, n);
+                            } else { 
+                                 var sl = vec3.length(this.data.spd);
+                                this.data.spd = scale3f(n, sl); 
+                            }
                             vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
-                             // TODO CD as vect and inflated target sph for fast speed interpolation
-                             // sqr(target sph r + source sph r) and vect between last_position and position 
-                         //   this..spd = reflect(this.data.spd, n);
-                          //  vec3.scale(this.data.spd, this.data.spd, 0.8);
-                           // vec3.scaleAndAdd(this.target.position, this.target.position, n, penetration);
-
-
-                        //    this.data.last_position = this.target.position.slice(); 
                             this.target.resetMatrix();
-                             // splos.lineTo(this.target.position, false);
+                            phyTracers.lineTo(this.target.position, false, [1, 0, 0]);
                         }
                     }
                 } // sph
@@ -461,17 +459,18 @@ function sphAnim(cand) {
                         if (last_Dist < 0.0001) { last_sgn = sgn; last_Dist = 0; }
                     
                         if ( dist < this.target.CD_sph_r[0]) { 
-
-                    ++colnum;
+                     
                             var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);                            
                             penetration *= last_sgn;
-
+                            
                             var d = vec3.dot(this.data.spd, this.scn.entities[i].CD_iPlane_n[j] );
                             if (last_sgn * d < 0.0) this.data.spd = reflect(this.data.spd, this.scn.entities[i].CD_iPlane_n[j]);
-    
+                            
+                            phyTracers.moveCursorTo(this.data.last_position);
                             vec3.scale(this.data.spd, this.data.spd, 0.8);
                             vec3.scaleAndAdd(this.target.position, this.target.position, this.scn.entities[i].CD_iPlane_n[j], penetration);
                             this.target.resetMatrix();
+                            phyTracers.lineTo(this.target.position, false, [1, 0, 0]);
 
 
                         } else { // if sph itself didn't hit plane, test as vector from last position to this one
@@ -520,12 +519,14 @@ function sphAnim(cand) {
             // Go trough colList and resolve CD for vect
             // [i, j, penetration, "sph/vect", "iPlane", this.scn.entities[i].CD_iPlane_n[j]]
             if (colList.length > 0) {
-           //       splos.moveTo(this.target.position);
+
+               phyTracers.moveCursorTo(this.target.position); 
                 colList.sort((a, b) => { return b[2] - a[2]; } );
                 this.data.spd = reflect(this.data.spd, colList[0][5]);
                 vec3.scale(this.data.spd, this.data.spd, 0.8);
                 vec3.scaleAndAdd(this.target.position, this.target.position, colList[0][5], colList[0][2]);
                 this.target.resetMatrix();
+                phyTracers.lineTo(this.target.position, false, [1, 0, 0]);
              //     splos.lineTo(this.target.position, false);
             }
 
@@ -537,7 +538,7 @@ function sphAnim(cand) {
                 this.target.visible = false;
             } 
 
-          //  if (colnum > 1) DEV_anim_active = false;
+      
         } else { // initial animation pass (pass 1)
             this.data.last_position = this.target.position.slice();
             var dlt = vec3.scale([0,0,0], this.data.spd, this.timer.delta);
