@@ -243,7 +243,7 @@ t.test2 = function() {
 }
 
 
-t.test3 = function() {
+t.test3a = function() {
 
     const numtst = 25000000;
     var d = vec3.create();
@@ -281,7 +281,59 @@ t.test3 = function() {
     et = Date.now();
     addLine("i in range [0..2] d[i] = s[i]" + " : " + (et-dt));
 
-    addLine("End Test 3");
+    addLine("End Test 3a");
+}
+
+
+function copy3f3f(a, b) {
+    a[0] = b[0];
+    a[1] = b[1];
+    a[2] = b[2];
+}
+
+
+t.test3b = function() {
+
+    const numtst = 25000000;
+    var d = vec3.create();
+    var s = vec3.create();
+    addLine("Num iter: " + numtst);
+
+    let dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        d = vec3.clone(s);
+    }
+    let et = Date.now();
+    addLine("d = vec3.clone(s)" + " : " + (et-dt));
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        d[0] = s[0];
+        d[1] = s[1];
+        d[2] = s[2];
+    }
+    et = Date.now();
+    addLine("d[i] = s[i]" + " : " + (et-dt));
+
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        d = s.slice();
+    }
+    et = Date.now();
+    addLine("d = s.slice();" + " : " + (et-dt));
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        copy3f3f(d, s);
+    }
+    et = Date.now();
+    addLine("copy3f3f(d, s);" + " : " + (et-dt));
+
+
+    copy3f3f
+
+    addLine("End Test 3b");
 }
 
 t.test4 = function() {

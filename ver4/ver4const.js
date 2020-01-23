@@ -71,11 +71,24 @@ function rndInt(val) { // integer random between 0 and val-1
 function add3f(a, b) {
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2] ];
 }
+function add3f3fm(dest, a) {
+    dest[0] = dest[0] + a[0];
+    dest[1] = dest[1] + a[1];
+    dest[2] = dest[2] + a[2];
+}
 function sub3f(a, b) {
     return [a[0] - b[0], a[1] - b[1], a[2] - b[2] ];
 }
+function sub3ff(a, b, c) {
+    return [a[0] - b[0] - c[0], a[1] - b[1] - c[1], a[2] - b[2] - c[2]];
+}
 function scale3f(a, f) {
     return [a[0] * f, a[1] * f, a[2] * f];
+}
+function scale3fm(dest, f) {
+    dest[0] = dest[0] * f;
+    dest[1] = dest[1] * f;
+    dest[2] = dest[2] * f;
 }
 function scaleAndAdd3f(a, b, f) {
     return [a[0] + (b[0] * f), a[1] + (b[1] * f), a[2] + (b[2] * f)];
@@ -85,12 +98,43 @@ function scaleAndSub3f(a, b, f) {
 }
 function copy3fArray(a) {
     var r = Array(a.length);
-    for (var i = 0; i< a.length; ++i) {
-        r[i] = a[i].slice();
+    for (var i = 0; i < a.length; ++i) {
+        r[i][0] = a[i][0];
+        r[i][1] = a[i][1];
+        r[i][2] = a[i][2];
     }
     return r;
 }
 
+function copy3fArraym(dest, a) {
+    for (var i = 0; i < a.length; ++i) {
+        dest[i][0] = a[i][0];
+        dest[i][1] = a[i][1];
+        dest[i][2] = a[i][2];
+    }
+}
+
+function copy3f3fm(dest, a) {    
+    dest[0] = a[0];
+    dest[1] = a[1];
+    dest[2] = a[2];
+}
+function copy3f3fr(a) {
+    return [ a[0], a[1], a[2] ];
+}
+
+function copy3f3fn(dest, a) {
+    dest = [ a[0], a[1], a[2] ];
+}
+
+function invScale3f1fm(a, f) {
+    a[0] = a[0] / f;
+    a[1] = a[1] / f;
+    a[2] = a[2] / f;
+}
+
+// TODO in situ add sub mult div scale invScale scaleAndAdd 
+// TODO return  sum dif quot fract
 // Strings
 function padStart(str, pad, len) {
     if (pad.length < 1) return str;
