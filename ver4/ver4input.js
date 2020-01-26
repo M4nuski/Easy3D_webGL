@@ -141,7 +141,7 @@ class E3D_input {
         // "custom" commands, binds can be added for anything
         this.keyMap.set("action0", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
         this.keyMap.set("action1", "KeyF");
-      //  this.keyMap.set("action2", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
+        this.keyMap.set("action2", "KeyX");
       //  this.keyMap.set("panPivot", E3D_INP_RMB);
         //this.keyMap.set("togglePointerlock", "ControlRight");
         //this.keyMap.set("toggleFullscreen", "F11");

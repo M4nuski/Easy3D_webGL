@@ -181,30 +181,30 @@ class E3D_entity {
         this.position = p.slice();
     }
     moveBy(p){
-        vec3.add(this.position, this.position, p);
+        add3f3fm(this.position, p);
     }
     moveByLocal(p){
         var offset = vec3.transformMat4(vec3_dummy, p, this.normalMatrix);
-        vec3.add(this.position, this.position, offset);
+        add3f3fm(this.position, offset);
     }
     moveByParent(p, parent){
         var offset = vec3.transformMat4(vec3_dummy, p, parent.normalMatrix);
-        vec3.add(this.position, this.position, offset);
+        add3f3fm(this.position, offset);
     }
     
     rotateTo(r){
         this.rotation = r.slice();
     }
     rotateBy(r) {
-        vec3.add(this.rotation, this.rotation, r);
+        add3f3fm(this.rotation, r);
     }
     rotateByLocal(r){
         var offset = vec3.transformMat4(vec3_dummy, r, this.normalMatrix);
-        vec3.add(this.rotation, this.rotation, offset);
+        add3f3fm(this.rotation, offset);
     }
     rotateByParent(r, parent){
         var offset = vec3.transformMat4(vec3_dummy, r, parent.normalMatrix);
-        vec3.add(this.rotation, this.rotation, offset);
+        add3f3fm(this.rotation, offset);
     }
 
     resetMatrix(){
@@ -723,7 +723,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.currentPos = p.slice();
     }
     moveCursorBy (p) {
-        vec3.add(this.currentPos, this.currentPos, p);
+        add3f3fm(this.currentPos, p);
     }
 
     lineTo(p, sweep, col= [1,1,1]) {
@@ -763,7 +763,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.setVertex3f(idx, this.currentPos);
         this.setColor3f(idx, color);
 
-        vec3.add(this.currentPos, this.currentPos, p);
+        add3f3fm(this.currentPos, p);
 
         idx++;
         this.setVertex3f(idx, p);

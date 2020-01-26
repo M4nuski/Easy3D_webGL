@@ -93,12 +93,18 @@ function scale3fm(dest, f) {
 function scaleAndAdd3f(a, b, f) {
     return [a[0] + (b[0] * f), a[1] + (b[1] * f), a[2] + (b[2] * f)];
 }
+function scaleAndAdd3fm(a, b, f) {
+    a[0] = a[0] + (b[0] * f);
+    a[1] = a[1] + (b[1] * f);
+    a[2] = a[2] + (b[2] * f);
+}
 function scaleAndSub3f(a, b, f) {
     return [a[0] - (b[0] * f), a[1] - (b[1] * f), a[2] - (b[2] * f)];
 }
 function copy3fArray(a) {
     var r = Array(a.length);
     for (var i = 0; i < a.length; ++i) {
+        r[i] = [0, 0, 0];
         r[i][0] = a[i][0];
         r[i][1] = a[i][1];
         r[i][2] = a[i][2];
