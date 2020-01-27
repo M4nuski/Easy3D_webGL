@@ -43,7 +43,7 @@ var hitPoints = [0,0,0];
 var DEV_anim_active = true;
 var vec1v, vec1e, vec2v, vec2e;
 var sphCounter = 0;
-var DEV_targetIndex;
+var DEV_lastAnimData = null;
 var nbCDpasses = 0;
 var gAccel = 0;
 
@@ -164,6 +164,8 @@ function initEngine() {
     inputs.keyMap.set("action_switch_ctrl_sphere", "Digit2");
     inputs.keyMap.set("action_switch_ctrl_vector", "Digit3");
     inputs.keyMap.set("action_switch_ctrl_edge", "Digit4");
+    inputs.keyMap.set("action_anim_clear", "Digit0");
+    inputs.keyMap.set("action_anim_replay", "KeyR");
 
     inputs.keyMap.set("action_speed", "ShiftLeft");
 
@@ -359,7 +361,7 @@ function prepRender() {
         }
 
         nbCDpasses = 0;
-        var numIter = 4;
+        var numIter = 10;
         var hitDetected = true;
         var newHit;
         while ((numIter > 0) && (hitDetected)){
@@ -383,6 +385,16 @@ function prepRender() {
         dev_CD.clear();
         for (let i = 0; i < scn.entities.length; ++i) {
             if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
+            for (let j = 0; j < scn.entities[i].CD_sph; ++j) {
+                dev_CD.addWireSphere(scn.entities[i].CD_sph_p[j], scn.entities[i].CD_sph_r[j] * 2, [1,0.5,0.5], 4, false);
+            }
+            for (let j = 0; j < scn.entities[i].CD_iPlane; ++j) {
+                var pos = scaleAndAdd3f(scn.entities[i].position, scn.entities[i].CD_iPlane_n[j], scn.entities[i].CD_iPlane_d[j]);
+                dev_CD.moveCursorTo(pos);
+                var norm = scale3f(scn.entities[i].CD_iPlane_n[j], 10);
+                dev_CD.lineBy(norm, false, [1.0,1.0,1.0]);
+            }
+
         }
         dev_CD.visible = true;
         phyTracers.visible = true;
@@ -421,7 +433,7 @@ function timerTick() {  // Game Loop
         }
       }
     if (inputs.checkCommand("action0", true)) { 
-      DEV_anim_active = !DEV_anim_active;  
+        DEV_anim_active = !DEV_anim_active;  
     }
 
     if (inputs.checkCommand("action_toggle_CD", true)) show_DEV_CD = !show_DEV_CD;
@@ -429,6 +441,27 @@ function timerTick() {  // Game Loop
     if (inputs.checkCommand("action_switch_ctrl_sphere", true)) moveTarget = "s";
     if (inputs.checkCommand("action_switch_ctrl_vector", true)) moveTarget = "v";
     if (inputs.checkCommand("action_switch_ctrl_edge", true)) moveTarget = "e";
+
+    if (inputs.checkCommand("action_anim_clear", true)) {
+        for (let i = animations.length -1; i >=0; --i) {
+            scn.removeEntity(animations[i].target.id, false);
+            animations.splice(i, 1);
+        } 
+    }
+    if (inputs.checkCommand("action_anim_replay", true)) {
+        if (DEV_lastAnimData != null) {
+            let newSph = scn.cloneEntity("sph", "sph" + sphCounter);
+            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_firstPass, anim_sph_rePass, anim_sph_endPass));
+            
+            animations[animations.length - 1].target.position =copy3f3fr(DEV_lastAnimData.pos);
+            animations[animations.length - 1].data.last_position = copy3f3fr(DEV_lastAnimData.pos);
+            animations[animations.length - 1].data.spd = copy3f3fr(DEV_lastAnimData.spd);
+            animations[animations.length - 1].data.ttl = 30;
+            animations[animations.length - 1].target.visible = true;
+            animations[animations.length - 1].target.resetMatrix();
+            animations[animations.length - 1].state = E3D_PLAY;
+        }
+    }
 
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
@@ -493,6 +526,7 @@ function CheckForAnimationCollisions(self){
                 if  (marker != self.lastHitIndex) {
                     nHitTest++;
 
+                    // TODO find side first and only process appropriate offset and normal
                     var offsetP = scale3f(self.scn.entities[i].CD_iPlane_n[j], self.scn.entities[i].CD_iPlane_d[j] + self.target.CD_sph_r[0]);
                     var offsetM = scale3f(self.scn.entities[i].CD_iPlane_n[j], self.scn.entities[i].CD_iPlane_d[j] - self.target.CD_sph_r[0]);
                     var planePosOffsetP = add3f(self.scn.entities[i].position, offsetP);
@@ -502,25 +536,26 @@ function CheckForAnimationCollisions(self){
                     var hitResM = planeIntersect(planePosOffsetM, self.scn.entities[i].CD_iPlane_n[j], vectOrig, pathVect);
                     
                     var hit = 0;
-                    if ((hitResP) && (!hitResM)) {       
-                        if (hitResP < self.deltaLength) hit = 1;
-                    } else if ((!hitResP) && (hitResM)) {
-                        if (hitResM < self.deltaLength) hit = -1;  
-                    } else if ((hitResP) && (hitResM)) { 
-                        if ((hitResP < 0.0) && (hitResM < 0.0)) {
-                            if (hitResP > hitResM) {
-                                if (hitResP < self.deltaLength) hit = 1; 
-                            } else {
-                                if (hitResM < self.deltaLength) hit = -1; 
-                            }
-                        } else if (hitResP < hitResM) {
-                            if (hitResP < self.deltaLength) hit = 1; 
-                        } else {
-                            if (hitResM < self.deltaLength) hit = -1; 
-                        }
-                    }  
 
+                    // pre cull results
+                    if (hitResP > self.deltaLength) hitResP = false;
+                    if (hitResM > self.deltaLength) hitResM = false;
+
+                    // obvious cases
+                    if ( hitResP && !hitResM) hit = 1;
+                    if (!hitResP &&  hitResM) hit = -1;
                     
+                    // dual cases
+                    if (hitResP && hitResM) {
+                        if ((hitResP > 0.0) && (hitResM > 0.0)) { // both positive
+                            hit = (hitResP < hitResM) ? 1 : -1;
+                        } else if ((hitResP < 0.0) && (hitResM < 0.0)) {  // both negative
+                            hit = (hitResP > hitResM) ? 1 : -1;
+                        } else {  // one negative and one positive
+                            hit = (hitResP < 0.0) ? 1 : -1;
+                        }
+                    }
+
                     if (hit == 1) {
 
                         var t0 = hitResP / self.deltaLength;
@@ -589,8 +624,8 @@ function anim_sph_firstPass() {
         this.target.resetMatrix();
         this.data.last_position = copy3f3fr(this.target.position);
 
-        this.data.startedYDelta = this.data.last_position[1];
-        this.data.expectedYDelta = 0;
+        DEV_lastAnimData = { pos: copy3f3fr(this.target.position), spd: copy3f3fr(this.data.spd) };
+
         
     } else if (this.state == E3D_PLAY) {
 
@@ -599,9 +634,6 @@ function anim_sph_firstPass() {
         vec3.scale(this.delta, this.data.spd, this.timer.delta);  
         add3f3fm(this.target.position, this.delta);
         this.deltaLength = vec3.length(this.delta);
-
-        this.data.startedYDelta = this.data.last_position[1];
-        this.data.expectedYDelta = this.delta[1];
 
         this.target.resetMatrix();
         this.lastHitIndex = "";

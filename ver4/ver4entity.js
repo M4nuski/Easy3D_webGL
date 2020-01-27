@@ -766,7 +766,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         add3f3fm(this.currentPos, p);
 
         idx++;
-        this.setVertex3f(idx, p);
+        this.setVertex3f(idx, this.currentPos);
         this.setColor3f(idx, color);  
     }
 
