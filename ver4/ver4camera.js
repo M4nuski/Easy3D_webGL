@@ -11,8 +11,8 @@ class E3D_camera {
         this.id = id;
         this.rotation = v3_new();
         this.position = v3_new();;
-        this.matrix = mat4.create(); // viewProjection
-        this.projectionMatrix = mat4.create(); 
+        this.matrix = m4_new(); // viewProjection
+        this.projectionMatrix = m4_new();
 
         this.near = -1.0;
         this.far = 1.0;
@@ -143,7 +143,7 @@ class E3D_camera_model extends E3D_camera_persp {
         this.nvx = v3_new();
         this.nvy = v3_new();
         this.zDist = 0; // position is now pivot point for rotation
-        this.inverseRotationMatrix = mat4.create();
+        this.inverseRotationMatrix = m4_new();
 
     }
     updateMatrix() {
@@ -205,8 +205,8 @@ class E3D_camera_space extends E3D_camera_persp {
         this.nvy = v3_new();
         this.nvz = v3_new();
 
-        this.rotationMatrix = mat4.create();
-        this.inverseRotationMatrix = mat4.create();
+        this.rotationMatrix = m4_new();
+        this.inverseRotationMatrix = m4_new();
         // start with identity matrix
         // translations are applied according to current matrix
         // then roration are applied incrementally from rotation matrix

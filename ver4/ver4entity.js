@@ -25,8 +25,8 @@ class E3D_entity {
         this.cull_dist = 0; // maximum vertex distance from object center for culling
         
         // Computed matrix
-        this.modelMatrix = mat4.create();
-        this.normalMatrix = mat4.create();
+        this.modelMatrix = m4_new();
+        this.normalMatrix = m4_new();
 
         // Data
         this.numElements = 0; // Actual number of vertices to draw.
@@ -579,7 +579,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         let p2 = [-width,-height, 0];
         let p3 = [-width, height, 0];
         
-        let m = mat4.create();
+        let m = m4_new();
 
         mat4.translate(m, m, pos);
         
@@ -675,7 +675,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         } 
 
         if (addIPCD) {
-            m = mat4.create();
+            m = m4_new();
             let n = [0, 0, 1];
             
             mat4.rotateZ(m, m, rot[2]);
@@ -687,7 +687,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.pushCD_iPlane(v3_dot(pos, n), n);
         }
         if (addFPCD) {
-            m = mat4.create();
+            m = m4_new();
             let n = [0, 0, 1];
             let w = [1/width, 0, 0];
             let h = [0, 1/height, 0];
@@ -765,7 +765,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         size[1] = Math.abs(size[1]) / 2;
         size[2] = Math.abs(size[2]) / 2;
 
-        let m = mat4.create();
+        let m = m4_new();
 
         mat4.translate(m, m, loc);
         
@@ -834,7 +834,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.line(brr, bfl, false, color);
         }
         if (addCubeCD) {
-            m = mat4.create();
+            m = m4_new();
             let x = [1/size[0], 0, 0];
             let y = [0, 1/size[1], 0];
             let z = [0, 0, 1/size[2]];

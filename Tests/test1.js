@@ -33,9 +33,9 @@ const gco = [0 ,0 ,0];
 let glo = [0,0 ,0];
 var gvo = [0, 0, 0];
 
-const gcv  = vec3.create();
-let glv  = vec3.create();
-var gvv  = vec3.create();
+const gcv  = v3_new();
+let glv  = v3_new();
+var gvv  = v3_new();
 
 const t = {};
 
@@ -44,15 +44,15 @@ t.test1 = function() {
     let llo = [0,0 ,0];
     var lvo = [0, 0, 0];
 
-    var v1 = vec3.create();
+    var v1 = v3_new();
 
-    const lcv  = vec3.create();
-    let llv  = vec3.create();
-    var lvv  = vec3.create();
+    const lcv  = v3_new();
+    let llv  = v3_new();
+    var lvv  = v3_new();
 
 
     //direct cast [0,0,0]
-    //cast from new vec3.create();
+    //cast from new v3_new();
     //cast from new vec3.fromValues(0, 0, 0);
 
     const numtst = 25000000;
@@ -138,11 +138,11 @@ t.test1 = function() {
 
     dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
-        vec3.add(v1, v1, vec3.create());
+        vec3.add(v1, v1, v3_new());
     }
     et = Date.now();
 
-    addLine("vec3.create()" + " : " + (et-dt));
+    addLine("v3_new()" + " : " + (et-dt));
 
 
     dt = Date.now();
@@ -246,7 +246,7 @@ t.test2 = function() {
 t.test3a = function() {
 
     const numtst = 25000000;
-    var d = vec3.create();
+    var d = v3_new();
 
     addLine("Num iter: " + numtst);
 
@@ -295,8 +295,8 @@ function copy3f3f(a, b) {
 t.test3b = function() {
 
     const numtst = 25000000;
-    var d = vec3.create();
-    var s = vec3.create();
+    var d = v3_new();
+    var s = v3_new();
     addLine("Num iter: " + numtst);
 
     let dt = Date.now();
@@ -337,9 +337,9 @@ t.test3b = function() {
 }
 
 t.test4 = function() {
-    let ms = mat4.create();
-    let md = mat4.create();
-    let v = vec3.create();
+    let ms = m4_new();
+    let md = m4_new();
+    let v = v3_new();
 
     const numtst = 5000000;    
     addLine("Num iter: " + numtst);
@@ -375,7 +375,7 @@ t.test4 = function() {
     et = Date.now();
     addLine("negate(v) + translate(md, ms, v) + negate(v) : " + (et-dt));
 
-    let dummy = vec3.create();
+    let dummy = v3_new();
     dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
         mat4.translate(md, ms, vec3.negate(dummy, v));

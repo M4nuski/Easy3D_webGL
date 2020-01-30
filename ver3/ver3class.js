@@ -66,13 +66,13 @@ class E3D_entity {
         this.dynamic = dynamic;
 
         // Properties
-        this.position = vec3.create();
-        this.rotation = vec3.create();
-        this.scale = vec3.fromValues(1.0, 1.0, 1.0);
+        this.position = v3_new();
+        this.rotation = v3_new();
+        this.scale = v3_val(1.0, 1.0, 1.0);
         
         // Computed matrix
-        this.modelMatrix = mat4.create();
-        this.normalMatrix = mat4.create();
+        this.modelMatrix = m4_new();
+        this.normalMatrix = m4_new();
 
         // Data
         this.numElements = 0;
@@ -447,10 +447,10 @@ class E3D_camera { // base camera, orthogonal
 
     constructor(id, width, height) {        
         this.id = id;
-        this.rotation = vec3.create();
-        this.position = vec3.create();
-        this.matrix = mat4.create();
-        this.baseMatrix = mat4.create(); 
+        this.rotation = v3_new();
+        this.position = v3_new();
+        this.matrix = m4_new();
+        this.baseMatrix = m4_new();
 
         this.near = -1.0;
         this.far = 1.0;
@@ -506,7 +506,7 @@ class E3D_camera { // base camera, orthogonal
     }
 
     adjustToCamera(vect) {
-        let result = vec3.create();
+        let result = v3_new();
         vec3.rotateX(result, vect, vec3_origin, -this.rotation[0]); 
         vec3.rotateY(result, result, vec3_origin, -this.rotation[1]); 
         return result;
@@ -579,11 +579,11 @@ class E3D_camera_space extends E3D_camera_persp { // free 3D view incremental di
         this.lastRx = 0;
         this.lastRy = 0;
         this.lastRz = 0;
-        this.nvx = vec3.create();
-        this.nvy = vec3.create();
-        this.nvz = vec3.create();
-        this.rotationMatrix = mat4.create();
-        this.inverseRotationMatrix = mat4.create();
+        this.nvx = v3_new();
+        this.nvy = v3_new();
+        this.nvz = v3_new();
+        this.rotationMatrix = m4_new();
+        this.inverseRotationMatrix = m4_new();
         // start with identity matrix
         // translations are applied according to current matrix
         // then roration are applied incrementally from rotation matrix
@@ -622,7 +622,7 @@ class E3D_camera_space extends E3D_camera_persp { // free 3D view incremental di
     }
 
     adjustToCamera(vect) {
-        let result = vec3.create();
+        let result = v3_new();
         vec3.transformMat4(result, vect, this.inverseRotationMatrix);
         return result;
     }  
@@ -635,13 +635,13 @@ class E3D_lighting {
         this.ambiant_color = vAmbiant;
 
         this.light0_color = vec3.fromValues(1.0, 1.0, 1.0);
-        this.light0_direction = vec3.create();
-        this.light0_adjusted = vec3.create();
+        this.light0_direction = v3_new();
+        this.light0_adjusted = v3_new();
         this.light0_lockToCamera = false;
 
         this.light1_color = vec3.fromValues(0.0, 0.0, 0.0);
-        this.light1_direction = vec3.create(); 
-        this.light1_adjusted = vec3.create();
+        this.light1_direction = v3_new(); 
+        this.light1_adjusted = v3_new();
         this.light1_lockToCamera = false;
     }
 

@@ -88,14 +88,14 @@ function drawMatrix(m) {
 const t = {};
 
 t.test1 = function() {
-    let m1 = mat4.create();
+    let m1 = m4_new();
     mat4.scale(m1, m1, [1.1, 2.2, 3.3, 4.4]);
     drawMatrix(m1);
-    let m2 = mat4.create();
+    let m2 = m4_new();
     mat4.translate(m2, m2, [10, 20, 30, 40]);
     drawMatrix(m2);
 
-    let m3 = mat4.create();
+    let m3 = m4_new();
     mat4.multiply(m3, m2, m1);
     addLine("m2 X m1");
     drawMatrix(m3);
@@ -104,7 +104,7 @@ t.test1 = function() {
     addLine("m1 X m2");
     drawMatrix(m3);
     
-    let m4 = mat4.create();
+    let m4 = m4_new();
     mat4.invert(m4, m3);
     addLine("inverse");
     drawMatrix(m4);
@@ -133,26 +133,26 @@ t.test1 = function() {
 
 
 t.test2 = function() {
-    let m1 = mat4.create();
+    let m1 = m4_new();
     mat4.scale(m1, m1, [1.1, 2.2, 3.3, 1.0]);
     mat4.translate(m1, m1, [100, 200, 300, 0]);
     addLine("m1");
     drawMatrix(m1);
 
-    let m2 = mat4.create();
+    let m2 = m4_new();
     mat4.translate(m2, m2, [10, 20, 30, 0]);
     mat4.scale(m2, m2, [11.11, 22.22, 33.33, 1.0]);
     addLine("m2");
     drawMatrix(m2);
 
-    let m3 = mat4.create();
+    let m3 = m4_new();
     mat4.rotate(m3, m3, 3.141592/4, [0, 0, 1]);
     mat4.translate(m3, m3, [10, 20, 30, 0]);
     mat4.rotate(m3, m3, 3.141592/4, [0, 1, 0]);
     addLine("m3");
     drawMatrix(m3);
     
-    let m4 = mat4.create();
+    let m4 = m4_new();
     mat4.multiply(m4, m2, m1);
     addLine("m2 * m1");
     drawMatrix(m4);
@@ -161,7 +161,7 @@ t.test2 = function() {
     addLine("(m2 * m1) * m3");
     drawMatrix(m4);
 
-    let m5 = mat4.create();
+    let m5 = m4_new();
     mat4.multiply(m5, m2, m1);
 
     mat4.multiply(m5, m3, m5);
@@ -177,11 +177,11 @@ var programA, programB, programC;
 var PosBuffer;
 var st, et;
 
-let modelMat = mat4.create();
-let viewMat = mat4.create();
-let projectionMat = mat4.create();
-let mvpMat = mat4.create();
-let mvMat = mat4.create();
+let modelMat = m4_new();
+let viewMat = m4_new();
+let projectionMat = m4_new();
+let mvpMat = m4_new();
+let mvMat = m4_new();
 mat4.perspective(projectionMat, 45, 320 / 240, 1, 1000);
 
 

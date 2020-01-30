@@ -294,7 +294,7 @@ function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
         v2 = vec3.subtract(v2, v2, v1);
         v3 = vec3.subtract(v3, v3, v1);
 
-        var newNormal = vec3.create();
+        var newNormal = v3_new();
 
         vec3.cross(newNormal, v3, v2);
 
@@ -347,7 +347,7 @@ function loadModel_RAW(rawModelData, name, file, smoothShading, color) {
         // for all unique, average normals
         //
         for (var i = 0; i < uniqueVertex.length; ++i) { // i index in uniqueVertex and avgNorms
-            avgNorms[i] = vec3.create();
+            avgNorms[i] = v3_new();
 
             for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
                 if (indices[j] == i) {

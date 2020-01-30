@@ -58,7 +58,7 @@ var inputTable = {};
 //var odz = dz, ody = dy, odx = dx;
 
 var winWidth = 10, winHeight = 10;
-var projectionMatrix = mat4.create();
+var projectionMatrix = m4_new();
 var viewMatrix = mat4.clone(projectionMatrix);
 
 var light_direction = vec3.fromValues(-1.0, -1.0, -1.0);
@@ -66,7 +66,7 @@ vec3.normalize(light_direction, light_direction);
 var _light0 = vec3.clone(light_direction);
 
 var current_pos = vec3.fromValues(0, 0, -16.0);
-var current_rot = mat4.create();
+var current_rot = m4_new();
 
 var gl, programInfo, buffers;
 
@@ -553,7 +553,7 @@ function setView() {
         vec3.add(current_pos, current_pos, [dx, -dy, dz]);
         mat4.translate(viewMatrix, projectionMatrix, current_pos); 
 
-        mat4.rotateY(current_rot, mat4.create(), sumRX);
+        mat4.rotateY(current_rot, m4_new(), sumRX);
         mat4.rotateX(current_rot, current_rot, sumRY);
         mat4.multiply(viewMatrix, viewMatrix, current_rot);
 
@@ -563,7 +563,7 @@ function setView() {
         
     } else if (vmode == "free") { // move freely around world             
 
-        mat4.rotateX(current_rot, mat4.create(), sumRY);
+        mat4.rotateX(current_rot, m4_new(), sumRY);
         mat4.rotateY(current_rot, current_rot, sumRX);
 
         mat4.multiply(viewMatrix, projectionMatrix, current_rot);
@@ -599,7 +599,7 @@ if (sceneStatus == "SCENE_ACTIVE") {
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
-    const modelViewMatrix = mat4.create();
+    const modelViewMatrix = m4_new();
 
    // mat4.translate(modelViewMatrix,     // destination matrix
   //      modelViewMatrix,     // matrix to translate
@@ -608,7 +608,7 @@ if (sceneStatus == "SCENE_ACTIVE") {
     //mat4.rotate(modelViewMatrix, modelViewMatrix, rx / 100, [0, 1, 0]);
     //mat4.rotate(modelViewMatrix, modelViewMatrix, ry / 100, [1, 0, 0]);
 
-    const modelNormalMatrix = mat4.create();
+    const modelNormalMatrix = m4_new();
 
   //  mat4.rotate(modelNormalMatrix, modelNormalMatrix, rx / 100, [0, 1, 0]);
 //    mat4.rotate(modelNormalMatrix, modelNormalMatrix, ry / 100, [1, 0, 0]);
@@ -747,7 +747,7 @@ function initBuffers(gl) {
         v2 = vec3.subtract(v2, v2, v1);
         v3 = vec3.subtract(v3, v3, v1);
 
-        var newNormal = vec3.create();
+        var newNormal = v3_new();
 
         vec3.cross(newNormal, v3, v2);
 
