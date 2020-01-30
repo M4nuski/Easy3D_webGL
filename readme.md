@@ -19,26 +19,32 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress and next steps
 ----------
-* Collision detection (vector/edge, sphere/elipsoid, plane/cuboid)
+* Collision detection (vector/edge, sphere, plane/cube)
 * Fake physics as animations
-* Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine
+* perf improvement of vec3, vec4, mat4 objets
+* flatten engine to reducre nested calls and hierarchy spinning
+* Update all demo pages of ver4 for latest engine schema
 * --Some kind of game:
 * Path interpolation for bots and animations.
+* Other type of physics mechanic for controls. (chase camera/3rd person)
 * Basic AI
 * Collision target culling (local)
 * Sounds
 * Better lights shaders (array of different types of ligts) (spot, point etc)
 * NetCode
 * Sprites (always facing viewer, shader with minimal inputs)
+* Text render in 3D scene
 * STL, OBJ, MS3D to JSON or other ready-to-use format for mesh data and entities
 * Improved Entity loading (ideally external tool should prepare model data for better load perf)
 * --ver5:
 * Entity hierarchy (parents with n-childs, matrix propagation etc)
-* Basic Collision physics (hit, bounce, move etc) as body data attached to entity
+* Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine
+* Improved Collision Detection (vector/edge, elipsoid, cuboid, mesh)
+* Basic Collision physics (hit, bounce, move etc) as body data attached to entity, mass, moment of rotation etc
 * Evaluate value of render culling on mobile
 * --ver6:
 * Replace per-vertex colors with textures, using a LUT texture and LUT data set if nothing else.
-* Other type of physics mechanic for controls. (chase camera/3rd person)
+
 
 Overview of collistion detection possibilities and implementation difficulty
 -----------

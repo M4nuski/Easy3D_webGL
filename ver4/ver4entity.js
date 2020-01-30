@@ -17,8 +17,8 @@ class E3D_entity {
         this.dataSizeChanged = true; // GPU buffers will be reset and updated
 
         // Properties
-        this.position = vec3.create();
-        this.rotation = vec3.create();
+        this.position = v3_new();
+        this.rotation = v3_new();
 
         // fustrum culling
         this.vis_culling = true;
@@ -50,7 +50,7 @@ class E3D_entity {
         this.filename = filename;
 
         this.collisionDetection = false;
-        // TODO use ref to external object from ver4physics.js
+     
         // Collision Detection / Hit Test Data (faster split in different array than accessing single object.array[i].property)
             // Vector Source (arrow)
             this.CD_vec = 0;
@@ -126,85 +126,85 @@ class E3D_entity {
 
         if (entity.CD_vec > 0) {
             this.CD_vec = entity.CD_vec;
-            this.CD_vec_v0 = copy3fArray(entity.CD_vec_v0);
-            this.CD_vec_v  = copy3fArray(entity.CD_vec_v);
-            this.CD_vec_p0 = copy3fArray(entity.CD_vec_p0);
-            this.CD_vec_p  = copy3fArray(entity.CD_vec_p);
+            this.CD_vec_v0 = v3a_clone(entity.CD_vec_v0);
+            this.CD_vec_v  = v3a_clone(entity.CD_vec_v);
+            this.CD_vec_p0 = v3a_clone(entity.CD_vec_p0);
+            this.CD_vec_p  = v3a_clone(entity.CD_vec_p);
         }
         if (entity.CD_edge > 0) {
             this.CD_edge = entity.CD_edge;
-            this.CD_edge_v0 = copy3fArray(entity.CD_edge_v0);
-            this.CD_edge_v  = copy3fArray(entity.CD_edge_v);
-            this.CD_edge_p0 = copy3fArray(entity.CD_edge_p0);
-            this.CD_edge_p  = copy3fArray(entity.CD_edge_p);
+            this.CD_edge_v0 = v3a_clone(entity.CD_edge_v0);
+            this.CD_edge_v  = v3a_clone(entity.CD_edge_v);
+            this.CD_edge_p0 = v3a_clone(entity.CD_edge_p0);
+            this.CD_edge_p  = v3a_clone(entity.CD_edge_p);
         }
         if (entity.CD_sph > 0) {
             this.CD_sph = entity.CD_sph;
-            this.CD_sph_p0 = copy3fArray(entity.CD_sph_p0);
-            this.CD_sph_p = copy3fArray(entity.CD_sph_p);
+            this.CD_sph_p0 = v3a_clone(entity.CD_sph_p0);
+            this.CD_sph_p = v3a_clone(entity.CD_sph_p);
             this.CD_sph_r = entity.CD_sph_r.slice();
             this.CD_sph_rs = entity.CD_sph_rs.slice();
         }
         if (entity.CD_iPlane > 0) {
             this.CD_iPlane = entity.CD_iPlane;
             this.CD_iPlane_d  = entity.CD_iPlane_d.slice();
-            this.CD_iPlane_n0 = copy3fArray(entity.CD_iPlane_n0);
-            this.CD_iPlane_n  = copy3fArray(entity.CD_iPlane_n);
+            this.CD_iPlane_n0 = v3a_clone(entity.CD_iPlane_n0);
+            this.CD_iPlane_n  = v3a_clone(entity.CD_iPlane_n);
         }
         if (entity.CD_fPlane > 0) {
             this.CD_fPlane = entity.CD_fPlane;
-            this.CD_fPlane_d0 = copy3fArray(entity.CD_fPlane_d0);
-            this.CD_fPlane_d  = copy3fArray(entity.CD_fPlane_d);
-            this.CD_fPlane_n0 = copy3fArray(entity.CD_fPlane_n0);
-            this.CD_fPlane_n  = copy3fArray(entity.CD_fPlane_n);
-            this.CD_fPlane_w0 = copy3fArray(entity.CD_fPlane_w0);
-            this.CD_fPlane_w  = copy3fArray(entity.CD_fPlane_w);
-            this.CD_fPlane_h0 = copy3fArray(entity.CD_fPlane_h0);
-            this.CD_fPlane_h  = copy3fArray(entity.CD_fPlane_h);
+            this.CD_fPlane_d0 = v3a_clone(entity.CD_fPlane_d0);
+            this.CD_fPlane_d  = v3a_clone(entity.CD_fPlane_d);
+            this.CD_fPlane_n0 = v3a_clone(entity.CD_fPlane_n0);
+            this.CD_fPlane_n  = v3a_clone(entity.CD_fPlane_n);
+            this.CD_fPlane_w0 = v3a_clone(entity.CD_fPlane_w0);
+            this.CD_fPlane_w  = v3a_clone(entity.CD_fPlane_w);
+            this.CD_fPlane_h0 = v3a_clone(entity.CD_fPlane_h0);
+            this.CD_fPlane_h  = v3a_clone(entity.CD_fPlane_h);
         }
         if (entity.CD_cube > 0) {
             this.CD_cube = entity.CD_cube;
-            this.CD_cube_p0  = copy3fArray(entity.CD_cube_p0);
-            this.CD_cube_p = copy3fArray(entity.CD_cube_p);
-            this.CD_cube_x0  = copy3fArray(entity.CD_cube_x0);
-            this.CD_cube_x = copy3fArray(entity.CD_cube_x);
-            this.CD_cube_y0  = copy3fArray(entity.CD_cube_y0);
-            this.CD_cube_y = copy3fArray(entity.CD_cube_y);
-            this.CD_cube_z0  = copy3fArray(entity.CD_cube_z0);
-            this.CD_cube_z = copy3fArray(entity.CD_cube_z);
+            this.CD_cube_p0  = v3a_clone(entity.CD_cube_p0);
+            this.CD_cube_p = v3a_clone(entity.CD_cube_p);
+            this.CD_cube_x0  = v3a_clone(entity.CD_cube_x0);
+            this.CD_cube_x = v3a_clone(entity.CD_cube_x);
+            this.CD_cube_y0  = v3a_clone(entity.CD_cube_y0);
+            this.CD_cube_y = v3a_clone(entity.CD_cube_y);
+            this.CD_cube_z0  = v3a_clone(entity.CD_cube_z0);
+            this.CD_cube_z = v3a_clone(entity.CD_cube_z);
         }
 
     }
 
 
     moveTo(p){
-        this.position = p.slice();
+        v3_copy(this.position, p);
     }
     moveBy(p){
-        add3f3fm(this.position, p);
+        v3_add_mod(this.position, p);
     }
     moveByLocal(p){
-        var offset = vec3.transformMat4(vec3_dummy, p, this.normalMatrix);
-        add3f3fm(this.position, offset);
+        var offset = vec3.transformMat4([0, 0, 0], p, this.normalMatrix);
+        v3_add_mod(this.position, offset);
     }
     moveByParent(p, parent){
-        var offset = vec3.transformMat4(vec3_dummy, p, parent.normalMatrix);
-        add3f3fm(this.position, offset);
+        var offset = vec3.transformMat4([0, 0, 0], p, parent.normalMatrix);
+        v3_add_mod(this.position, offset);
     }
     
     rotateTo(r){
-        this.rotation = r.slice();
+        v3_copy(this.rotation, r);
     }
     rotateBy(r) {
-        add3f3fm(this.rotation, r);
+        v3_add_mod(this.rotation, r);
     }
     rotateByLocal(r){
-        var offset = vec3.transformMat4(vec3_dummy, r, this.normalMatrix);
-        add3f3fm(this.rotation, offset);
+        var offset = vec3.transformMat4([0, 0, 0], r, this.normalMatrix);
+        v3_add_mod(this.rotation, offset);
     }
     rotateByParent(r, parent){
-        var offset = vec3.transformMat4(vec3_dummy, r, parent.normalMatrix);
-        add3f3fm(this.rotation, offset);
+        var offset = vec3.transformMat4([0, 0, 0], r, parent.normalMatrix);
+        v3_add_mod(this.rotation, offset);
     }
 
     resetMatrix(){
@@ -250,28 +250,28 @@ class E3D_entity {
     }
 
     pushCD_vec(p, v) {
-        this.CD_vec_p0[this.CD_vec] = p.slice(); 
-        this.CD_vec_p[this.CD_vec] = p.slice();
+        this.CD_vec_p0[this.CD_vec] = v3_clone(p);
+        this.CD_vec_p[this.CD_vec] = v3_clone(p);
         
-        this.CD_vec_v0[this.CD_vec] = v.slice(); 
-        this.CD_vec_v[this.CD_vec] = v.slice(); 
+        this.CD_vec_v0[this.CD_vec] = v3_clone(v);
+        this.CD_vec_v[this.CD_vec] = v3_clone(v);
         
         this.CD_vec += 1;
         this.collisionDetection = true;
     }
     pushCD_edge(p, v) {
-        this.CD_edge_p0[this.CD_edge] = p.slice(); 
-        this.CD_edge_p[this.CD_edge] = p.slice();
+        this.CD_edge_p0[this.CD_edge] = v3_clone(p);
+        this.CD_edge_p[this.CD_edge] = v3_clone(p);
         
-        this.CD_edge_v0[this.CD_edge] = v.slice(); 
-        this.CD_edge_v[this.CD_edge] = v.slice(); 
+        this.CD_edge_v0[this.CD_edge] = v3_clone(v);
+        this.CD_edge_v[this.CD_edge] = v3_clone(v);
         
         this.CD_edge += 1;
         this.collisionDetection = true;
     }
     pushCD_sph(p, r) {
-        this.CD_sph_p0[this.CD_sph] = p.slice();
-        this.CD_sph_p[this.CD_sph] = p.slice(); 
+        this.CD_sph_p0[this.CD_sph] = v3_clone(p); 
+        this.CD_sph_p[this.CD_sph] = v3_clone(p); 
         
         this.CD_sph_r[this.CD_sph] = r;
         this.CD_sph_rs[this.CD_sph] = r*r;
@@ -281,35 +281,35 @@ class E3D_entity {
     }
     pushCD_iPlane(d, n) {
         this.CD_iPlane_d[this.CD_iPlane] = d; 
-        this.CD_iPlane_n0[this.CD_iPlane] = n.slice(); 
-        this.CD_iPlane_n[this.CD_iPlane] = n.slice();
+        this.CD_iPlane_n0[this.CD_iPlane] = v3_clone(n);
+        this.CD_iPlane_n[this.CD_iPlane] = v3_clone(n);
 
         this.CD_iPlane += 1;
         this.collisionDetection = true;
     }
     pushCD_fPlane(d, hw, hh, n) {
-        this.CD_fPlane_n0[this.CD_fPlane] = n.slice(); // normal of plane face
-        this.CD_fPlane_n[this.CD_fPlane] = n.slice();  
-        this.CD_fPlane_d0[this.CD_fPlane] = d.slice(); // position offset of plane
-        this.CD_fPlane_d[this.CD_fPlane] = d.slice();  
-        this.CD_fPlane_w0[this.CD_fPlane] = hw.slice(); // width
-        this.CD_fPlane_w[this.CD_fPlane] = hw.slice();
-        this.CD_fPlane_h0[this.CD_fPlane] = hh.slice(); // height
-        this.CD_fPlane_h[this.CD_fPlane] = hh.slice();
+        this.CD_fPlane_n0[this.CD_fPlane] = v3_clone(n); // normal of plane face
+        this.CD_fPlane_n[this.CD_fPlane] = v3_clone(n);  
+        this.CD_fPlane_d0[this.CD_fPlane] = v3_clone(d); // position offset of plane
+        this.CD_fPlane_d[this.CD_fPlane] = v3_clone(d);  
+        this.CD_fPlane_w0[this.CD_fPlane] = v3_clone(hw); // width
+        this.CD_fPlane_w[this.CD_fPlane] = v3_clone(hw);
+        this.CD_fPlane_h0[this.CD_fPlane] = v3_clone(hh); // height
+        this.CD_fPlane_h[this.CD_fPlane] = v3_clone(hh);
         
         this.CD_fPlane += 1;
         this.collisionDetection = true;
     }
 
     pushCD_cube(p, x, y, z) {
-        this.CD_cube_p0[this.CD_cube] = p.slice();
-        this.CD_cube_p[this.CD_cube] = p.slice();
-        this.CD_cube_x0[this.CD_cube] = x.slice();
-        this.CD_cube_x[this.CD_cube] = x.slice();
-        this.CD_cube_y0[this.CD_cube] = y.slice();
-        this.CD_cube_y[this.CD_cube] = y.slice();
-        this.CD_cube_z0[this.CD_cube] = z.slice();
-        this.CD_cube_z[this.CD_cube] = z.slice();
+        this.CD_cube_p0[this.CD_cube] = v3_clone(p); 
+        this.CD_cube_p[this.CD_cube] = v3_clone(p); 
+        this.CD_cube_x0[this.CD_cube] = v3_clone(x); 
+        this.CD_cube_x[this.CD_cube] = v3_clone(x); 
+        this.CD_cube_y0[this.CD_cube] = v3_clone(y); 
+        this.CD_cube_y[this.CD_cube] = v3_clone(y); 
+        this.CD_cube_z0[this.CD_cube] = v3_clone(z); 
+        this.CD_cube_z[this.CD_cube] = zv3_clone(z); 
 
         this.CD_cube += 1;
         this.collisionDetection = true;
@@ -345,11 +345,11 @@ class E3D_entity_axis extends E3D_entity {
     }
 
     updateVector(vec) {
-        let nv = [vec[0], vec[1], vec[2]];
+        let nv = v3_clone(vec);
         if (this.normalize) {
-            vec3.normalize(nv, vec);
+            v3_normalize_mod(nv);
         }
-        vec3.scale(nv, nv, this.vectorScale);
+        v3_scale_mod(nv, this.vectorScale);
         this.vertexArray[21] = nv[0];
         this.vertexArray[22] = nv[1];
         this.vertexArray[23] = nv[2];
@@ -478,7 +478,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 z = location[2] + ci;*/
                 var v = [0, si, ci];
                 vec3.transformMat4(v, v, matY);
-                this.setVertex3f(idx, add3f(v, location));
+                this.setVertex3f(idx, v3_add_new(v, location));
                 this.setColor3f(idx, color);
                 idx++;
             
@@ -487,7 +487,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 z = location[2] + cip;*/
                 v = [0, sip, cip];
                 vec3.transformMat4(v, v, matY);
-                this.setVertex3f(idx, add3f(v, location));
+                this.setVertex3f(idx, v3_add_new(v, location));
             // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
@@ -498,7 +498,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 z = location[2] + ci;*/
                 v = [si, 0, ci];
                 vec3.transformMat4(v, v, matZ);
-                this.setVertex3f(idx, add3f(v, location));
+                this.setVertex3f(idx, v3_add_new(v, location));
             // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
@@ -508,7 +508,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 z = location[2] + cip;*/
                 v = [sip, 0, cip];
                 vec3.transformMat4(v, v, matZ);
-                this.setVertex3f(idx, add3f(v, location));
+                this.setVertex3f(idx, v3_add_new(v, location));
             // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
@@ -519,7 +519,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 z = location[2];*/
                 v = [si, ci, 0];
                 vec3.transformMat4(v, v, matX);
-                this.setVertex3f(idx, add3f(v, location));
+                this.setVertex3f(idx, v3_add_new(v, location));
             //   this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
@@ -529,7 +529,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 z = location[2];*/
                 v = [sip, cip, 0];
                 vec3.transformMat4(v, v, matX);
-                this.setVertex3f(idx, add3f(v, location));
+                this.setVertex3f(idx, v3_add_new(v, location));
             //  this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
@@ -539,16 +539,6 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             }
         }
 
-       /* if (numSegments > 1) {
-            var offsetAngle = PIdiv2 / numSegments;
-            for (var i = 1; i < numSegments; ++i) {
-                this.increaseSize(sides * 6);
-       //         mat4.translate(this.modelMatrix, mat4_identity, this.position);        
-                mat4.rotateZ(this.modelMatrix, mat4_identity, this.rotation[2] );
-                vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
-
-            }
-        }*/
     }
         
     addWireCross(location, size, color = [1,1,1]) {
@@ -660,11 +650,11 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
             for (var i = 0; i < numSubdiv; ++i){
                 let t = (i + 1) / (numSubdiv + 1);
-                vec3.lerp(a, p1, p0, t);
-                vec3.lerp(b, p2, p3, t);
+                v3_lerp_res(a, p1, p0, t);
+                v3_lerp_res(b, p2, p3, t);
 
-                vec3.lerp(c, p1, p2, t);
-                vec3.lerp(d, p0, p3, t);
+                v3_lerp_res(c, p1, p2, t);
+                v3_lerp_res(d, p0, p3, t);
 
                 idx++;
                 this.setVertex3f(idx, a);
@@ -694,7 +684,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
             vec3.transformMat4(n, n, m);
 
-            this.pushCD_iPlane(vec3.dot(pos, n), n);
+            this.pushCD_iPlane(v3_dot(pos, n), n);
         }
         if (addFPCD) {
             m = mat4.create();
@@ -720,10 +710,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     moveCursorTo (p) {
-        this.currentPos = p.slice();
+        v3_copy(this.currentPos, p);
     }
     moveCursorBy (p) {
-        add3f3fm(this.currentPos, p);
+        v3_add_mod(this.currentPos, p);
     }
 
     lineTo(p, sweep, col= [1,1,1]) {
@@ -738,7 +728,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.setVertex3f(idx, p);
         this.setColor3f(idx, color);
 
-        this.currentPos = p.slice();
+        v3_copy(this.currentPos, p);
     }
 
     line(p0, p1, sweep, col= [1,1,1]) {
@@ -763,7 +753,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.setVertex3f(idx, this.currentPos);
         this.setColor3f(idx, color);
 
-        add3f3fm(this.currentPos, p);
+        v3_add_mod(this.currentPos, p);
 
         idx++;
         this.setVertex3f(idx, this.currentPos);

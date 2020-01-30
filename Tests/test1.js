@@ -1198,75 +1198,104 @@ t.test11 = function() {
         for (var j = 0; j < numtst; ++j) resarr[j] = (Math.round(arr[j] * inveps) != 0);  
     et = Date.now();
     addLine("(Math.round(arr[j] * inveps) != 0) : " + (et-dt));
-/*
-    dt = Date.now();
 
-    for (var h = 0; h < numtst; ++h)
-        for (let i = 0; i < numtst; ++i)
-            for (let j = 0; j < numtst; ++j)
-                for (let k = 0; k < numtst; ++k) sum += arr[k];
-
-    et = Date.now();
-    addLine("let ++iter : " + (et-dt) + " sum: " + sum);
-
-
-    sum = 0;
-    var dt = Date.now();
-
-    for (var h = 0; h < numtst; h++)
-        for (var i = 0; i < numtst; i++)
-            for (var j = 0; j < numtst; j++)
-                for (var k = 0; k < numtst; k++) sum += arr[k];
-
-    var et = Date.now();
-    addLine("var iter++ : " + (et-dt) + " sum: " + sum);
-
-    sum = 0;
-    dt = Date.now();
-
-    for (var h = 0; h < numtst; h++) 
-        for (let i = 0; i < numtst; i++)
-            for (let j = 0; j < numtst; j++)
-                for (let k = 0; k < numtst; k++) sum += arr[k];
-
-    et = Date.now();
-    addLine("let iter++ : " + (et-dt) + " sum: " + sum);
-
-
-    sum = 0;
-
-    let l = 0;
-    let m = 0;
-    let n = 0;
-    let o = 0;
-    dt = Date.now();
-
-    for (l = 0; l < numtst; ++l) 
-        for (m = 0; m < numtst; ++m)
-            for (n = 0; n < numtst; ++n)
-                for (o = 0; o < numtst; ++o) sum += arr[o];
-
-    et = Date.now();
-    addLine("local let ++iter : " + (et-dt) + " sum: " + sum);
-
-
-    sum = 0;
-
-    dt = Date.now();
-
-    for (e = 0; e < numtst; ++e) 
-        for (f = 0; f < numtst; ++f)
-            for (g = 0; g < numtst; ++g)
-                for (h = 0; h < numtst; ++h) sum += arr[h];
-
-    et = Date.now();
-    addLine("global var ++iter : " + (et-dt) + " sum: " + sum);
-
-
-
-*/
 
     addLine("End Test 11");
+}
+
+
+t.test12 = function() {
+
+    const numtst = 100000;
+    const numNum = 3000;    
+    addLine("Num iter: " + numtst + " ()");
+    addLine("Num numbers: " + numNum + " ()");
+
+    let f32a = new Float32Array(numNum);
+    let f32b = new Float32Array(numNum);
+    let f32r = new Float32Array(numNum);
+    let nora = new Array(numNum);
+    let norb = new Array(numNum);
+    let norr = new Array(numNum);
+
+
+
+    for (let i = 0; i < numNum; ++i) {
+        var a = rndPM(1000) / 10.0; if (a == 0.0) a = 0.1;
+        var b = rndPM(1000) / 10.0; if (b == 0.0) b = -0.1;
+        f32a[i] = a;
+        f32b[i] = b;
+
+        var a = rndPM(1000) / 10.0; if (a == 0.0) a = 0.1;
+        var b = rndPM(1000) / 10.0; if (b == 0.0) b = -0.1;
+        nora[i] = a;
+        norb[i] = b;      
+    }
+
+
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) 
+            for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] + f32b[j];
+    var et = Date.now();
+    addLine("f32 a + b : " + (et-dt));
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) 
+            for (var j = 0; j < numNum; ++j) norr[j] = nora[j] + norb[j];
+    var et = Date.now();
+    addLine("nor a + b : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] - f32b[j];
+    var et = Date.now();
+    addLine("f32 a - b : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) norr[j] = nora[j] - norb[j];
+    var et = Date.now();
+    addLine("nor a - b : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] * f32b[j];
+    var et = Date.now();
+    addLine("f32 a * b : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) norr[j] = nora[j] * norb[j];
+    var et = Date.now();
+    addLine("nor a * b : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] / f32b[j];
+    var et = Date.now();
+    addLine("f32 a / b : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) norr[j] = nora[j] / norb[j];
+    var et = Date.now();
+    addLine("nor a / b : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = Math.sqrt( f32a[j]*f32a[j] + f32b[j]*f32b[j] );
+    var et = Date.now();
+    addLine("f32 sqrt(a*a + b*b) : " + (et-dt));
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) norr[j] = Math.sqrt( nora[j]*nora[j] + norb[j]*norb[j] );
+    var et = Date.now();
+    addLine("nor sqrt(a*a + b*b) : " + (et-dt));
+
+
+    addLine("End Test 12");
 }
 
 function rndPM(val) { // random between plus or minus "val"

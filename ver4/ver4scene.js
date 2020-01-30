@@ -5,7 +5,7 @@
 "use strict"
 
 class E3D_scene {
-    constructor(id, context, width, height, vBackColor = vec4.fromValues(0.0, 0.0, 0.1, 1.0), fogLimit = -1) {
+    constructor(id, context, width, height, vBackColor = [0.0, 0.0, 0.1, 1.0], fogLimit = -1) {
         this.id = id;
         this.context = context; // GL rendering context
         this.state = E3D_CREATED;
@@ -188,7 +188,7 @@ class E3D_scene {
 
         }
         
-        ent.cull_dist = vec3.length(E3D_scene.cull_calculate_max_pos(ent.vertexArray));
+        ent.cull_dist = v3_length(E3D_scene.cull_calculate_max_pos(ent.vertexArray));
 
         ent.resetMatrix();
 
@@ -246,7 +246,7 @@ class E3D_scene {
         let result = [0, 0, 0];
         let r_dist2 = 0;
         for (let i = 0; i < vertArray.length; i += 3) {
-            var currentDist = vec3.squaredLength([vertArray[i], vertArray[i+1], vertArray[i+2] ]);
+            var currentDist = v3_lengthsquared([vertArray[i], vertArray[i+1], vertArray[i+2] ]);
             if (currentDist > r_dist2) {
                 result = [vertArray[i], vertArray[i+1], vertArray[i+2] ];
                 r_dist2 = currentDist;
@@ -257,8 +257,7 @@ class E3D_scene {
 
     cull_check_visible(idx) {
         if (this.entities[idx].vis_culling) {
-            var pos = [0, 0, 0];
-            vec3.subtract(pos, this.entities[idx].position, this.camera.position);
+            var pos = v3_sub_new(this.entities[idx].position, this.camera.position);
             this.camera.negateCamera(pos);
             var dist = -pos[2]; // only check for Z
             return ( ((dist - this.entities[idx].cull_dist) < this.camera.far) && 

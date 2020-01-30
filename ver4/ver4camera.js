@@ -9,8 +9,8 @@ class E3D_camera {
 
     constructor(id, width, height) {        
         this.id = id;
-        this.rotation = vec3.create();
-        this.position = vec3.create();
+        this.rotation = v3_new();
+        this.position = v3_new();;
         this.matrix = mat4.create(); // viewProjection
         this.projectionMatrix = mat4.create(); 
 
@@ -41,7 +41,7 @@ class E3D_camera {
 
     // calculate viewProjection matrix per position and rotation
     updateMatrix() {
-        mat4.translate(this.matrix, this.projectionMatrix, vec3.negate(vec3_dummy, this.position) );
+        mat4.translate(this.matrix, this.projectionMatrix, v3_negate_new(this.position) );
 
         mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
@@ -78,14 +78,14 @@ class E3D_camera {
 
     adjustToCamera(vect) {
         let result = [0 ,0 ,0];
-        vec3.rotateX(result, vect, vec3_origin, -this.rotation[0]); 
-        vec3.rotateY(result, result, vec3_origin, -this.rotation[1]); 
+        vec3.rotateX(result, vect, _v3_origin, -this.rotation[0]); 
+        vec3.rotateY(result, result, _v3_origin, -this.rotation[1]); 
         return result;
     }  
 
     negateCamera(vect) {
-        vec3.rotateY(vect, vect, vec3_origin, this.rotation[1]); 
-        return vec3.rotateX(vect, vect, vec3_origin, this.rotation[0]); 
+        vec3.rotateY(vect, vect, _v3_origin, this.rotation[1]); 
+        return vec3.rotateX(vect, vect, _v3_origin, this.rotation[0]); 
     }  
 
 }
@@ -115,15 +115,15 @@ class E3D_camera_persp extends E3D_camera {
         mat4.rotateX(this.matrix, this.projectionMatrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
 
-        mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
+        mat4.translate(this.matrix, this.matrix, v3_negate_new(this.position) );
     }
 
     moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
         // adjust translation to current rotation
-        const t = vec3.fromValues(tx, ty, tz);
+        const t = v3_val(tx, ty, tz);
    //     vec3.rotateZ(t, t, vec3_origin, -rz); // do not use Z
-        vec3.rotateX(t, t, vec3_origin, -this.rotation[0]);
-        vec3.rotateY(t, t, vec3_origin, -this.rotation[1]);
+        vec3.rotateX(t, t, _v3_origin, -this.rotation[0]);
+        vec3.rotateY(t, t, _v3_origin, -this.rotation[1]);
 
         this.position[0] += t[0];
         this.position[1] += t[1];
@@ -142,8 +142,8 @@ class E3D_camera_persp extends E3D_camera {
 class E3D_camera_model extends E3D_camera_persp { 
     constructor(id, width, height, fov, near, far) {
         super(id, width, height, fov, near, far);
-        this.nvx = vec3.create();
-        this.nvy = vec3.create();
+        this.nvx = v3_new();
+        this.nvy = v3_new();
         this.zDist = 0; // position is now pivot point for rotation
         this.inverseRotationMatrix = mat4.create();
 
@@ -156,15 +156,15 @@ class E3D_camera_model extends E3D_camera_persp {
             mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
             mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
 
-            mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
+            mat4.translate(this.matrix, this.matrix, v3_negate_new(this.position) );
             
-            mat4.rotate(this.inverseRotationMatrix, mat4_identity, -this.rotation[0], vec3_x);
-            mat4.rotate(this.inverseRotationMatrix, this.inverseRotationMatrix ,-this.rotation[1], vec3_y);
+            mat4.rotate(this.inverseRotationMatrix, mat4_identity, -this.rotation[0], _v3_x);
+            mat4.rotate(this.inverseRotationMatrix, this.inverseRotationMatrix ,-this.rotation[1], _v3_y);
         }
     }
 
     moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) { // tx and ty pan and move the pivot point, z is always away from that point
-        let t = vec3.fromValues(tx, ty, 0);
+        let t = v3_val(tx, ty, 0);
         vec3.transformMat4(t, t, this.inverseRotationMatrix);
         this.zDist -= tz;
         if (this.zDist > 0) {
@@ -184,14 +184,14 @@ class E3D_camera_model extends E3D_camera_persp {
     }
 
     adjustToCamera(vect) {
-        let result = vec3.create();
+        let result =  v3_new();
         vec3.transformMat4(result, vect, this.inverseRotationMatrix);
         return result;
     }  
 
     negateCamera(vect) {
-        vec3.rotateX(vect, vect, vec3_origin, this.rotation[0]); 
-        vec3.rotateY(vect, vect, vec3_origin, this.rotation[1]); 
+        vec3.rotateX(vect, vect, _v3_origin, this.rotation[0]); 
+        vec3.rotateY(vect, vect, _v3_origin, this.rotation[1]); 
         vect[2] += this.zDist;
     }  
 
@@ -204,9 +204,9 @@ class E3D_camera_space extends E3D_camera_persp {
         super(id, width, height, fov, near, far);
 
         // local references
-        this.nvx = vec3.create();
-        this.nvy = vec3.create();
-        this.nvz = vec3.create();
+        this.nvx = v3_new();
+        this.nvy = v3_new();
+        this.nvz = v3_new();
 
         this.rotationMatrix = mat4.create();
         this.inverseRotationMatrix = mat4.create();
@@ -220,9 +220,9 @@ class E3D_camera_space extends E3D_camera_persp {
         // update matrix per internal data
         // Set new axis reference system
         if (this.nvx) {
-            vec3.transformMat4(this.nvx, vec3_x, this.inverseRotationMatrix);
-            vec3.transformMat4(this.nvy, vec3_y, this.inverseRotationMatrix);
-            vec3.transformMat4(this.nvz, vec3_z, this.inverseRotationMatrix);
+            vec3.transformMat4(this.nvx, _v3_x, this.inverseRotationMatrix);
+            vec3.transformMat4(this.nvy, _v3_y, this.inverseRotationMatrix);
+            vec3.transformMat4(this.nvz, _v3_z, this.inverseRotationMatrix);
 
             mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[0], this.nvx);
             mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[1], this.nvy);
@@ -230,7 +230,7 @@ class E3D_camera_space extends E3D_camera_persp {
 
             mat4.multiply(this.matrix, this.projectionMatrix, this.rotationMatrix);     
 
-            mat4.translate(this.matrix, this.matrix, vec3.negate(vec3_dummy , this.position) );
+            mat4.translate(this.matrix, this.matrix, v3_negate_new(this.position) );
 
             mat4.invert(this.inverseRotationMatrix, this.rotationMatrix);
         }
@@ -238,7 +238,7 @@ class E3D_camera_space extends E3D_camera_persp {
 
     moveBy(tx, ty, tz, rx = 0, rz = 0, ry = 0) {
         //transform translation to local
-        const t = vec3.fromValues(tx, ty, tz);
+        const t = v3_val(tx, ty, tz);
         vec3.transformMat4(t, t, this.inverseRotationMatrix);
 
         this.position[0] += t[0];
@@ -258,7 +258,7 @@ class E3D_camera_space extends E3D_camera_persp {
     }
 
     adjustToCamera(vect) {
-        let result = vec3.create();
+        let result = v3_new();
         vec3.transformMat4(result, vect, this.inverseRotationMatrix);
         return result;
     }  
