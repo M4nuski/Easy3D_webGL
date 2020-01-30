@@ -57,4 +57,20 @@ Overview of collistion detection possibilities and implementation difficulty
 | Cube          |         |        |       | not easy | nope |
 | Triangle Mesh |         |        |       |       | NOPE |
 
+Evaluations of CD and physics
+-----------
+* [old] Eager: test and adjust all CD for each collisions, single pass
+* Shortest: test and keep only shortest hit of each source
+* Average: test and note all collisions, result is average of all adjustments
+* Incremental: test (eager) multiple time along path of CD solids instead of shape interpolation
+* [Current] Shortest multi-pass: test and adjust for shortest hit, mark as done, re-test for next hits n-times or until no more hits
+
+Interpolations
+-----------
+* Point : vector
+* Edge : plane
+* Sphere : pill
+* Plane : Cuboid
+* Cube : hyperCube?
+
 -M4nuski
