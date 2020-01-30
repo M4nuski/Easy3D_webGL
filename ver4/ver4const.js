@@ -303,7 +303,25 @@ function v3_dot(a, b) {
     return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]);
 }
 
+function v3_cross_new(a, b) { 
+    var r =  [0, 0, 0];    
+    r[0] = a[1] * b[2] - a[2] * b[1];
+    r[1] = a[2] * b[0] - a[0] * b[2];
+    r[2] = a[0] * b[1] - a[1] * b[0];
+    return r;
+}
+function v3_cross_mod(a, b) { 
+    var a0 = a[0], a1 = a[1], a2 = a[2];
+    a[0] = a1 * b[2] - a2 * b[1];
+    a[1] = a2 * b[0] - a0 * b[2];
+    a[2] = a0 * b[1] - a1 * b[0];
+}
 
+function v3_cross_res(res, a, b) { 
+    res[0] = a[1] * b[2] - a[2] * b[1];
+    res[1] = a[2] * b[0] - a[0] * b[2];
+    res[2] = a[0] * b[1] - a[1] * b[0];
+}
 
 function v3_normalize_new(a) {
     var l = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
@@ -340,7 +358,6 @@ function v3_normalize_res(res, a) {
 
 function v3_length(a) {
     return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-
 }
 function v3_lengthsquared(a) {
     return (a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
@@ -361,19 +378,19 @@ function v3_distancesquared(a, b) {
 
 
 
-function reflect_mod(inc, norm) {
+function v3_reflect_mod(inc, norm) {
     var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
     inc[0] = inc[0] - (norm[0] * dr2); 
     inc[1] = inc[1] - (norm[1] * dr2);
     inc[2] = inc[2] - (norm[2] * dr2);
 }
-function reflect_new(inc, norm) {
+function v3_reflect_new(inc, norm) {
     var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
     return [ inc[0] - (norm[0] * dr2), 
              inc[1] - (norm[1] * dr2), 
              inc[2] - (norm[2] * dr2) ];
 }
-function reflect_res(result, inc, norm) {
+function v3_reflect_res(result, inc, norm) {
     var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
     result[0] = inc[0] - (norm[0] * dr2); 
     result[1] = inc[1] - (norm[1] * dr2);
@@ -381,6 +398,56 @@ function reflect_res(result, inc, norm) {
 }
 
 
+function v3_rotateX_mod(a, ang) {
+    let ny = a[1] * Math.cos(ang) - a[2] * Math.sin(ang);
+    let nz = a[1] * Math.sin(ang) + a[2] * Math.cos(ang);
+    a[1] = ny;
+    a[2] = nz;
+}
+function v3_rotateX_new(a, ang) {
+    return [ a[0],
+             a[1] * Math.cos(ang) - a[2] * Math.sin(ang),
+             a[1] * Math.sin(ang) + a[2] * Math.cos(ang) ];
+}
+function v3_rotateX_res(res, a, ang) {
+    res[0] = a[0];
+    res[1] = a[1] * Math.cos(ang) - a[2] * Math.sin(ang);
+    res[2] = a[1] * Math.sin(ang) + a[2] * Math.cos(ang);
+}
+
+function v3_rotateY_mod(a, ang) {
+    let nx = a[2] * Math.sin(ang) + a[0] * Math.cos(ang);
+    let nz = a[2] * Math.cos(ang) - a[0] * Math.sin(ang);
+    a[0] = nx;
+    a[2] = nz;
+}
+function v3_rotateY_new(a, ang) {
+    return [ a[2] * Math.sin(ang) + a[0] * Math.cos(ang),
+             a[1],
+             a[2] * Math.cos(ang) - a[0] * Math.sin(ang) ];
+}
+function v3_rotateY_res(res, a, ang) {
+    res[0] = a[2] * Math.sin(ang) + a[0] * Math.cos(ang);
+    res[1] = a[1];
+    res[2] = a[2] * Math.cos(ang) - a[0] * Math.sin(ang);
+}
+
+function v3_rotateZ_mod(a, ang) {
+    let nx = a[0] * Math.cos(ang) - a[1] * Math.sin(ang);
+    let ny = a[0] * Math.sin(ang) + a[1] * Math.cos(ang);
+    a[0] = nx;
+    a[1] = ny;
+}
+function v3_rotateZ_new(a, ang) {
+    return [ a[0] * Math.cos(ang) - a[1] * Math.sin(ang),
+             a[0] * Math.sin(ang) + a[1] * Math.cos(ang),
+             a[2] ];
+}
+function v3_rotateZ_res(res, a, ang) {
+    res[0] = a[0] * Math.cos(ang) - a[1] * Math.sin(ang);
+    res[1] = a[0] * Math.sin(ang) + a[1] * Math.cos(ang);
+    res[2] = a[2];
+}
 /*
 function sub3ff(a, b, c) {
     return [a[0] - b[0] - c[0], a[1] - b[1] - c[1], a[2] - b[2] - c[2]];
@@ -407,7 +474,7 @@ function scaleAndSub3f(a, b, f) {
 */
 
 function v3a_clone(a) {
-    var res = Array(a.length);
+    var res = new Array(a.length);
     for (var i = 0; i < a.length; ++i) res[i] = [ a[i][0],  a[i][1],  a[i][2] ];
     return res;
 }
@@ -416,8 +483,137 @@ function v3a_copy(res, a) {
     return res;
 }
 
-// TODO v3_rotate---
-// TODO v3_appMat4
+
+
+
+
+
+
+
+
+
+function v3_applym4_new(a, m) {
+    var res = [0, 0, 0];
+    var w =   m[3] * a[0] + m[7] * a[1] + m[11] * a[2] + m[15];
+    w = w || 1.0;
+    res[0] = (m[0] * a[0] + m[4] * a[1] + m[8]  * a[2] + m[12]) / w;
+    res[1] = (m[1] * a[0] + m[5] * a[1] + m[9]  * a[2] + m[13]) / w;
+    res[2] = (m[2] * a[0] + m[6] * a[1] + m[10] * a[2] + m[14]) / w;
+    return res;
+}
+function v3_applym4_res(res, a, m) {
+    var w =   m[3] * a[0] + m[7] * a[1] + m[11] * a[2] + m[15];
+    w = w || 1.0;
+    res[0] = (m[0] * a[0] + m[4] * a[1] + m[8]  * a[2] + m[12]) / w;
+    res[1] = (m[1] * a[0] + m[5] * a[1] + m[9]  * a[2] + m[13]) / w;
+    res[2] = (m[2] * a[0] + m[6] * a[1] + m[10] * a[2] + m[14]) / w;
+}
+function v3_applym4_mod(a, m) {
+    var w = m[3] * a[0] + m[7] * a[1] + m[11] * a[2] + m[15];
+    w = w || 1.0;
+    a[0] = (m[0] * a[0] + m[4] * a[1] + m[8]  * a[2] + m[12]) / w;
+    a[1] = (m[1] * a[0] + m[5] * a[1] + m[9]  * a[2] + m[13]) / w;
+    a[2] = (m[2] * a[0] + m[6] * a[1] + m[10] * a[2] + m[14]) / w;
+}
+
+
+
+function m4_new(){
+    var m = new Array(16);
+    m[0] =  1;        m[1] =  0;        m[2] =  0;       m[3] =  0;
+    m[4] =  0;        m[5] =  1;        m[6] =  0;       m[7] =  0;
+    m[8] =  0;        m[9] =  0;        m[10] = 1;       m[11] = 0;
+    m[12] = 0;        m[13] = 0;        m[14] = 0;       m[15] = 1;
+    return m;      
+}
+function m4_clone(a){
+    var m = new Array(16);
+    m[0] =  a[0];        m[1] =  a[1];        m[2] =  a[2];       m[3] =  a[3];
+    m[4] =  a[4];        m[5] =  a[5];        m[6] =  a[6];       m[7] =  a[7];
+    m[8] =  a[8];        m[9] =  a[9];        m[10] = a[10];      m[11] = a[11];
+    m[12] = a[12];       m[13] = a[13];       m[14] = a[14];      m[15] = a[15];
+    return m;      
+}
+function m4_copy(res, a){
+    res[0] =  a[0];        res[1] =  a[1];        res[2] =  a[2];       res[3] =  a[3];
+    res[4] =  a[4];        res[5] =  a[5];        res[6] =  a[6];       res[7] =  a[7];
+    res[8] =  a[8];        res[9] =  a[9];        res[10] = a[10];      res[11] = a[11];
+    res[12] = a[12];       res[13] = a[13];       res[14] = a[14];      res[15] = a[15];
+}
+function m4_reset(a){
+    a[0] =  1;        a[1] =  0;        a[2] =  0;       a[3] =  0;
+    a[4] =  0;        a[5] =  1;        a[6] =  0;       a[7] =  0;
+    a[8] =  0;        a[9] =  0;        a[10] = 1;       a[11] = 0;
+    a[12] = 0;        a[13] = 0;        a[14] = 0;       a[15] = 1;    
+}
+
+// m4_rotateX
+// m4_rotateY
+// m4_rotateZ
+// m4_rotate
+// m4_translate
+// m4_scale
+// m4_invert
+// m4_ortho
+// m4_persp
+
+function m4_transpose_mod(a) {
+    var a1 = a[1], a2 = a[2], a3 = a[3], a6 = a[6], a7 = a[7], a11 = a[11];
+
+    a[1] = a[4];
+    a[2] = a[8];
+    a[3] = a[12];
+    a[4] = a1;
+
+    a[6] = a[9];
+    a[7] = a[13];
+    a[8] = a2;
+    a[9] = a6;
+
+    a[11] = a[14];
+    a[12] = a3;
+    a[13] = a7;
+    a[14] = a11;
+}
+function m4_transpose_res(res, a) {    
+   res[0] = a[0];
+   res[1] = a[4];
+   res[2] = a[8];
+   res[3] = a[12];
+   res[4] = a[1];
+   res[5] = a[5];
+   res[6] = a[9];
+   res[7] = a[13];
+   res[8] = a[2];
+   res[9] = a[6];
+   res[10] = a[10];
+   res[11] = a[14];
+   res[12] = a[3];
+   res[13] = a[7];
+   res[14] = a[11];
+   res[15] = a[15];
+}
+function m4_transpose_new(a) {    
+    var m = new Array(16);
+    m[0] = a[0];
+    m[1] = a[4];
+    m[2] = a[8];
+    m[3] = a[12];
+    m[4] = a[1];
+    m[5] = a[5];
+    m[6] = a[9];
+    m[7] = a[13];
+    m[8] = a[2];
+    m[9] = a[6];
+    m[10] = a[10];
+    m[11] = a[14];
+    m[12] = a[3];
+    m[13] = a[7];
+    m[14] = a[11];
+    m[15] = a[15];
+    return m;
+ }
+
 // TODO m4_---
 
 /*

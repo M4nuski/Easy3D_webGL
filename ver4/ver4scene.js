@@ -258,7 +258,7 @@ class E3D_scene {
     cull_check_visible(idx) {
         if (this.entities[idx].vis_culling) {
             var pos = v3_sub_new(this.entities[idx].position, this.camera.position);
-            this.camera.negateCamera(pos);
+            pos = this.camera.negateCamera(pos);
             var dist = -pos[2]; // only check for Z
             return ( ((dist - this.entities[idx].cull_dist) < this.camera.far) && 
             ((dist + this.entities[idx].cull_dist) > this.camera.near) );

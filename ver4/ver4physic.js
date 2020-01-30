@@ -280,9 +280,9 @@ function prepRender() {
                                inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
       }
 
-      vec3.rotateX(vec2v, vec2v, [0,0,0], 0.2 * timer.delta);
+      v3_rotateX_mod(vec2v, 0.2 * timer.delta);
       vec2e.updateVector(vec2v);
-      vec1v = reflect_new(vec2v, [0, 1, 0]);
+      vec1v = v3_reflect_new(vec2v, [0, 1, 0]);
       vec1e.updateVector(vec1v);
 
 /*
@@ -389,7 +389,7 @@ function prepRender() {
                 dev_CD.addWireSphere(scn.entities[i].CD_sph_p[j], scn.entities[i].CD_sph_r[j] * 2, [1,0.5,0.5], 4, false);
             }
             for (let j = 0; j < scn.entities[i].CD_iPlane; ++j) {
-                var pos = v3_addScaled_new(scn.entities[i].position, scn.entities[i].CD_iPlane_n[j], scn.entities[i].CD_iPlane_d[j]);
+                var pos = v3_addscaled_new(scn.entities[i].position, scn.entities[i].CD_iPlane_n[j], scn.entities[i].CD_iPlane_d[j]);
                 dev_CD.moveCursorTo(pos);
                 var norm = v3_scale_new(scn.entities[i].CD_iPlane_n[j], 10);
                 dev_CD.lineBy(norm, false, [1.0,1.0,1.0]);
@@ -560,75 +560,7 @@ function CheckForAnimationCollisions(self){
                             if (t0 < 0.0) t0 = 0;
                             self.closestCollision = [marker, t0, v3_clone(hitNormal), firstHit, "Sph-iPlane"];
                         }
-
                     }
-
-/*
-                   
-              
-                    var offsetP = scale3f(scn.entities[i].CD_iPlane_n[j], scn.entities[i].CD_iPlane_d[j] + self.target.CD_sph_r[0]);
-                    var offsetM = scale3f(scn.entities[i].CD_iPlane_n[j], scn.entities[i].CD_iPlane_d[j] - self.target.CD_sph_r[0]);
-                    var planePosOffsetP = add3f(scn.entities[i].position, offsetP);
-                    var planePosOffsetM = add3f(scn.entities[i].position, offsetM);
-
-                    var hitResP = planeIntersect(planePosOffsetP, scn.entities[i].CD_iPlane_n[j], vectOrig, pathVect);
-                    var hitResM = planeIntersect(planePosOffsetM, scn.entities[i].CD_iPlane_n[j], vectOrig, pathVect);
-                    
-                    var hit = 0;
-
-                    // pre cull results
-                    if (hitResP > self.deltaLength) hitResP = false;
-                    if (hitResM > self.deltaLength) hitResM = false;
-
-                    // obvious cases
-                    if ( hitResP && !hitResM) hit = 1;
-                    if (!hitResP &&  hitResM) hit = -1;
-                    
-                    // dual cases
-                    if (hitResP && hitResM) {
-                        if ((hitResP >= 0.0) && (hitResM >= 0.0)) { // both positive
-                            hit = (hitResP < hitResM) ? 1 : -1;
-                        } else if ((hitResP < 0.0) && (hitResM < 0.0)) {  // both negative
-                            hit = (hitResP > hitResM) ? 1 : -1;
-                        } else {  // one negative and one positive
-                            hit = (hitResP < 0.0) ? 1 : -1;
-                        }
-                    }
-
-                    if (hit == 1) {
-
-                        var t0 = hitResP / self.deltaLength;
-                        if ((!hitDetected) || ((hitDetected) && (t0 < self.closestCollision[1]))) {
-                            var firstHit = scaleAndAdd3f(vectOrig, pathVect, hitResP - 0.05);
-                            if (show_DEV_CD) phyTracers.addWireSphere(firstHit, 16, [1,0,0], 16, false, 4);
-
-                            var origOffset = sub3f(vectOrig, planePosOffsetP);
-
-                            var n = copy3f3fr(scn.entities[i].CD_iPlane_n[j]);
-                            if (vec3.dot(origOffset, n) < 0.0) scale3fm(n, -1);
-                
-                            hitDetected = true;
-                            if (t0 < 0.0) t0 = 0;
-                            self.closestCollision = [marker, t0, n, firstHit, "Sph-iPlane"];
-                        }
-
-                    } else if (hit == -1) {
-
-                        var t0 = hitResM / self.deltaLength;
-                        if ((!hitDetected) || ((hitDetected) && (t0 < self.closestCollision[1]))) {
-                            var firstHit = scaleAndAdd3f(vectOrig, pathVect, hitResM - 0.05);
-                            if (show_DEV_CD) phyTracers.addWireSphere(firstHit, 16, [1,0,0], 16, false, 4);
-
-                            var origOffset = sub3f(vectOrig, planePosOffsetM);
-
-                            var n = copy3f3fr(scn.entities[i].CD_iPlane_n[j]);
-                            if (vec3.dot(origOffset, n) < 0.0) scale3fm(n, -1);  
-                
-                            hitDetected = true;
-                            if (t0 < 0.0) t0 = 0;
-                            self.closestCollision = [marker, t0, n, firstHit, "Sph-iPlane"];
-                        }
-                    }*/
                 }
             }
         }
@@ -733,9 +665,8 @@ function anim_sph_rePass() {
 if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this.closestCollision[1];
 
             v3_normalize_mod(this.closestCollision[2]); // change direction on hit
-            /*this.data.spd =*/ reflect_mod(this.data.spd, this.closestCollision[2]); // reflect per hit normal  
-           // this.delta = reflect(this.delta, this.closestCollision[2]); // reflect per hit normal           
-           
+            v3_reflect_mod(this.data.spd, this.closestCollision[2]); // reflect per hit normal  
+
             if (show_DEV_CD) phyTracers.line(this.data.last_position, this.target.position, false, [1, 0, 0]);
             if (show_DEV_CD) phyTracers.line(this.data.last_position, this.closestCollision[3], false, [0, 1, 0]);            
            
@@ -768,7 +699,6 @@ if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this
 
 function anim_sph_endPass() {
     this.data.spd[1] -= gAccel;
-  //  if (this.data.spd[1] < -50) this.data.spd[1] = -50;
     this.data.ttl -= this.timer.delta;
 
     if (this.data.ttl < 0) {
@@ -778,15 +708,9 @@ function anim_sph_endPass() {
 }
 
 
-// Physics Methods
 
-// Reflection vector, incident vector vs normal of surface
-/*function reflect(inc, norm) {
-    //r = v - 2.0 * dot(v, n) * n
-   // vec3.normalize(norm, norm);
-    var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
-    return [ inc[0] - (norm[0] * dr2) , inc[1] - (norm[1] * dr2), inc[2] - (norm[2] * dr2) ];
-}*/
+
+// Physics Methods
 
 
 
