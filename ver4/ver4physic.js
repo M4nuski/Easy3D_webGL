@@ -140,7 +140,8 @@ function initEngine() {
         scn.lights.light1_lockToCamera = false;
 
         log("Camera Initialization", false);
-        scn.camera = new E3D_camera_persp("cam1f", can.offsetWidth, can.offsetHeight, _fieldOfView, _zNear, _zFar);
+      //  scn.camera = new E3D_camera("cam1ortho", can.offsetWidth, can.offsetHeight);
+        scn.camera = new E3D_camera_persp("cam1persp", can.offsetWidth, can.offsetHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
        // scn.camera.moveTo(-32, 64, 160, 20 * DegToRad, 10 * DegToRad, 0);
        scn.camera.moveTo(50, -40, 200, -0 * DegToRad, -0 * DegToRad, 0);

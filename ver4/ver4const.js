@@ -92,6 +92,8 @@ function sub3f(a, b) {
 }
 */
 
+// v3
+
 function v3_new() { return [ 0.0, 0.0, 0.0 ]; }
 function v3_val(x, y, z) { return [ x, y, z ]; } // syntaxtic sugar
 
@@ -468,6 +470,9 @@ function scaleAndSub3f(a, b, f) {
 }
 */
 
+
+// v3 Arrays
+
 function v3a_clone(a) {
     var res = new Array(a.length);
     for (var i = 0; i < a.length; ++i) res[i] = [ a[i][0],  a[i][1],  a[i][2] ];
@@ -485,7 +490,7 @@ function v3a_copy(res, a) {
 
 
 
-
+// v3 and m4
 
 function v3_applym4_new(a, m) {
     var res = [0, 0, 0];
@@ -512,6 +517,7 @@ function v3_applym4_mod(a, m) {
 }
 
 
+// m4
 
 function m4_new(){
     var m = new Array(16);
@@ -548,9 +554,7 @@ function m4_reset(a){
 // m4_rotate
 // m4_translate
 // m4_scale
-// m4_invert
-// m4_ortho
-// m4_persp
+// m4_multiply
 
 function m4_transpose_mod(a) {
     var a1 = a[1], a2 = a[2], a3 = a[3], a6 = a[6], a7 = a[7], a11 = a[11];
@@ -829,24 +833,131 @@ function m4_invert_res(res, a) {
     }
 }
 
-function m4_mult_new(a, b){
+function m4_multiply_new(a, b){
+    var res = m4_new();
+    var a00 = a[0],  a01 = a[1],  a02 = a[2],  a03 = a[3];
+    var a10 = a[4],  a11 = a[5],  a12 = a[6],  a13 = a[7];
+    var a20 = a[8],  a21 = a[9],  a22 = a[10], a23 = a[11];
+    var a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
 
+    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];        
+    res[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
+    res[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
+    res[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
+    res[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+    return res;
 }
-function m4_mult_mod(a, b){
-    
+function m4_multiply_mod(a, b){
+    var a00 = a[0],  a01 = a[1],  a02 = a[2],  a03 = a[3];
+    var a10 = a[4],  a11 = a[5],  a12 = a[6],  a13 = a[7];
+    var a20 = a[8],  a21 = a[9],  a22 = a[10], a23 = a[11];
+    var a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];        
+    a[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    a[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    a[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    a[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
+    a[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    a[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    a[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    a[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
+    a[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    a[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    a[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    a[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
+    a[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    a[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    a[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    a[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
 }
-function m4_mult_res(res, a, b){
-    
+function m4_multiply_res(res, a, b){
+    var a00 = a[0],  a01 = a[1],  a02 = a[2],  a03 = a[3];
+    var a10 = a[4],  a11 = a[5],  a12 = a[6],  a13 = a[7];
+    var a20 = a[8],  a21 = a[9],  a22 = a[10], a23 = a[11];
+    var a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];        
+    res[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
+    res[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
+    res[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+    b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
+    res[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+    res[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+    res[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+    res[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
 }
 
-function m4_trans_new(a, v){
+function m4_translate_new(a, v){
+    var res = m4_new();
 
+    res[0] = a[0]; res[1] = a[1]; res[2]  = a[2];  res[3]  = a[3];
+    res[4] = a[4]; res[5] = a[5]; res[6]  = a[6];  res[7]  = a[7];
+    res[8] = a[8]; res[9] = a[9]; res[10] = a[10]; res[11] = a[11];
+
+    res[12] = a[0] * v[0] + a[4] * v[1] + a[8]  * v[2] + a[12];
+    res[13] = a[1] * v[0] + a[5] * v[1] + a[9]  * v[2] + a[13];
+    res[14] = a[2] * v[0] + a[6] * v[1] + a[10] * v[2] + a[14];
+    res[15] = a[3] * v[0] + a[7] * v[1] + a[11] * v[2] + a[15];
+
+    return res;
 }
-function m4_trans_mod(a, v){
-    
+
+function m4_translate_mod(a, v){
+    //var a12 = a[12],  a13 = a[13],  a14 = a[14],  a15 = a[15];
+
+    a[12] = a[0] * v[0] + a[4] * v[1] + a[ 8] * v[2] + a[12];
+    a[13] = a[1] * v[0] + a[5] * v[1] + a[ 9] * v[2] + a[13];
+    a[14] = a[2] * v[0] + a[6] * v[1] + a[10] * v[2] + a[14];
+    a[15] = a[3] * v[0] + a[7] * v[1] + a[11] * v[2] + a[15];
 }
-function m4_trans_res(res, a, v){
-    
+function m4_translate_res(res, a, v){
+    res[0] = a[0]; res[1] = a[1]; res[2]  = a[2];  res[3]  = a[3];
+    res[4] = a[4]; res[5] = a[5]; res[6]  = a[6];  res[7]  = a[7];
+    res[8] = a[8]; res[9] = a[9]; res[10] = a[10]; res[11] = a[11];
+
+    res[12] = a[0] * v[0] + a[4] * v[1] + a[8]  * v[2] + a[12];
+    res[13] = a[1] * v[0] + a[5] * v[1] + a[9]  * v[2] + a[13];
+    res[14] = a[2] * v[0] + a[6] * v[1] + a[10] * v[2] + a[14];
+    res[15] = a[3] * v[0] + a[7] * v[1] + a[11] * v[2] + a[15];
 }
 
 function m4_rotate_new(a, v, ang){
@@ -887,4 +998,90 @@ function m4_rotateZ_mod(a, ang){
 }
 function m4_rotateZ_res(res, a, ang){
     
+}
+
+
+
+
+function m4_ortho_new(width, height, znear, zfar){
+    var res = m4_new();
+    res[0] = 2 / width;
+    res[1] = 0;
+    res[2] = 0;
+    res[3] = 0;
+    res[4] = 0;
+    res[5] = 2 / height;
+    res[6] = 0;
+    res[7] = 0;
+    res[8] = 0;
+    res[9] = 0;
+    res[10] = -2 / (zfar - znear);
+    res[11] = 0;
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = (zfar + znear) / (zfar - znear);
+    res[15] = 1;
+    return res;
+}
+function m4_ortho_res(res, width, height, znear, zfar){
+    res[0] = 2 / width;
+    res[1] = 0;
+    res[2] = 0;
+    res[3] = 0;
+    res[4] = 0;
+    res[5] = 2 / height;
+    res[6] = 0;
+    res[7] = 0;
+    res[8] = 0;
+    res[9] = 0;
+    res[10] = -2 / (zfar - znear);
+    res[11] = 0;
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = (zfar + znear) / (zfar - znear);
+    res[15] = 1;
+}
+
+function m4_persp_new(yfov, ar, znear, zfar){
+    var res = m4_new();
+    var f = 1.0 / Math.tan(yfov / 2);
+    var nf = 1 / (znear - zfar);
+    res[0] = f / ar;
+    res[1] = 0;
+    res[2] = 0;
+    res[3] = 0;
+    res[4] = 0;
+    res[5] = f;
+    res[6] = 0;
+    res[7] = 0;
+    res[8] = 0;
+    res[9] = 0;
+    res[10] = (zfar + znear) * nf;
+    res[11] = -1;
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = 2 * zfar * znear * nf;
+    res[15] = 0;
+    return res;
+}
+
+function m4_persp_res(res, yfov, ar, znear, zfar){
+    var f = 1.0 / Math.tan(yfov / 2);
+    var nf = 1 / (znear - zfar);
+    res[0] = f / ar;
+    res[1] = 0;
+    res[2] = 0;
+    res[3] = 0;
+    res[4] = 0;
+    res[5] = f;
+    res[6] = 0;
+    res[7] = 0;
+    res[8] = 0;
+    res[9] = 0;
+    res[10] = (zfar + znear) * nf;
+    res[11] = -1;
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = 2 * zfar * znear * nf;
+    res[15] = 0; 
 }

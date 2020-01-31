@@ -10,7 +10,7 @@ class E3D_camera {
     constructor(id, width, height) {        
         this.id = id;
         this.rotation = v3_new();
-        this.position = v3_new();;
+        this.position = v3_new();
         this.matrix = m4_new(); // viewProjection
         this.projectionMatrix = m4_new();
 
@@ -19,21 +19,18 @@ class E3D_camera {
 
         this.fov = -1;
 
+        this._neg_position = v3_new();
+
         this.resize(width, height);
         this.updateMatrix();
     }
 
     // recalculate projection (base) matrix
     resize(width, height) {
-        let wd2 = width /2;
-        let hd2 = height /2;
-        let dd2 = wd2;
-        
-        if (hd2 > wd2) {
-            dd2 = hd2;
-        }
+
+        let dd2 = (width > height) ? width / 2 : height / 2;
  
-        mat4.ortho(this.projectionMatrix, -wd2, wd2, hd2, -hd2, -dd2, dd2);  
+        m4_ortho_res(this.projectionMatrix, width, height, -dd2, dd2);  
 
         this.near = -dd2;
         this.far = dd2;
@@ -41,7 +38,8 @@ class E3D_camera {
 
     // calculate viewProjection matrix per position and rotation
     updateMatrix() {
-        mat4.translate(this.matrix, this.projectionMatrix, v3_negate_new(this.position) );
+        v3_negate_res(this._neg_position, this.position)
+        m4_translate_res(this.matrix, this.projectionMatrix, this._neg_position);
 
         mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
         mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
@@ -107,7 +105,7 @@ class E3D_camera_persp extends E3D_camera {
         this.fov = fov;
         this.near = near;
         this.far = far;
-        mat4.perspective(this.projectionMatrix, fov, width / height, near, far);
+        m4_persp_res(this.projectionMatrix, fov, width / height, near, far);
     }
 
     updateMatrix() {
@@ -115,7 +113,8 @@ class E3D_camera_persp extends E3D_camera {
         mat4.rotateX(this.matrix, this.projectionMatrix, this.rotation[0] );
         mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
 
-        mat4.translate(this.matrix, this.matrix, v3_negate_new(this.position) );
+        v3_negate_res(this._neg_position, this.position);
+        m4_translate_mod(this.matrix, this._neg_position);
     }
 
     moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
@@ -149,12 +148,13 @@ class E3D_camera_model extends E3D_camera_persp {
     updateMatrix() {
         // update matrix per internal data
         if (this.zDist != undefined) {
-            mat4.translate(this.matrix, this.projectionMatrix,  [0, 0, this.zDist]);
+            m4_translate_res(this.matrix, this.projectionMatrix,  [0, 0, this.zDist]);
 
             mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
             mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
 
-            mat4.translate(this.matrix, this.matrix, v3_negate_new(this.position) );
+            v3_negate_res(this._neg_position, this.position);
+            m4_translate_mod(this.matrix, this._neg_position);
             
             mat4.rotate(this.inverseRotationMatrix, mat4_identity, -this.rotation[0], _v3_x);
             mat4.rotate(this.inverseRotationMatrix, this.inverseRotationMatrix ,-this.rotation[1], _v3_y);
@@ -225,11 +225,12 @@ class E3D_camera_space extends E3D_camera_persp {
             mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[1], this.nvy);
             mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[2], this.nvz);
 
-            mat4.multiply(this.matrix, this.projectionMatrix, this.rotationMatrix);     
+            m4_multiply_res(this.matrix, this.projectionMatrix, this.rotationMatrix);     
 
-            mat4.translate(this.matrix, this.matrix, v3_negate_new(this.position) );
+            v3_negate_res(this._neg_position, this.position);
+            m4_translate_mod(this.matrix, this._neg_position);
 
-            mat4.invert(this.inverseRotationMatrix, this.rotationMatrix);
+            m4_invert_res(this.inverseRotationMatrix, this.rotationMatrix);
         }
     }
 
