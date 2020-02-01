@@ -41,12 +41,12 @@ class E3D_camera {
         v3_negate_res(this._neg_position, this.position)
         m4_translate_res(this.matrix, this.projectionMatrix, this._neg_position);
 
-        mat4.rotateZ(this.matrix, this.matrix, this.rotation[2] );
-        mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
-        mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
+        m4_rotateZ_mod(this.matrix, this.rotation[2]);
+        m4_rotateX_mod(this.matrix, this.rotation[0]);
+        m4_rotateY_mod(this.matrix, this.rotation[1]);
     }
 
-    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
+    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {        
         this.position[0] += tx;
         this.position[1] += ty;
         this.position[2] += tz;
@@ -109,9 +109,8 @@ class E3D_camera_persp extends E3D_camera {
     }
 
     updateMatrix() {
-     //   mat4.rotateZ(this.matrix, this.projectionMatrix, this.rotation[2] ); // do not use Z
-        mat4.rotateX(this.matrix, this.projectionMatrix, this.rotation[0] );
-        mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
+        m4_rotateX_res(this.matrix, this.projectionMatrix, this.rotation[0] );
+        m4_rotateY_mod(this.matrix, this.rotation[1] );
 
         v3_negate_res(this._neg_position, this.position);
         m4_translate_mod(this.matrix, this._neg_position);
@@ -120,7 +119,6 @@ class E3D_camera_persp extends E3D_camera {
     moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
         // adjust translation to current rotation
         const t = v3_val(tx, ty, tz);
-   //     v3_rotateZ_mod(t, -rz); // do not use Z
         v3_rotateX_mod(t, -this.rotation[0]);
         v3_rotateY_mod(t, -this.rotation[1]);
 
@@ -150,14 +148,14 @@ class E3D_camera_model extends E3D_camera_persp {
         if (this.zDist != undefined) {
             m4_translate_res(this.matrix, this.projectionMatrix,  [0, 0, this.zDist]);
 
-            mat4.rotateY(this.matrix, this.matrix, this.rotation[1] );
-            mat4.rotateX(this.matrix, this.matrix, this.rotation[0] );
+            m4_rotateY_mod(this.matrix, this.rotation[1] );
+            m4_rotateX_mod(this.matrix, this.rotation[0] );
 
             v3_negate_res(this._neg_position, this.position);
             m4_translate_mod(this.matrix, this._neg_position);
             
-            mat4.rotate(this.inverseRotationMatrix, mat4_identity, -this.rotation[0], _v3_x);
-            mat4.rotate(this.inverseRotationMatrix, this.inverseRotationMatrix ,-this.rotation[1], _v3_y);
+            m4_rotate_res(this.inverseRotationMatrix, mat4_identity, -this.rotation[0], _v3_x);
+            m4_rotate_mod(this.inverseRotationMatrix ,-this.rotation[1], _v3_y);
         }
     }
 
@@ -169,9 +167,7 @@ class E3D_camera_model extends E3D_camera_persp {
             this.zDist = 0;
         }
 
-        this.position[0] += t[0];
-        this.position[1] += t[1];
-        this.position[2] += t[2];
+        v3_add_mod(this.position, t);
         
         this.rotation[0] += rx;
         this.rotation[1] += ry;
@@ -221,9 +217,9 @@ class E3D_camera_space extends E3D_camera_persp {
             v3_applym4_res(this.nvy, _v3_y, this.inverseRotationMatrix);
             v3_applym4_res(this.nvz, _v3_z, this.inverseRotationMatrix);
 
-            mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[0], this.nvx);
-            mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[1], this.nvy);
-            mat4.rotate(this.rotationMatrix, this.rotationMatrix, this.rotation[2], this.nvz);
+            m4_rotate_mod(this.rotationMatrix, this.rotation[0], this.nvx);
+            m4_rotate_mod(this.rotationMatrix, this.rotation[1], this.nvy);
+            m4_rotate_mod(this.rotationMatrix, this.rotation[2], this.nvz);
 
             m4_multiply_res(this.matrix, this.projectionMatrix, this.rotationMatrix);     
 

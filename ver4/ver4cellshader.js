@@ -76,13 +76,13 @@ function initEngine() {
         scn.strokeProgram.bindLocations(attribList02_CS00, uniformList02_CS00);
 
         log("Lighting Initialization", false);
-        scn.lights =  new E3D_lighting(vec3.fromValues(0.0, 0.0, 0.15));
-        scn.lights.setColor0(vec3.fromValues(1.0, 1.0, 1.0));
-        scn.lights.setDirection0(vec3.fromValues(-0.2, -0.2, -1.0)); 
+        scn.lights =  new E3D_lighting(v3_val(0.0, 0.0, 0.15));
+        scn.lights.setColor0(v3_val(1.0, 1.0, 1.0));
+        scn.lights.setDirection0(v3_val(-0.2, -0.2, -1.0)); 
         scn.lights.light0_lockToCamera = true;
 
-        scn.lights.setColor1(vec3.fromValues(1.0, 1.0, 0.85));
-        scn.lights.setDirection1(vec3.fromValues(1.0, -1.0, 0.8));
+        scn.lights.setColor1(v3_val(1.0, 1.0, 0.85));
+        scn.lights.setDirection1(v3_val(1.0, -1.0, 0.8));
         scn.lights.light1_lockToCamera = true;
 
         log("Camera Initialization", false);

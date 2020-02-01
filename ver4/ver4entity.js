@@ -184,11 +184,11 @@ class E3D_entity {
         v3_add_mod(this.position, p);
     }
     moveByLocal(p){
-        var offset = vec3.transformMat4([0, 0, 0], p, this.normalMatrix);
+        var offset = v3_applym4_new(p, this.normalMatrix);
         v3_add_mod(this.position, offset);
     }
     moveByParent(p, parent){
-        var offset = vec3.transformMat4([0, 0, 0], p, parent.normalMatrix);
+        var offset = v3_applym4_new(p, parent.normalMatrix);
         v3_add_mod(this.position, offset);
     }
     
@@ -199,11 +199,11 @@ class E3D_entity {
         v3_add_mod(this.rotation, r);
     }
     rotateByLocal(r){
-        var offset = vec3.transformMat4([0, 0, 0], r, this.normalMatrix);
+        var offset = v3_applym4_new(r, this.normalMatrix);
         v3_add_mod(this.rotation, offset);
     }
     rotateByParent(r, parent){
-        var offset = vec3.transformMat4([0, 0, 0], r, parent.normalMatrix);
+        var offset = v3_applym4_new(r, parent.normalMatrix);
         v3_add_mod(this.rotation, offset);
     }
 
@@ -221,30 +221,30 @@ class E3D_entity {
 
         if (this.collisionDetection) {
             for (var i = 0; i < this.CD_vec; ++i) {
-                vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
-                vec3.transformMat4(this.CD_vec_v[i], this.CD_vec_v0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
+                v3_applym4_res(this.CD_vec_v[i], this.CD_vec_v0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_edge; ++i) {
-                vec3.transformMat4(this.CD_edge_p[i], this.CD_edge_p0[i], this.modelMatrix);
-                vec3.transformMat4(this.CD_edge_v[i], this.CD_edge_v0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_edge_p[i], this.CD_edge_p0[i], this.modelMatrix);
+                v3_applym4_res(this.CD_edge_v[i], this.CD_edge_v0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_sph; ++i) {
-                vec3.transformMat4(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
+                v3_applym4_res(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
             }
             for (var i = 0; i < this.CD_iPlane; ++i) {
-                vec3.transformMat4(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_fPlane; ++i) {
-                vec3.transformMat4(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
-                vec3.transformMat4(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.modelMatrix);
-                vec3.transformMat4(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
-                vec3.transformMat4(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.modelMatrix);
+                v3_applym4_res(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_cube; ++i) {
-                vec3.transformMat4(this.CD_cube_p[i], this.CD_cube_p0[i], this.modelMatrix);
-                vec3.transformMat4(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
-                vec3.transformMat4(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
-                vec3.transformMat4(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_cube_p[i], this.CD_cube_p0[i], this.modelMatrix);
+                v3_applym4_res(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
             }
         }
     }
@@ -465,7 +465,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             mat4.rotateX(matX, matX, offsetAngle);
             mat4.rotateY(matY, matY, offsetAngle);
             mat4.rotateZ(matZ, matZ, offsetAngle);
-       // vec3.transformMat4(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
+       // v3_applym4_res(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
 
             for (var i = 0; i < sides; ++i) { 
 
@@ -477,7 +477,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 y = location[1] + si;
                 z = location[2] + ci;*/
                 var v = [0, si, ci];
-                vec3.transformMat4(v, v, matY);
+                v3_applym4_mod(v, matY);
                 this.setVertex3f(idx, v3_add_new(v, location));
                 this.setColor3f(idx, color);
                 idx++;
@@ -486,7 +486,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 y = location[1] + sip;
                 z = location[2] + cip;*/
                 v = [0, sip, cip];
-                vec3.transformMat4(v, v, matY);
+                v3_applym4_mod(v, matY);
                 this.setVertex3f(idx, v3_add_new(v, location));
             // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
@@ -497,7 +497,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 y = location[1];
                 z = location[2] + ci;*/
                 v = [si, 0, ci];
-                vec3.transformMat4(v, v, matZ);
+                v3_applym4_mod(v, matZ);
                 this.setVertex3f(idx, v3_add_new(v, location));
             // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
@@ -507,7 +507,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 y = location[1];
                 z = location[2] + cip;*/
                 v = [sip, 0, cip];
-                vec3.transformMat4(v, v, matZ);
+                v3_applym4_mod(v, matZ);
                 this.setVertex3f(idx, v3_add_new(v, location));
             // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
@@ -518,7 +518,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 y = location[1] + ci;
                 z = location[2];*/
                 v = [si, ci, 0];
-                vec3.transformMat4(v, v, matX);
+                v3_applym4_mod(v, matX);
                 this.setVertex3f(idx, v3_add_new(v, location));
             //   this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
@@ -528,7 +528,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 y = location[1] + cip;
                 z = location[2];*/
                 v = [sip, cip, 0];
-                vec3.transformMat4(v, v, matX);
+                v3_applym4_mod(v, matX);
                 this.setVertex3f(idx, v3_add_new(v, location));
             //  this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
@@ -587,10 +587,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         mat4.rotateX(m, m, rot[0]);
         mat4.rotateY(m, m, rot[1]);
 
-        vec3.transformMat4(p0, p0, m);
-        vec3.transformMat4(p1, p1, m);
-        vec3.transformMat4(p2, p2, m);
-        vec3.transformMat4(p3, p3, m);
+        v3_applym4_mod(p0, m);
+        v3_applym4_mod(p1, m);
+        v3_applym4_mod(p2, m);
+        v3_applym4_mod(p3, m);
 
         this.increaseSize(8);
         
@@ -682,7 +682,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             mat4.rotateX(m, m, rot[0]);
             mat4.rotateY(m, m, rot[1]);
 
-            vec3.transformMat4(n, n, m);
+            v3_applym4_mod(n, m);
 
             this.pushCD_iPlane(v3_dot(pos, n), n);
         }
@@ -695,9 +695,9 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             mat4.rotateX(m, m, rot[0]);
             mat4.rotateY(m, m, rot[1]);
 
-            vec3.transformMat4(n, n, m);
-            vec3.transformMat4(w, w, m);
-            vec3.transformMat4(h, h, m);
+            v3_applym4_mod(n, m);
+            v3_applym4_mod(w, m);
+            v3_applym4_mod(h, m);
 
             this.pushCD_fPlane(pos, h, w, n);
         }
@@ -783,15 +783,15 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         let brr = [size[0], -size[1], -size[2]];
         let brl = [-size[0], -size[1], -size[2]];
 
-        vec3.transformMat4(tfr, tfr, m);
-        vec3.transformMat4(tfl, tfl, m);
-        vec3.transformMat4(trr, trr, m);
-        vec3.transformMat4(trl, trl, m);
+        v3_applym4_mod(tfr, m);
+        v3_applym4_mod(tfl, m);
+        v3_applym4_mod(trr, m);
+        v3_applym4_mod(trl, m);
 
-        vec3.transformMat4(bfr, bfr, m);
-        vec3.transformMat4(bfl, bfl, m);
-        vec3.transformMat4(brr, brr, m);
-        vec3.transformMat4(brl, brl, m);
+        v3_applym4_mod(bfr, m);
+        v3_applym4_mod(bfl, m);
+        v3_applym4_mod(brr, m);
+        v3_applym4_mod(brl, m);
 
          this.line(tfr, tfl, false, color);
          this.line(tfl, trl, false, color);
@@ -842,9 +842,9 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             mat4.rotateX(m, m, rot[0]);
             mat4.rotateY(m, m, rot[1]);
 
-            vec3.transformMat4(x, x, m);
-            vec3.transformMat4(y, y, m);
-            vec3.transformMat4(z, z, m);
+            v3_applym4_mod(x, m);
+            v3_applym4_mod(y, m);
+            v3_applym4_mod(z, m);
 
             this.pushCD_cube(loc, x, y, z);
         }

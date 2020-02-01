@@ -1,5 +1,10 @@
 // Easy3D_WebGL
 // Common engine constants and some helper methods
+// Modified version of gl-matrix.js by Brandon Jones and Colin MacKenzie IV version 2.4.0
+// Uses faster vanilla array, most methods have 3 versions:
+//      _new returns a new object: add(a, b) - > return new (a + b)
+//      _mod modifies the first parameter object: add(a, b) -> a = a + b
+//      _res modifies the result parameter without using it in the calculations: add(r, a, b) -> r = a + b
 // Emmanuel Charette 2017-2019
 
 "use strict"
@@ -960,47 +965,453 @@ function m4_translate_res(res, a, v){
     res[15] = a[3] * v[0] + a[7] * v[1] + a[11] * v[2] + a[15];
 }
 
-function m4_rotate_new(a, v, ang){
+function m4_rotate_new(a, ang, v){
+    var res = m4_new();
 
-}
-function m4_rotate_mod(a, v, ang){
+    var x = v[0],
+        y = v[1],
+        z = v[2];
+
+    var len = Math.sqrt(x * x + y * y + z * z);
+    if (len < glMatrix.EPSILON) {
+        m4_copy(res, a);
+        return res;
+    }
+
+    //len = 1 / len;
+    x /= len;
+    y /= len;
+    z /= len;
+      
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+    var t = 1 - c;
+      
+    var a00 = a[0], a01 = a[1], a02 = a[2],  a03 = a[3];
+    var a10 = a[4], a11 = a[5], a12 = a[6],  a13 = a[7];
+    var a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+      
+    // Construct the rotation matrix
+    b00 = x * x * t + c;
+    b01 = y * x * t + z * s;
+    b02 = z * x * t - y * s;
+    b10 = x * y * t - z * s;
+    b11 = y * y * t + c;
+    b12 = z * y * t + x * s;
+    b20 = x * z * t + y * s;
+    b21 = y * z * t - x * s;
+    b22 = z * z * t + c;
+      
+    // Perform rotation-specific matrix multiplication
+    res[0] = a00 * b00 + a10 * b01 + a20 * b02;
+    res[1] = a01 * b00 + a11 * b01 + a21 * b02;
+    res[2] = a02 * b00 + a12 * b01 + a22 * b02;
+    res[3] = a03 * b00 + a13 * b01 + a23 * b02;
+    res[4] = a00 * b10 + a10 * b11 + a20 * b12;
+    res[5] = a01 * b10 + a11 * b11 + a21 * b12;
+    res[6] = a02 * b10 + a12 * b11 + a22 * b12;
+    res[7] = a03 * b10 + a13 * b11 + a23 * b12;
+    res[8] = a00 * b20 + a10 * b21 + a20 * b22;
+    res[9] = a01 * b20 + a11 * b21 + a21 * b22;
+    res[10] = a02 * b20 + a12 * b21 + a22 * b22;
+    res[11] = a03 * b20 + a13 * b21 + a23 * b22;
     
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
+
+    return res;
 }
-function m4_rotate_res(res, a, v, ang){
+
+function m4_rotate_mod(a, ang, v){
+    var x = v[0],
+        y = v[1],
+        z = v[2];
+
+    var len = Math.sqrt(x * x + y * y + z * z);
+    if (len < glMatrix.EPSILON) return;
+
+    x /= len;
+    y /= len;
+    z /= len;
+      
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+    var t = 1 - c;
+      
+    var a00 = a[0], a01 = a[1], a02 = a[2],  a03 = a[3];
+    var a10 = a[4], a11 = a[5], a12 = a[6],  a13 = a[7];
+    var a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+      
+    // Construct the rotation matrix
+    b00 = x * x * t + c;
+    b01 = y * x * t + z * s;
+    b02 = z * x * t - y * s;
+    b10 = x * y * t - z * s;
+    b11 = y * y * t + c;
+    b12 = z * y * t + x * s;
+    b20 = x * z * t + y * s;
+    b21 = y * z * t - x * s;
+    b22 = z * z * t + c;
+      
+    // Perform rotation-specific matrix multiplication
+    a[0] = a00 * b00 + a10 * b01 + a20 * b02;
+    a[1] = a01 * b00 + a11 * b01 + a21 * b02;
+    a[2] = a02 * b00 + a12 * b01 + a22 * b02;
+    a[3] = a03 * b00 + a13 * b01 + a23 * b02;
+    a[4] = a00 * b10 + a10 * b11 + a20 * b12;
+    a[5] = a01 * b10 + a11 * b11 + a21 * b12;
+    a[6] = a02 * b10 + a12 * b11 + a22 * b12;
+    a[7] = a03 * b10 + a13 * b11 + a23 * b12;
+    a[8] = a00 * b20 + a10 * b21 + a20 * b22;
+    a[9] = a01 * b20 + a11 * b21 + a21 * b22;
+    a[10] = a02 * b20 + a12 * b21 + a22 * b22;
+    a[11] = a03 * b20 + a13 * b21 + a23 * b22; 
+}
+
+function m4_rotate_res(res, a, ang, v){
+    var x = v[0],
+        y = v[1],
+        z = v[2];
+
+    var len = Math.sqrt(x * x + y * y + z * z);
+    if (len < glMatrix.EPSILON) {
+        m4_copy(res, a);
+        return;
+    }
+
+    x /= len;
+    y /= len;
+    z /= len;
+      
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+    var t = 1 - c;
+      
+    var a00 = a[0], a01 = a[1], a02 = a[2],  a03 = a[3];
+    var a10 = a[4], a11 = a[5], a12 = a[6],  a13 = a[7];
+    var a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+      
+    // Construct the rotation matrix
+    b00 = x * x * t + c;
+    b01 = y * x * t + z * s;
+    b02 = z * x * t - y * s;
+    b10 = x * y * t - z * s;
+    b11 = y * y * t + c;
+    b12 = z * y * t + x * s;
+    b20 = x * z * t + y * s;
+    b21 = y * z * t - x * s;
+    b22 = z * z * t + c;
+      
+    // Perform rotation-specific matrix multiplication
+    res[0] = a00 * b00 + a10 * b01 + a20 * b02;
+    res[1] = a01 * b00 + a11 * b01 + a21 * b02;
+    res[2] = a02 * b00 + a12 * b01 + a22 * b02;
+    res[3] = a03 * b00 + a13 * b01 + a23 * b02;
+    res[4] = a00 * b10 + a10 * b11 + a20 * b12;
+    res[5] = a01 * b10 + a11 * b11 + a21 * b12;
+    res[6] = a02 * b10 + a12 * b11 + a22 * b12;
+    res[7] = a03 * b10 + a13 * b11 + a23 * b12;
+    res[8] = a00 * b20 + a10 * b21 + a20 * b22;
+    res[9] = a01 * b20 + a11 * b21 + a21 * b22;
+    res[10] = a02 * b20 + a12 * b21 + a22 * b22;
+    res[11] = a03 * b20 + a13 * b21 + a23 * b22;
     
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
 }
 
 function m4_rotateX_new(a, ang){
+    var res = m4_new();
 
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = a[0];
+    res[1] = a[1];
+    res[2] = a[2];
+    res[3] = a[3];
+
+    res[4] = a[4] * c + a[8]  * s;
+    res[5] = a[5] * c + a[9]  * s;
+    res[6] = a[6] * c + a[10] * s;    
+    res[7] = a[7] * c + a[11] * s;
+
+    res[8]  = a[8]  * c - a[4] * s;
+    res[9]  = a[9]  * c - a[5] * s;
+    res[10] = a[10] * c - a[6] * s;
+    res[11] = a[11] * c - a[7] * s;
+
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
+    
+    return res;
 }
+
 function m4_rotateX_mod(a, ang){
-    
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    var a04 = a[4];
+    var a05 = a[5];
+    var a06 = a[6];
+    var a07 = a[7];
+    var a08 = a[8];
+    var a09 = a[9];
+    var a10 = a[10];
+    var a11 = a[11];
+
+    a[4] = a04 * c + a08 * s;
+    a[5] = a05 * c + a09 * s;
+    a[6] = a06 * c + a10 * s;    
+    a[7] = a07 * c + a11 * s;
+
+    a[8]  = a08 * c - a04 * s;
+    a[9]  = a09 * c - a05 * s;
+    a[10] = a10 * c - a06 * s;
+    a[11] = a11 * c - a07 * s;
 }
+
 function m4_rotateX_res(res, a, ang){
-    
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = a[0];
+    res[1] = a[1];
+    res[2] = a[2];
+    res[3] = a[3];
+
+    res[4] = a[4] * c + a[8]  * s;
+    res[5] = a[5] * c + a[9]  * s;
+    res[6] = a[6] * c + a[10] * s;    
+    res[7] = a[7] * c + a[11] * s;
+
+    res[8]  = a[8]  * c - a[4] * s;
+    res[9]  = a[9]  * c - a[5] * s;
+    res[10] = a[10] * c - a[6] * s;
+    res[11] = a[11] * c - a[7] * s;
+
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
 }
 
 function m4_rotateY_new(a, ang){
+    var res = m4_new();
 
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = a[0] * c - a[8]  * s;
+    res[1] = a[1] * c - a[9]  * s;
+    res[2] = a[2] * c - a[10] * s;
+    res[3] = a[3] * c - a[11] * s;
+
+    res[4] = a[4];
+    res[5] = a[5];
+    res[6] = a[6];
+    res[7] = a[7];
+
+    res[8]  = a[0] * s + a[8]  * c;
+    res[9]  = a[1] * s + a[9]  * c;
+    res[10] = a[2] * s + a[10] * c;
+    res[11] = a[3] * s + a[11] * c;
+    
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
+
+    return res;
 }
 function m4_rotateY_mod(a, ang){
-    
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    var a00 = a[0];
+    var a01 = a[1];
+    var a02 = a[2];
+    var a03 = a[3];
+    var a08 = a[8];
+    var a09 = a[9];
+    var a10 = a[10];
+    var a11 = a[11];
+
+    a[0] = a00 * c - a08 * s;
+    a[1] = a01 * c - a09 * s;
+    a[2] = a02 * c - a10 * s;
+    a[3] = a03 * c - a11 * s;
+
+    a[8]  = a00 * s + a08 * c;
+    a[9]  = a01 * s + a09 * c;
+    a[10] = a02 * s + a10 * c;
+    a[11] = a03 * s + a11 * c;
 }
+
 function m4_rotateY_res(res, a, ang){
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = a[0] * c - a[8]  * s;
+    res[1] = a[1] * c - a[9]  * s;
+    res[2] = a[2] * c - a[10] * s;
+    res[3] = a[3] * c - a[11] * s;
+
+    res[4] = a[4];
+    res[5] = a[5];
+    res[6] = a[6];
+    res[7] = a[7];
+
+    res[8]  = a[0] * s + a[8]  * c;
+    res[9]  = a[1] * s + a[9]  * c;
+    res[10] = a[2] * s + a[10] * c;
+    res[11] = a[3] * s + a[11] * c;
     
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
 }
 
 function m4_rotateZ_new(a, ang){
 
+    var res = m4_new();
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = a[0] * c + a[4] * s;
+    res[1] = a[1] * c + a[5] * s;
+    res[2] = a[2] * c + a[6] * s;
+    res[3] = a[3] * c + a[7] * s;    
+  
+    res[8] = a[8];
+    res[9] = a[9];
+    res[10] = a[10];
+    res[11] = a[11];
+
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
+
+    res[4] = a[4] * c - a[0] * s;
+    res[5] = a[5] * c - a[1] * s;
+    res[6] = a[6] * c - a[2] * s;
+    res[7] = a[7] * c - a[3] * s;
+
+    return res;
 }
 function m4_rotateZ_mod(a, ang){
-    
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    var a00 = a[0];
+    var a01 = a[1];
+    var a02 = a[2];
+    var a03 = a[3];
+    var a04 = a[4];
+    var a05 = a[5];
+    var a06 = a[6];
+    var a07 = a[7];
+
+    a[0] = a00 * c + a04 * s;
+    a[1] = a01 * c + a05 * s;
+    a[2] = a02 * c + a06 * s;
+    a[3] = a03 * c + a07 * s;    
+
+    a[4] = a04 * c - a00 * s;
+    a[5] = a05 * c - a01 * s;
+    a[6] = a06 * c - a02 * s;
+    a[7] = a07 * c - a03 * s;
 }
 function m4_rotateZ_res(res, a, ang){
-    
+
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = a[0] * c + a[4] * s;
+    res[1] = a[1] * c + a[5] * s;
+    res[2] = a[2] * c + a[6] * s;
+    res[3] = a[3] * c + a[7] * s;    
+  
+    res[8] = a[8];
+    res[9] = a[9];
+    res[10] = a[10];
+    res[11] = a[11];
+
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
+
+    res[4] = a[4] * c - a[0] * s;
+    res[5] = a[5] * c - a[1] * s;
+    res[6] = a[6] * c - a[2] * s;
+    res[7] = a[7] * c - a[3] * s;
 }
 
-
+function m4_scale_new(a, v) {
+    var res = m4_new();   
+    res[0]  = a[0]  * v[0];
+    res[1]  = a[1]  * v[0];
+    res[2]  = a[2]  * v[0];
+    res[3]  = a[3]  * v[0];
+    res[4]  = a[4]  * v[1];
+    res[5]  = a[5]  * v[1];
+    res[6]  = a[6]  * v[1];
+    res[7]  = a[7]  * v[1];
+    res[8]  = a[8]  * v[2];
+    res[9]  = a[9]  * v[2];
+    res[10] = a[10] * v[2];
+    res[11] = a[11] * v[2];
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
+    return res;
+  }
+  function m4_scale_mod(a, v) {
+    a[0]  = a[0]  * v[0];
+    a[1]  = a[1]  * v[0];
+    a[2]  = a[2]  * v[0];
+    a[3]  = a[3]  * v[0];
+    a[4]  = a[4]  * v[1];
+    a[5]  = a[5]  * v[1];
+    a[6]  = a[6]  * v[1];
+    a[7]  = a[7]  * v[1];
+    a[8]  = a[8]  * v[2];
+    a[9]  = a[9]  * v[2];
+    a[10] = a[10] * v[2];
+    a[11] = a[11] * v[2];
+    a[12] = a[12];
+    a[13] = a[13];
+    a[14] = a[14];
+    a[15] = a[15];
+  }
+  function m4_scale_res(res, a, v) {
+    res[0]  = a[0]  * v[0];
+    res[1]  = a[1]  * v[0];
+    res[2]  = a[2]  * v[0];
+    res[3]  = a[3]  * v[0];
+    res[4]  = a[4]  * v[1];
+    res[5]  = a[5]  * v[1];
+    res[6]  = a[6]  * v[1];
+    res[7]  = a[7]  * v[1];
+    res[8]  = a[8]  * v[2];
+    res[9]  = a[9]  * v[2];
+    res[10] = a[10] * v[2];
+    res[11] = a[11] * v[2];
+    res[12] = a[12];
+    res[13] = a[13];
+    res[14] = a[14];
+    res[15] = a[15];
+  }
 
 
 function m4_ortho_new(width, height, znear, zfar){
