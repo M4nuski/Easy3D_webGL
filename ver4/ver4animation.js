@@ -30,7 +30,21 @@ class E3D_animation {
         this.timer = timerclass;
 
         this.state = E3D_RESET; // TODO add STATIC to simplyfy CD
+
+        this.ttl = 0;
+
+        // Custom data
         this.data = {}; // to store custom data through the animation
+        this.last_position = v3_new();
+        this.delta_position = v3_new();
+        this.mainVector = v3_new();
+        this.spd = v3_new();
+        this.vertOffset = v3_new();
+        this.vect = v3_new();
+        this.org = v3_new();
+        this.vectNorm = v3_new();
+        this.act = [];
+        this.numPellets = 10;
 
         // For CD
         this.delta = [0, 0, 0]; // Position delta

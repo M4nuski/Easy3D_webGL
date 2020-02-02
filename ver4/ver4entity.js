@@ -309,7 +309,7 @@ class E3D_entity {
         this.CD_cube_y0[this.CD_cube] = v3_clone(y); 
         this.CD_cube_y[this.CD_cube] = v3_clone(y); 
         this.CD_cube_z0[this.CD_cube] = v3_clone(z); 
-        this.CD_cube_z[this.CD_cube] = zv3_clone(z); 
+        this.CD_cube_z[this.CD_cube] = v3_clone(z); 
 
         this.CD_cube += 1;
         this.collisionDetection = true;

@@ -52,6 +52,8 @@ const _v3_nz =     [ 0,  0, -1];
 const _v3_unit =   [ 1,  1,  1];
 const _v3_nunit =  [-1, -1, -1];
 
+const _v3_epsilon = 0.00001;
+
 const _m4_identity = m4_new(); 
 
 // General mathematical constants
@@ -103,6 +105,9 @@ function v3_copy(res, a) {
     res[2] = a[2];
 }
 
+function v3_equals(a, b) {
+    return (Math.abs(a[0] - b[0]) < _v3_epsilon) && (Math.abs(a[1] - b[1]) < _v3_epsilon) && (Math.abs(a[2] - b[2]) < _v3_epsilon);
+}
 
 // Vector subtractions
 // = a + b
@@ -334,6 +339,21 @@ function v3_cross_res(res, a, b) {
     res[0] = a[1] * b[2] - a[2] * b[1];
     res[1] = a[2] * b[0] - a[0] * b[2];
     res[2] = a[0] * b[1] - a[1] * b[0];
+}
+
+function v3_angle(a, b) {
+    var na = v3_normalize_new(a);
+    var nb = v3_normalize_new(b);
+
+    var cosine = v3_dot(na, nb);
+  
+    if (cosine > 1.0) {
+      return 0;
+    } else if (cosine < -1.0) {
+      return Math.PI;
+    } else {
+      return Math.acos(cosine);
+    }
 }
 
 // Vector normalisation

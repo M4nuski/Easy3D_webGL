@@ -18,7 +18,7 @@ class E3D_loader {
  * @param {vec3} scale scale modifier of the entity data
  * @returns {E3D_entity} the resulting model and entity data
  */
-    static loadModel_RAW(name, file, rawModelData, smoothShading, color, dynamic = false, scale = vec3_unit) {
+    static loadModel_RAW(name, file, rawModelData, smoothShading, color, dynamic = false, scale = _v3_unit) {
         
         let entity = new E3D_entity(name, file, dynamic);
 
@@ -67,7 +67,7 @@ class E3D_loader {
         }
 
         // apply scale
-        if (scale != vec3_unit) {
+        if (scale != _v3_unit) {
             for (var i = 0; i < numFloats / 3; i++) { // for each vertex                
                positions[(i * 3)] =     positions[(i * 3)]     * scale[0];
                positions[(i * 3) + 1] = positions[(i * 3) + 1] * scale[1];
@@ -82,10 +82,10 @@ class E3D_loader {
             var v2 = [positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]];
             var v3 = [positions[(i * 9) + 6], positions[(i * 9) + 7], positions[(i * 9) + 8]];
 
-            v2 = vec3.subtract(v2, v2, v1);
-            v3 = vec3.subtract(v3, v3, v1);
-            vec3.cross(newNormal, v3, v2);
-            vec3.normalize(newNormal, newNormal);
+            v3_sub_mod(v2, v1);
+            v3_sub_mod(v3, v1);
+            v3_cross_res(newNormal, v3, v2);
+            v3_normalize_mod(newNormal);
 
             normals.push(newNormal[0]); // flat shading
             normals.push(newNormal[1]); 
@@ -116,13 +116,13 @@ class E3D_loader {
                 var unique = true;
                 var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
                 for (var j = 0; j < uniqueVertex.length; ++j) {
-                    if ((unique) && (vec3.equals(uniqueVertex[j], curVert))) {
+                    if ((unique) && (v3_equals(uniqueVertex[j], curVert))) {
                         unique = false;
                         indices[i] = j;
                     }
                 }
                 if (unique) { 
-                    uniqueVertex.push(vec3.clone(curVert));
+                    uniqueVertex.push(v3_clone(curVert));
                     indices[i] = uniqueVertex.length-1;
                 } 
             }
@@ -138,11 +138,11 @@ class E3D_loader {
                 for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
                     if (indices[j] == i) {
                         var curNorm = [normals[j*3], normals[(j*3)+1], normals[(j*3)+2] ];
-                        vec3.add(avgNorms[i] , avgNorms[i], curNorm);
+                        v3_add_mod(avgNorms[i], curNorm);
                     }
                 }
 
-                vec3.normalize(avgNorms[i], avgNorms[i]);
+                v3_normalize_mod(avgNorms[i]);
             }
 
             console.log("Smoothing...");
@@ -153,7 +153,7 @@ class E3D_loader {
                     if (indices[j] == i) {
                         var curNorm = [normals[j*3], normals[(j*3)+1], normals[(j*3)+2] ];
 
-                        if (vec3.angle(avgNorms[i], curNorm) < smoothShading) {
+                        if (v3_angle(avgNorms[i], curNorm) < smoothShading) {
                             normals[j*3] = avgNorms[i][0];
                             normals[(j*3)+1] = avgNorms[i][1];
                             normals[(j*3)+2] = avgNorms[i][2];
@@ -167,9 +167,9 @@ class E3D_loader {
                 var unique = true;
                 var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
                 for (var j = 0; j < uniqueVertex.length; ++j) {
-                    if ((unique) && (vec3.equals(uniqueVertex[j], curVert))) unique = false;
+                    if ((unique) && (v3_equals(uniqueVertex[j], curVert))) unique = false;
                 }
-                if (unique) uniqueVertex.push(vec3.clone(curVert));
+                if (unique) uniqueVertex.push(v3_clone(curVert));
             }
         }
 
@@ -199,7 +199,7 @@ class E3D_loader {
  * @param {vec3} scale scale modifier of the entity data
  * @returns {E3D_entity} the resulting model E3D_Entity data
  */
-    static loadModel_STL(name, file, rawModelData, smoothShading, color, dynamic = false, scale = vec3_unit) {
+    static loadModel_STL(name, file, rawModelData, smoothShading, color, dynamic = false, scale = _v3_unit) {
             
         let entity = new E3D_entity(name, file, dynamic);
 
@@ -284,10 +284,10 @@ class E3D_loader {
 
 
             if ((normal[0] == 0) && (normal[1] == 0) && (normal[2] == 0)) {
-                vec3.subtract(p1, p1, p0);
-                vec3.subtract(p2, p2, p0);
-                vec3.cross(normal, p2, p1);
-                vec3.normalize(normal, normal);
+                v3_sub_mod(p1, p0);
+                v3_sub_mod(p2, p0);
+                v3_cross_res(normal, p2, p1);
+                v3_normalize_mod(normal);
                 //TODO add smoothing
                 //TODO extract from all loaders 
             }
