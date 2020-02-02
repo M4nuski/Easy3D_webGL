@@ -19,15 +19,17 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress and next steps
 ----------
-* Collision detection (vector/edge, sphere, plane/cube)
+* Collision detection (vector/edge, sphere/cylinder, plane/cube)
 * Fake physics as animations
+* Update all demo pages of ver4 for latest v3, m4 and animations
+* --ver5:
 * flatten engine to reducre nested calls and hierarchy spinning
-* Update all demo pages of ver4 for latest engine schema
+* Improved Collision Detection/Interpolation (vector/edge, elipsoid, cuboid, cylinder, mesh)
+* Other type of physics mechanic for controls. (chase camera/3rd person)
 * --Some kind of game:
 * Path interpolation for bots and animations.
-* Other type of physics mechanic for controls. (chase camera/3rd person)
 * Basic AI
-* Collision target culling (local)
+* 3D cube tree Collision target culling
 * Sounds
 * Better lights shaders (array of different types of ligts) (spot, point etc)
 * NetCode
@@ -35,13 +37,11 @@ Current work-in-progress and next steps
 * Text render in 3D scene
 * STL, OBJ, MS3D to JSON or other ready-to-use format for mesh data and entities
 * Improved Entity loading (ideally external tool should prepare model data for better load perf)
-* --ver5:
+* --ver6:
 * Entity hierarchy (parents with n-childs, matrix propagation etc)
 * Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine
-* Improved Collision Detection (vector/edge, elipsoid, cuboid, mesh)
-* Basic Collision physics (hit, bounce, move etc) as body data attached to entity, mass, moment of rotation etc
+* Basic Physics (hit, bounce, move etc) as body data attached to entity, mass, moment of rotation etc
 * Evaluate value of render culling on mobile
-* --ver6:
 * Replace per-vertex colors with textures, using a LUT texture and LUT data set if nothing else.
 
 
@@ -68,8 +68,8 @@ Interpolations
 -----------
 * Point : vector
 * Edge : plane
-* Sphere : pill
+* Sphere : pill/cylinder
 * Plane : Cuboid
-* Cube : hyperCube?
+* Cube : cuboid
 
 -M4nuski

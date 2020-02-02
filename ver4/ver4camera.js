@@ -148,13 +148,13 @@ class E3D_camera_model extends E3D_camera_persp {
         if (this.zDist != undefined) {
             m4_translate_res(this.matrix, this.projectionMatrix,  [0, 0, this.zDist]);
 
-            m4_rotateY_mod(this.matrix, this.rotation[1] );
-            m4_rotateX_mod(this.matrix, this.rotation[0] );
+            m4_rotateY_mod(this.matrix, this.rotation[1]);
+            m4_rotateX_mod(this.matrix, this.rotation[0]);
 
             v3_negate_res(this._neg_position, this.position);
             m4_translate_mod(this.matrix, this._neg_position);
             
-            m4_rotatation_res(this.inverseRotationMatrix, -this.rotation[0], _v3_x);
+            m4_rotation_res(this.inverseRotationMatrix, -this.rotation[0], _v3_x);
             m4_rotate_mod(this.inverseRotationMatrix ,-this.rotation[1], _v3_y);
         }
     }

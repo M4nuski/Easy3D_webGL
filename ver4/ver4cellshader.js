@@ -63,7 +63,7 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene_cell_shader("mainScene_CS", gl, winWidth, winHeight, vec4.fromValues(0.95, 0.95, 0.95, 1.0), 300);
+        scn = new E3D_scene_cell_shader("mainScene_CS", gl, winWidth, winHeight, [0.95, 0.95, 0.95, 1.0], 300);
 
         log("Shader Program Initialization", false);
 

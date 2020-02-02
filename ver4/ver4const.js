@@ -1010,7 +1010,7 @@ function m4_rotation_new(ang, v) {
         z = v[2];
 
     var len = Math.sqrt(x * x + y * y + z * z);
-    if (len < glMatrix.EPSILON) return res;
+    if (len < _v3_epsilon) return res;
 
     x /= len;
     y /= len;
@@ -1048,7 +1048,7 @@ function m4_rotation_res(res, ang, v) {
         z = v[2];
 
     var len = Math.sqrt(x * x + y * y + z * z);
-    if (len < glMatrix.EPSILON) return res;
+    if (len < _v3_epsilon) return res;
 
     x /= len;
     y /= len;
@@ -1088,7 +1088,7 @@ function m4_rotate_new(a, ang, v){
         z = v[2];
 
     var len = Math.sqrt(x * x + y * y + z * z);
-    if (len < glMatrix.EPSILON) {
+    if (len < _v3_epsilon) {
         m4_copy(res, a);
         return res;
     }
@@ -1147,7 +1147,7 @@ function m4_rotate_mod(a, ang, v){
         z = v[2];
 
     var len = Math.sqrt(x * x + y * y + z * z);
-    if (len < glMatrix.EPSILON) return;
+    if (len < _v3_epsilon) return;
 
     x /= len;
     y /= len;
@@ -1195,7 +1195,7 @@ function m4_rotate_res(res, a, ang, v){
         z = v[2];
 
     var len = Math.sqrt(x * x + y * y + z * z);
-    if (len < glMatrix.EPSILON) {
+    if (len < _v3_epsilon) {
         m4_copy(res, a);
         return;
     }
