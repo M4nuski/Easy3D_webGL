@@ -1242,10 +1242,10 @@ function m4_rotationX_new(ang) {
     res[6] = s;    
     res[7] = 0;
 
-    res[8]  = 0;
+    res[8]  =  0;
     res[9]  = -s;
     res[10] =  c;
-    res[11] = 0;
+    res[11] =  0;
 
     res[12] = 0;
     res[13] = 0;
@@ -1268,10 +1268,10 @@ function m4_rotationX_res(res, ang) {
     res[6] = s;    
     res[7] = 0;
 
-    res[8]  = 0;
+    res[8]  =  0;
     res[9]  = -s;
     res[10] =  c;
-    res[11] = 0;
+    res[11] =  0;
 
     res[12] = 0;
     res[13] = 0;
@@ -1358,6 +1358,61 @@ function m4_rotateX_res(res, a, ang){
     res[15] = a[15];
 }
 
+// Create a new rotation matrix around Y
+function m4_rotationY_new(ang) {
+    var res = new Array(16);
+
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] =  c;
+    res[1] =  0;
+    res[2] = -s;
+    res[3] =  0;
+
+    res[4] = 0;
+    res[5] = 1;
+    res[6] = 0;
+    res[7] = 0;
+
+    res[8]  = s;
+    res[9]  = 0;
+    res[10] = c;
+    res[11] = 0;
+    
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = 0;
+    res[15] = 1;
+
+    return res;
+}
+function m4_rotationY_res(res, ang) {
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] =  c;
+    res[1] =  0;
+    res[2] = -s;
+    res[3] =  0;
+
+    res[4] = 0;
+    res[5] = 1;
+    res[6] = 0;
+    res[7] = 0;
+
+    res[8]  = s;
+    res[9]  = 0;
+    res[10] = c;
+    res[11] = 0;
+    
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = 0;
+    res[15] = 1;
+}
+
+// Add rotation around Y to matrix
 function m4_rotateY_new(a, ang){
     var res = new Array(16);
 
@@ -1435,6 +1490,61 @@ function m4_rotateY_res(res, a, ang){
     res[15] = a[15];
 }
 
+// Create a new rotation matrix around Z
+function m4_rotationZ_new(ang) {
+    var res = new Array(16);
+
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = c;
+    res[1] = s;
+    res[2] = 0;
+    res[3] = 0;
+
+    res[4] = -s;
+    res[5] =  c;
+    res[6] =  0;
+    res[7] =  0;
+
+    res[8]  = 0;
+    res[9]  = 0;
+    res[10] = 1;
+    res[11] = 0;
+    
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = 0;
+    res[15] = 1;
+
+    return res;
+}
+function m4_rotationZ_res(res, ang) {
+    var s = Math.sin(ang);
+    var c = Math.cos(ang);
+
+    res[0] = c;
+    res[1] = s;
+    res[2] = 0;
+    res[3] = 0;
+
+    res[4] = -s;
+    res[5] =  c;
+    res[6] =  0;
+    res[7] =  0;
+
+    res[8]  = 0;
+    res[9]  = 0;
+    res[10] = 1;
+    res[11] = 0;
+    
+    res[12] = 0;
+    res[13] = 0;
+    res[14] = 0;
+    res[15] = 1;
+}
+
+// Add rotation around Z to matrix
 function m4_rotateZ_new(a, ang){
     var res = new Array(16);
 
@@ -1446,6 +1556,11 @@ function m4_rotateZ_new(a, ang){
     res[2] = a[2] * c + a[6] * s;
     res[3] = a[3] * c + a[7] * s;    
   
+    res[4] = a[4] * c - a[0] * s;
+    res[5] = a[5] * c - a[1] * s;
+    res[6] = a[6] * c - a[2] * s;
+    res[7] = a[7] * c - a[3] * s;
+
     res[8] = a[8];
     res[9] = a[9];
     res[10] = a[10];
@@ -1456,10 +1571,6 @@ function m4_rotateZ_new(a, ang){
     res[14] = a[14];
     res[15] = a[15];
 
-    res[4] = a[4] * c - a[0] * s;
-    res[5] = a[5] * c - a[1] * s;
-    res[6] = a[6] * c - a[2] * s;
-    res[7] = a[7] * c - a[3] * s;
 
     return res;
 }
@@ -1494,7 +1605,12 @@ function m4_rotateZ_res(res, a, ang){
     res[0] = a[0] * c + a[4] * s;
     res[1] = a[1] * c + a[5] * s;
     res[2] = a[2] * c + a[6] * s;
-    res[3] = a[3] * c + a[7] * s;    
+    res[3] = a[3] * c + a[7] * s;
+
+    res[4] = a[4] * c - a[0] * s;
+    res[5] = a[5] * c - a[1] * s;
+    res[6] = a[6] * c - a[2] * s;
+    res[7] = a[7] * c - a[3] * s;
   
     res[8] = a[8];
     res[9] = a[9];
@@ -1505,11 +1621,6 @@ function m4_rotateZ_res(res, a, ang){
     res[13] = a[13];
     res[14] = a[14];
     res[15] = a[15];
-
-    res[4] = a[4] * c - a[0] * s;
-    res[5] = a[5] * c - a[1] * s;
-    res[6] = a[6] * c - a[2] * s;
-    res[7] = a[7] * c - a[3] * s;
 }
 
 
