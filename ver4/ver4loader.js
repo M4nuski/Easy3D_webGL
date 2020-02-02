@@ -305,7 +305,9 @@ class E3D_loader {
         entity.numElements = NumTriangle * 3;
 
 /*
-// TODO smooth shading for STL binary files
+// TODO smooth shading 
+// TODO edge finding
+
         if (smoothShading > 0.0) {
             console.log("Smooth Shading Normals");
             // group vertex by locality (list of unique location)

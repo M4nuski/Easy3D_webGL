@@ -37,7 +37,7 @@ class E3D_entity {
         this.vertexBuffer;
         this.normalBuffer;
         this.colorBuffer; // TODO replace by texture
-        //this.uvBuffer; // TODO textures into single data store
+        //this.uvBuffer;
 
 
         // float32Array of raw data, can be flushed for static entities 

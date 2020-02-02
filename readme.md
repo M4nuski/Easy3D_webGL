@@ -21,7 +21,6 @@ Current work-in-progress and next steps
 ----------
 * Collision detection (vector/edge, sphere/cylinder, plane/cube)
 * Fake physics as animations
-* Update all demo pages of ver4 for latest v3, m4 and animations
 * --ver5:
 * flatten engine to reducre nested calls and hierarchy spinning
 * Improved Collision Detection/Interpolation (vector/edge, elipsoid, cuboid, cylinder, mesh)

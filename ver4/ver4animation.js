@@ -19,7 +19,6 @@
 class E3D_animation { 
     constructor(id, targetEntity, sceneContext, timerclass, animFirstPass, animNPass = null, animLastPass =  null) {
         this.id = id;
-        //this.anim = animatorFunct; // function delegate that perform the animation
         
         this.animFirstPass = animFirstPass; //  calculate ideal next position
         this.animRePass = animNPass; // n+ times, re-calculate after hit was detected
@@ -29,7 +28,7 @@ class E3D_animation {
         this.scn = sceneContext;
         this.timer = timerclass;
 
-        this.state = E3D_RESET; // TODO add STATIC to simplyfy CD
+        this.state = E3D_RESET;
 
         this.ttl = 0;
 
