@@ -6,14 +6,15 @@
             position: absolute;
             top : 0px;
             left : 0px;
-            width : 1280px;
-            height : 720px;
+            width : 640px;
+            height : 100vh;
         } 
         #dataDiv {
             position: absolute;
             top:0px;
             left:650px;
-            width:600px;         
+            width:600px;   
+            height: 100vh;      
         }
         #logDiv {
             height : 300px;
@@ -33,6 +34,14 @@
             text-align: center;
             background-color: lightgray;
         }
+        .test {
+            background-color: white;
+            transition-delay: 100;
+            
+        }
+        .test:hover {
+            background-color: lightgray;
+        }
     </style>
     <script type="text/javascript" src="gl-matrix-min.js"></script>
     <script type="text/javascript" src="test1.js"></script>
@@ -46,7 +55,9 @@
         <div id="test3a" class="test">3a-vec3 to vec3 data transfers</div>
         <div id="test3b" class="test">3b-array.slice vs a[i] = b[i] data transfers</div>
         <div id="test4" class="test">4-mat4 inverse translate</div>
-        <div id="test5" class="test">5-4map vs array access time</div>
+        <div id="test5a" class="test">5a-map vs array random access time</div>
+        <div id="test5b" class="test">5b-map vs array sequential access time</div>
+        <div id="test5c" class="test">5c-map vs array search access time</div>
         <div id="test6" class="test">6-Reflect, vect-sph hit test</div>
         <div id="test7" class="test">7-Array(x), [], float32Array, mixed call</div>
         <div id="test8" class="test">8-Array push vs length+=x, [[a,b,c]] vs a[] b[] c[]</div>
@@ -54,6 +65,8 @@
         <div id="test10" class="test">10-let/var and ++x/x++ in for loop</div>
         <div id="test11" class="test">11-epsilon ABS &lt; eps vs Round(eps * n)</div>
         <div id="test12" class="test">12-float32Array[3] vs plain array[3] of float</div>
+        <div id="test13" class="test">13-recalc sin/cos, cache sin/cos, cache all</div>
+        <div id="test14" class="test">14-Reflect Double Array access, vs cached values</div>
     </div>
     <div id="dataDiv">
         <div id="statusDiv">Status</div><br />

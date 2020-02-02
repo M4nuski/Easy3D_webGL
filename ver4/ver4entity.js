@@ -209,15 +209,15 @@ class E3D_entity {
 
     resetMatrix(){
         // recreate matrices from rotation and position
-        mat4.rotateZ(this.normalMatrix, mat4_identity,     this.rotation[2] );
-        mat4.rotateX(this.normalMatrix, this.normalMatrix, this.rotation[0] );
-        mat4.rotateY(this.normalMatrix, this.normalMatrix, this.rotation[1] );
+        m4_rotateZ_res(this.normalMatrix, _m4_identity, this.rotation[2]);
+        m4_rotateX_mod(this.normalMatrix, this.rotation[0]);
+        m4_rotateY_mod(this.normalMatrix, this.rotation[1]);
 
-        mat4.translate(this.modelMatrix, mat4_identity, this.position);
+        m4_translate_res(this.modelMatrix, _m4_identity, this.position);
         
-        mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.rotation[2] );
-        mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0] );
-        mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1] );
+        m4_rotateZ_mod(this.modelMatrix, this.rotation[2]);
+        m4_rotateX_mod(this.modelMatrix, this.rotation[0]);
+        m4_rotateY_mod(this.modelMatrix, this.rotation[1]);
 
         if (this.collisionDetection) {
             for (var i = 0; i < this.CD_vec; ++i) {
@@ -452,20 +452,22 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
       //  var x=0, y=0, z=0;
 
       var baseOffset = PIdiv2 / numSegments;
-        
-        for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
-            this.increaseSize(sides*6);
-            var si = Math.sin(0) * dia;
-            var ci = Math.cos(0) * dia;
-            var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
-      //      offsetAngle += offsetAngle/2;
-            var matX = mat4.clone(mat4_identity);
-            var matY = mat4.clone(mat4_identity);
-            var matZ = mat4.clone(mat4_identity);
-            mat4.rotateX(matX, matX, offsetAngle);
-            mat4.rotateY(matY, matY, offsetAngle);
-            mat4.rotateZ(matZ, matZ, offsetAngle);
-       // v3_applym4_res(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
+
+      var matX = m4_new();
+      var matY = m4_new();
+      var matZ = m4_new();
+      
+      for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
+          
+          this.increaseSize(sides*6);
+          var si = Math.sin(0) * dia;
+          var ci = Math.cos(0) * dia;
+          
+          var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
+          
+            m4_rotateX_res(matX, _m4_identity, offsetAngle);
+            m4_rotateY_res(matY, _m4_identity, offsetAngle);
+            m4_rotateZ_res(matZ, _m4_identity, offsetAngle);  
 
             for (var i = 0; i < sides; ++i) { 
 

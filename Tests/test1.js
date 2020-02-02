@@ -33,9 +33,9 @@ const gco = [0 ,0 ,0];
 let glo = [0,0 ,0];
 var gvo = [0, 0, 0];
 
-const gcv  = v3_new();
-let glv  = v3_new();
-var gvv  = v3_new();
+const gcv  = vec3.fromValues(0, 0, 0);
+let glv  = vec3.fromValues(0, 0, 0);
+var gvv  = vec3.fromValues(0, 0, 0);
 
 const t = {};
 
@@ -44,15 +44,15 @@ t.test1 = function() {
     let llo = [0,0 ,0];
     var lvo = [0, 0, 0];
 
-    var v1 = v3_new();
+    var v1 = vec3.fromValues(0, 0, 0);
 
-    const lcv  = v3_new();
-    let llv  = v3_new();
-    var lvv  = v3_new();
+    const lcv  = vec3.fromValues(0, 0, 0);
+    let llv  = vec3.fromValues(0, 0, 0);
+    var lvv  = vec3.fromValues(0, 0, 0);
 
 
     //direct cast [0,0,0]
-    //cast from new v3_new();
+    //cast from new vec3.fromValues(0, 0, 0);
     //cast from new vec3.fromValues(0, 0, 0);
 
     const numtst = 25000000;
@@ -138,11 +138,11 @@ t.test1 = function() {
 
     dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
-        vec3.add(v1, v1, v3_new());
+        vec3.add(v1, v1, vec3.fromValues(0, 0, 0));
     }
     et = Date.now();
 
-    addLine("v3_new()" + " : " + (et-dt));
+    addLine("vec3.fromValues(0, 0, 0)" + " : " + (et-dt));
 
 
     dt = Date.now();
@@ -246,7 +246,7 @@ t.test2 = function() {
 t.test3a = function() {
 
     const numtst = 25000000;
-    var d = v3_new();
+    var d = vec3.fromValues(0, 0, 0);
 
     addLine("Num iter: " + numtst);
 
@@ -295,8 +295,8 @@ function copy3f3f(a, b) {
 t.test3b = function() {
 
     const numtst = 25000000;
-    var d = v3_new();
-    var s = v3_new();
+    var d = vec3.fromValues(0, 0, 0);
+    var s = vec3.fromValues(0, 0, 0);
     addLine("Num iter: " + numtst);
 
     let dt = Date.now();
@@ -337,9 +337,9 @@ t.test3b = function() {
 }
 
 t.test4 = function() {
-    let ms = m4_new();
-    let md = m4_new();
-    let v = v3_new();
+    let ms = mat4.create();
+    let md = mat4.create();
+    let v = vec3.fromValues(0, 0, 0);
 
     const numtst = 5000000;    
     addLine("Num iter: " + numtst);
@@ -375,7 +375,7 @@ t.test4 = function() {
     et = Date.now();
     addLine("negate(v) + translate(md, ms, v) + negate(v) : " + (et-dt));
 
-    let dummy = v3_new();
+    let dummy = vec3.fromValues(0, 0, 0);
     dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
         mat4.translate(md, ms, vec3.negate(dummy, v));
@@ -389,7 +389,7 @@ t.test4 = function() {
 
 
 
-t.test5 = function() {
+t.test5a = function() {
     const numtst = 1500000;
     const numItem = 5000;
 
@@ -402,35 +402,125 @@ t.test5 = function() {
     }
 
     var ma = new Map();
-
     for (var i = 0; i < numItem; ++i ) {
        ma.set(i, i);
     }
+    
 
-    var dummy = 0;
     let dt = Date.now();
+    for (let i = 0; i < numtst; ++i) var x = Math.floor(Math.random() * numItem);
+    let et = Date.now();
+    addLine("random number gen time: " + (et-dt));
+
+
+    var dummy;
+    dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         dummy = ar[x];
     }
-
-    let et = Date.now();
+    et = Date.now();
     addLine("random access array: " + (et-dt));
 
-    dummy = 0;
-     dt = Date.now();
+
+    dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         dummy = ma.get(x);
     }
+    et = Date.now();
+    addLine("random access map: " + (et-dt));  
 
-     et = Date.now();
-    addLine("random access map: " + (et-dt));
 
+    addLine("End Test 5a");
+}
+
+
+
+t.test5b = function() {
+    const numtst = 150000;
+    const numItem = 5000;
+
+    addLine("Num iter: " + numtst);
+    addLine("numItem: " + numItem);
+
+    var ar = [numItem];
+    for (var i = 0; i < numItem; ++i ) {
+        ar[i] = i;
+    }
+
+    var ma = new Map();
+    for (var i = 0; i < numItem; ++i ) {
+       ma.set(i, i);
+    }
     
-    dummy = 0;
+
+    var dummy;
+    let dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        for (let j = 0; j < numItem; ++j) {
+            dummy = ar[j];
+        }
+    }
+    let et = Date.now();
+    addLine("sequential access array: " + (et-dt));
+
+
+    dt = Date.now();    
+    for (let i = 0; i < numtst; ++i) {
+        var itr = ma.values();
+        var v = itr.next();
+        while (!v.done) {
+            dummy = v.value;
+            v = itr.next();
+        }
+    }
+    et = Date.now();
+    addLine("sequential access while (!itr.next().done): " + (et-dt));  
+
+
+    dt = Date.now();    
+    for (let i = 0; i < numtst; ++i) {
+        for (var [val, done] of ma) {
+            dummy = val;
+        }
+    }
+    et = Date.now();
+    addLine("sequential access for [val, done] of map: " + (et-dt));  
+
+   addLine("End Test 5b");
+}
+
+
+
+
+t.test5c = function() {
+    const numtst = 1500000;
+    const numItem = 5000;
+
+    addLine("Num iter: " + numtst);
+    addLine("numItem: " + numItem);
+
+    var ar = [numItem];
+    for (var i = 0; i < numItem; ++i ) {
+        ar[i] = i;
+    }
+
+    var ma = new Map();
+    for (var i = 0; i < numItem; ++i ) {
+       ma.set(i, i);
+    }
+   
+
+    let dt = Date.now();
+    for (let i = 0; i < numtst; ++i) var x = Math.floor(Math.random() * numItem);
+    let et = Date.now();
+    addLine("random number gen time: " + (et-dt));
+
+
+    var dummy;
     let idx = 0;
-     dt = Date.now();
+    dt = Date.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         for (let j = 0; j < ar.length; ++j) {
@@ -441,23 +531,30 @@ t.test5 = function() {
         }
         dummy = ar[idx];
     }
-
-     et = Date.now();
+    et = Date.now();
     addLine("array search by for: " + (et-dt));
 
-    dummy = 0;
+
     dt = Date.now();
-   for (let i = 0; i < numtst; ++i) {
-       var x = Math.floor(Math.random() * numItem);
-       dummy = ar[ar.indexOf(x)];
-   }
-
+    for (let i = 0; i < numtst; ++i) {
+        var x = Math.floor(Math.random() * numItem);
+        dummy = ar[ar.indexOf(x)];
+    }
     et = Date.now();
-   addLine("array search by indexOf: " + (et-dt));
+    addLine("array search by indexOf: " + (et-dt));
 
-   addLine("End Test 5");
+
+    dt = Date.now();
+    for (let i = 0; i < numtst; ++i) {
+        var x = Math.floor(Math.random() * numItem);
+        dummy = ma.get(x);
+    }
+    et = Date.now();
+    addLine("random access map: " + (et-dt));  
+
+
+    addLine("End Test 5c");
 }
-
 
 
 
@@ -1182,8 +1279,8 @@ t.test11 = function() {
 
 
     var dt = Date.now();
-        for (var i = 0; i < 1; ++i) 
-            for (var j = 0; j < numtst; ++j) resarr[j] = (Math.abs(arr[j]) < eps);
+    for (var i = 0; i < 1; ++i) 
+        for (var j = 0; j < numtst; ++j) resarr[j] = (Math.abs(arr[j]) < eps);
     var et = Date.now();
     addLine("(Math.abs(x) < eps) : " + (et-dt));
 
@@ -1298,6 +1395,266 @@ t.test12 = function() {
     addLine("End Test 12");
 }
 
+
+
+t.test13 = function() {
+
+    const numtst = 1000000;
+  
+    addLine("Num iter: " + numtst + " ()");
+
+    let a1 = new Array(numtst);
+    let r1 = new Array(numtst);
+    let ang1 = new Array(numtst);
+
+    var t1 = 0;
+    var t2 = 0;
+    var t3 = 0;
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resRecalc(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resRecalc: " + (et-dt));
+    t1 += (et-dt);
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVar(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resLocalVar: " + (et-dt));
+    t2 += (et-dt);
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVarCache(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resLocalVarCache: " + (et-dt));
+    t3 += (et-dt);
+
+
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVarCache(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resLocalVarCache: " + (et-dt));
+    t3 += (et-dt);
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resRecalc(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resRecalc: " + (et-dt));
+    t1 += (et-dt);
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVar(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resLocalVar: " + (et-dt));
+    t2 += (et-dt);
+
+
+
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVar(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resLocalVar: " + (et-dt));
+    t2 += (et-dt);
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVarCache(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resLocalVarCache: " + (et-dt));
+    t3 += (et-dt);
+
+    for (let i = 0; i < numtst; ++i) {
+        ang1[i] = rand(2 * Math.PI);
+        a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        r1[i] = [ 0, 0, 0 ]; 
+    }
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_rotateX_resRecalc(r1[i], a1[i], ang1[i]);
+    var et = Date.now();
+    addLine("v3_rotateX_resRecalc: " + (et-dt));
+    t1 += (et-dt);
+    addLine("");
+    addLine("v3_rotateX_resRecalc total: " + t1);
+    addLine("v3_rotateX_resLocalVar total: " + t2);
+    addLine("v3_rotateX_resLocalVarCache total: " + t3);
+
+
+    addLine("End Test 13");
+}
+
+
+
+
+t.test14 = function() {
+
+    const numtst = 1000000;
+  
+    addLine("Num iter: " + numtst);
+
+    let a = new Array(numtst);
+    let b = new Array(numtst);
+    let r = new Array(numtst);
+
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+    
+    var t1 = 0;
+    var t2 = 0;
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resAccessAll: " + (et-dt));
+    t1 += (et-dt);
+
+    addLine("Randomizing sets");
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resCachedAccess: " + (et-dt));
+    t2 += (et-dt);
+
+    addLine("Randomizing sets");
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resCachedAccess: " + (et-dt));
+    t2 += (et-dt);
+
+    addLine("Randomizing sets");
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resAccessAll: " + (et-dt));
+    t1 += (et-dt);
+
+    addLine("Randomizing sets");    
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resAccessAll: " + (et-dt));
+    t1 += (et-dt);
+
+    addLine("Randomizing sets");
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resCachedAccess: " + (et-dt));
+    t2 += (et-dt);
+
+
+    addLine("Randomizing sets");
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+
+    var dt = Date.now();
+    for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resCachedAccess: " + (et-dt));
+    t2 += (et-dt);
+
+    addLine("Randomizing sets");
+    for (let i = 0; i < numtst; ++i) {
+        a[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
+        b[i] = [ rndPM(1), rndPM(1), rndPM(1) ];  
+        r[i] = [ 0, 0, 0 ]; 
+    }
+
+    var dt = Date.now();
+        for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
+    var et = Date.now();
+    addLine("v3_reflect_resAccessAll: " + (et-dt));
+    t1 += (et-dt);
+    
+    addLine("");
+    addLine("v3_reflect_resAccessAll total: " + t1);
+    addLine("v3_reflect_resCachedAccess total: " + t2);
+
+    addLine("End Test 14");
+}
+
+
+
+
+
+
 function rndPM(val) { // random between plus or minus "val"
     return (2*val*Math.random()) - val;
 }
@@ -1306,6 +1663,43 @@ function rand(x) {
     return Math.floor(Math.random() * x);
 }
 
+function v3_rotateX_resRecalc(res, a, ang) {
+    res[0] = a[0];
+    res[1] = a[1] * Math.cos(ang) - a[2] * Math.sin(ang);
+    res[2] = a[1] * Math.sin(ang) + a[2] * Math.cos(ang);
+}
 
+function v3_rotateX_resLocalVar(res, a, ang) {
+    let c = Math.cos(ang);
+    let s = Math.sin(ang);
+    res[0] = a[0];
+    res[1] = a[1] * c - a[2] * s;
+    res[2] = a[1] * s + a[2] * c;
+}
+function v3_rotateX_resLocalVarCache(res, a, ang) {
+    let c = Math.cos(ang);
+    let s = Math.sin(ang);
+    let y = a[1];
+    let z = a[2];
+    res[0] = a[0];
+    res[1] = y * c - z * s;
+    res[2] = y * s + z * c;
+}
+
+function v3_reflect_resAccessAll(result, inc, norm) {
+    var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
+    result[0] = inc[0] - (norm[0] * dr2); 
+    result[1] = inc[1] - (norm[1] * dr2);
+    result[2] = inc[2] - (norm[2] * dr2);
+}
+
+function v3_reflect_resCachedAccess(result, inc, norm) {
+    var ix =  inc[0], iy =  inc[1], iz =  inc[2];
+    var nx = norm[0], ny = norm[1], nz = norm[2];
+    var dr2 = 2.0 * (ix * nx + iy * ny + iz * nz);
+    result[0] = ix - (nx * dr2); 
+    result[1] = iy - (ny * dr2);
+    result[2] = iz - (nz * dr2);
+}
 
 });
