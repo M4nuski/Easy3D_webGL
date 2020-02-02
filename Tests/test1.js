@@ -1652,6 +1652,90 @@ t.test14 = function() {
 
 
 
+t.test15 = function() {
+
+    const numIter = 10000;
+    const numtst = 1000;
+  
+    addLine("Num iter: " + numtst);
+
+    let m = new Array(numtst);
+    let v = new Array(numtst);
+    let r = new Array(numtst);
+
+    var t1 = 0; // m4_translate_resNoCache
+    var t2 = 0; // m4_translate_resCacheVect
+    var t3 = 0; // m4_translate_resCacheMat
+    var t4 = 0; // m4_translate_resCacheBoth
+
+    for (var cur_itt = 0; cur_itt < numIter; ++cur_itt) {
+
+        for (let i = 0; i < numtst; ++i) {
+            m[i] = m4_new();  
+            m[i][0] = rndPM(10);
+            m[i][5] = rndPM(10);
+            m[i][10] = rndPM(10);
+            v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
+            r[i] = m4_new();  
+        }
+        var dt = Date.now();
+            for (var i = 0; i < numtst; ++i) m4_translate_resNoCache(r[i], m[i], v[i]);
+        var et = Date.now();
+        t1 += (et-dt);
+
+        for (let i = 0; i < numtst; ++i) {
+            m[i] = m4_new();  
+            m[i][0] = rndPM(10);
+            m[i][5] = rndPM(10);
+            m[i][10] = rndPM(10);
+            v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
+            r[i] = m4_new();  
+        }
+        var dt = Date.now();
+            for (var i = 0; i < numtst; ++i) m4_translate_resCacheVect(r[i], m[i], v[i]);
+        var et = Date.now();
+        t2 += (et-dt);
+
+        for (let i = 0; i < numtst; ++i) {
+            m[i] = m4_new();  
+            m[i][0] = rndPM(10);
+            m[i][5] = rndPM(10);
+            m[i][10] = rndPM(10);
+            v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
+            r[i] = m4_new();  
+        }
+        var dt = Date.now();
+            for (var i = 0; i < numtst; ++i) m4_translate_resCacheMat(r[i], m[i], v[i]);
+        var et = Date.now();
+        t3 += (et-dt);
+
+        for (let i = 0; i < numtst; ++i) {
+            m[i] = m4_new();  
+            m[i][0] = rndPM(10);
+            m[i][5] = rndPM(10);
+            m[i][10] = rndPM(10);
+            v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
+            r[i] = m4_new();  
+        }
+        var dt = Date.now();
+            for (var i = 0; i < numtst; ++i) m4_translate_resCacheBoth(r[i], m[i], v[i]);
+        var et = Date.now();
+        t4 += (et-dt);   
+
+    }
+
+    addLine("");
+    addLine("m4_translate_resNoCache total: " + t1);
+    addLine("m4_translate_resCacheVect total: " + t2);
+    addLine("m4_translate_resCacheMat total: " + t3);
+    addLine("m4_translate_resCacheBoth total: " + t4);
+
+
+    addLine("End Test 15");
+}
+
+
+
 
 
 
@@ -1701,5 +1785,97 @@ function v3_reflect_resCachedAccess(result, inc, norm) {
     result[1] = iy - (ny * dr2);
     result[2] = iz - (nz * dr2);
 }
+
+
+
+function m4_translate_resNoCache(res, a, v){
+    res[0] = a[0]; res[1] = a[1]; res[2]  = a[2];  res[3]  = a[3];
+    res[4] = a[4]; res[5] = a[5]; res[6]  = a[6];  res[7]  = a[7];
+    res[8] = a[8]; res[9] = a[9]; res[10] = a[10]; res[11] = a[11];
+
+    res[12] = a[0] * v[0] + a[4] * v[1] + a[8]  * v[2] + a[12];
+    res[13] = a[1] * v[0] + a[5] * v[1] + a[9]  * v[2] + a[13];
+    res[14] = a[2] * v[0] + a[6] * v[1] + a[10] * v[2] + a[14];
+    res[15] = a[3] * v[0] + a[7] * v[1] + a[11] * v[2] + a[15];
+}
+
+function m4_translate_resCacheVect(res, a, v){
+    var x = v[0], y = v[1], z = v[2];
+
+    res[0] = a[0]; res[1] = a[1]; res[2]  = a[2];  res[3]  = a[3];
+    res[4] = a[4]; res[5] = a[5]; res[6]  = a[6];  res[7]  = a[7];
+    res[8] = a[8]; res[9] = a[9]; res[10] = a[10]; res[11] = a[11];
+
+    res[12] = a[0] * x + a[4] * y + a[8]  * z + a[12];
+    res[13] = a[1] * x + a[5] * y + a[9]  * z + a[13];
+    res[14] = a[2] * x + a[6] * y + a[10] * z + a[14];
+    res[15] = a[3] * x + a[7] * y + a[11] * z + a[15];
+}
+
+function m4_translate_resCacheMat(res, a, v){
+    var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
+    var a4 = a[4], a5 = a[5], a6 = a[6], a7 = a[7];
+    var a8 = a[8], a9 = a[9], a10 = a[10], a11 = a[11];
+
+    res[0] = a0;
+    res[1] = a1;
+    res[2] = a2;
+    res[3] = a3;
+
+    res[4] = a4;
+    res[5] = a5;
+    res[6] = a6;
+    res[7] = a7;
+
+    res[8] =  a8;
+    res[9] =  a9; 
+    res[10] = a10;
+    res[11] = a11;
+
+    res[12] = a0 * v[0] + a4 * v[1] + a8  * v[2] + a[12];
+    res[13] = a1 * v[0] + a5 * v[1] + a9  * v[2] + a[13];
+    res[14] = a2 * v[0] + a6 * v[1] + a10 * v[2] + a[14];
+    res[15] = a3 * v[0] + a7 * v[1] + a11 * v[2] + a[15];
+}
+
+function m4_translate_resCacheBoth(res, a, v){
+    var x = v[0], y = v[1], z = v[2];
+
+    var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
+    var a4 = a[4], a5 = a[5], a6 = a[6], a7 = a[7];
+    var a8 = a[8], a9 = a[9], a10 = a[10], a11 = a[11];
+
+    res[0] = a0;
+    res[1] = a1;
+    res[2] = a2;
+    res[3] = a3;
+
+    res[4] = a4;
+    res[5] = a5;
+    res[6] = a6;
+    res[7] = a7;
+
+    res[8]  = a8;
+    res[9]  = a9; 
+    res[10] = a10;
+    res[11] = a11;
+
+    res[12] = a0 * x + a4 * y + a8  * z + a[12];
+    res[13] = a1 * x + a5 * y + a9  * z + a[13];
+    res[14] = a2 * x + a6 * y + a10 * z + a[14];
+    res[15] = a3 * x + a7 * y + a11 * z + a[15];
+}
+
+
+function m4_new(){
+    var m = new Array(16);
+    m[0] =  1;        m[1] =  0;        m[2] =  0;       m[3] =  0;
+    m[4] =  0;        m[5] =  1;        m[6] =  0;       m[7] =  0;
+    m[8] =  0;        m[9] =  0;        m[10] = 1;       m[11] = 0;
+    m[12] = 0;        m[13] = 0;        m[14] = 0;       m[15] = 1;
+    return m;      
+}
+
+
 
 });

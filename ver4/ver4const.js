@@ -416,57 +416,76 @@ function v3_reflect_res(result, inc, norm) {
 
 // Rotate vector aound X
 function v3_rotateX_mod(a, ang) {
-    let ny = a[1] * Math.cos(ang) - a[2] * Math.sin(ang);
-    let nz = a[1] * Math.sin(ang) + a[2] * Math.cos(ang);
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
+    let ny = a[1] * c - a[2] * s;
+    let nz = a[1] * s + a[2] * c;
     a[1] = ny;
     a[2] = nz;
 }
 function v3_rotateX_new(a, ang) {
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
     return [ a[0],
-             a[1] * Math.cos(ang) - a[2] * Math.sin(ang),
-             a[1] * Math.sin(ang) + a[2] * Math.cos(ang) ];
+             a[1] * c - a[2] * s,
+             a[1] * s + a[2] * c ];
 }
 function v3_rotateX_res(res, a, ang) {
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
     res[0] = a[0];
-    res[1] = a[1] * Math.cos(ang) - a[2] * Math.sin(ang);
-    res[2] = a[1] * Math.sin(ang) + a[2] * Math.cos(ang);
+    res[1] = a[1] * c - a[2] * s;
+    res[2] = a[1] * s + a[2] * c;
 }
 
 
 // Rotate vector around Y
 function v3_rotateY_mod(a, ang) {
-    let nx = a[2] * Math.sin(ang) + a[0] * Math.cos(ang);
-    let nz = a[2] * Math.cos(ang) - a[0] * Math.sin(ang);
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
+    let nx = a[2] * s + a[0] * c;
+    let nz = a[2] * c - a[0] * s;
     a[0] = nx;
     a[2] = nz;
 }
 function v3_rotateY_new(a, ang) {
-    return [ a[2] * Math.sin(ang) + a[0] * Math.cos(ang),
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
+    return [ a[2] * s + a[0] * c,
              a[1],
-             a[2] * Math.cos(ang) - a[0] * Math.sin(ang) ];
+             a[2] * c - a[0] * s ];
 }
 function v3_rotateY_res(res, a, ang) {
-    res[0] = a[2] * Math.sin(ang) + a[0] * Math.cos(ang);
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
+    res[0] = a[2] * s + a[0] * c;
     res[1] = a[1];
-    res[2] = a[2] * Math.cos(ang) - a[0] * Math.sin(ang);
+    res[2] = a[2] * c - a[0] * s;
 }
 
 
 // Rotate vector around Z
 function v3_rotateZ_mod(a, ang) {
-    let nx = a[0] * Math.cos(ang) - a[1] * Math.sin(ang);
-    let ny = a[0] * Math.sin(ang) + a[1] * Math.cos(ang);
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
+    let nx = a[0] * c - a[1] * s;
+    let ny = a[0] * s + a[1] * c;
     a[0] = nx;
     a[1] = ny;
 }
 function v3_rotateZ_new(a, ang) {
-    return [ a[0] * Math.cos(ang) - a[1] * Math.sin(ang),
-             a[0] * Math.sin(ang) + a[1] * Math.cos(ang),
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
+    return [ a[0] * c - a[1] * s,
+             a[0] * s + a[1] * c,
              a[2] ];
 }
+
 function v3_rotateZ_res(res, a, ang) {
-    res[0] = a[0] * Math.cos(ang) - a[1] * Math.sin(ang);
-    res[1] = a[0] * Math.sin(ang) + a[1] * Math.cos(ang);
+    var c = Math.cos(ang);
+    var s = Math.sin(ang);
+    res[0] = a[0] * c - a[1] * s;
+    res[1] = a[0] * s + a[1] * c;
     res[2] = a[2];
 }
 
@@ -496,26 +515,39 @@ function v3a_copy(res, a) {
 // Apply m4 matrix to vector
 function v3_applym4_new(a, m) {
     var res = [0, 0, 0];
-    var w =   m[3] * a[0] + m[7] * a[1] + m[11] * a[2] + m[15];
-    w = w || 1.0;
-    res[0] = (m[0] * a[0] + m[4] * a[1] + m[8]  * a[2] + m[12]) / w;
-    res[1] = (m[1] * a[0] + m[5] * a[1] + m[9]  * a[2] + m[13]) / w;
-    res[2] = (m[2] * a[0] + m[6] * a[1] + m[10] * a[2] + m[14]) / w;
-    return res;
-}
-function v3_applym4_res(res, a, m) {
-    var w =   m[3] * a[0] + m[7] * a[1] + m[11] * a[2] + m[15];
-    w = w || 1.0;
-    res[0] = (m[0] * a[0] + m[4] * a[1] + m[8]  * a[2] + m[12]) / w;
-    res[1] = (m[1] * a[0] + m[5] * a[1] + m[9]  * a[2] + m[13]) / w;
-    res[2] = (m[2] * a[0] + m[6] * a[1] + m[10] * a[2] + m[14]) / w;
-}
-function v3_applym4_mod(a, m) {
-    var w = m[3] * a[0] + m[7] * a[1] + m[11] * a[2] + m[15];
-    w = w || 1.0;
+
     var a0 = a[0];
     var a1 = a[1];
     var a2 = a[2];
+
+    var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+    w = w || 1.0;
+
+    res[0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w;
+    res[1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w;
+    res[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
+    return res;
+}
+function v3_applym4_res(res, a, m) {
+    var a0 = a[0];
+    var a1 = a[1];
+    var a2 = a[2];
+
+    var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+    w = w || 1.0;
+
+    res[0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w;
+    res[1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w;
+    res[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
+}
+function v3_applym4_mod(a, m) {
+    var a0 = a[0];
+    var a1 = a[1];
+    var a2 = a[2];
+
+    var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+    w = w || 1.0;
+
     a[0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w;
     a[1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w;
     a[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
