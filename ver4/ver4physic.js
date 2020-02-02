@@ -579,12 +579,12 @@ function CheckForAnimationCollisions(self){
 
 function anim_sph_firstPass() {
     if (this.state == E3D_RESTART) {
-        v3_copy(this.target.position, this.scn.camera.position);
+        v3_copy(this.target.position, scn.camera.position);
         this.target.position[1] += 5;
         this.target.rotation[0] = rndPM(PIx2);
         this.target.rotation[1] = rndPM(PIx2);
 
-        this.data.spd = this.scn.camera.adjustToCamera(v3_scale_new(_v3_nz, inputs.checkCommand("action_speed", false) ? 600 : 300));
+        this.data.spd = scn.camera.adjustToCamera(v3_scale_new(_v3_nz, inputs.checkCommand("action_speed", false) ? 600 : 300));
 
         this.data.spd[0] += rndPM(1);
         this.data.spd[1] += rndPM(1);
@@ -603,7 +603,7 @@ function anim_sph_firstPass() {
 
         v3_copy(this.data.last_position, this.target.position);
 
-        v3_scale_res(this.delta, this.data.spd, this.timer.delta);  
+        v3_scale_res(this.delta, this.data.spd, timer.delta);  
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
@@ -641,7 +641,7 @@ function anim_sphRain_firstPass() {
 
         v3_copy(this.data.last_position, this.target.position);
 
-        v3_scale_res(this.delta, this.data.spd, this.timer.delta);   
+        v3_scale_res(this.delta, this.data.spd, timer.delta);   
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
@@ -684,7 +684,7 @@ if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this
             }
             if (remainder < 0.0) throw "remaining delta is negative " + remainder;
             
-            v3_scale_res(this.delta, this.data.spd, remainder * this.timer.delta);
+            v3_scale_res(this.delta, this.data.spd, remainder * timer.delta);
             this.deltaLength = v3_length(this.delta);
             v3_add_res(this.target.position, this.data.last_position, this.delta);  
             
@@ -700,7 +700,7 @@ if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this
 
 function anim_sph_endPass() {
     this.data.spd[1] -= gAccel;
-    this.data.ttl -= this.timer.delta;
+    this.data.ttl -= timer.delta;
 
     if (this.data.ttl < 0) {
         this.state = E3D_DONE;
