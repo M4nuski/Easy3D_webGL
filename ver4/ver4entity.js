@@ -209,11 +209,11 @@ class E3D_entity {
 
     resetMatrix(){
         // recreate matrices from rotation and position
-        m4_rotateZ_res(this.normalMatrix, _m4_identity, this.rotation[2]);
+        m4_rotationZ_res(this.normalMatrix, this.rotation[2]);
         m4_rotateX_mod(this.normalMatrix, this.rotation[0]);
         m4_rotateY_mod(this.normalMatrix, this.rotation[1]);
 
-        m4_translate_res(this.modelMatrix, _m4_identity, this.position);
+        m4_translation_res(this.modelMatrix, this.position);
         
         m4_rotateZ_mod(this.modelMatrix, this.rotation[2]);
         m4_rotateX_mod(this.modelMatrix, this.rotation[0]);
@@ -465,9 +465,9 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
           
           var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
           
-            m4_rotateX_res(matX, _m4_identity, offsetAngle);
-            m4_rotateY_res(matY, _m4_identity, offsetAngle);
-            m4_rotateZ_res(matZ, _m4_identity, offsetAngle);  
+            m4_rotationX_res(matX, offsetAngle);
+            m4_rotationY_res(matY, offsetAngle);
+            m4_rotationZ_res(matZ, offsetAngle);  
 
             for (var i = 0; i < sides; ++i) { 
 
@@ -475,64 +475,41 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 var cip = Math.cos((i+1) * PIx2 / sides) * dia;
 
                 //x
-             /*   x = location[0];
-                y = location[1] + si;
-                z = location[2] + ci;*/
                 var v = [0, si, ci];
                 v3_applym4_mod(v, matY);
                 this.setVertex3f(idx, v3_add_new(v, location));
                 this.setColor3f(idx, color);
                 idx++;
-            
-              /*  x = location[0];
-                y = location[1] + sip;
-                z = location[2] + cip;*/
+
                 v = [0, sip, cip];
                 v3_applym4_mod(v, matY);
                 this.setVertex3f(idx, v3_add_new(v, location));
-            // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
                 
                 //y
-               /* x = location[0] + si;
-                y = location[1];
-                z = location[2] + ci;*/
                 v = [si, 0, ci];
                 v3_applym4_mod(v, matZ);
                 this.setVertex3f(idx, v3_add_new(v, location));
-            // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
 
-             /*   x = location[0] + sip;
-                y = location[1];
-                z = location[2] + cip;*/
                 v = [sip, 0, cip];
                 v3_applym4_mod(v, matZ);
                 this.setVertex3f(idx, v3_add_new(v, location));
-            // this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
 
                 //z
-             /*   x = location[0] + si;
-                y = location[1] + ci;
-                z = location[2];*/
                 v = [si, ci, 0];
                 v3_applym4_mod(v, matX);
                 this.setVertex3f(idx, v3_add_new(v, location));
-            //   this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
 
-             /*   x = location[0] + sip;
-                y = location[1] + cip;
-                z = location[2];*/
                 v = [sip, cip, 0];
                 v3_applym4_mod(v, matX);
                 this.setVertex3f(idx, v3_add_new(v, location));
-            //  this.setVertex3f(idx, [x, y, z]);
                 this.setColor3f(idx, color);
                 idx++;
 
@@ -581,13 +558,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         let p2 = [-width,-height, 0];
         let p3 = [-width, height, 0];
         
-        let m = m4_new();
-
-        mat4.translate(m, m, pos);
-        
-        mat4.rotateZ(m, m, rot[2]);
-        mat4.rotateX(m, m, rot[0]);
-        mat4.rotateY(m, m, rot[1]);
+        let m = m4_translation_new(pos);               
+        m4_rotateZ_mod(m, rot[2]);
+        m4_rotateX_mod(m, rot[0]);
+        m4_rotateY_mod(m, rot[1]);
 
         v3_applym4_mod(p0, m);
         v3_applym4_mod(p1, m);
@@ -677,25 +651,26 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         } 
 
         if (addIPCD) {
-            m = m4_new();
+
             let n = [0, 0, 1];
             
-            mat4.rotateZ(m, m, rot[2]);
-            mat4.rotateX(m, m, rot[0]);
-            mat4.rotateY(m, m, rot[1]);
+            m = m4_rotationZ_new(rot[2]);
+            m4_rotateX_mod(m, rot[0]);
+            m4_rotateY_mod(m, rot[1]);
 
             v3_applym4_mod(n, m);
 
             this.pushCD_iPlane(v3_dot(pos, n), n);
         }
         if (addFPCD) {
-            m = m4_new();
+
             let n = [0, 0, 1];
             let w = [1/width, 0, 0];
             let h = [0, 1/height, 0];
-            mat4.rotateZ(m, m, rot[2]);
-            mat4.rotateX(m, m, rot[0]);
-            mat4.rotateY(m, m, rot[1]);
+
+            m = m4_rotationZ_new(m, rot[2]);
+            m4_rotateX_mod(m, rot[0]);
+            m4_rotateY_mod(m, rot[1]);
 
             v3_applym4_mod(n, m);
             v3_applym4_mod(w, m);
@@ -767,13 +742,11 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         size[1] = Math.abs(size[1]) / 2;
         size[2] = Math.abs(size[2]) / 2;
 
-        let m = m4_new();
-
-        mat4.translate(m, m, loc);
-        
-        mat4.rotateZ(m, m, rot[2]);
-        mat4.rotateX(m, m, rot[0]);
-        mat4.rotateY(m, m, rot[1]);
+        let m = m4_translation_new(loc);
+       
+        m4_rotateZ_mod(m, rot[2]);
+        m4_rotateX_mod(m, rot[0]);
+        m4_rotateY_mod(m, rot[1]);
 
         let tfr = [size[0], size[1], size[2]];
         let tfl = [-size[0], size[1], size[2]];
@@ -836,13 +809,14 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.line(brr, bfl, false, color);
         }
         if (addCubeCD) {
-            m = m4_new();
+
             let x = [1/size[0], 0, 0];
             let y = [0, 1/size[1], 0];
             let z = [0, 0, 1/size[2]];
-            mat4.rotateZ(m, m, rot[2]);
-            mat4.rotateX(m, m, rot[0]);
-            mat4.rotateY(m, m, rot[1]);
+
+            m = m4_rotationZ_new(rot[2]);
+            m4_rotateX_mod(m, rot[0]);
+            m4_rotateY_mod(m, rot[1]);
 
             v3_applym4_mod(x, m);
             v3_applym4_mod(y, m);
