@@ -15,16 +15,16 @@ const E3D_RES_LOAD = 1;
 const E3D_RES_ALL = 2;
 
 // Premade vec and mat to avoid inline creation of instances
-const vec3_origin = v3_val(0, 0, 0);
-const vec3_x = v3_val(1, 0, 0);
-const vec3_y = v3_val(0, 1, 0);
-const vec3_z = v3_val(0, 0, 1);
+const vec3_origin = vec3.fromValues(0, 0, 0);
+const vec3_x = vec3.fromValues(1, 0, 0);
+const vec3_y = vec3.fromValues(0, 1, 0);
+const vec3_z = vec3.fromValues(0, 0, 1);
 
-const mat4_identity = m4_new();
+const mat4_identity = mat4.create();
 
 // Dummy containers to capture temporary results without affecting parameters
-var vec3_dummy = v3_new();
-var mat4_dummy = m4_new();
+var vec3_dummy = vec3.create();
+var mat4_dummy = mat4.create();
 
 // General mathematical constants
 const PIdiv2 = Math.PI / 2.0;

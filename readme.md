@@ -21,7 +21,6 @@ Current work-in-progress and next steps
 ----------
 * Collision detection (vector/edge, sphere, plane/cube)
 * Fake physics as animations
-* perf improvement of vec3, vec4, mat4 objets
 * flatten engine to reducre nested calls and hierarchy spinning
 * Update all demo pages of ver4 for latest engine schema
 * --Some kind of game:

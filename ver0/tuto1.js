@@ -378,7 +378,7 @@ function drawScene(gl, programInfo, buffers) {
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
     const zFar = 100.0;
-    const projectionMatrix = m4_new();
+    const projectionMatrix = mat4.create();
 
     // note: glmatrix.js always has the first argument
     // as the destination to receive the result.
@@ -391,7 +391,7 @@ function drawScene(gl, programInfo, buffers) {
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
-    const modelViewMatrix = m4_new();
+    const modelViewMatrix = mat4.create();
 
     // Now move the drawing position a bit to where we want to
     // start drawing the square.
