@@ -208,7 +208,7 @@ function initEngine() {
     targetVector = new E3D_entity_wireframe_canvas("vectorHitTest");
     targetVector.position = [25, 25, 25];
     targetVector.line([0, 0, 0], [0, 100, 0], false, [1,1,1]);
-    targetVector.pushCD_edge([0, 0, 0], [0, 100, 0]);
+    targetVector.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
     targetVector.visible = true;
     //targetVector.vis_culling = false;
     scn.addEntity(targetVector);
@@ -288,34 +288,35 @@ function prepRender() {
 
 /*
       targetVector.CD_edge_p[0]; // edge origin
-      targetVector.CD_edge_v[0]; // edge vector
+      targetVector.CD_edge_n[0]; // edge normal
+      targetVector.CD_edge_l[0]; // edge length
       testSph.CD_sph_p[0]; // sphere origin
       testSph.CD_sph_r[0]; // sphere radius
       testSph.CD_sph_rs[0]; // sphare radius squared
 */
     var so = [0,0,0];
-    var n = [0,0,0];
+
     v3_sub_res(so, testSph.CD_sph_p[0], targetVector.CD_edge_p[0]);
-    v3_normalize_res(n, targetVector.CD_edge_v[0]);
+    //v3_normalize_res(n, targetVector.CD_edge_v[0]);
     //copy3f3fm(n, targetVector.CD_edge_v[0]);
-    var hit = VectSphHit(n, so, testSph.CD_sph_rs[0]);
+    var hit = VectSphHit(targetVector.CD_edge_n[0], so, testSph.CD_sph_rs[0]);
     //var l = v3_length(n);
    // l = l*l;
      // if (hit != false) {
         hitsMarkers.clear();
         // p = targetVector.CD_edge_p[0] + (targetVector.CD_edge_v[0] * d)
 
-        var p = v3_scale_new(n, hitPoints[0]); 
+        var p = v3_scale_new(targetVector.CD_edge_n[0], hitPoints[0]); 
         v3_add_mod(p, targetVector.CD_edge_p[0]);
-        hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
+        if ((hitPoints[0] >= 0.0) && hitPoints[0] <= targetVector.CD_edge_l[0]) hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
 
-        p = v3_scale_new(n, hitPoints[1]); 
+        p = v3_scale_new(targetVector.CD_edge_n[0], hitPoints[1]); 
         v3_add_mod(p, targetVector.CD_edge_p[0]);
-        hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
+        if ((hitPoints[1] >= 0.0) && hitPoints[1] <= targetVector.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
 
-        p = v3_scale_new(n, hitPoints[2]); 
+        p = v3_scale_new(targetVector.CD_edge_n[0], hitPoints[2]); 
         v3_add_mod(p, targetVector.CD_edge_p[0]);
-        hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
+        if ((hitPoints[2] >= 0.0) && hitPoints[2] <= targetVector.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
       //}
 
       hitsMarkers.line(testSph.position, [0,0,0], false, [1,0,0]);
@@ -516,12 +517,12 @@ function CheckForAnimationCollisions(self){
                             v3_addscaled_res(firstHit, self.data.last_position, pathVect, hitRes);
                             v3_sub_res(hitNormal, firstHit, scn.entities[i].CD_sph_p[j]);
                             hitDetected = true;
-                            self.closestCollision = [marker, t0, v3_clone(hitNormal), firstHit, "Sph-Sph"];
+                            self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-Sph"];
                         }
                     }
                 } 
             }
-        } // sph
+        } // sph - sph
 
 
 
@@ -547,7 +548,7 @@ function CheckForAnimationCollisions(self){
 
                     var hitRes = planeIntersect(planPosition, hitNormal, vectOrig, pathVect);
                     
-                    if ((hitRes) && (hitRes <= self.deltaLength) && (hitRes >= 0) ) {
+                    if ((hitRes) && (hitRes <= self.deltaLength) ) {
                         var t0 = hitRes / self.deltaLength;
                         
                         if ((!hitDetected) || ((hitDetected) && (t0 < self.closestCollision[1]))) {
@@ -559,14 +560,47 @@ function CheckForAnimationCollisions(self){
 
                             hitDetected = true;
                             if (t0 < 0.0) t0 = 0;
-                            self.closestCollision = [marker, t0, v3_clone(hitNormal), firstHit, "Sph-iPlane"];
+                            self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-iPlane"];
                         }
                     }
                 }
             }
-        }
+        } // sph - iPlane
 
 
+                // collision detection - self.sph to infinite plane
+                if ((self.target.CD_sph > 0) && (scn.entities[i].CD_edge > 0)) {  
+
+                    for (let j = 0; j < scn.entities[i].CD_edge; ++j) {
+                        var marker = i+"e"+j;
+                        if  (marker != self.lastHitIndex) {
+                            nHitTest++;
+
+                            // dir normalize vector
+                            // rpos relative position of ray vs cylinder axis (ray.pos - cyl.pos)
+                            // rad2 squared radius of cylinder
+                            // height height of cylinder
+                            // returns [ t , normal ]
+                            //function cylinderIntersect(dir, rpos, rad2, height)
+
+                            var rpos = v3_sub_new(vectOrig, scn.entities[i].CD_edge_p[j]);
+                            var hitRes = cylinderIntersect(pathVect, rpos, self.target.CD_sph_rs[0], scn.entities[i].CD_edge_l[j]);
+                            if ((hitRes) && (hitRes[0] <= self.deltaLength)) {
+
+                                var t0 = hitRes[0] / self.deltaLength;
+                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes[0]);
+
+                                if (show_DEV_CD) {
+                                    phyTracers.addWireSphere(firstHit, 16, [1,0,0], 16, false, 4);
+                                    log("edge hit " + hitRes[0] + " " + hitRes[1], false);
+                                }
+
+                                hitDetected = true;
+                                self.closestCollision = [marker, t0, v3_clone(hitRes[1]), v3_clone(firstHit), "Sph-edge"];
+                            }//hitres
+                        }//marker different
+                    }// for edges
+                } // sph - edge
 
     } // end for each other entity perform hit test
 
@@ -723,8 +757,8 @@ function VectSphHit(v, so, sr2) { // translated to v origin
    // var sr2 = sr * sr;
     var tca = v3_dot(so, v);
     hitPoints[0] = tca;
-    hitPoints[1] = 0;
-    hitPoints[2] = 0;
+    hitPoints[1] = -1;
+    hitPoints[2] = -1;
 if (isNaN(tca)) throw "VectSphHit tca NaN";
     if  (tca < 0) return false;
     // sph behind origin
@@ -759,6 +793,84 @@ function planeIntersect(planePos, planeNormal, vectOrigin, vectDirection) {
 	return t;
 }
 
+// dir normalize vector
+// rpos relative position of ray vs cylinder axis (ray.pos - cyl.pos)
+// rad2 squared radius of cylinder
+// height height of cylinder
+// returns [ t , normal ]
+function cylinderIntersect(dir, rpos, rad2, height) {
+    var t = -1, t1 = -1, t2 = -1;
+ 
+	var a = (dir[0] * dir[0]) + (dir[2] * dir[2]);
+    if (a == 0.0) return false;
 
+    var b = 2.0 * ((dir[0] * rpos[0]) + (dir[2] * rpos[2]));
+	var c = (rpos[0] * rpos[0]) + (rpos[2] * rpos[2]) - (rad2);
+
+    var sfact = Math.sqrt((b * b) - (4.0 * a * c));
+    if (isNaN(sfact)) return false;
+	var t1 = (-b + sfact) / (2.0 * a);
+    var t2 = (-b - sfact) / (2.0 * a);
+    
+    if ((rpos[1] + (dir[1] * t1)) > height) t1 = Infinity;
+	if ((rpos[1] + (dir[1] * t1)) < 0.0) t1 = Infinity;
+	if ((rpos[1] + (dir[1] * t2)) > height) t2 = Infinity;
+    if ((rpos[1] + (dir[1] * t2)) < 0.0) t2 = Infinity;
+    
+	if (t1 < 0.0) t1 = Infinity;
+    if (t2 < 0.0) t2 = Infinity;
+    
+    if ((t1 == Infinity) && (t2 == Infinity)) return false;
+
+	t = Math.min(t1, t2);
+
+	var h = v3_addscaled_new(rpos, dir, t * (1 - _v3_epsilon));
+	h[1] = 0.0;
+
+    if (v3_lengthsquared(h) < rad2) v3_negate_mod(h);
+
+	return [t, h];
+}
+
+
+/*
+intersection obj_cyl::intersect(rayon r) {
+	//https://www.cl.cam.ac.uk/teaching/1999/AGraphHCI/SMAG/node2.html#eqn:rectray
+	// substituant le Z par Y 
+
+	intersection i;
+
+	vec3 rpos = (r.position - position);
+
+	float a = (r.direction.x * r.direction.x) + (r.direction.z * r.direction.z);
+	if (a == 0.0f) return i;
+
+	float b = 2.0f * ((r.direction.x * rpos.x) + (r.direction.z * rpos.z));
+	float c = (rpos.x * rpos.x) + (rpos.z * rpos.z) - (rad2);
+
+	float sfact = sqrt((b * b) - (4.0f * a * c));
+	float t1 = (-b + sfact) / (2.0f * a);
+	float t2 = (-b - sfact) / (2.0f * a);
+
+	if ((rpos.y + (r.direction.y * t1)) > height) t1 = _INFINITY;
+	if ((rpos.y + (r.direction.y * t1)) < 0.0f) t1 = _INFINITY;
+	if ((rpos.y + (r.direction.y * t2)) > height) t2 = _INFINITY;
+	if ((rpos.y + (r.direction.y * t2)) < 0.0f) t2 = _INFINITY;
+	if (t1 < 0.0f) t1 = _INFINITY;
+	if (t2 < 0.0f) t2 = _INFINITY;
+
+	if ((t1 == _INFINITY) && (t2 == _INFINITY)) return i;
+
+	i.t = std::min(t1, t2);
+
+	vec3 h = rpos + (r.direction * i.t * 0.99f);
+	h.y = 0.0f;
+
+	if (length2(h) < rad2) h = -h;
+
+	i.n = h;
+	return i;
+}
+*/
 
 }); // DOMContentLoaded

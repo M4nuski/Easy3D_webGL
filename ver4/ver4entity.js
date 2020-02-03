@@ -63,8 +63,9 @@ class E3D_entity {
             this.CD_edge = 0;
             this.CD_edge_p0 = []; // original to model space
             this.CD_edge_p  = []; // transformed to world space
-            this.CD_edge_v0 = []; // original to model space
-            this.CD_edge_v  = []; // transformed to world space (rotation)
+            this.CD_edge_n0 = []; // original to model space
+            this.CD_edge_n  = []; // transformed to world space (rotation)
+            this.CD_edge_l  = [];
 
             // Sphere Source/Target
             // TODO generalize as ellipsoid
@@ -133,10 +134,11 @@ class E3D_entity {
         }
         if (entity.CD_edge > 0) {
             this.CD_edge = entity.CD_edge;
-            this.CD_edge_v0 = v3a_clone(entity.CD_edge_v0);
-            this.CD_edge_v  = v3a_clone(entity.CD_edge_v);
             this.CD_edge_p0 = v3a_clone(entity.CD_edge_p0);
             this.CD_edge_p  = v3a_clone(entity.CD_edge_p);
+            this.CD_edge_n0 = v3a_clone(entity.CD_edge_n0);
+            this.CD_edge_n  = v3a_clone(entity.CD_edge_n);
+            this.CD_edge_l  = entity.CD_edge_l.slice();
         }
         if (entity.CD_sph > 0) {
             this.CD_sph = entity.CD_sph;
@@ -226,7 +228,7 @@ class E3D_entity {
             }
             for (var i = 0; i < this.CD_edge; ++i) {
                 v3_applym4_res(this.CD_edge_p[i], this.CD_edge_p0[i], this.modelMatrix);
-                v3_applym4_res(this.CD_edge_v[i], this.CD_edge_v0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_edge_n[i], this.CD_edge_n0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_sph; ++i) {
                 v3_applym4_res(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
@@ -259,12 +261,14 @@ class E3D_entity {
         this.CD_vec += 1;
         this.collisionDetection = true;
     }
-    pushCD_edge(p, v) {
+    pushCD_edge(p, n, l) {
         this.CD_edge_p0[this.CD_edge] = v3_clone(p);
         this.CD_edge_p[this.CD_edge] = v3_clone(p);
         
-        this.CD_edge_v0[this.CD_edge] = v3_clone(v);
-        this.CD_edge_v[this.CD_edge] = v3_clone(v);
+        this.CD_edge_n0[this.CD_edge] = v3_clone(n);
+        this.CD_edge_n[this.CD_edge] = v3_clone(n);
+
+        this.CD_edge_l[this.CD_edge] = l;
         
         this.CD_edge += 1;
         this.collisionDetection = true;
