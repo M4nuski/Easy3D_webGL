@@ -31,7 +31,10 @@ class E3D_input {
         this.onInput = null;
 
         // Setup element's events
-        if (supportMouse) {
+        if (supportMouse) {    
+
+            element.addEventListener("contextmenu", (e) => { e.preventDefault(); } );
+
             element.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
             element.addEventListener("mouseup", (e) => { this.mouseUp(e) } );
             element.addEventListener("mousemove", (e) => { this.mouseMove(e) } );
@@ -59,6 +62,9 @@ class E3D_input {
         // Config        
         this._posSpeed = 50; // units per sec for position outputs
         this._rotSpeed = 90 * DegToRad; // rad per sec for rotation outputs
+
+        this.mousePosDirection = 1; 
+        this.mouseRotDirection = 1;
         
         this._mouseSpeed = 0.05; // units per mouse position delta 
         this._mouseWheelSpeed = 5.0; // units per wheel rotation delta
@@ -263,41 +269,44 @@ class E3D_input {
 
         // Pointer
         // Position        
+        var mps = this._posSpeed * this.mousePosDirection;
+        var mrs = this._rotSpeed * this.mouseRotDirection;
+
         if (this.inputTable.get(this.pointerMap.get("px_btn"))) {
-            if (this.pointerMap.get("px_axis") == E3D_INP_X) this.px_delta += this.mx * this._posSpeed;
-            if (this.pointerMap.get("px_axis") == E3D_INP_Y) this.px_delta += this.my * this._posSpeed;
-            if (this.pointerMap.get("px_axis") == E3D_INP_W) this.px_delta += this.mw * this._posSpeed;
+            if (this.pointerMap.get("px_axis") == E3D_INP_X) this.px_delta += this.mx * mps;
+            if (this.pointerMap.get("px_axis") == E3D_INP_Y) this.px_delta += this.my * mps;
+            if (this.pointerMap.get("px_axis") == E3D_INP_W) this.px_delta += this.mw * mps;
         }
 
         if (this.inputTable.get(this.pointerMap.get("py_btn"))) {
-            if (this.pointerMap.get("py_axis") == E3D_INP_X) this.py_delta += this.mx * this._posSpeed;
-            if (this.pointerMap.get("py_axis") == E3D_INP_Y) this.py_delta += this.my * this._posSpeed;
-            if (this.pointerMap.get("py_axis") == E3D_INP_W) this.py_delta += this.mw * this._posSpeed;
+            if (this.pointerMap.get("py_axis") == E3D_INP_X) this.py_delta += this.mx * mps;
+            if (this.pointerMap.get("py_axis") == E3D_INP_Y) this.py_delta += this.my * mps;
+            if (this.pointerMap.get("py_axis") == E3D_INP_W) this.py_delta += this.mw * mps;
         }
 
         if (this.inputTable.get(this.pointerMap.get("pz_btn"))) {
-            if (this.pointerMap.get("pz_axis") == E3D_INP_X) this.pz_delta += this.mx * this._posSpeed;
-            if (this.pointerMap.get("pz_axis") == E3D_INP_Y) this.pz_delta += this.my * this._posSpeed;
-            if (this.pointerMap.get("pz_axis") == E3D_INP_W) this.pz_delta += this.mw * this._posSpeed;
+            if (this.pointerMap.get("pz_axis") == E3D_INP_X) this.pz_delta += this.mx * mps;
+            if (this.pointerMap.get("pz_axis") == E3D_INP_Y) this.pz_delta += this.my * mps;
+            if (this.pointerMap.get("pz_axis") == E3D_INP_W) this.pz_delta += this.mw * mps;
         }
 
         // Rotations
         if (this.inputTable.get(this.pointerMap.get("rx_btn"))) {
-            if (this.pointerMap.get("rx_axis") == E3D_INP_X) this.rx_delta += this.mx * this._rotSpeed;
-            if (this.pointerMap.get("rx_axis") == E3D_INP_Y) this.rx_delta += this.my * this._rotSpeed;
-            if (this.pointerMap.get("rx_axis") == E3D_INP_W) this.rx_delta += this.mw * this._rotSpeed;
+            if (this.pointerMap.get("rx_axis") == E3D_INP_X) this.rx_delta += this.mx * mrs;
+            if (this.pointerMap.get("rx_axis") == E3D_INP_Y) this.rx_delta += this.my * mrs;
+            if (this.pointerMap.get("rx_axis") == E3D_INP_W) this.rx_delta += this.mw * mrs;
         }
 
         if (this.inputTable.get(this.pointerMap.get("ry_btn"))) {
-            if (this.pointerMap.get("ry_axis") == E3D_INP_X) this.ry_delta += this.mx * this._rotSpeed;
-            if (this.pointerMap.get("ry_axis") == E3D_INP_Y) this.ry_delta += this.my * this._rotSpeed;
-            if (this.pointerMap.get("ry_axis") == E3D_INP_W) this.ry_delta += this.mw * this._rotSpeed;
+            if (this.pointerMap.get("ry_axis") == E3D_INP_X) this.ry_delta += this.mx * mrs;
+            if (this.pointerMap.get("ry_axis") == E3D_INP_Y) this.ry_delta += this.my * mrs;
+            if (this.pointerMap.get("ry_axis") == E3D_INP_W) this.ry_delta += this.mw * mrs;
         }
 
         if (this.inputTable.get(this.pointerMap.get("rz_btn"))) {
-            if (this.pointerMap.get("rz_axis") == E3D_INP_X) this.rz_delta += this.mx * this._rotSpeed;
-            if (this.pointerMap.get("rz_axis") == E3D_INP_Y) this.rz_delta += this.my * this._rotSpeed;
-            if (this.pointerMap.get("rz_axis") == E3D_INP_W) this.rz_delta += this.mw * this._rotSpeed;
+            if (this.pointerMap.get("rz_axis") == E3D_INP_X) this.rz_delta += this.mx * mrs;
+            if (this.pointerMap.get("rz_axis") == E3D_INP_Y) this.rz_delta += this.my * mrs;
+            if (this.pointerMap.get("rz_axis") == E3D_INP_W) this.rz_delta += this.mw * mrs;
         }
 
 

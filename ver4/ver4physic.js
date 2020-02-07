@@ -280,26 +280,39 @@ function initEngine() {
 }
 
 
+var _parentView = { normalMatrix : m4_new() };
 function prepRender() {
 
     if (show_DEV_CD) dev_CD.clear();
 
     // Move per inputs
     switch (moveTarget) {
-        case 'e':
-            targetVector.moveBy([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth]);
-            targetVector.rotateBy([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth]);
+        case 'e': // edge            
+            m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
+            m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
+
+            targetVector.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            targetVector.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
             targetVector.resetMatrix();
             break;
-        case 's':
-            testSph.moveByLocal([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth]);
-            testSph.rotateBy([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth]);
+        case 's': // sphere
+            m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
+            m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
+
+            testSph.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            testSph.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
             testSph.resetMatrix();
             break;
         default:
             scn.camera.moveBy(-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth, 
                                inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
       }
+/*
+    if (inputs.checkCommand("action_switch_ctrl_player", true)) moveTarget = "p";
+    if (inputs.checkCommand("action_switch_ctrl_sphere", true)) moveTarget = "s";
+    if (inputs.checkCommand("action_switch_ctrl_vector", true)) moveTarget = "v";
+    if (inputs.checkCommand("action_switch_ctrl_edge", true)) moveTarget = "e";
+ */
 
     //  v3_rotateX_mod(vec2v, 0.2 * timer.delta);
      // vec2e.updateVector(vec2v);
@@ -488,10 +501,10 @@ function timerTick() {  // Game Loop
     }
 
     if (inputs.checkCommand("action_toggle_CD", true)) show_DEV_CD = !show_DEV_CD;
-    if (inputs.checkCommand("action_switch_ctrl_player", true)) moveTarget = "p";
-    if (inputs.checkCommand("action_switch_ctrl_sphere", true)) moveTarget = "s";
-    if (inputs.checkCommand("action_switch_ctrl_vector", true)) moveTarget = "v";
-    if (inputs.checkCommand("action_switch_ctrl_edge", true)) moveTarget = "e";
+    if (inputs.checkCommand("action_switch_ctrl_player", true)) { moveTarget = "p";  inputs.mousePosDirection = 1; }
+    if (inputs.checkCommand("action_switch_ctrl_sphere", true)) { moveTarget = "s";  inputs.mousePosDirection = -1; }
+    if (inputs.checkCommand("action_switch_ctrl_vector", true)) { moveTarget = "v";  inputs.mousePosDirection = -1; }
+    if (inputs.checkCommand("action_switch_ctrl_edge", true)) { moveTarget = "e";  inputs.mousePosDirection = -1; }
 
     if (inputs.checkCommand("action_anim_clear", true)) {
         for (let i = animations.length -1; i >=0; --i) {
