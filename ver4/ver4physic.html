@@ -36,7 +36,7 @@
         }
 
         #statusDiv {
-            width : 100%;
+            width : 40%;
             position: absolute;
             top: 0px;
             left: 0px; 
@@ -45,18 +45,88 @@
             overflow-y: hidden;
             background-color: rgba(0, 0, 0, 0.2);
         }
+        
+        #dataDiv {
+            width : 10%;
+            position: absolute;
+            top: 0px;
+            right: 0px; 
+            white-space: pre;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        #sliderDiv {
+            width : 50%;
+            position: absolute;
+            top: 0px;
+            left: 40%; 
+
+            overflow-x: hidden;
+            overflow-y: hidden;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
 
         #logDiv {
             position: absolute;
-            left: 0px;
+            right: 0px;
             bottom: 0px;
             white-space: pre;
             height : 125px;
-            width: 100%;
+            width: 500px;
             overflow-x: wrap;
             overflow-y: scroll;
             background-color: rgba(0, 0, 0, 0.2);
         }
+
+        .flatspan {
+            background-color: rgba(255, 255, 255, 0.4);
+            padding: 0px 5px 0px 5px;
+            color:black;
+            height:25px;
+        }
+
+
+
+.slidecontainer {
+  width: 100%; /* Width of the outside container */
+}
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 90%; /* Full-width */
+  height: 20px; /* Specified height */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: green; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: red; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
 
 
 
@@ -87,6 +157,24 @@
     <div id="mainDiv">
         <canvas id="GLCanvas">Erreur - Canvas non supporté</canvas>
         <div id="statusDiv">Status</div>
+        <div id="dataDiv">Data</div>
+        <div id="sliderDiv">
+
+       
+            <span class="flatspan"># Toggle CD</span>
+            <span class="flatspan">1 Player Ctrl</span>
+            <span class="flatspan">2 Sphere Ctrl</span>
+            <span class="flatspan">3 Vector Ctrl</span>
+            <span class="flatspan">4 Edge Ctrl</span>
+            <span class="flatspan">0 Clear Anim</span><br />
+            <span class="flatspan">F Throw</span>   
+            <span class="flatspan">R Replay last throw</span>    
+            <span class="flatspan">X Rain</span>   
+             <br />             
+            <input type="range" min="1" max="100" value="50" class="slider" id="myRange" /><br />
+            <input type="range" min="1" max="100" value="50" class="slider" id="myRange2" />
+
+        </div>
         <div id="logDiv"></div>
     </div>
 

@@ -11,6 +11,7 @@ log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
 const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
+const dataElement = document.getElementById("dataDiv");
 
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
@@ -95,18 +96,24 @@ function log(text, silent = true) {
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = 
+    status.textContent = 
     "pX:" + padStart(""+Math.floor(scn.camera.position[0]), " ", 6) + 
     ", pY:" + padStart(""+Math.floor(scn.camera.position[1]), " ", 6) + 
     ", pZ:" + padStart(""+Math.floor(scn.camera.position[2]), " ", 6) + 
     ", rX: " + padStart(""+Math.floor(inputs.rx * RadToDeg), " ", 5) + 
-    ", rY:"+ padStart(""+Math.floor(inputs.ry * RadToDeg), " ", 5) + "<br />" +
-    "delta:" + padEnd(""+timer.delta, "0", 5) + 
-    "s, usage: " + padStart(""+Math.floor(usepct_smth), " ", 3) +
-    "%, nElements: " + scn.drawnElemenets + "<br />"+
-    "nAnims: " + padStart(""+animations.length, " ", 6) + ", nHitTests: " + nHitTest + ", nbHits: " + nHits + ", nbCDpasses: " + nbCDpasses + "<br />" +
-    hitPoints[10] + " " +  hitPoints[11] + " " +  hitPoints[12] + " " +  hitPoints[13];
-    // + " " +  hitPoints[3] + " " +  hitPoints[4] + " dotv1v2 " + v3_dot(vec1v, vec2v);
+    ", rY:"+ padStart(""+Math.floor(inputs.ry * RadToDeg), " ", 5) + "\n" +
+    "delta: " + padEnd(""+timer.delta, "0", 5) + 
+    "s, usage: " + padStart(""+(usepct_smth.toFixed(1)), " ", 5) +
+    "%, FPS: " + padStart(""+Math.floor(timer.smoothfps), " ", 3) + "\n" +
+
+    "nElements: " + scn.drawnElemenets +
+    ", nAnims: " + padStart(""+animations.length, " ", 6) + ", nHitTests: " + nHitTest + ", nbHits: " + nHits + ", nbCDpasses: " + nbCDpasses;
+    
+    var tc = "";
+    for (var i = 0; i < 20; ++i) {
+        if (hitPoints[i] != undefined) tc += "[" + padStart(""+i, "0", 2) + "] "+ padStart(hitPoints[i].toFixed(4), " ", 12) + "\n";
+    }
+    dataElement.textContent = tc;
 }
 
 
@@ -341,7 +348,7 @@ function prepRender() {
 
         var p = point_vector_point(targetVector.CD_edge_p[0], targetVector.CD_edge_n[0],  testSph.CD_sph_p[0]);
        // v3_add_mod(p, targetVector.CD_edge_p[0]);
-       hitsMarkers.addWireSphere(p, 1, [0.5,1.0,0.5], 8, false);
+    //   hitsMarkers.addWireSphere(p, 1, [0.5,1.0,0.5], 8, false);
 
 
         var cylAxis = [0, 1, 0];
@@ -596,8 +603,9 @@ function CheckForAnimationCollisions(self){
                         if ((!hitDetected) || ((hitDetected) && (t0 < self.closestCollision[1]))) {
                             v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes - 0.05);
                             
-                            if (show_DEV_CD) phyTracers.addWireSphere(firstHit, 16, [1,0,0], 8, false, 3);
-
+                            if (show_DEV_CD) {
+                                if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0,0], 8, false, 3);
+                            }
                             if (d < 0.0) v3_negate_mod(hitNormal);
 
                             hitDetected = true;
@@ -610,7 +618,7 @@ function CheckForAnimationCollisions(self){
         } // sph - iPlane
 
 
-        // collision detection - self.sph to infinite plane
+        // collision detection - self.sph to edge
         if ((self.target.CD_sph > 0) && (scn.entities[i].CD_edge > 0)) {  
 
             for (let j = 0; j < scn.entities[i].CD_edge; ++j) {
@@ -632,10 +640,10 @@ function CheckForAnimationCollisions(self){
                     v3_rotateX_mod(rotatedVect, -scn.entities[i].rotation[0]);
                     v3_rotateZ_mod(rotatedVect, -scn.entities[i].rotation[2]);
                     var hitRes = cylinderIntersect(rotatedVect, rpos, self.target.CD_sph_rs[0], scn.entities[i].CD_edge_l[j]);     
-                    if (show_DEV_CD) {          
+                   /* if (show_DEV_CD) {          
                         phyTracers.moveCursorTo(vectOrig);
                         phyTracers.lineBy(v3_scale_new(rotatedVect, scn.entities[i].CD_edge_l[j]*2), false, [1,0,0]);
-                    }
+                    }*/
                     if ((hitRes) && (hitRes[0] <= self.deltaLength)) {
 
                         var t0 = hitRes[0] / self.deltaLength;
@@ -644,14 +652,14 @@ function CheckForAnimationCollisions(self){
                 //        v3_applym4_mod(hitRes[1], scn.entities[i].normalMatrix);
 
                         if (show_DEV_CD) {
-                            phyTracers.addWireSphere(firstHit, 16, [1,0,0], 8, false, 3);
+                            phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0,0], 8, false, 3);
                             //phyTracers.line(firstHit, 16, [1,0,0], 8, false, 3);
                             log("edge hit " + hitRes[0] + " " + hitRes[1], false);
 
 
                         }
-                        var wc = v3_scale_new(hitRes[1], 10);
-                        phyTracers.addWireCross(wc, 5, [1,1,1]);
+                   //     var wc = v3_scale_new(hitRes[1], 10);
+                      //  phyTracers.addWireCross(wc, 5, [1,1,1]);
                         //  hitNormal = 
 
                         hitDetected = true;
@@ -763,8 +771,8 @@ if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this
             v3_normalize_mod(this.closestCollision[2]); // change direction on hit
             v3_reflect_mod(this.data.spd, this.closestCollision[2]); // reflect per hit normal  
 
-            if (show_DEV_CD) phyTracers.line(this.data.last_position, this.target.position, false, [1, 0, 0]);
-            if (show_DEV_CD) phyTracers.line(this.data.last_position, this.closestCollision[3], false, [0, 1, 0]);            
+          //  if (show_DEV_CD) phyTracers.line(this.data.last_position, this.target.position, false, [1, 0, 0]);
+          //  if (show_DEV_CD) phyTracers.line(this.data.last_position, this.closestCollision[3], false, [0, 1, 0]);            
            
             v3_copy(this.data.last_position, this.closestCollision[3]);             
            
@@ -937,10 +945,10 @@ function vector_vector_distance(orig1, v1, orig2, v2) {
     // http://geomalgorithms.com/a07-_distance.html
     v3_sub_res(_vector_vector_distance_Odelta, orig1, orig2);
     var a = v3_lengthsquared(v1);
-    var b = v_v3_dot(v1, v2);
+    var b = v3_dot(v1, v2);
     var c = v3_lengthsquared(v2);
-    var d = v_v3_dot(v1, _vector_vector_distance_Odelta);
-    var e = v_v3_dot(v2, _vector_vector_distance_Odelta);
+    var d = v3_dot(v1, _vector_vector_distance_Odelta);
+    var e = v3_dot(v2, _vector_vector_distance_Odelta);
 
     var D = a*c - b*b;
     var sc = 0.0;

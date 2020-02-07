@@ -20,6 +20,9 @@ class E3D_timing {
         this.active = run;
         this.usage = 0;
 
+        this.fps = 60;
+        this.smoothfps = 60;
+
         if (run) {
             this.timer = setInterval( () => {this.tickEvent() }, interval);
         }
@@ -53,6 +56,11 @@ class E3D_timing {
         }
 
         this.usage = 100*(Date.now() - this.lastTick)/this.tickInterval;
+
+        if (this.delta > 0) {
+            this.fps = 1.0 / this.delta;
+            this.smoothfps = this.smooth(this.smoothfps, this.fps, 5);
+        }
     }
 
     setInterval(interval) {
