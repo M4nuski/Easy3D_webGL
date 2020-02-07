@@ -51,6 +51,38 @@ class E3D_entity {
 
         this.collisionDetection = false;
      
+        // TODO new CD shapes 
+        /*
+            CD_point
+                Source
+                Interpolate as vector
+
+            CD_edge
+                Source and Target
+                Interpolate as plane
+
+            CD_sphere
+                Source and Target
+                Interpolate as capsule
+
+            CD_iPlane (infinite plane)
+                Target
+                No Interpolation (static)
+                
+            CD_plane (rectangle)
+                Target
+                No Interpolation (static)
+
+            CD_box (not aligned)
+                Target
+                No Interpolation (static)
+                optional bottom (dont CD bottom plane and 4 bottom edges)
+
+            CD_triangle
+                Source and Target
+                Interpolated first in capsule with other triangles
+        */
+
         // Collision Detection / Hit Test Data (faster split in different array than accessing single object.array[i].property)
             // Vector Source (arrow)
             this.CD_vec = 0;
@@ -68,7 +100,6 @@ class E3D_entity {
             this.CD_edge_l  = [];
 
             // Sphere Source/Target
-            // TODO generalize as ellipsoid
             this.CD_sph = 0;
             this.CD_sph_p0 = []; // original to model space
             this.CD_sph_p  = []; // transformed to world space
@@ -92,7 +123,7 @@ class E3D_entity {
             this.CD_fPlane_h0 = []; // half height vector original to model space
             this.CD_fPlane_h  = []; // transformed to world space (rotation)
 
-            // TODO Cuboid Target (/Source?)
+            // TODO Box Target
             this.CD_cube = 0;
             this.CD_cube_p0 = []; // center position original to model space
             this.CD_cube_p  = []; // transformed to world space (rotation)
@@ -781,8 +812,8 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     moveCursorBy (p) {
         v3_add_mod(this.currentPos, p);
     }
-// TODO rename to addLineTo
-    lineTo(p, sweep, col= [1,1,1]) {
+
+    addLineTo(p, sweep, col= [1,1,1]) {
         let idx = this.numElements;
         this.increaseSize(2);
 
@@ -796,8 +827,8 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
         v3_copy(this.currentPos, p);
     }
-// TODO rename to addLine
-    line(p0, p1, sweep, col= [1,1,1]) {
+
+    addLine(p0, p1, sweep, col= [1,1,1]) {
         let idx = this.numElements;
         this.increaseSize(2);
 
@@ -810,8 +841,8 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.setColor3f(idx, color);
     }
 
-// TODO rename to addLineBy
-    lineBy(p, sweep, col= [1,1,1]) {
+
+    addLineBy(p, sweep, col= [1,1,1]) {
         let idx = this.numElements;
         this.increaseSize(2);
 
@@ -858,45 +889,45 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         v3_applym4_mod(brr, m);
         v3_applym4_mod(brl, m);
 
-         this.line(tfr, tfl, false, color);
-         this.line(tfl, trl, false, color);
-         this.line(trl, trr, false, color);
-         this.line(trr, tfr, false, color);
+         this.addLine(tfr, tfl, false, color);
+         this.addLine(tfl, trl, false, color);
+         this.addLine(trl, trr, false, color);
+         this.addLine(trr, tfr, false, color);
 
-         this.line(bfr, bfl, false, color);
-         this.line(bfl, brl, false, color);
-         this.line(brl, brr, false, color);
-         this.line(brr, bfr, false, color);
+         this.addLine(bfr, bfl, false, color);
+         this.addLine(bfl, brl, false, color);
+         this.addLine(brl, brr, false, color);
+         this.addLine(brr, bfr, false, color);
 
-         this.line(tfr, bfr, false, color);
-         this.line(tfl, bfl, false, color);
-         this.line(trl, brl, false, color);
-         this.line(trr, brr, false, color);
+         this.addLine(tfr, bfr, false, color);
+         this.addLine(tfl, bfl, false, color);
+         this.addLine(trl, brl, false, color);
+         this.addLine(trr, brr, false, color);
 
         if (centerCross) {
-            this.line(tfr, brl, false, color);
-            this.line(tfl, brr, false, color);
-            this.line(trl, bfr, false, color);
-            this.line(trr, bfl, false, color);
+            this.addLine(tfr, brl, false, color);
+            this.addLine(tfl, brr, false, color);
+            this.addLine(trl, bfr, false, color);
+            this.addLine(trr, bfl, false, color);
         }
         if (sideCross) {
-            this.line(tfr, bfl, false, color); //f
-            this.line(tfl, bfr, false, color);
+            this.addLine(tfr, bfl, false, color); //f
+            this.addLine(tfl, bfr, false, color);
 
-            this.line(tfr, brr, false, color); //ri
-            this.line(trr, bfr, false, color);
+            this.addLine(tfr, brr, false, color); //ri
+            this.addLine(trr, bfr, false, color);
 
-            this.line(tfl, brl, false, color);//l
-            this.line(trl, bfl, false, color);
+            this.addLine(tfl, brl, false, color);//l
+            this.addLine(trl, bfl, false, color);
 
-            this.line(trl, brr, false, color);//re
-            this.line(trr, brl, false, color);
+            this.addLine(trl, brr, false, color);//re
+            this.addLine(trr, brl, false, color);
 
-            this.line(tfr, trl, false, color);//t
-            this.line(tfl, trr, false, color);
+            this.addLine(tfr, trl, false, color);//t
+            this.addLine(tfl, trr, false, color);
 
-            this.line(brl, bfr, false, color); //b
-            this.line(brr, bfl, false, color);
+            this.addLine(brl, bfr, false, color); //b
+            this.addLine(brr, bfl, false, color);
         }
         if (addCubeCD) {
 

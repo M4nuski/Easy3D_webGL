@@ -18,10 +18,13 @@ class E3D_timing {
         this.start = Date.now();
         this.lastTick = this.start;
         this.active = run;
-        this.usage = 0;
 
+        this.usage = 0;
+        this.usageSmoothed = 0;
         this.fps = 60;
-        this.smoothfps = 60;
+        this.fpsSmoothed = 60;
+
+        this.smoothFactor = 2.5;
 
         if (run) {
             this.timer = setInterval( () => {this.tickEvent() }, interval);
@@ -55,11 +58,12 @@ class E3D_timing {
             this.onTick(); 
         }
 
-        this.usage = 100*(Date.now() - this.lastTick)/this.tickInterval;
+        this.usage = 100 * (Date.now() - this.lastTick) / this.tickInterval;
+        this.usageSmoothed = this.smooth(this.usageSmoothed, this.usage, this.smoothFactor);
 
         if (this.delta > 0) {
             this.fps = 1.0 / this.delta;
-            this.smoothfps = this.smooth(this.smoothfps, this.fps, 5);
+            this.fpsSmoothed = this.smooth(this.fpsSmoothed, this.fps, this.smoothFactor);
         }
     }
 

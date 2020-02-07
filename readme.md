@@ -62,13 +62,14 @@ Evaluations of CD and physics
 * Average: test and note all collisions, result is average of all adjustments
 * Incremental: test (eager) multiple time along path of CD solids instead of shape interpolation
 * [Current] Shortest multi-pass: test and adjust for shortest hit, mark as done, re-test for next hits n-times or until no more hits
+* Progressive: Find shortest collision time, adjust all for time, recalc next pass until time reach 1 or maximum passes
 
 Interpolations
 -----------
 * Point : vector
 * Edge : plane
-* Sphere : pill/cylinder
-* Plane : Cuboid
-* Cube : cuboid
+* Sphere : pill
+* Plane : box
+* Cube : box
 
 -M4nuski

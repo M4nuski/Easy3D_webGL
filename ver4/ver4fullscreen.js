@@ -282,7 +282,7 @@ function initEngine() {
 
     targetVector = new E3D_entity_wireframe_canvas("vectorHitTest");
     targetVector.position = [25, 25, 25];
-    targetVector.line([0, 0, 0], [0, 100, 0], false, [1,1,1]);
+    targetVector.addLine([0, 0, 0], [0, 100, 0], false, [1,1,1]);
     targetVector.pushCD_edge([0, 0, 0], [0, 100, 0]);
     targetVector.visible = true;
     scn.addEntity(targetVector);
@@ -528,7 +528,7 @@ function sphAnimR() {
     if (this.state == E3D_PLAY) {
 
         this.target.resetMatrix();  // update CD data  
-        splos.line(this.last_position, this.target.position, true);
+        splos.addLine(this.last_position, this.target.position, true);
         var colList = [] ; // array of [entIdx, cdIdx, penetration, srcType, trgtType, normal]
             // for each other entity
             for (let i = 0; i < scn.entities.length; ++i ) if (this.candidates[i]) {
@@ -548,7 +548,7 @@ function sphAnimR() {
                             v3_scale_mod(this.spd, 0.8);
                             v3_addscaled_mod(this.target.position, n, penetration);
                             this.target.resetMatrix();
-                              splos.lineTo(this.target.position, false);
+                              splos.addLineTo(this.target.position, false);
                         }
                     }
                 } // sph
@@ -579,7 +579,7 @@ function sphAnimR() {
                             v3_scale_mod(this.spd, 0.8);
                             v3_addscaled_mod(this.target.position, scn.entities[i].CD_iPlane_n[j], penetration);
                             this.target.resetMatrix();
-                              splos.lineTo(this.target.position, false);
+                              splos.addLineTo(this.target.position, false);
 
                         } else { // if sph itself didn't hit plane, test for vector from last position to this one
                             dist *= sgn;
@@ -614,7 +614,7 @@ function sphAnimR() {
                             v3reflect_mod(this.spd, n);
                             v3_addscaled_mod(this.target.position, n, penetration);
                             this.target.resetMatrix();
-                              splos.lineTo(this.target.position, false);
+                              splos.addLineTo(this.target.position, false);
                         }*/
                     } // target edges
 
@@ -630,7 +630,7 @@ function sphAnimR() {
                 v3_reflect_mod(this.spd, colList[0][5]);
                 v3_addscaled_mod(this.target.position, colList[0][5], colList[0][2]);
                 this.target.resetMatrix();
-                  splos.lineTo(this.target.position, false);
+                  splos.addLineTo(this.target.position, false);
             }
 
 

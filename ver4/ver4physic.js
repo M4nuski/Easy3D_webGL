@@ -27,11 +27,12 @@ const _zFar = 1024.0;
 
 // Engine Stats
 
-
-var usepct_smth = 0; //usage pct smoothed value
 var nHitTest = 0;
 var nCDPasses = 0;
 var nHits = 0;
+var nbCDpasses = 0;
+
+
 
 // Engine Content and state
 
@@ -45,12 +46,11 @@ var DEV_anim_active = true;
 var vec1v, vec1e, vec2v, vec2e;
 var sphCounter = 0;
 var DEV_lastAnimData = null;
-var nbCDpasses = 0;
 var gAccel = 0;
 
 // Engine Core Components
 
-
+// TODO make global in core, add entities and anim, add core switch-over methods
 var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
@@ -95,7 +95,7 @@ function log(text, silent = true) {
 
 
 function updateStatus() {
-    usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
+
     status.textContent = 
     "pX:" + padStart(""+Math.floor(scn.camera.position[0]), " ", 6) + 
     ", pY:" + padStart(""+Math.floor(scn.camera.position[1]), " ", 6) + 
@@ -103,8 +103,8 @@ function updateStatus() {
     ", rX: " + padStart(""+Math.floor(inputs.rx * RadToDeg), " ", 5) + 
     ", rY:"+ padStart(""+Math.floor(inputs.ry * RadToDeg), " ", 5) + "\n" +
     "delta: " + padEnd(""+timer.delta, "0", 5) + 
-    "s, usage: " + padStart(""+(usepct_smth.toFixed(1)), " ", 5) +
-    "%, FPS: " + padStart(""+Math.floor(timer.smoothfps), " ", 3) + "\n" +
+    "s, usage: " + padStart(""+(timer.usageSmoothed.toFixed(1)), " ", 5) +
+    "%, FPS: " + padStart(""+Math.floor(timer.fpsSmoothed), " ", 3) + "\n" +
 
     "nElements: " + scn.drawnElemenets +
     ", nAnims: " + padStart(""+animations.length, " ", 6) + ", nHitTests: " + nHitTest + ", nbHits: " + nHits + ", nbCDpasses: " + nbCDpasses;
@@ -215,7 +215,7 @@ function initEngine() {
 
     targetVector = new E3D_entity_wireframe_canvas("vectorHitTest");
     targetVector.position = [25, 25, 25];
-    targetVector.line([0, 0, 0], [0, 100, 0], false, [1,1,1]);
+    targetVector.addLine([0, 0, 0], [0, 100, 0], false, [1,1,1]);
     targetVector.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
     targetVector.visible = true;
     //targetVector.vis_culling = false;
@@ -339,12 +339,12 @@ function prepRender() {
         if ((hitPoints[2] >= 0.0) && hitPoints[2] <= targetVector.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
       //}
 
-         hitsMarkers.line(testSph.position, [0,0,0], false, [1,0,0]);
+         hitsMarkers.addLine(testSph.position, [0,0,0], false, [1,0,0]);
     //  vec1v = v3_sub_new(testSph.position, scn.camera.position);
      // vec2v = [0, 1, 0];
    //   vec1v = reflect(vec1v, [0, 1, 0]);
       // v3_scale_mod(n(vec1v, vec1v, 10.0);
-    //  hitsMarkers.line(vec1v, [0,0,0], false, [0,1,0]);
+    //  hitsMarkers.addLine(vec1v, [0,0,0], false, [0,1,0]);
 
         var p = point_vector_point(targetVector.CD_edge_p[0], targetVector.CD_edge_n[0],  testSph.CD_sph_p[0]);
        // v3_add_mod(p, targetVector.CD_edge_p[0]);
@@ -443,7 +443,7 @@ function prepRender() {
                 var pos = v3_addscaled_new(scn.entities[i].position, scn.entities[i].CD_iPlane_n[j], scn.entities[i].CD_iPlane_d[j]);
                 dev_CD.moveCursorTo(pos);
                 var norm = v3_scale_new(scn.entities[i].CD_iPlane_n[j], 10);
-                dev_CD.lineBy(norm, false, [1.0,1.0,1.0]);
+                dev_CD.addLineBy(norm, false, [1.0,1.0,1.0]);
             }
 
         }
@@ -642,7 +642,7 @@ function CheckForAnimationCollisions(self){
                     var hitRes = cylinderIntersect(rotatedVect, rpos, self.target.CD_sph_rs[0], scn.entities[i].CD_edge_l[j]);     
                    /* if (show_DEV_CD) {          
                         phyTracers.moveCursorTo(vectOrig);
-                        phyTracers.lineBy(v3_scale_new(rotatedVect, scn.entities[i].CD_edge_l[j]*2), false, [1,0,0]);
+                        phyTracers.addLineBy(v3_scale_new(rotatedVect, scn.entities[i].CD_edge_l[j]*2), false, [1,0,0]);
                     }*/
                     if ((hitRes) && (hitRes[0] <= self.deltaLength)) {
 
@@ -653,7 +653,7 @@ function CheckForAnimationCollisions(self){
 
                         if (show_DEV_CD) {
                             phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0,0], 8, false, 3);
-                            //phyTracers.line(firstHit, 16, [1,0,0], 8, false, 3);
+                            //phyTracers.addLine(firstHit, 16, [1,0,0], 8, false, 3);
                             log("edge hit " + hitRes[0] + " " + hitRes[1], false);
 
 
@@ -713,7 +713,7 @@ function anim_sph_firstPass() {
         this.target.resetMatrix();
         this.lastHitIndex = "";
         
-        if (show_DEV_CD) phyTracers.line(this.data.last_position,this.target.position, true);
+        if (show_DEV_CD) phyTracers.addLine(this.data.last_position,this.target.position, true);
     }
 }
 function anim_sphRain_firstPass() {
@@ -771,8 +771,8 @@ if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this
             v3_normalize_mod(this.closestCollision[2]); // change direction on hit
             v3_reflect_mod(this.data.spd, this.closestCollision[2]); // reflect per hit normal  
 
-          //  if (show_DEV_CD) phyTracers.line(this.data.last_position, this.target.position, false, [1, 0, 0]);
-          //  if (show_DEV_CD) phyTracers.line(this.data.last_position, this.closestCollision[3], false, [0, 1, 0]);            
+          //  if (show_DEV_CD) phyTracers.addLine(this.data.last_position, this.target.position, false, [1, 0, 0]);
+          //  if (show_DEV_CD) phyTracers.addLine(this.data.last_position, this.closestCollision[3], false, [0, 1, 0]);            
            
             v3_copy(this.data.last_position, this.closestCollision[3]);             
            
@@ -791,7 +791,7 @@ if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this
             this.deltaLength = v3_length(this.delta);
             v3_add_res(this.target.position, this.data.last_position, this.delta);  
             
-           // if (show_DEV_CD) phyTracers.line(this.data.last_position, this.target.position, true); 
+           // if (show_DEV_CD) phyTracers.addLine(this.data.last_position, this.target.position, true); 
 
             
             this.target.resetMatrix();

@@ -457,7 +457,7 @@ function sphAnimR() { // test and lock (pass 2)
     if (this.state == E3D_PLAY) {
 
         this.target.resetMatrix();  // update CD data  
-        splos.line(this.last_position, this.target.position, true);
+        splos.addLine(this.last_position, this.target.position, true);
         var colList = [] ; // array of [entIdx, cdIdx, penetration, srcType, trgtType, normal]
 
             // for each other entity
@@ -477,7 +477,7 @@ function sphAnimR() { // test and lock (pass 2)
                             this.spd = v3_reflect_mod(this.spd, n);
                             v3_addscaled_mod(this.target.position, n, penetration);
                             this.target.resetMatrix();
-                              splos.lineTo(this.target.position, false);
+                              splos.addLineTo(this.target.position, false);
                         }
                     }
                 } // sph
@@ -507,7 +507,7 @@ function sphAnimR() { // test and lock (pass 2)
                             v3_reflect_mod(this.spd, scn.entities[i].CD_iPlane_n[j]);
                             v3_addscaled_mod(this.target.position, scn.entities[i].CD_iPlane_n[j], penetration);
                             this.target.resetMatrix();
-                              splos.lineTo(this.target.position, false);
+                              splos.addLineTo(this.target.position, false);
 
                         } else { // if sph itself didn't hit plane, test for vector from last position to this one
                             dist *= sgn;
@@ -531,7 +531,7 @@ function sphAnimR() { // test and lock (pass 2)
                 v3_reflect_mod(this.spd, colList[0][5]);
                 v3_addscaled_mod(this.target.position, colList[0][5], colList[0][2]);
                 this.target.resetMatrix();
-                  splos.lineTo(this.target.position, false);
+                  splos.addLineTo(this.target.position, false);
             }
 
 
