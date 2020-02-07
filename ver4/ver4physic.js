@@ -28,7 +28,6 @@ const _zFar = 1024.0;
 // Engine Stats
 
 var nHitTest = 0;
-var nCDPasses = 0;
 var nHits = 0;
 var nbCDpasses = 0;
 
@@ -38,19 +37,18 @@ var nbCDpasses = 0;
 
 
 var animations = [];
-var testSph, targetVector, targetCyl, iplanes, dev_CD, hitsMarkers, phyTracers; // entities
+var testSph, targetEdge, targetEdge2, iplanes, dev_CD, hitsMarkers, phyTracers; // entities
 var show_DEV_CD = false;
 var moveTarget = "p";
 var hitPoints = [0,0,0,0,0];
 var DEV_anim_active = true;
-var vec1v, vec1e, vec2v, vec2e;
 var sphCounter = 0;
 var DEV_lastAnimData = null;
 var gAccel = 0;
 
 // Engine Core Components
 
-// TODO make global in core, add entities and anim, add core switch-over methods
+// TODO make global in core, add entities and anim, add core switch-over methods, add default engine init methods
 var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
@@ -213,23 +211,22 @@ function initEngine() {
     //fplanes.cull_dist2 = 4200;
     scn.addEntity(fplanes);*/
 
-    targetVector = new E3D_entity_wireframe_canvas("vectorHitTest");
-    targetVector.position = [25, 25, 25];
-    targetVector.addLine([0, 0, 0], [0, 100, 0], false, [1,1,1]);
-    targetVector.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
-    targetVector.visible = true;
-    //targetVector.vis_culling = false;
-    scn.addEntity(targetVector);
+    targetEdge = new E3D_entity_wireframe_canvas("edgeHitTest");
+    targetEdge.position = [25, 25, 25];
+    targetEdge.addCylinder([0, 0, 0], 20, 100, [1, 0, 0], 32, 4, 10, false);
+    targetEdge.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
+    targetEdge.visible = true;
+    targetEdge.vis_culling = false;
+    scn.addEntity(targetEdge);
 
 
-
-    targetCyl = new E3D_entity_wireframe_canvas("vectorHitTest");
-    targetCyl.position = [0, 25, 25];
-    targetCyl.addCylinder([0, 0, 0], 20, 100, [1, 1, 0.5], 32, 4, 3, false);
-//    targetCyl.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
-    targetCyl.visible = true;
-    //targetVector.vis_culling = false;
-    scn.addEntity(targetCyl);
+    targetEdge2 = new E3D_entity_wireframe_canvas("edge2HitTest");
+    targetEdge2.position = [0, 25, 25];
+    targetEdge2.addCylinder([0, 0, 0], 10, 150, [0, 1, 0], 32, 4, 10, false);
+    targetEdge2.pushCD_edge([0, 0, 0], [0, 1, 0], 150);
+    targetEdge2.visible = true;
+    targetEdge2.vis_culling = false;
+    scn.addEntity(targetEdge2);
 
 
     /*cubes = new E3D_entity_wireframe_canvas("cubesTest");
@@ -259,20 +256,6 @@ function initEngine() {
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
-    vec1e = new E3D_entity_axis("reflected", true, 10, false);
-    vec1v = [0, 1, 0];
-    vec1e.updateVector(vec1v);
-    vec1e.visible = true;
-    scn.addEntity(vec1e);
-
-    vec2e = new E3D_entity_axis("incident", true, 10, false);
-    vec2v = [0, -1, 0];
-    vec2e.position = [0.5, 0, 0.5];
-    vec2e.resetMatrix();
-    vec2e.updateVector(vec2v);
-    vec2e.visible = true;
-    scn.addEntity(vec2e);
-
     // Activate timer and set scene as active
 
     timer.run();
@@ -287,13 +270,21 @@ function prepRender() {
 
     // Move per inputs
     switch (moveTarget) {
-        case 'e': // edge            
+        case 'e': // edge2        
             m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
             m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
 
-            targetVector.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
-            targetVector.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
-            targetVector.resetMatrix();
+            targetEdge2.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            targetEdge2.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
+            targetEdge2.resetMatrix();
+            break;
+        case 'v': // edge1      
+            m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
+            m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
+
+            targetEdge.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            targetEdge.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
+            targetEdge.resetMatrix();
             break;
         case 's': // sphere
             m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
@@ -314,64 +305,76 @@ function prepRender() {
     if (inputs.checkCommand("action_switch_ctrl_edge", true)) moveTarget = "e";
  */
 
-    //  v3_rotateX_mod(vec2v, 0.2 * timer.delta);
-     // vec2e.updateVector(vec2v);
-      //vec1v = v3_reflect_new(vec2v, [0, 1, 0]);
-      //vec1e.updateVector(vec1v);
 
+hitsMarkers.clear();
+
+
+
+
+        var closestPt = point_vector_point( targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0], testSph.CD_sph_p[0]);
+        hitsMarkers.addLine(closestPt, testSph.CD_sph_p[0], false, [1,1,0]);
+
+        closestPt = point_segment_point( targetEdge2.CD_edge_p[0],  targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0], testSph.CD_sph_p[0]);
+        hitsMarkers.addLine(closestPt, testSph.CD_sph_p[0], false, [0,1,1]);
+
+        var v1 = v3_scale_new(targetEdge.CD_edge_n[0],  targetEdge.CD_edge_l[0]);
+        var v2 = v3_scale_new(targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0]);
+
+        closestPt = path_path_closest_t(targetEdge.CD_edge_p[0],  v1, targetEdge2.CD_edge_p[0], v2);
+
+        v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  v1, closestPt);
+        v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], v2, closestPt);
+
+        hitsMarkers.addLine(v1, v2, false, [1,0,1]);
 /*
-      targetVector.CD_edge_p[0]; // edge origin
-      targetVector.CD_edge_n[0]; // edge normal
-      targetVector.CD_edge_l[0]; // edge length
+      targetEdge.CD_edge_p[0]; // edge origin
+      targetEdge.CD_edge_n[0]; // edge normal
+      targetEdge.CD_edge_l[0]; // edge length
       testSph.CD_sph_p[0]; // sphere origin
       testSph.CD_sph_r[0]; // sphere radius
       testSph.CD_sph_rs[0]; // sphare radius squared
 */
     var so = [0,0,0];
 
-    v3_sub_res(so, testSph.CD_sph_p[0], targetVector.CD_edge_p[0]);
-    //v3_normalize_res(n, targetVector.CD_edge_v[0]);
-    //copy3f3fm(n, targetVector.CD_edge_v[0]);
-    var hit = VectSphHit(targetVector.CD_edge_n[0], so, testSph.CD_sph_rs[0]);
+    v3_sub_res(so, testSph.CD_sph_p[0], targetEdge.CD_edge_p[0]);
+    //v3_normalize_res(n, targetEdge.CD_edge_v[0]);
+    //copy3f3fm(n, targetEdge.CD_edge_v[0]);
+    var hit = VectSphHit(targetEdge.CD_edge_n[0], so, testSph.CD_sph_rs[0]);
     //var l = v3_length(n);
-   // l = l*l;
-     // if (hit != false) {
-        hitsMarkers.clear();
-        // p = targetVector.CD_edge_p[0] + (targetVector.CD_edge_v[0] * d)
 
-        var p = v3_scale_new(targetVector.CD_edge_n[0], hitPoints[0]); 
-        v3_add_mod(p, targetVector.CD_edge_p[0]);
-        if ((hitPoints[0] >= 0.0) && hitPoints[0] <= targetVector.CD_edge_l[0]) hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
+     
+        // p = targetEdge.CD_edge_p[0] + (targetEdge.CD_edge_v[0] * d)
 
-        p = v3_scale_new(targetVector.CD_edge_n[0], hitPoints[1]); 
-        v3_add_mod(p, targetVector.CD_edge_p[0]);
-        if ((hitPoints[1] >= 0.0) && hitPoints[1] <= targetVector.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
+        var p = v3_scale_new(targetEdge.CD_edge_n[0], hitPoints[0]); 
+        v3_add_mod(p, targetEdge.CD_edge_p[0]);
+        if ((hitPoints[0] >= 0.0) && hitPoints[0] <= targetEdge.CD_edge_l[0]) hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
 
-        p = v3_scale_new(targetVector.CD_edge_n[0], hitPoints[2]); 
-        v3_add_mod(p, targetVector.CD_edge_p[0]);
-        if ((hitPoints[2] >= 0.0) && hitPoints[2] <= targetVector.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
-      //}
+        p = v3_scale_new(targetEdge.CD_edge_n[0], hitPoints[1]); 
+        v3_add_mod(p, targetEdge.CD_edge_p[0]);
+        if ((hitPoints[1] >= 0.0) && hitPoints[1] <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
+
+        p = v3_scale_new(targetEdge.CD_edge_n[0], hitPoints[2]); 
+        v3_add_mod(p, targetEdge.CD_edge_p[0]);
+        if ((hitPoints[2] >= 0.0) && hitPoints[2] <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
+
 
          hitsMarkers.addLine(testSph.position, [0,0,0], false, [1,0,0]);
-    //  vec1v = v3_sub_new(testSph.position, scn.camera.position);
-     // vec2v = [0, 1, 0];
-   //   vec1v = reflect(vec1v, [0, 1, 0]);
-      // v3_scale_mod(n(vec1v, vec1v, 10.0);
-    //  hitsMarkers.addLine(vec1v, [0,0,0], false, [0,1,0]);
 
-        var p = point_vector_point(targetVector.CD_edge_p[0], targetVector.CD_edge_n[0],  testSph.CD_sph_p[0]);
-       // v3_add_mod(p, targetVector.CD_edge_p[0]);
+
+        var p = point_vector_point(targetEdge.CD_edge_p[0], targetEdge.CD_edge_n[0],  testSph.CD_sph_p[0]);
+
+       // v3_add_mod(p, targetEdge.CD_edge_p[0]);
     //   hitsMarkers.addWireSphere(p, 1, [0.5,1.0,0.5], 8, false);
 
 
         var cylAxis = [0, 1, 0];
-        var cylPos = v3_clone(targetCyl.position);
+        var cylPos = v3_clone(targetEdge2.position);
         var cylLen = 100;
         var cylRad = 10;
 
-        var edgeAxis = v3_clone(targetVector.CD_edge_n[0]);
-        var edgePos = v3_clone(targetVector.CD_edge_p[0]);
-        var edgeLen = targetVector.CD_edge_l[0];
+        var edgeAxis = v3_clone(targetEdge.CD_edge_n[0]);
+        var edgePos = v3_clone(targetEdge.CD_edge_p[0]);
+        var edgeLen = targetEdge.CD_edge_l[0];
         
         
         hitPoints[10] = v3_dot(cylAxis, edgeAxis); // is vector parallel or perpendicular
@@ -385,6 +388,12 @@ function prepRender() {
         
       //  v3_addscaled_res(so, edgePos, edgeAxis, edgeLen);
       //  hitPoints[13] = v3_dot(cylAxis, so);
+
+
+
+
+
+
 
 
 
@@ -445,6 +454,8 @@ function prepRender() {
 
 
 
+
+
     if (show_DEV_CD) {
      //   dev_CD.clear();
         for (let i = 0; i < scn.entities.length; ++i) {
@@ -466,6 +477,9 @@ function prepRender() {
         dev_CD.visible = false;
         phyTracers.visible = false;
     }
+
+
+
 }
 
 
@@ -533,6 +547,11 @@ function timerTick() {  // Game Loop
         scn.postRender();
     }   
 }
+
+
+
+
+
 
 var firstHit = [0.0, 0.0, 0.0];
 var hitNormal = [0.0, 0.0, 0.0];
@@ -930,12 +949,23 @@ function point_vector_point(orig, norm, point) {
 function point_vector_distance(orig, norm, point) {
     return v3_distance(point, point_vector_point(orig, norm, point));
 }
+function point_segment_point(orig, norm, len, point) {
+    var t = point_vector_t(orig, norm, point);
+    if (t < 0.0) t = 0.0;
+    if (t > len) t = len;
+
+    return v3_addscaled_new(orig, norm, t);
+}
+function point_segment_distance(orig, norm, len, point) {
+    return v3_distance(point, point_segment_point(orig, norm, len, point));
+}
+
 
 var _path_path_closest_t_Vdelta = [0, 0, 0];
 var _path_path_closest_t_Odelta = [0, 0, 0];
 function path_path_closest_t(orig1, v1, orig2, v2) {
     // http://geomalgorithms.com/a07-_distance.html
-    v3_sub_res(path_path_closest_t_Vdelta, v1, v2);
+    v3_sub_res(_path_path_closest_t_Vdelta, v1, v2);
     var dvlen = v3_lengthsquared(_path_path_closest_t_Vdelta);
     if (dvlen < _v3_epsilon) return -1.0;
     v3_sub_res(_path_path_closest_t_Odelta, orig1, orig2);
