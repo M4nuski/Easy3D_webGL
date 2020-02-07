@@ -368,8 +368,8 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     constructor(id) {
         super(id, "E3D_entity_wireframe_canvas/"+id, true);
         this.drawMode = 1; // gl.LINES;      
-        this.arraySize = 128;
-        this.arrayIncrement = 128 ;// 3 vertex * 128;
+        this.arraySize = 512;
+        this.arrayIncrement = 512 ;// 3 vertex * 128;
 
         this.vertexArray = new Float32Array(this.arraySize*3);
         this.colorArray = new Float32Array(this.arraySize*3);
@@ -684,6 +684,91 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         }
     }
 
+    addCylinder(location, dia, height, color, sides = 8, sideLineStep = 1, sections = 1, addCD = false) {
+        dia = dia / 2;
+       // if (addSphCD) this.pushCD_sph(location, dia);
+
+        let idx = this.numElements;
+      //  var x=0, y=0, z=0;
+
+  //    var baseOffset = PIdiv2 / numSegments;
+
+//      var matX = m4_new();
+      
+ //     for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
+          if (sections < 1) sections = 1;
+          this.increaseSize((sides * 6) + (sides * 2 * (sections-1)));
+
+          var si = Math.sin(0) * dia;
+          var ci = Math.cos(0) * dia;
+          
+          //var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
+          
+           // m4_rotationX_res(matX, offsetAngle);
+         //   m4_rotationY_res(matY, offsetAngle);
+          //  m4_rotationZ_res(matZ, offsetAngle);  
+
+        for (var i = 0; i < sides; ++i) { 
+
+            var sip = Math.sin((i+1) * PIx2 / sides) * dia;
+            var cip = Math.cos((i+1) * PIx2 / sides) * dia;
+
+            // base
+            var v = [si, 0, ci];
+            this.setVertex3f(idx, v3_add_new(v, location));
+            this.setColor3f(idx, color);
+            idx++;
+
+            v = [sip, 0, cip];
+            this.setVertex3f(idx, v3_add_new(v, location));
+            this.setColor3f(idx, color);
+            idx++;
+            
+            // top
+            v = [si, height, ci];  
+            this.setVertex3f(idx, v3_add_new(v, location));
+            this.setColor3f(idx, color);
+            idx++;
+
+            v = [sip, height, cip];            
+            this.setVertex3f(idx, v3_add_new(v, location));
+            this.setColor3f(idx, color);
+            idx++;
+
+            if ( (sideLineStep > 0) && ((i % sideLineStep) == 0) ) {
+                // side
+                v = [si, 0, ci];    
+                this.setVertex3f(idx, v3_add_new(v, location));
+                this.setColor3f(idx, color);
+                idx++;
+
+                v = [si, height, ci];
+                this.setVertex3f(idx, v3_add_new(v, location));
+                this.setColor3f(idx, color);
+                idx++;
+            }
+
+            for (var j = 1; j < sections; ++j) {
+
+                var v = [si, j * height / sections, ci];
+                this.setVertex3f(idx, v3_add_new(v, location));
+                this.setColor3f(idx, color);
+                idx++;
+
+                v = [sip, j * height / sections, cip];
+                this.setVertex3f(idx, v3_add_new(v, location));
+                this.setColor3f(idx, color);
+                idx++;
+            }
+
+            si = sip;
+            ci = cip;
+  
+        }
+
+    }
+
+
     getNextSweepColor() {
         this.colSweepIndex++;
         if (this.colSweepIndex >= this.colSweep.length)  this.colSweepIndex = 0;
@@ -696,7 +781,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     moveCursorBy (p) {
         v3_add_mod(this.currentPos, p);
     }
-
+// TODO rename to addLineTo
     lineTo(p, sweep, col= [1,1,1]) {
         let idx = this.numElements;
         this.increaseSize(2);
@@ -711,7 +796,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
         v3_copy(this.currentPos, p);
     }
-
+// TODO rename to addLine
     line(p0, p1, sweep, col= [1,1,1]) {
         let idx = this.numElements;
         this.increaseSize(2);
@@ -725,6 +810,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.setColor3f(idx, color);
     }
 
+// TODO rename to addLineBy
     lineBy(p, sweep, col= [1,1,1]) {
         let idx = this.numElements;
         this.increaseSize(2);
