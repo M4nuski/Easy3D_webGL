@@ -40,7 +40,7 @@ var nbCDpasses = 0;
 
 
 var animations = [];
-var testSph, targetEdge, targetEdge2, iplanes, dev_CD, hitsMarkers, phyTracers; // entities
+var testSph, targetEdge, targetEdge2, iplanes, dev_CD, DEV_markers, phyTracers; // entities
 var show_DEV_CD = false;
 var moveTarget = "p";
 var hitPoints = new Map();
@@ -173,6 +173,7 @@ function initEngine() {
     inputs.keyMap.set("action_switch_ctrl_vector", "Digit3");
     inputs.keyMap.set("action_switch_ctrl_edge", "Digit4");
     inputs.keyMap.set("action_anim_clear", "Digit0");
+    inputs.keyMap.set("action_CD_clear", "Digit9");
     inputs.keyMap.set("action_anim_replay", "KeyR");
 
     inputs.keyMap.set("action_speed", "ShiftLeft");
@@ -240,11 +241,11 @@ function initEngine() {
     //cubes.cull_dist2 = 4200;
     scn.addEntity(cubes);*/
 
-    hitsMarkers = new E3D_entity_wireframe_canvas("CD_hits_markers");
-    hitsMarkers.addWireSphere([0,0,0], 1, [1,1,1], 8, false);
-    hitsMarkers.visible = true;
-    hitsMarkers.vis_culling = false;
-    scn.addEntity(hitsMarkers);
+    DEV_markers = new E3D_entity_wireframe_canvas("CD_hits_markers");
+    DEV_markers.addWireSphere([0,0,0], 1, [1,1,1], 8, false);
+    DEV_markers.visible = true;
+    DEV_markers.vis_culling = false;
+    scn.addEntity(DEV_markers);
 
     phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces");
     phyTracers.visible = true;
@@ -301,13 +302,13 @@ function prepRender() {
       }
 
 
-    hitsMarkers.clear();
+    DEV_markers.clear();
 
     var closestPt = point_vector_point( targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0], testSph.CD_sph_p[0]);
-    hitsMarkers.addLine(closestPt, testSph.CD_sph_p[0], false, [1,1,0]);
+    DEV_markers.addLine(closestPt, testSph.CD_sph_p[0], false, [1,1,0]);
 
     closestPt = point_segment_point( targetEdge2.CD_edge_p[0],  targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0], testSph.CD_sph_p[0]);
-    hitsMarkers.addLine(closestPt, testSph.CD_sph_p[0], false, [0,1,1]);
+    DEV_markers.addLine(closestPt, testSph.CD_sph_p[0], false, [0,1,1]);
 
     var v1 = v3_scale_new(targetEdge.CD_edge_n[0],  targetEdge.CD_edge_l[0]);
     var v2 = v3_scale_new(targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0]);
@@ -317,7 +318,7 @@ function prepRender() {
     v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  v1, closestPt);
     v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], v2, closestPt);
 
-    hitsMarkers.addLine(v1, v2, false, [1,0,1]);
+    DEV_markers.addLine(v1, v2, false, [1,0,1]);
 
     var edge_r = 10;
     var edge2_r = 5;        
@@ -342,8 +343,8 @@ function prepRender() {
 
         hitPoints.set("p_p endDist", v3_distance(v1, v2));
 
-        hitsMarkers.addWireSphere(v1, edge_r*2, [1, 0.5, 0.5], 32, false, 5);
-        hitsMarkers.addWireSphere(v2, edge2_r*2, [1, 0.5, 0.5], 32, false, 5);
+        DEV_markers.addWireSphere(v1, edge_r*2, [1, 0.5, 0.5], 32, false, 5);
+        DEV_markers.addWireSphere(v2, edge2_r*2, [1, 0.5, 0.5], 32, false, 5);
 
     } 
 
@@ -351,8 +352,8 @@ function prepRender() {
     hitPoints.set("r2 off", off);
     v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0],  targetEdge.CD_edge_l[0] * off);
     v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0] * off);
-    hitsMarkers.addWireSphere(v1, edge_r*2, [1, 1, 1], 32, false, 5);
-    hitsMarkers.addWireSphere(v2, edge2_r*2, [1, 1, 1], 32, false, 5);
+    DEV_markers.addWireSphere(v1, edge_r*2, [1, 1, 1], 32, false, 5);
+    DEV_markers.addWireSphere(v2, edge2_r*2, [1, 1, 1], 32, false, 5);
 
 
 
@@ -376,18 +377,18 @@ function prepRender() {
 
     var p = v3_scale_new(targetEdge.CD_edge_n[0], _tca); 
     v3_add_mod(p, targetEdge.CD_edge_p[0]);
-    if ((_tca >= 0.0) && _tca <= targetEdge.CD_edge_l[0]) hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
+    if ((_tca >= 0.0) && _tca <= targetEdge.CD_edge_l[0]) DEV_markers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
 
     p = v3_scale_new(targetEdge.CD_edge_n[0], _t0); 
     v3_add_mod(p, targetEdge.CD_edge_p[0]);
-    if ((_t0 >= 0.0) && _t0 <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
+    if ((_t0 >= 0.0) && _t0 <= targetEdge.CD_edge_l[0])  DEV_markers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
 
     p = v3_scale_new(targetEdge.CD_edge_n[0], _t1); 
     v3_add_mod(p, targetEdge.CD_edge_p[0]);
-    if ((_t1 >= 0.0) &&_t1 <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
+    if ((_t1 >= 0.0) &&_t1 <= targetEdge.CD_edge_l[0])  DEV_markers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
 
 
-    hitsMarkers.addLine(testSph.position, [0,0,0], false, [1,0,0]);
+    DEV_markers.addLine(testSph.position, [0,0,0], false, [1,0,0]);
 
     var p = point_vector_point(targetEdge.CD_edge_p[0], targetEdge.CD_edge_n[0],  testSph.CD_sph_p[0]);
 
@@ -534,6 +535,8 @@ function timerTick() {  // Game Loop
     if (inputs.checkCommand("action_switch_ctrl_sphere", true)) { moveTarget = "s";  inputs.mousePosDirection = -1; }
     if (inputs.checkCommand("action_switch_ctrl_vector", true)) { moveTarget = "v";  inputs.mousePosDirection = -1; }
     if (inputs.checkCommand("action_switch_ctrl_edge", true)) { moveTarget = "e";  inputs.mousePosDirection = -1; }
+
+    if (inputs.checkCommand("action_CD_clear", true)) { phyTracers.clear(); }
 
     if (inputs.checkCommand("action_anim_clear", true)) {
         for (let i = animations.length -1; i >=0; --i) {
