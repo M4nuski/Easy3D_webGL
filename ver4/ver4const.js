@@ -85,8 +85,8 @@ function padEnd(str, pad, len) {
 function justify(str1, str2, len) {
     str1 = str1.toString();
     str2 = str2.toString();
-    var delta = len - str1.length - str2.length;
-    return str1 + " ".repeat(delta) + str2;
+    var delta = len - str1.length - str2.length;    
+    return str1 + ( (delta >=0) ? (" ".repeat(delta) + str2) : ("#".repeat(len - str1.length))) ;
 }
 
 
