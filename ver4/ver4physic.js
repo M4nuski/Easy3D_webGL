@@ -13,6 +13,9 @@ const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 const dataElement = document.getElementById("dataDiv");
 
+const range1 = document.getElementById("myRange1");
+const range2 = document.getElementById("myRange2");
+
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
 
@@ -40,7 +43,7 @@ var animations = [];
 var testSph, targetEdge, targetEdge2, iplanes, dev_CD, hitsMarkers, phyTracers; // entities
 var show_DEV_CD = false;
 var moveTarget = "p";
-var hitPoints = [0,0,0,0,0];
+var hitPoints = new Map();
 var DEV_anim_active = true;
 var sphCounter = 0;
 var DEV_lastAnimData = null;
@@ -106,11 +109,9 @@ function updateStatus() {
 
     "nElements: " + scn.drawnElemenets +
     ", nAnims: " + padStart(""+animations.length, " ", 6) + ", nHitTests: " + nHitTest + ", nbHits: " + nHits + ", nbCDpasses: " + nbCDpasses;
-    
+
     var tc = "";
-    for (var i = 0; i < 20; ++i) {
-        if (hitPoints[i] != undefined) tc += "[" + padStart(""+i, "0", 2) + "] "+ padStart(hitPoints[i].toFixed(4), " ", 12) + "\n";
-    }
+    for (var [k, v] of hitPoints) tc += justify(k, v.toFixed(4), 30) + "\n";
     dataElement.textContent = tc;
 }
 
@@ -196,8 +197,8 @@ function initEngine() {
 
     iplanes = new E3D_entity_wireframe_canvas("infinitePlanes");
     iplanes.addPlane([0, -50, 0], [PIdiv2, 0, 0], 2048, 2048, 64, [1,1,0], true, false);
-    iplanes.addPlane([50, -50, 0], [PIdiv2, 0, 0.5], 2048, 2048, 64, [1,0,1], true, false);
-    iplanes.addPlane([-50, -50, 0], [PIdiv2, 0, -0.5], 2048, 2048, 64, [0,1,1], true, false);
+   // iplanes.addPlane([50, -50, 0], [PIdiv2, 0, 0.5], 2048, 2048, 64, [1,0,1], true, false);
+   // iplanes.addPlane([-50, -50, 0], [PIdiv2, 0, -0.5], 2048, 2048, 64, [0,1,1], true, false);
     iplanes.visible = true;
     //iplanes.vis_culling = false;
     scn.addEntity(iplanes);
@@ -275,7 +276,7 @@ function prepRender() {
             m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
 
             targetEdge2.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
-            targetEdge2.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
+            targetEdge2.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
             targetEdge2.resetMatrix();
             break;
         case 'v': // edge1      
@@ -283,7 +284,7 @@ function prepRender() {
             m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
 
             targetEdge.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
-            targetEdge.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
+            targetEdge.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
             targetEdge.resetMatrix();
             break;
         case 's': // sphere
@@ -326,6 +327,68 @@ hitsMarkers.clear();
         v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], v2, closestPt);
 
         hitsMarkers.addLine(v1, v2, false, [1,0,1]);
+
+        var edge_r = 10;
+        var edge2_r = 5;        
+        var edge_dist = v3_distance(v1, v2);
+
+        hitPoints.set("p_p eD", edge_dist);
+        hitPoints.set("p_p closest t",  closestPt);
+
+        if ((closestPt > 0.0) && (closestPt <= 1.0) && (edge_dist < (edge_r + edge2_r))) {
+
+            var edge_pen = (edge_r + edge2_r) - edge_dist;
+            var start_dist = v3_distance(targetEdge2.CD_edge_p[0], targetEdge.CD_edge_p[0]);
+            var fact_dist = (-(edge_pen/2) + edge_dist - start_dist) / closestPt;  
+        //    var fact_dist = (edge_dist - start_dist) / closestPt;  
+
+           // var l_diff = targetEdge.CD_edge_l[0] / targetEdge2.CD_edge_l[0];
+
+          //  if (l_diff > 1.0) l_diff = 1.0 / l_diff;
+         //   hitPoints.set("p_p l_diff", l_diff);  
+
+            var hit_dist = (edge_r + edge2_r - start_dist) / fact_dist;
+        //    hit_dist = hit_dist * Math.pow(l_diff, .25);
+            hitPoints.set("p_p sD", start_dist);    
+            hitPoints.set("p_p fact",fact_dist);
+            hitPoints.set("p_p hit_dst", hit_dist);    
+
+            v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0],  (targetEdge.CD_edge_l[0] * hit_dist) );
+            v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], targetEdge2.CD_edge_n[0],  (targetEdge2.CD_edge_l[0] * hit_dist) );
+
+            hitPoints.set("p_p endDist", v3_distance(v1, v2));
+            
+            /*var edge_pen_ratio =  targetEdge.CD_edge_l[0] / (targetEdge.CD_edge_l[0] + targetEdge2.CD_edge_l[0]); // watch for edge case of l around epsilon
+            var edge_offset = edge_pen_ratio * 1.0 * edge_pen * (edge_r + edge2_r) / edge2_r;
+            var edge2_pen_ratio =  targetEdge2.CD_edge_l[0] / (targetEdge.CD_edge_l[0] + targetEdge2.CD_edge_l[0]); 
+            var edge2_offset = (edge2_pen_ratio) * 1.0 * edge_pen * (edge_r + edge2_r) / edge_r;
+
+            hitPoints[5] = edge_pen;
+            hitPoints[6] = edge_offset;
+            hitPoints[7] = edge2_offset;
+
+            var off = (range1.value - 500) / 1000;
+
+            hitPoints[8] = off;
+
+            v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0],  (targetEdge.CD_edge_l[0] * closestPt) - edge_offset);
+            v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], targetEdge2.CD_edge_n[0],  (targetEdge2.CD_edge_l[0] * closestPt) - edge2_offset);
+            */
+
+            hitsMarkers.addWireSphere(v1, edge_r*2, [1, 0.5, 0.5], 32, false, 5);
+            hitsMarkers.addWireSphere(v2, edge2_r*2, [1, 0.5, 0.5], 32, false, 5);
+
+        } 
+
+            var off = range2.value / 1000;
+            hitPoints.set("r2 off", off);
+            v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0],  targetEdge.CD_edge_l[0] * off);
+            v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0] * off);
+            hitsMarkers.addWireSphere(v1, edge_r*2, [1, 1, 1], 32, false, 5);
+            hitsMarkers.addWireSphere(v2, edge2_r*2, [1, 1, 1], 32, false, 5);
+
+
+
 /*
       targetEdge.CD_edge_p[0]; // edge origin
       targetEdge.CD_edge_n[0]; // edge normal
@@ -345,17 +408,21 @@ hitsMarkers.clear();
      
         // p = targetEdge.CD_edge_p[0] + (targetEdge.CD_edge_v[0] * d)
 
-        var p = v3_scale_new(targetEdge.CD_edge_n[0], hitPoints[0]); 
-        v3_add_mod(p, targetEdge.CD_edge_p[0]);
-        if ((hitPoints[0] >= 0.0) && hitPoints[0] <= targetEdge.CD_edge_l[0]) hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
+        var _tca = hitPoints.get("v-s tca");
+        var _t0 = hitPoints.get("v-s t0");
+        var _t1 = hitPoints.get("v-s t1");
 
-        p = v3_scale_new(targetEdge.CD_edge_n[0], hitPoints[1]); 
+        var p = v3_scale_new(targetEdge.CD_edge_n[0], _tca); 
         v3_add_mod(p, targetEdge.CD_edge_p[0]);
-        if ((hitPoints[1] >= 0.0) && hitPoints[1] <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
+        if ((_tca >= 0.0) && _tca <= targetEdge.CD_edge_l[0]) hitsMarkers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
 
-        p = v3_scale_new(targetEdge.CD_edge_n[0], hitPoints[2]); 
+        p = v3_scale_new(targetEdge.CD_edge_n[0], _t0); 
         v3_add_mod(p, targetEdge.CD_edge_p[0]);
-        if ((hitPoints[2] >= 0.0) && hitPoints[2] <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
+        if ((_t0 >= 0.0) && _t0 <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
+
+        p = v3_scale_new(targetEdge.CD_edge_n[0], _t1); 
+        v3_add_mod(p, targetEdge.CD_edge_p[0]);
+        if ((_t1 >= 0.0) &&_t1 <= targetEdge.CD_edge_l[0])  hitsMarkers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
 
 
          hitsMarkers.addLine(testSph.position, [0,0,0], false, [1,0,0]);
@@ -377,22 +444,15 @@ hitsMarkers.clear();
         var edgeLen = targetEdge.CD_edge_l[0];
         
         
-        hitPoints[10] = v3_dot(cylAxis, edgeAxis); // is vector parallel or perpendicular
+        hitPoints.set("cyl_edg dot", v3_dot(cylAxis, edgeAxis)); // is vector parallel or perpendicular
         
         var cylEdgeOffset = v3_sub_new(edgePos, cylPos);
-        hitPoints[11] = v3_dot(cylAxis, cylEdgeOffset); // is base within cyl length
+        hitPoints.set("cyl_w0 dot", v3_dot(cylAxis, cylEdgeOffset)); // is base within cyl length
         
         v3_addscaled_res(so, cylEdgeOffset, edgeAxis, edgeLen);
       //  v3_sub_res(so, edgePos, cylPos);
-        hitPoints[12] = v3_dot(cylAxis, so); // is end within cyl length
+        hitPoints.set("w0_edg dot", v3_dot(cylAxis, so)); // is end within cyl length
         
-      //  v3_addscaled_res(so, edgePos, edgeAxis, edgeLen);
-      //  hitPoints[13] = v3_dot(cylAxis, so);
-
-
-
-
-
 
 
 
@@ -857,9 +917,9 @@ function VectSphHit(v, so, sr2) { // translated to v origin
     var t1 = 0;
    // var sr2 = sr * sr;
     var tca = v3_dot(so, v);
-    hitPoints[0] = tca;
-    hitPoints[1] = -1;
-    hitPoints[2] = -1;
+    hitPoints.set("v-s tca", tca);
+    hitPoints.set("v-s t0" ,-1);
+    hitPoints.set("v-s t1" ,-1);
 if (isNaN(tca)) throw "VectSphHit tca NaN";
     if  (tca < 0) return false;
     // sph behind origin
@@ -872,8 +932,8 @@ if (isNaN(tca)) throw "VectSphHit tca NaN";
     var thc = Math.sqrt(sr2 - d2);
     t0 = tca - thc;
     t1 = tca + thc;
-    hitPoints[1] = t0;
-    hitPoints[2] = t1;
+    hitPoints.set("v-s t0" , t0);
+    hitPoints.set("v-s t1" , t1);
 if (isNaN(thc)) throw "VectSphHit thc NaN";
     return (t0 < t1) ? t0 : t1;
 }
@@ -881,7 +941,7 @@ if (isNaN(thc)) throw "VectSphHit thc NaN";
 var _planeIntersect_diff = [0.0, 0.0, 0.0];
 function planeIntersect(planePos, planeNormal, vectOrigin, vectDirection) {
     var angleCos = v3_dot(planeNormal, vectDirection);
-    hitPoints[3] = angleCos;
+    hitPoints.set("p-v cos", angleCos);
 	if (angleCos == 0.0) {
         log("parallel");
         return false; // parallel
@@ -889,7 +949,7 @@ function planeIntersect(planePos, planeNormal, vectOrigin, vectDirection) {
 	v3_sub_res(_planeIntersect_diff, planePos, vectOrigin);
     var t = v3_dot(planeNormal, _planeIntersect_diff) / angleCos;
 
-    hitPoints[4] = t;
+    hitPoints.set("p-v t", t);
     if (t < -0.0) return false; // derriere    
 	return t;
 }
