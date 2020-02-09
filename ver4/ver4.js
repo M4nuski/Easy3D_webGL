@@ -474,7 +474,7 @@ function sphAnimR() { // test and lock (pass 2)
                             var n = [this.target.CD_sph_p[0][0] - scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - scn.entities[i].CD_sph_p[j][2] ];
                             //colList.push([i, j, penetration, "sph", "sph", n]);
                               splos.moveCursorTo(this.target.position);
-                            this.spd = v3_reflect_mod(this.spd, n);
+                            v3_reflect_mod(this.spd, n);
                             v3_addscaled_mod(this.target.position, n, penetration);
                             this.target.resetMatrix();
                               splos.addLineTo(this.target.position, false);
