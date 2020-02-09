@@ -138,11 +138,11 @@ class E3D_input {
         this.keyMap.set("rx_dec", "KeyT");
         this.keyMap.set("rx_inc", "KeyG");
         
-        this.keyMap.set("ry_dec", "KeyQ");
-        this.keyMap.set("ry_inc", "KeyE");
+        this.keyMap.set("ry_dec", "KeyG");
+        this.keyMap.set("ry_inc", "KeyJ");
 
-        this.keyMap.set("rz_dec", "KeyZ");
-        this.keyMap.set("rz_inc", "KeyX");
+        this.keyMap.set("rz_dec", "KeyY");
+        this.keyMap.set("rz_inc", "KeyH");
 
         // "custom" commands, binds can be added for anything
         this.keyMap.set("action0", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);

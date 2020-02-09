@@ -33,7 +33,6 @@ class E3D_animation {
         this.ttl = 0;
 
         // Custom data
-        this.data = {}; // to store custom data through the animation
         this.last_position = v3_new();
         this.delta_position = v3_new();
         this.mainVector = v3_new();
@@ -48,9 +47,15 @@ class E3D_animation {
         // For CD
         this.delta = [0, 0, 0]; // Position delta
         this.deltaLength = -1; // length of this.delta during animation step for culling, -1 anim target is not a source
-        this.closestCollision = []; // targetIndex, t0, n, hitPos, hitDescriptionText
-        this.candidates = []; // for all other entities, bool to test for CD
-        this.lastHitIndex = "";
+
+        this.collisionDetected = false;
+        this.closestCollision = []; // targetIndex, t0, n, hitPos, hitDescriptionText when this is the source
+
+        this.collisionFromOther = false;
+        this.otherCollision = []; // sourceIndex, t0, -n, hitPos, hitDescriptionText when this was the target
+
+        this.candidates = []; // for all other entities, bool to test for CD after culling pass
+        this.lastHitMarker = ""; // marker of last hit target
     }
 
     animateFirstPass() {

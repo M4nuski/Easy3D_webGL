@@ -19,12 +19,12 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress and next steps
 ----------
-* Collision detection (vector/edge, sphere/cylinder, plane/cube)
+* Collision detection (point, edge, sphere, plane, box)
 * Fake physics as animations
 * --ver5:
 * flatten engine to reducre nested calls and hierarchy spinning
-* Improved Collision Detection/Interpolation (vector/edge, elipsoid, cuboid, cylinder, mesh)
-* Other type of physics mechanic for controls. (chase camera/3rd person)
+* Improved Collision Detection with Interpolation (point, edge, sphere, box, triangles)
+* Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
 * --Some kind of game:
 * Path interpolation for bots and animations.
 * Basic AI
@@ -68,8 +68,8 @@ Interpolations
 -----------
 * Point : vector
 * Edge : plane
-* Sphere : pill
+* Sphere : capsule
 * Plane : box
-* Cube : box
+* Box : box
 
 -M4nuski

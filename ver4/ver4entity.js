@@ -10,7 +10,7 @@ class E3D_entity {
 
         this.id = id; // to find object in list
         this.visible = false;
-        this.dynamic = dynamic; // Static (non-dynamic) entities have their data pushedd to the GPU memory only once when added to scene.
+        this.dynamic = dynamic; // Static (non-dynamic) entities have their data pushed to the GPU memory only once when added to scene.
                                 // Dynamic entities can have their data modified on the fly (with performance cost).
 
         this.dataContentChanged = false; // GPU buffers will be updated  
@@ -21,7 +21,7 @@ class E3D_entity {
         this.rotation = v3_new();
 
         // fustrum culling
-        this.vis_culling = true;
+        this.vis_culling = true; // Setting to false will force the entity to always be redrawn
         this.cull_dist = 0; // maximum vertex distance from object center for culling
         
         // Computed matrix
@@ -33,7 +33,30 @@ class E3D_entity {
         this.drawMode = 4;//gl.TRIANGLES;
 
         // GL buffer data stores
-        // TODO: combine to single data store (v1 v2 v3 n1 n2 n3 u v) 
+        // TODO: combine to single data store (v1 v2 v3 n1 n2 n3 u  v  pad = face // smooth shaded
+        //                                      3  3  3  3  3  3 1  1  4   = (20) 24 float = 96 bytes
+        //    in color mode instead of texture v1 v2 v3 n1 n2 n3 r  g  b  a (22) 24
+        //    stroke mode                      v1 v2  c pad // 8 float = 32 bytes
+        //    face flat shaded textured        v1 v2 v3 n  u  v    14 floats
+        //    face flat shaded color           v1 v2 v3 n  r g b a 16 floats
+
+        // _dataOffset_v1 = 0
+        // _dataOffset_v2 = 3
+        // _dataOffset_v3 = 6
+        // _dataOffset_n1 = 9
+        // _dataOffset_n2 = 12
+        // _dataOffset_n3 = 15
+
+        // _dataOffset_u = 18
+        // _dataOffset_v = 19
+        // _dataOffsetDummy = 20 21 22 23
+
+        // _dataOffset_r = 18
+        // _dataOffset_g = 19
+        // _dataOffset_b = 20
+        // _dataOffset_a = 21
+        // _dataOffsetDummy = 22 23
+
         this.vertexBuffer;
         this.normalBuffer;
         this.colorBuffer; // TODO replace by texture
@@ -50,6 +73,13 @@ class E3D_entity {
         this.filename = filename;
 
         this.collisionDetection = false;
+        // TODO isCollisionSource
+        // TODO isCollisionTarget
+        // TODO isCollisionCullable ??
+        // TODO isAnimated
+        // TODO isVisible
+        // TODO isVisibiltyCullable
+        // TODO isTransparent // z-sort before render, dont write to depth buffer
      
         // TODO new CD shapes 
         /*
@@ -64,26 +94,24 @@ class E3D_entity {
             CD_sphere
                 Source and Target
                 Interpolate as capsule
+                
+            CD_triangle
+                Source and Target
+                Interpolated first in capsule with other triangles
 
-            CD_iPlane (infinite plane)
+            CD_plane
                 Target
                 No Interpolation (static)
                 
-            CD_plane (rectangle)
-                Target
-                No Interpolation (static)
-
             CD_box (not aligned)
                 Target
                 No Interpolation (static)
                 optional bottom (dont CD bottom plane and 4 bottom edges)
-
-            CD_triangle
-                Source and Target
-                Interpolated first in capsule with other triangles
         */
 
         // Collision Detection / Hit Test Data (faster split in different array than accessing single object.array[i].property)
+        // TODO test multi dimensional array
+
             // Vector Source (arrow)
             this.CD_vec = 0;
             this.CD_vec_p0 = []; // original to model space
@@ -107,21 +135,17 @@ class E3D_entity {
             this.CD_sph_rs = []; // radius squared
 
             // Infinite Plane Target, on X-Y plane
-            this.CD_iPlane = 0;
-            this.CD_iPlane_n0 = []; // normal original to model space
-            this.CD_iPlane_n  = []; // normal transformed to world space (rotation)
-            this.CD_iPlane_d  = []; // z distance original to model space
-
-            // Finite Plane Target, X-Y plane 
-            this.CD_fPlane = 0;
-            this.CD_fPlane_n0 = []; // normal original to model space
-            this.CD_fPlane_n  = []; // normal transformed to world space (rotation)
-            this.CD_fPlane_d0 = []; // center position original to model space
-            this.CD_fPlane_d  = []; // transformed to world space (rotation)
-            this.CD_fPlane_w0 = []; // half width vector original to model space
-            this.CD_fPlane_w  = []; // transformed to world space (rotation)
-            this.CD_fPlane_h0 = []; // half height vector original to model space
-            this.CD_fPlane_h  = []; // transformed to world space (rotation)
+            this.CD_plane = 0;
+            this.CD_plane_p0 = []; // center position original to model space
+            this.CD_plane_p  = []; // transformed to world space
+            this.CD_plane_n0 = []; // surface normal original to model space
+            this.CD_plane_n  = []; // surface normal transformed to world space (rotation)
+            this.CD_plane_w0 = []; // half-width normal original to model space
+            this.CD_plane_w  = []; // half-width normal transformed to world space (rotation)
+            this.CD_plane_h0 = []; // half-height normal original to model space
+            this.CD_plane_h  = []; // half-height normal transformed to world space (rotation)
+            this.CD_plane_halfWidth  = [];
+            this.CD_plane_halfHeight = [];
 
             // TODO Box Target
             this.CD_cube = 0;
@@ -133,6 +157,8 @@ class E3D_entity {
             this.CD_cube_y  = []; // transformed to world space (rotation)
             this.CD_cube_z0 = []; // half size on Z vector original to model space
             this.CD_cube_z  = []; // transformed to world space (rotation)
+            this.CD_cube_bottom = []; // bool to include bottom face
+            this.CD_cube_corners = []; // TODO 8 corners for edge testing array(per cube) of array(per corner) of array (v3)
 
 
         this.resetMatrix();
@@ -178,22 +204,18 @@ class E3D_entity {
             this.CD_sph_r = entity.CD_sph_r.slice();
             this.CD_sph_rs = entity.CD_sph_rs.slice();
         }
-        if (entity.CD_iPlane > 0) {
-            this.CD_iPlane = entity.CD_iPlane;
-            this.CD_iPlane_d  = entity.CD_iPlane_d.slice();
-            this.CD_iPlane_n0 = v3a_clone(entity.CD_iPlane_n0);
-            this.CD_iPlane_n  = v3a_clone(entity.CD_iPlane_n);
-        }
-        if (entity.CD_fPlane > 0) {
-            this.CD_fPlane = entity.CD_fPlane;
-            this.CD_fPlane_d0 = v3a_clone(entity.CD_fPlane_d0);
-            this.CD_fPlane_d  = v3a_clone(entity.CD_fPlane_d);
-            this.CD_fPlane_n0 = v3a_clone(entity.CD_fPlane_n0);
-            this.CD_fPlane_n  = v3a_clone(entity.CD_fPlane_n);
-            this.CD_fPlane_w0 = v3a_clone(entity.CD_fPlane_w0);
-            this.CD_fPlane_w  = v3a_clone(entity.CD_fPlane_w);
-            this.CD_fPlane_h0 = v3a_clone(entity.CD_fPlane_h0);
-            this.CD_fPlane_h  = v3a_clone(entity.CD_fPlane_h);
+        if (entity.CD_plane > 0) {
+            this.CD_plane = entity.CD_plane;
+            this.CD_plane_p0 = v3a_clone(entity.CD_plane_p0);
+            this.CD_plane_p  = v3a_clone(entity.CD_plane_p);
+            this.CD_plane_n0 = v3a_clone(entity.CD_plane_n0);
+            this.CD_plane_n  = v3a_clone(entity.CD_plane_n);
+            this.CD_plane_w0 = v3a_clone(entity.CD_plane_w0);
+            this.CD_plane_w  = v3a_clone(entity.CD_plane_w);
+            this.CD_plane_h0 = v3a_clone(entity.CD_plane_h0);
+            this.CD_plane_h  = v3a_clone(entity.CD_plane_h);
+            this.CD_plane_halfWidth  = entity.CD_plane_halfWidth.slice();
+            this.CD_plane_halfHeight = entity.CD_plane_halfHeight.slice();
         }
         if (entity.CD_cube > 0) {
             this.CD_cube = entity.CD_cube;
@@ -264,14 +286,11 @@ class E3D_entity {
             for (var i = 0; i < this.CD_sph; ++i) {
                 v3_applym4_res(this.CD_sph_p[i], this.CD_sph_p0[i], this.modelMatrix);
             }
-            for (var i = 0; i < this.CD_iPlane; ++i) {
-                v3_applym4_res(this.CD_iPlane_n[i], this.CD_iPlane_n0[i], this.normalMatrix);
-            }
-            for (var i = 0; i < this.CD_fPlane; ++i) {
-                v3_applym4_res(this.CD_fPlane_n[i], this.CD_fPlane_n0[i], this.normalMatrix);
-                v3_applym4_res(this.CD_fPlane_d[i], this.CD_fPlane_d0[i], this.modelMatrix);
-                v3_applym4_res(this.CD_fPlane_w[i], this.CD_fPlane_w0[i], this.normalMatrix);
-                v3_applym4_res(this.CD_fPlane_h[i], this.CD_fPlane_h0[i], this.normalMatrix);
+            for (var i = 0; i < this.CD_plane; ++i) {
+                v3_applym4_res(this.CD_plane_p[i], this.CD_plane_p0[i], this.modelMatrix);
+                v3_applym4_res(this.CD_plane_n[i], this.CD_plane_n0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_plane_w[i], this.CD_plane_w0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_plane_h[i], this.CD_plane_h0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_cube; ++i) {
                 v3_applym4_res(this.CD_cube_p[i], this.CD_cube_p0[i], this.modelMatrix);
@@ -282,7 +301,7 @@ class E3D_entity {
         }
     }
 
-    pushCD_vec(p, v) {
+    pushCD_vec(p, v) { // TODO replace by point
         this.CD_vec_p0[this.CD_vec] = v3_clone(p);
         this.CD_vec_p[this.CD_vec] = v3_clone(p);
         
@@ -314,37 +333,33 @@ class E3D_entity {
         this.CD_sph += 1;
         this.collisionDetection = true;
     }
-    pushCD_iPlane(d, n) {
-        this.CD_iPlane_d[this.CD_iPlane] = d; 
-        this.CD_iPlane_n0[this.CD_iPlane] = v3_clone(n);
-        this.CD_iPlane_n[this.CD_iPlane] = v3_clone(n);
 
-        this.CD_iPlane += 1;
-        this.collisionDetection = true;
-    }
-    pushCD_fPlane(d, hw, hh, n) {
-        this.CD_fPlane_n0[this.CD_fPlane] = v3_clone(n); // normal of plane face
-        this.CD_fPlane_n[this.CD_fPlane] = v3_clone(n);  
-        this.CD_fPlane_d0[this.CD_fPlane] = v3_clone(d); // position offset of plane
-        this.CD_fPlane_d[this.CD_fPlane] = v3_clone(d);  
-        this.CD_fPlane_w0[this.CD_fPlane] = v3_clone(hw); // width
-        this.CD_fPlane_w[this.CD_fPlane] = v3_clone(hw);
-        this.CD_fPlane_h0[this.CD_fPlane] = v3_clone(hh); // height
-        this.CD_fPlane_h[this.CD_fPlane] = v3_clone(hh);
-        
-        this.CD_fPlane += 1;
+    pushCD_plane(p, n, wn, hn, w, h) {
+        this.CD_plane_p0[this.CD_plane] = v3_clone(p); // position offset of plane
+        this.CD_plane_p[this.CD_plane] = v3_clone(p);  
+        this.CD_plane_n0[this.CD_plane] = v3_clone(n); // normal of plane face
+        this.CD_plane_n[this.CD_plane] = v3_clone(n);  
+        this.CD_plane_w0[this.CD_plane] = v3_clone(wn); // width
+        this.CD_plane_w[this.CD_plane] = v3_clone(wn);
+        this.CD_plane_h0[this.CD_plane] = v3_clone(hn); // height
+        this.CD_plane_h[this.CD_plane] = v3_clone(hn);
+        this.CD_plane_halfWidth[this.CD_plane] = w;
+        this.CD_plane_halfHeight[this.CD_plane] = h;
+
+        this.CD_plane += 1;
         this.collisionDetection = true;
     }
 
-    pushCD_cube(p, x, y, z) {
+    pushCD_cube(p, hx, hy, hz, bottom) {
         this.CD_cube_p0[this.CD_cube] = v3_clone(p); 
         this.CD_cube_p[this.CD_cube] = v3_clone(p); 
-        this.CD_cube_x0[this.CD_cube] = v3_clone(x); 
-        this.CD_cube_x[this.CD_cube] = v3_clone(x); 
-        this.CD_cube_y0[this.CD_cube] = v3_clone(y); 
-        this.CD_cube_y[this.CD_cube] = v3_clone(y); 
-        this.CD_cube_z0[this.CD_cube] = v3_clone(z); 
-        this.CD_cube_z[this.CD_cube] = v3_clone(z); 
+        this.CD_cube_x0[this.CD_cube] = v3_clone(hx); 
+        this.CD_cube_x[this.CD_cube] = v3_clone(hx); 
+        this.CD_cube_y0[this.CD_cube] = v3_clone(hy); 
+        this.CD_cube_y[this.CD_cube] = v3_clone(hy); 
+        this.CD_cube_z0[this.CD_cube] = v3_clone(hz); 
+        this.CD_cube_z[this.CD_cube] = v3_clone(hz); 
+        // TODO bottom and corners
 
         this.CD_cube += 1;
         this.collisionDetection = true;
@@ -583,7 +598,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.setColor3f(idx, color);
     }
 
-    addPlane(pos, rot, width, height, numSubdiv, color = [1,1,1], addIPCD = false, addFPCD = false) {
+    addPlane(pos, rot, width, height, numSubdiv, color = [1,1,1], addCD = false) {
         let idx = this.numElements;
 
         width = width / 2;
@@ -685,33 +700,44 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             }
         } 
 
-        if (addIPCD) {
+        if (addCD) {
 
             let n = [0, 0, 1];
-            
-            m = m4_rotationZ_new(rot[2]);
-            m4_rotateX_mod(m, rot[0]);
-            m4_rotateY_mod(m, rot[1]);
+            let w = [1, 0, 0];
+            let h = [0, 1, 0];
 
-            v3_applym4_mod(n, m);
+            let rm = m4_rotationZ_new(rot[2]);
+            m4_rotateX_mod(rm, rot[0]);
+            m4_rotateY_mod(rm, rot[1]);
 
-            this.pushCD_iPlane(v3_dot(pos, n), n);
-        }
-        if (addFPCD) {
+            v3_applym4_mod(n, rm);
+            v3_applym4_mod(w, rm);
+            v3_applym4_mod(h, rm);
 
-            let n = [0, 0, 1];
-            let w = [1/width, 0, 0];
-            let h = [0, 1/height, 0];
+            this.pushCD_plane(pos, n, w, h, width, height);
 
-            m = m4_rotationZ_new(m, rot[2]);
-            m4_rotateX_mod(m, rot[0]);
-            m4_rotateY_mod(m, rot[1]);
+            let p = [-width, height, 0];
+            n = [1, 0, 0];
+            v3_applym4_mod(p, m);
+            v3_applym4_mod(n, rm);
 
-            v3_applym4_mod(n, m);
-            v3_applym4_mod(w, m);
-            v3_applym4_mod(h, m);
+            this.pushCD_edge(p, n, width * 2);
 
-            this.pushCD_fPlane(pos, h, w, n);
+            p = [-width, -height, 0];
+            v3_applym4_mod(p, m);
+
+            this.pushCD_edge(p, n, width * 2);
+
+            p = [-width, -height, 0];
+            n = [0, 1, 0];
+            v3_applym4_mod(p, m);
+            v3_applym4_mod(n, rm);
+            this.pushCD_edge(p, n, height * 2);
+
+            p = [width, -height, 0];
+            v3_applym4_mod(p, m);
+            this.pushCD_edge(p, n, height * 2);
+
         }
     }
 
