@@ -51,7 +51,7 @@ class E3D_animation {
         this.collisionDetected = false;
         this.closestCollision = []; // targetIndex, t0, n, hitPos, hitDescriptionText when this is the source
 
-        this.collisionFromOther = false;
+        this.collisionFromOther = false; // TODO in entity because source cannot find target's source animation....
         this.otherCollision = []; // sourceIndex, t0, -n, hitPos, hitDescriptionText when this was the target
 
         this.candidates = []; // for all other entities, bool to test for CD after culling pass

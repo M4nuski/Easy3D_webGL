@@ -4,6 +4,7 @@
 
 "use strict"
 
+
 // Base class for static entity, optionnally dynamic
 class E3D_entity {
     constructor(id, filename, dynamic = false) {
@@ -72,10 +73,14 @@ class E3D_entity {
         //this.textureID = ""; // todo        
         this.filename = filename;
 
+
+        // Animation
+        this.animIndex = -1;
+
         this.collisionDetection = false;
         // TODO isCollisionSource
         // TODO isCollisionTarget
-        // TODO isCollisionCullable ??
+        // TODO isCollisionCullable ??  pre-cull expensive collision with sph first 
         // TODO isAnimated
         // TODO isVisible
         // TODO isVisibiltyCullable
@@ -110,7 +115,6 @@ class E3D_entity {
         */
 
         // Collision Detection / Hit Test Data (faster split in different array than accessing single object.array[i].property)
-        // TODO test multi dimensional array
 
             // Vector Source (arrow)
             this.CD_vec = 0;
@@ -159,7 +163,11 @@ class E3D_entity {
             this.CD_cube_z  = []; // transformed to world space (rotation)
             this.CD_cube_bottom = []; // bool to include bottom face
             this.CD_cube_corners = []; // TODO 8 corners for edge testing array(per cube) of array(per corner) of array (v3)
-
+            // tfl tfr tbl tbr 
+            // if bottom: bfl bfr bbl bbr
+            this.CD_plane_halfWidth  = []; //x
+            this.CD_plane_halfHeight = []; //y
+            this.CD_plane_halfDepth = [];  //z 
 
         this.resetMatrix();
     } 
