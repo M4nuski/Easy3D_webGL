@@ -15,6 +15,7 @@ const dataElement = document.getElementById("dataDiv");
 
 const range1 = document.getElementById("myRange1");
 const range2 = document.getElementById("myRange2");
+const range3 = document.getElementById("myRange3");
 
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
@@ -362,6 +363,7 @@ function prepRender() {
     DEV_markers.addWireSphere(v2, edge2_r*2, [1, 1, 1], 32, false, 5);
 
 
+    dev_CD.addPlane([0, 30, 0],  [PIx2 * range1.value / 1000, PIx2 * range2.value / 1000, PIx2 * range3.value / 1000], 256, 256, 8, [1,1,1], true);
 
 /*
       targetEdge.CD_edge_p[0]; // edge origin

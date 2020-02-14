@@ -423,7 +423,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         super(id, "E3D_entity_wireframe_canvas/"+id, true);
         this.drawMode = 1; // gl.LINES;      
         this.arraySize = 512;
-        this.arrayIncrement = 512 ;// 3 vertex * 128;
+        this.arrayIncrement = 512; // 256 lines
 
         this.vertexArray = new Float32Array(this.arraySize*3);
         this.colorArray = new Float32Array(this.arraySize*3);
@@ -476,6 +476,13 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     clear() {
         this.numElements = 0;
         this.dataContentChanged = true;
+
+        this.CD_vec = 0;
+        this.CD_edge = 0;
+        this.CD_sph = 0;
+        this.CD_plane = 0;
+        this.CD_cube = 0;
+        this.collisionDetection = false;
     }
 
     getColor3f(elem) {
@@ -616,10 +623,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         let p2 = [-width,-height, 0];
         let p3 = [-width, height, 0];
         
-        let m = m4_translation_new(pos);               
-        m4_rotateZ_mod(m, rot[2]);
+        let m = m4_translation_new(pos);
         m4_rotateX_mod(m, rot[0]);
         m4_rotateY_mod(m, rot[1]);
+        m4_rotateZ_mod(m, rot[2]);
 
         v3_applym4_mod(p0, m);
         v3_applym4_mod(p1, m);
@@ -714,9 +721,9 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             let w = [1, 0, 0];
             let h = [0, 1, 0];
 
-            let rm = m4_rotationZ_new(rot[2]);
-            m4_rotateX_mod(rm, rot[0]);
+            let rm = m4_rotationX_new(rot[0]);
             m4_rotateY_mod(rm, rot[1]);
+            m4_rotateZ_mod(rm, rot[2]);
 
             v3_applym4_mod(n, rm);
             v3_applym4_mod(w, rm);
@@ -751,28 +758,15 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
     addCylinder(location, dia, height, color, sides = 8, sideLineStep = 1, sections = 1, addCD = false) {
         dia = dia / 2;
-       // if (addSphCD) this.pushCD_sph(location, dia);
 
         let idx = this.numElements;
-      //  var x=0, y=0, z=0;
 
-  //    var baseOffset = PIdiv2 / numSegments;
+        if (sections < 1) sections = 1;
+        this.increaseSize((sides * 6) + (sides * 2 * (sections-1)));
 
-//      var matX = m4_new();
-      
- //     for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
-          if (sections < 1) sections = 1;
-          this.increaseSize((sides * 6) + (sides * 2 * (sections-1)));
-
-          var si = Math.sin(0) * dia;
-          var ci = Math.cos(0) * dia;
+        var si = Math.sin(0) * dia;
+        var ci = Math.cos(0) * dia;
           
-          //var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
-          
-           // m4_rotationX_res(matX, offsetAngle);
-         //   m4_rotationY_res(matY, offsetAngle);
-          //  m4_rotationZ_res(matZ, offsetAngle);  
-
         for (var i = 0; i < sides; ++i) { 
 
             var sip = Math.sin((i+1) * PIx2 / sides) * dia;
