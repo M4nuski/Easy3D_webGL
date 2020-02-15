@@ -127,9 +127,9 @@ function testShader() {
 
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
-            st = Date.now();
+            st = performance.now();
             renderA(entNum, triNum);
-            et = Date.now();
+            et = performance.now();
             delta += (et - st);
         }
         addLine("Program A delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );
@@ -144,9 +144,9 @@ function testShader() {
 
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
-            st = Date.now();
+            st = performance.now();
             renderB(entNum, triNum);
-            et = Date.now();
+            et = performance.now();
             delta += (et - st);
         }
         addLine("Program B delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );

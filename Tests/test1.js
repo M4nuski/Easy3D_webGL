@@ -59,27 +59,27 @@ t.test1 = function() {
     addLine("Num iter: " + numtst);
     addLine("Premade vec3, local");
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, lcv);
     }
-    let et = Date.now();
+    let et = performance.now();
 
     addLine("const" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, llv);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("let" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, lvv);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("var" + " : " + (et-dt));
 
@@ -87,27 +87,27 @@ t.test1 = function() {
     addLine("");
     addLine("Premade vec3, global");
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, gcv);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("const" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, glv);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("let" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, gvv);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("var" + " : " + (et-dt));
 
@@ -119,37 +119,37 @@ t.test1 = function() {
     addLine("");
     addLine("Inline");
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, [0, 0, 0]);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("array [0,0,0]" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, [lvv[0],lvv[1],lvv[2]]);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("array [v[0],v[1],v[2]]" + " : " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, vec3.fromValues(0, 0, 0));
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("vec3.fromValues(0, 0, 0)" + " : " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, vec3.fromValues(0, 0, 0));
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("vec3.fromValues()" + " : " + (et-dt));
 
@@ -158,27 +158,27 @@ t.test1 = function() {
     addLine("Local array");
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, lco);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("const" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, llo);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("let" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, lvo);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("var" + " : " + (et-dt));
 
@@ -187,27 +187,27 @@ t.test1 = function() {
     addLine("Global array");
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, gco);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("const" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, glo);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("let" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.add(v1, v1, gvo);
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("var" + " : " + (et-dt));
 
@@ -222,20 +222,30 @@ t.test2 = function() {
     const numtst = 25000000;
     addLine("Num iter: " + numtst);
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         sum += Date.now() - dt;
     }
-    let et = Date.now();
+    let et = performance.now();
 
     addLine("Date.now(): " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
+    for (let i = 0; i < numtst; ++i) {
+        sum += performance.now() - dt;
+    }
+    et = performance.now();
+
+    addLine("performance.now(): " + (et-dt));
+
+
+
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         sum += (new Date()).getTime() - dt;
     }
-    et = Date.now();
+    et = performance.now();
 
     addLine("new Date().getTime() x: " + (et-dt));
 
@@ -250,35 +260,35 @@ t.test3a = function() {
 
     addLine("Num iter: " + numtst);
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         d = vec3.fromValues(gvv[0], gvv[1], gvv[2]);
     }
-    let et = Date.now();
+    let et = performance.now();
     addLine("d = fromValues(s[])" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.copy(d, gvv);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("copy(d, s)" + " : " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         d = vec3.clone(gvv);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("d = clone(s)" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         d[0] = gvv[0];
         d[1] = gvv[1];
         d[2] = gvv[2];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("i in range [0..2] d[i] = s[i]" + " : " + (et-dt));
 
     addLine("End Test 3a");
@@ -299,35 +309,35 @@ t.test3b = function() {
     var s = vec3.fromValues(0, 0, 0);
     addLine("Num iter: " + numtst);
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         d = vec3.clone(s);
     }
-    let et = Date.now();
+    let et = performance.now();
     addLine("d = vec3.clone(s)" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         d[0] = s[0];
         d[1] = s[1];
         d[2] = s[2];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("d[i] = s[i]" + " : " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         d = s.slice();
     }
-    et = Date.now();
+    et = performance.now();
     addLine("d = s.slice();" + " : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         copy3f3f(d, s);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("copy3f3f(d, s);" + " : " + (et-dt));
 
 
@@ -344,43 +354,43 @@ t.test4 = function() {
     const numtst = 5000000;    
     addLine("Num iter: " + numtst);
     
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         mat4.translate(md, ms, v);
     }
-    let et = Date.now();
+    let et = performance.now();
     addLine("translate(md, ms, v) : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.negate(v, v);
         mat4.translate(md, ms, v);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("vec.negate(v) + translate(md, ms, v) : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         mat4.translate(md, ms, [-v[0], -v[1], -v[2]] );
     }
-    et = Date.now();
+    et = performance.now();
     addLine("translate(md, ms, [-v[]...]) : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         vec3.negate(v, v);
         mat4.translate(md, ms, v);
         vec3.negate(v, v);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("negate(v) + translate(md, ms, v) + negate(v) : " + (et-dt));
 
     let dummy = vec3.fromValues(0, 0, 0);
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         mat4.translate(md, ms, vec3.negate(dummy, v));
     }
-    et = Date.now();
+    et = performance.now();
     addLine("translate(md, ms, negate(dummy, v)) : " + (et-dt));
 
     addLine("End Test 4");
@@ -407,28 +417,28 @@ t.test5a = function() {
     }
     
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) var x = Math.floor(Math.random() * numItem);
-    let et = Date.now();
+    let et = performance.now();
     addLine("random number gen time: " + (et-dt));
 
 
     var dummy;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         dummy = ar[x];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("random access array: " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         dummy = ma.get(x);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("random access map: " + (et-dt));  
 
 
@@ -456,17 +466,17 @@ t.test5b = function() {
     
 
     var dummy;
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         for (let j = 0; j < numItem; ++j) {
             dummy = ar[j];
         }
     }
-    let et = Date.now();
+    let et = performance.now();
     addLine("sequential access array: " + (et-dt));
 
 
-    dt = Date.now();    
+    dt = performance.now();    
     for (let i = 0; i < numtst; ++i) {
         var itr = ma.values();
         var v = itr.next();
@@ -475,17 +485,17 @@ t.test5b = function() {
             v = itr.next();
         }
     }
-    et = Date.now();
+    et = performance.now();
     addLine("sequential access while (!itr.next().done): " + (et-dt));  
 
 
-    dt = Date.now();    
+    dt = performance.now();    
     for (let i = 0; i < numtst; ++i) {
         for (var [val, done] of ma) {
             dummy = val;
         }
     }
-    et = Date.now();
+    et = performance.now();
     addLine("sequential access for [val, done] of map: " + (et-dt));  
 
    addLine("End Test 5b");
@@ -512,15 +522,15 @@ t.test5c = function() {
     }
    
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) var x = Math.floor(Math.random() * numItem);
-    let et = Date.now();
+    let et = performance.now();
     addLine("random number gen time: " + (et-dt));
 
 
     var dummy;
     let idx = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         for (let j = 0; j < ar.length; ++j) {
@@ -531,25 +541,25 @@ t.test5c = function() {
         }
         dummy = ar[idx];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("array search by for: " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         dummy = ar[ar.indexOf(x)];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("array search by indexOf: " + (et-dt));
 
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = Math.floor(Math.random() * numItem);
         dummy = ma.get(x);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("random access map: " + (et-dt));  
 
 
@@ -577,25 +587,25 @@ t.test6 = function() {
     var ia = _ia.slice(0, numtst);
     var na = _na.slice(0, numtst);
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = reflect1(ia[i], na[i]);
         var r = x[0] + x[1] + x[2];
     }
 
-    let et = Date.now();
+    let et = performance.now();
     addLine("reflect1: " + (et-dt));
 
     ia = _ia.slice(0, numtst);
     na = _na.slice(0, numtst);
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
       var x = reflect2(ia[i], na[i]);
       var r = x[0] + x[1] + x[2];
     }
 
-    et = Date.now();
+    et = performance.now();
     addLine("reflect2: " + (et-dt));
 
 
@@ -604,14 +614,14 @@ t.test6 = function() {
     var ra = _ra.slice(0, numtst);
     var r = 0;
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = VectSphHit_geo(ia[i], na[i], ra[i]);
         if (x != false) r += x;
 
     }
 
-    et = Date.now();
+    et = performance.now();
     addLine("VectSphHit_geo: " + (et-dt));
 
 
@@ -620,14 +630,14 @@ t.test6 = function() {
     ra = _ra.slice(0, numtst);
     r = 0;
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         var x = VectSphHit_quad(ia[i], na[i], ra[i]);
         if (x != false) r += x;
 
     }
 
-    et = Date.now();
+    et = performance.now();
     addLine("VectSphHit_quad: " + (et-dt));
 
     addLine("End Test 6");
@@ -724,155 +734,155 @@ t.test7 = function() {
     var a1 = [1, 1, 1];
     var a2 = [2, 2, 2];
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s += a1[idx[i]];
     }
-    let et = Date.now();
+    let et = performance.now();
     addLine("[1, 1, 1] rnd access: " + (et-dt));
 
      s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s += a1[0];
         s += a1[2];
         s += a1[3];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("[1, 1, 1] x3 access: " + (et-dt));
 
     s = 0;
     var f1 = new Float32Array([1, 1, 1]);
     var f2 = new Float32Array([2, 2, 2]);
 
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s += f1[idx[i]];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("Float32Array([1, 1, 1]) rnd access: " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s += f1[0];
         s += f1[1];
         s += f1[2];
     }
-    et = Date.now();
+    et = performance.now();
     addLine("Float32Array([1, 1, 1]) x3 access: " + (et-dt));
 
 
     s = 0;
     var o1 = { a0: 1, a1 : 2, a2 : 3 };
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = new Float32Array(3);
         s[0]=1;
         s[1]=2;
         s[2]=3;
     }
-    et = Date.now();
+    et = performance.now();
     addLine("access o.a0 o.a1, o.a2: " + (et-dt));
 
 
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s += a1[idx[i]] + a2[idx[i]]; 
         s += a2[idx[i]] + a1[idx[i]]; 
     }
-    et = Date.now();
+    et = performance.now();
     addLine("add [1, 1, 1]: " + (et-dt));
 
 
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s += f1[idx[i]] + f2[idx[i]]; 
         s += f2[idx[i]] + f1[idx[i]]; 
     }
-    et = Date.now();
+    et = performance.now();
     addLine("add Float32Array: " + (et-dt));
 
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s += f1[idx[i]] + a2[idx[i]]; 
         s += f2[idx[i]] + a1[idx[i]]; 
     }
-    et = Date.now();
+    et = performance.now();
     addLine("add mix: " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = [1, 2, 3]; 
     }
-    et = Date.now();
+    et = performance.now();
     addLine("create [1, 2, 3]: " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = []; 
         s[0]=1;
         s[1]=2;
         s[2]=3;
     }
-    et = Date.now();
+    et = performance.now();
     addLine("create [] +  [0]=1 [1]=2 [2]=3: " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = []; 
         s.push(1);
         s.push(2);
         s.push(3);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("create [] + push(1) push(2) push(3): " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = Array(3);
         s[0]=1;
         s[1]=2;
         s[2]=3;
     }
-    et = Date.now();
+    et = performance.now();
     addLine("create Array(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = Array(1, 2, 3);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("create Array(1, 2, 3): " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = new Float32Array([1, 2, 3]);
     }
-    et = Date.now();
+    et = performance.now();
     addLine("create FloatArray([1, 2, 3]): " + (et-dt));
 
     s = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s = new Float32Array(3);
         s[0]=1;
         s[1]=2;
         s[2]=3;
     }
-    et = Date.now();
+    et = performance.now();
     addLine("create FloatArray(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
 
     addLine("End Test 7");
@@ -891,40 +901,40 @@ t.test8 = function() {
   //  var a1 = [1, 1, 1];
   //  var a2 = [2, 2, 2];
 
-    let dt = Date.now();
+    let dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s.push([1,2,3]);
     }
-    let et = Date.now();
+    let et = performance.now();
     addLine("push([1, 1, 1]) : " + (et-dt));
 
 
     s = [];
     var idx = 0;
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s[idx] = [1, 2, 3];
         idx++
     }
-    et = Date.now();
+    et = performance.now();
     addLine("holed idx++: " + (et-dt));
 
     idx = 0;
     var inc = 1000000;
     s = Array(inc);
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s[idx] = [1, 2, 3];
         idx++;
     }
-    et = Date.now();
+    et = performance.now();
     addLine("start at inc, then holed : " + (et-dt));
 
     idx = 0;
     inc = 1000;
     var l = inc;
     s = Array(inc);
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s[idx] = [1, 2, 3];
         idx++;
@@ -933,7 +943,7 @@ t.test8 = function() {
             l += inc;
         }
     }
-    et = Date.now();
+    et = performance.now();
     addLine("length+= inc: " + (et-dt));
 
     /*
@@ -941,7 +951,7 @@ t.test8 = function() {
     inc = 1000;
     l = inc;
     s = Array(inc);
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s[idx] = [1, 2, 3];
         idx++;
@@ -950,7 +960,7 @@ t.test8 = function() {
             l += inc;
         }
     }
-    et = Date.now();
+    et = performance.now();
     addLine("concat(array(inc)) : " + (et-dt));
 */
     addLine("concat(array(inc)) : NOPE");
@@ -960,13 +970,13 @@ t.test8 = function() {
     inc = 1000000;
     var x = 0;
     s = Array(inc);
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s[idx] = [1, 2, 3, 4, 5];
         x += s[idx][0] + s[idx][1] + s[idx][2] + s[idx][3] + s[idx][4] ; 
         idx++;
     }
-    et = Date.now();
+    et = performance.now();
     addLine("s[a,b,c] read s[0]+s[1]+s[2] " + (et-dt));
 
     idx = 0;
@@ -977,7 +987,7 @@ t.test8 = function() {
     var s2 = Array(inc);
     var s3 = Array(inc);
     var s4 = Array(inc);
-    dt = Date.now();
+    dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
         s0[idx] = 1;
         s1[idx] = 2;
@@ -987,7 +997,7 @@ t.test8 = function() {
         x += s0[idx] + s1[idx] + s2[idx] + s3[idx] + s4[idx]; 
         idx++;
     }
-    et = Date.now();
+    et = performance.now();
     addLine("s0=a, s1=b, s2=c read s0+s1+s2 " + (et-dt));
 
     addLine("End Test 8");
@@ -1045,20 +1055,20 @@ t.test9 = function() {
 
     var mo = 0;
     var le = 0;
-    var dt = Date.now();
+    var dt = performance.now();
     for (var iter = 0; iter < numtst; ++iter)
         for (var x= 0; x < 10; ++x) {
         if ( obj1["prop" + x] >= 5) mo++;
         if ( obj1["prop" + x] < 5) le++;
     }
-    var et = Date.now();
+    var et = performance.now();
     addLine("prop list, concat string : " + (et-dt) + " mo: " + mo + " le: " + le);
 
 
 
     mo = 0;
     le = 0;
-    var dt = Date.now();
+    var dt = performance.now();
     for (var iter = 0; iter < numtst; ++iter) {
         if ( obj1["prop0"] >= 5) mo++;
         if ( obj1["prop0"] < 5) le++;
@@ -1091,13 +1101,13 @@ t.test9 = function() {
         if ( obj1["prop9"] < 5) le++;
 
     }
-    var et = Date.now();
+    var et = performance.now();
     addLine("prop list, direct string : " + (et-dt) + " mo: " + mo + " le: " + le);
 
 
     mo = 0;
     le = 0;
-    var dt = Date.now();
+    var dt = performance.now();
     for (var iter = 0; iter < numtst; ++iter) {
         if ( obj1.prop0 >= 5) mo++;
         if ( obj1.prop0 < 5) le++;
@@ -1130,31 +1140,31 @@ t.test9 = function() {
         if ( obj1.prop9 < 5) le++;
 
     }
-    var et = Date.now();
+    var et = performance.now();
     addLine("prop normal access : " + (et-dt) + " mo: " + mo + " le: " + le);
 
 
     
     mo = 0;
     le = 0;    
-    dt = Date.now();
+    dt = performance.now();
     for (var iter = 0; iter < numtst; ++iter) for (var x= 0; x < 10; ++x) { 
         if ( obj2.prop[x] >= 5) mo++;
         if ( obj2.prop[x] < 5) le++;
     }
 
-    et = Date.now();
+    et = performance.now();
     addLine("obj.array[iter] : " + (et-dt) + " mo: " + mo + " le: " + le);
 
     mo = 0;
     le = 0;    
-    dt = Date.now();
+    dt = performance.now();
     for (var iter = 0; iter < numtst; ++iter) for (var x= 0; x < 10; ++x) { 
         if ( obj3[x] >= 5) mo++;
         if ( obj3[x] < 5) le++;
     }
 
-    et = Date.now();
+    et = performance.now();
     addLine("obj[iter] : " + (et-dt) + " mo: " + mo + " le: " + le);
 
     addLine("End Test 9");
@@ -1179,48 +1189,48 @@ t.test10 = function() {
 
     let sum = 0;
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var h = 0; h < numtst; ++h) 
         for (var i = 0; i < numtst; ++i) 
             for (var j = 0; j < numtst; ++j) 
                 for (var k = 0; k < numtst; ++k) sum += arr[k];
 
-    var et = Date.now();
+    var et = performance.now();
     addLine("var ++iter : " + (et-dt) + " sum: " + sum);
 
     sum = 0;
 
-    dt = Date.now();
+    dt = performance.now();
 
     for (var h = 0; h < numtst; ++h)
         for (let i = 0; i < numtst; ++i)
             for (let j = 0; j < numtst; ++j)
                 for (let k = 0; k < numtst; ++k) sum += arr[k];
 
-    et = Date.now();
+    et = performance.now();
     addLine("let ++iter : " + (et-dt) + " sum: " + sum);
 
 
     sum = 0;
-    var dt = Date.now();
+    var dt = performance.now();
 
     for (var h = 0; h < numtst; h++)
         for (var i = 0; i < numtst; i++)
             for (var j = 0; j < numtst; j++)
                 for (var k = 0; k < numtst; k++) sum += arr[k];
 
-    var et = Date.now();
+    var et = performance.now();
     addLine("var iter++ : " + (et-dt) + " sum: " + sum);
 
     sum = 0;
-    dt = Date.now();
+    dt = performance.now();
 
     for (var h = 0; h < numtst; h++) 
         for (let i = 0; i < numtst; i++)
             for (let j = 0; j < numtst; j++)
                 for (let k = 0; k < numtst; k++) sum += arr[k];
 
-    et = Date.now();
+    et = performance.now();
     addLine("let iter++ : " + (et-dt) + " sum: " + sum);
 
 
@@ -1230,27 +1240,27 @@ t.test10 = function() {
     let m = 0;
     let n = 0;
     let o = 0;
-    dt = Date.now();
+    dt = performance.now();
 
     for (l = 0; l < numtst; ++l) 
         for (m = 0; m < numtst; ++m)
             for (n = 0; n < numtst; ++n)
                 for (o = 0; o < numtst; ++o) sum += arr[o];
 
-    et = Date.now();
+    et = performance.now();
     addLine("local let ++iter : " + (et-dt) + " sum: " + sum);
 
 
     sum = 0;
 
-    dt = Date.now();
+    dt = performance.now();
 
     for (e = 0; e < numtst; ++e) 
         for (f = 0; f < numtst; ++f)
             for (g = 0; g < numtst; ++g)
                 for (h = 0; h < numtst; ++h) sum += arr[h];
 
-    et = Date.now();
+    et = performance.now();
     addLine("global var ++iter : " + (et-dt) + " sum: " + sum);
 
 
@@ -1278,22 +1288,22 @@ t.test11 = function() {
 
 
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < 1; ++i) 
         for (var j = 0; j < numtst; ++j) resarr[j] = (Math.abs(arr[j]) < eps);
-    var et = Date.now();
+    var et = performance.now();
     addLine("(Math.abs(x) < eps) : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (var i = 0; i < 100; ++i) 
         for (var j = 0; j < numtst; ++j) resarr[j] = (Math.round(arr[j] / eps) != 0);  
-    et = Date.now();
+    et = performance.now();
     addLine("(Math.round(arr[j] / eps) != 0) : " + (et-dt));
 
-    dt = Date.now();
+    dt = performance.now();
     for (var i = 0; i < 100; ++i) 
         for (var j = 0; j < numtst; ++j) resarr[j] = (Math.round(arr[j] * inveps) != 0);  
-    et = Date.now();
+    et = performance.now();
     addLine("(Math.round(arr[j] * inveps) != 0) : " + (et-dt));
 
 
@@ -1331,64 +1341,64 @@ t.test12 = function() {
 
 
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) 
             for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] + f32b[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("f32 a + b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) 
             for (var j = 0; j < numNum; ++j) norr[j] = nora[j] + norb[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("nor a + b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] - f32b[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("f32 a - b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) norr[j] = nora[j] - norb[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("nor a - b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] * f32b[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("f32 a * b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) norr[j] = nora[j] * norb[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("nor a * b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] / f32b[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("f32 a / b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) norr[j] = nora[j] / norb[j];
-    var et = Date.now();
+    var et = performance.now();
     addLine("nor a / b : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) f32r[j] = Math.sqrt( f32a[j]*f32a[j] + f32b[j]*f32b[j] );
-    var et = Date.now();
+    var et = performance.now();
     addLine("f32 sqrt(a*a + b*b) : " + (et-dt));
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) norr[j] = Math.sqrt( nora[j]*nora[j] + norb[j]*norb[j] );
-    var et = Date.now();
+    var et = performance.now();
     addLine("nor sqrt(a*a + b*b) : " + (et-dt));
 
 
@@ -1416,9 +1426,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resRecalc(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resRecalc: " + (et-dt));
     t1 += (et-dt);
 
@@ -1427,9 +1437,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVar(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resLocalVar: " + (et-dt));
     t2 += (et-dt);
 
@@ -1438,9 +1448,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVarCache(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resLocalVarCache: " + (et-dt));
     t3 += (et-dt);
 
@@ -1451,9 +1461,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVarCache(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resLocalVarCache: " + (et-dt));
     t3 += (et-dt);
 
@@ -1462,9 +1472,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resRecalc(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resRecalc: " + (et-dt));
     t1 += (et-dt);
 
@@ -1473,9 +1483,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVar(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resLocalVar: " + (et-dt));
     t2 += (et-dt);
 
@@ -1487,9 +1497,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVar(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resLocalVar: " + (et-dt));
     t2 += (et-dt);
 
@@ -1498,9 +1508,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resLocalVarCache(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resLocalVarCache: " + (et-dt));
     t3 += (et-dt);
 
@@ -1509,9 +1519,9 @@ t.test13 = function() {
         a1[i] = [ rndPM(100), rndPM(100), rndPM(100) ];  
         r1[i] = [ 0, 0, 0 ]; 
     }
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_rotateX_resRecalc(r1[i], a1[i], ang1[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_rotateX_resRecalc: " + (et-dt));
     t1 += (et-dt);
     addLine("");
@@ -1545,9 +1555,9 @@ t.test14 = function() {
     var t1 = 0;
     var t2 = 0;
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resAccessAll: " + (et-dt));
     t1 += (et-dt);
 
@@ -1558,9 +1568,9 @@ t.test14 = function() {
         r[i] = [ 0, 0, 0 ]; 
     }
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resCachedAccess: " + (et-dt));
     t2 += (et-dt);
 
@@ -1571,9 +1581,9 @@ t.test14 = function() {
         r[i] = [ 0, 0, 0 ]; 
     }
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resCachedAccess: " + (et-dt));
     t2 += (et-dt);
 
@@ -1584,9 +1594,9 @@ t.test14 = function() {
         r[i] = [ 0, 0, 0 ]; 
     }
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resAccessAll: " + (et-dt));
     t1 += (et-dt);
 
@@ -1597,9 +1607,9 @@ t.test14 = function() {
         r[i] = [ 0, 0, 0 ]; 
     }
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resAccessAll: " + (et-dt));
     t1 += (et-dt);
 
@@ -1610,9 +1620,9 @@ t.test14 = function() {
         r[i] = [ 0, 0, 0 ]; 
     }
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resCachedAccess: " + (et-dt));
     t2 += (et-dt);
 
@@ -1624,9 +1634,9 @@ t.test14 = function() {
         r[i] = [ 0, 0, 0 ]; 
     }
 
-    var dt = Date.now();
+    var dt = performance.now();
     for (var i = 0; i < numtst; ++i) v3_reflect_resCachedAccess(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resCachedAccess: " + (et-dt));
     t2 += (et-dt);
 
@@ -1637,9 +1647,9 @@ t.test14 = function() {
         r[i] = [ 0, 0, 0 ]; 
     }
 
-    var dt = Date.now();
+    var dt = performance.now();
         for (var i = 0; i < numtst; ++i) v3_reflect_resAccessAll(r[i], a[i], b[i]);
-    var et = Date.now();
+    var et = performance.now();
     addLine("v3_reflect_resAccessAll: " + (et-dt));
     t1 += (et-dt);
     
@@ -1678,9 +1688,9 @@ t.test15 = function() {
             v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
             r[i] = m4_new();  
         }
-        var dt = Date.now();
+        var dt = performance.now();
             for (var i = 0; i < numtst; ++i) m4_translate_resNoCache(r[i], m[i], v[i]);
-        var et = Date.now();
+        var et = performance.now();
         t1 += (et-dt);
 
         for (let i = 0; i < numtst; ++i) {
@@ -1691,9 +1701,9 @@ t.test15 = function() {
             v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
             r[i] = m4_new();  
         }
-        var dt = Date.now();
+        var dt = performance.now();
             for (var i = 0; i < numtst; ++i) m4_translate_resCacheVect(r[i], m[i], v[i]);
-        var et = Date.now();
+        var et = performance.now();
         t2 += (et-dt);
 
         for (let i = 0; i < numtst; ++i) {
@@ -1704,9 +1714,9 @@ t.test15 = function() {
             v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
             r[i] = m4_new();  
         }
-        var dt = Date.now();
+        var dt = performance.now();
             for (var i = 0; i < numtst; ++i) m4_translate_resCacheMat(r[i], m[i], v[i]);
-        var et = Date.now();
+        var et = performance.now();
         t3 += (et-dt);
 
         for (let i = 0; i < numtst; ++i) {
@@ -1717,9 +1727,9 @@ t.test15 = function() {
             v[i] = [ rndPM(10), rndPM(10), rndPM(10) ];  
             r[i] = m4_new();  
         }
-        var dt = Date.now();
+        var dt = performance.now();
             for (var i = 0; i < numtst; ++i) m4_translate_resCacheBoth(r[i], m[i], v[i]);
-        var et = Date.now();
+        var et = performance.now();
         t4 += (et-dt);   
 
     }

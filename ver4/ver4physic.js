@@ -229,12 +229,12 @@ function initEngine() {
   //  DEV_wand.addLine([0, 0, 25], [0, 0, -25], false, [1, 1, 1]);
   //  DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
   //  DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
-  //  DEV_wand.addPlane([0, 0, -25], [0, 0, 0], 50, 50, 2, [1,1,1], true);
-  //  DEV_wand.addPlane([0, 0,  25], [0, 0, 0], 50, 50, 2, [1,1,1], true);
-    DEV_wand.addPlane([0, -25, 0], [PIdiv2, 0, 0], 150, 150, 2, [1,1,1], true);
-    DEV_wand.addPlane([0,  25, 0], [PIdiv2, 0, 0], 150, 150, 2, [1,1,1], true);
-   // DEV_wand.addPlane([-25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,1,1], true);
-   // DEV_wand.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,1,1], true);
+    DEV_wand.addPlane([0, 0, -25], [0, 0, 0], 50, 50, 2, [1,1,1], true);
+    DEV_wand.addPlane([0, 0,  25], [0, 0, 0], 50, 50, 2, [1,1,1], true);
+    DEV_wand.addPlane([0, -25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,1,1], true);
+    DEV_wand.addPlane([0,  25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,1,1], true);
+    DEV_wand.addPlane([-25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,1,1], true);
+    DEV_wand.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,1,1], true);
     DEV_wand.resetMatrix();
     DEV_wand.visible = true;
     scn.addEntity(DEV_wand);
@@ -637,6 +637,14 @@ var pathVect = [0.0, 0.0, 0.0];
 var sphOffset = [0.0, 0.0, 0.0];
 var vectOffset = [0.0, 0.0, 0.0];
 
+var DEV_cubeStartTime;
+var DEV_cube_6P_target = 5;
+hitPoints.set("CUBE_6P_nt", 0); // num tests
+hitPoints.set("CUBE_6P_nh", 0); // num hits
+hitPoints.set("CUBE_6P_tt", 0); // total time
+hitPoints.set("CUBE_6P_att", 0); // avg time per test
+hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
+
 function CheckForAnimationCollisions(self){
 
     //  [animIndex, entityIndex, t, normal, firstHitPosition] // t is fraction of self.deltaLength done when firstHit        
@@ -648,6 +656,13 @@ function CheckForAnimationCollisions(self){
         v3_invscale_res(pathVect, self.delta, self.deltaLength); // TODO preserve actual last positions, or effective delta
         
         // collision detection - self.sph to other sph (static sph target) // TODO use path to path interpolation for both
+
+        //stats
+        if (i == DEV_cube_6P_target) {
+            DEV_cubeStartTime = performance.now();
+            hitPoints.set("CUBE_6P_nt", hitPoints.get("CUBE_6P_nt") + 1);
+        }
+
         if ((self.target.CD_sph > 0) && (scn.entities[i].CD_sph > 0)) {           
 
 
@@ -960,6 +975,21 @@ function CheckForAnimationCollisions(self){
 
 
         // TODO triangle as simplification of box
+
+
+
+
+
+        //stats
+        if (i == DEV_cube_6P_target) {
+            var DEV_cubeStopTime = performance.now();
+            hitPoints.set("CUBE_6P_tt", hitPoints.get("CUBE_6P_tt") + (DEV_cubeStopTime - DEV_cubeStartTime));
+            hitPoints.set("CUBE_6P_att", hitPoints.get("CUBE_6P_tt") / hitPoints.get("CUBE_6P_nt"));    
+            if (self.collisionDetected) {
+                hitPoints.set("CUBE_6P_nh", hitPoints.get("CUBE_6P_nh") + 1);
+                hitPoints.set("CUBE_6P_ath", hitPoints.get("CUBE_6P_tt") / hitPoints.get("CUBE_6P_nh"));                
+            }
+        }
 
     } // end for each other entity perform hit test
 

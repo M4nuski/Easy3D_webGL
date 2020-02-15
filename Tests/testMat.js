@@ -236,9 +236,9 @@ t.test3 = function() {
     for (var testLoop = 0; testLoop < 6; ++testLoop) {
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
-            st = Date.now();
+            st = performance.now();
             renderA(numEnt, numVert); // view, projection, model as uniform; normal, modelView, modelViewProjection in shader
-            et = Date.now();
+            et = performance.now();
             delta += (et - st);
         }
         addLine("nbEntities: " + numEnt + " nbTri: " + numVert + " delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );
@@ -259,9 +259,9 @@ t.test3 = function() {
     for (var testLoop = 0; testLoop < 6; ++testLoop) {
         var delta = 0;
         for (var subTest = 0; subTest < 10; ++subTest) {
-            st = Date.now();
+            st = performance.now();
             renderB(numEnt, numVert); 
-            et = Date.now();
+            et = performance.now();
             delta += (et - st);
         }
         addLine("nbEntities: " + numEnt + " nbTri: " + numVert + " delta: " + (delta / 10) + " maxRPS: " + (10000 / delta) );
