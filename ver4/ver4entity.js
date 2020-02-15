@@ -151,23 +151,26 @@ class E3D_entity {
             this.CD_plane_halfWidth  = [];
             this.CD_plane_halfHeight = [];
 
-            // TODO Box Target
-            this.CD_cube = 0;
-            this.CD_cube_p0 = []; // center position original to model space
-            this.CD_cube_p  = []; // transformed to world space (rotation)
-            this.CD_cube_x0 = []; // half size on X vector original to model space
-            this.CD_cube_x  = []; // transformed to world space (rotation)
-            this.CD_cube_y0 = []; // half size on Y vector original to model space
-            this.CD_cube_y  = []; // transformed to world space (rotation)
-            this.CD_cube_z0 = []; // half size on Z vector original to model space
-            this.CD_cube_z  = []; // transformed to world space (rotation)
-            this.CD_cube_bottom = []; // bool to include bottom face
-            this.CD_cube_corners = []; // TODO 8 corners for edge testing array(per cube) of array(per corner) of array (v3)
+            // Box Target 
+            this.CD_box = 0;
+            this.CD_box_p0 = []; // center position original to model space
+            this.CD_box_p  = []; // transformed to world space
+            this.CD_box_x0 = []; // width normal X original to model space
+            this.CD_box_x  = []; // transformed to world space (rotation)
+            this.CD_box_y0 = []; // height normal Y original to model space
+            this.CD_box_y  = []; // transformed to world space (rotation)
+            this.CD_box_z0 = []; // depth normal Z original to model space
+            this.CD_box_z  = []; // transformed to world space (rotation)
+            this.CD_box_bottom = []; // bool to include bottom face
+            this.CD_box_corners0 = []; // 8 corners for edge testing array(per cube) of array(per corner) of array (v3)
+            this.CD_box_corners  = [];
+            this.CD_box_preCull_r = [];
+            // CD_box_corners[boxIndex][cornerIndex][x y z]
             // tfl tfr tbl tbr 
             // if bottom: bfl bfr bbl bbr
-            this.CD_plane_halfWidth  = []; //x
-            this.CD_plane_halfHeight = []; //y
-            this.CD_plane_halfDepth = [];  //z 
+            this.CD_box_halfWidth  = []; //x
+            this.CD_box_halfHeight = []; //y
+            this.CD_box_halfDepth  = []; //z 
 
         this.resetMatrix();
     } 
@@ -215,7 +218,7 @@ class E3D_entity {
         if (entity.CD_plane > 0) {
             this.CD_plane = entity.CD_plane;
             this.CD_plane_p0 = v3a_clone(entity.CD_plane_p0);
-            this.CD_plane_p  = v3a_clone(entity.CD_plane_p);
+           this.CD_plane_p  = v3a_clone(entity.CD_plane_p);
             this.CD_plane_n0 = v3a_clone(entity.CD_plane_n0);
             this.CD_plane_n  = v3a_clone(entity.CD_plane_n);
             this.CD_plane_w0 = v3a_clone(entity.CD_plane_w0);
@@ -225,16 +228,24 @@ class E3D_entity {
             this.CD_plane_halfWidth  = entity.CD_plane_halfWidth.slice();
             this.CD_plane_halfHeight = entity.CD_plane_halfHeight.slice();
         }
-        if (entity.CD_cube > 0) {
-            this.CD_cube = entity.CD_cube;
-            this.CD_cube_p0  = v3a_clone(entity.CD_cube_p0);
-            this.CD_cube_p = v3a_clone(entity.CD_cube_p);
-            this.CD_cube_x0  = v3a_clone(entity.CD_cube_x0);
-            this.CD_cube_x = v3a_clone(entity.CD_cube_x);
-            this.CD_cube_y0  = v3a_clone(entity.CD_cube_y0);
-            this.CD_cube_y = v3a_clone(entity.CD_cube_y);
-            this.CD_cube_z0  = v3a_clone(entity.CD_cube_z0);
-            this.CD_cube_z = v3a_clone(entity.CD_cube_z);
+        if (entity.CD_box > 0) {
+            this.CD_box = entity.CD_box;
+            this.CD_box_p0  = v3a_clone(entity.CD_box_p0);
+            this.CD_box_p = v3a_clone(entity.CD_box_p);
+            this.CD_box_x0  = v3a_clone(entity.CD_box_x0);
+            this.CD_box_x = v3a_clone(entity.CD_box_x);
+            this.CD_box_y0  = v3a_clone(entity.CD_box_y0);
+            this.CD_box_y = v3a_clone(entity.CD_box_y);
+            this.CD_box_z0  = v3a_clone(entity.CD_box_z0);
+            this.CD_box_z = v3a_clone(entity.CD_box_z);
+
+
+            this.CD_box_bottom  = entity.CD_box_bottom.slice();
+            this.CD_box_corners0 = entity.CD_box_corners0.slice();
+            this.CD_box_halfWidth  = entity.CD_box_halfWidth.slice();
+            this.CD_box_halfHeight = entity.CD_box_halfHeight.slice();
+            this.CD_box_halfDepth  = entity.CD_box_halfDepth.slice();
+            this.CD_box_preCull_r  = entity.CD_box_preCull_r.slice();
         }
 
     }
@@ -301,11 +312,12 @@ class E3D_entity {
                 v3_applym4_res(this.CD_plane_w[i], this.CD_plane_w0[i], this.normalMatrix);
                 v3_applym4_res(this.CD_plane_h[i], this.CD_plane_h0[i], this.normalMatrix);
             }
-            for (var i = 0; i < this.CD_cube; ++i) {
-                v3_applym4_res(this.CD_cube_p[i], this.CD_cube_p0[i], this.modelMatrix);
-                v3_applym4_res(this.CD_cube_x[i], this.CD_cube_x0[i], this.normalMatrix);
-                v3_applym4_res(this.CD_cube_y[i], this.CD_cube_y0[i], this.normalMatrix);
-                v3_applym4_res(this.CD_cube_z[i], this.CD_cube_z0[i], this.normalMatrix);
+            for (var i = 0; i < this.CD_box; ++i) {
+                v3_applym4_res(this.CD_box_p[i], this.CD_box_p0[i], this.modelMatrix);
+                v3_applym4_res(this.CD_box_x[i], this.CD_box_x0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_box_y[i], this.CD_box_y0[i], this.normalMatrix);
+                v3_applym4_res(this.CD_box_z[i], this.CD_box_z0[i], this.normalMatrix);
+                for (var j = 0; j < 8; ++j) v3_applym4_res(this.CD_box_corners[i][j], this.CD_box_corners0[i][j], this.modelMatrix);
             }
         }
     }
@@ -359,18 +371,64 @@ class E3D_entity {
         this.collisionDetection = true;
     }
 
-    pushCD_cube(p, hx, hy, hz, bottom) {
-        this.CD_cube_p0[this.CD_cube] = v3_clone(p); 
-        this.CD_cube_p[this.CD_cube] = v3_clone(p); 
-        this.CD_cube_x0[this.CD_cube] = v3_clone(hx); 
-        this.CD_cube_x[this.CD_cube] = v3_clone(hx); 
-        this.CD_cube_y0[this.CD_cube] = v3_clone(hy); 
-        this.CD_cube_y[this.CD_cube] = v3_clone(hy); 
-        this.CD_cube_z0[this.CD_cube] = v3_clone(hz); 
-        this.CD_cube_z[this.CD_cube] = v3_clone(hz); 
-        // TODO bottom and corners
+    pushCD_box(p, nx, ny, nz, hwidth, hheight, hdepth, bottom) {
+        this.CD_box_p0[this.CD_box] = v3_clone(p); 
+        this.CD_box_p[this.CD_box] = v3_clone(p); 
 
-        this.CD_cube += 1;
+        this.CD_box_x0[this.CD_box] = v3_clone(nx); 
+        this.CD_box_x[this.CD_box] = v3_clone(nx); 
+        this.CD_box_y0[this.CD_box] = v3_clone(ny); 
+        this.CD_box_y[this.CD_box] = v3_clone(ny); 
+        this.CD_box_z0[this.CD_box] = v3_clone(nz); 
+        this.CD_box_z[this.CD_box] = v3_clone(nz); 
+
+        this.CD_box_halfWidth[this.CD_box]  = hwidth;
+        this.CD_box_halfHeight[this.CD_box] = hheight;
+        this.CD_box_halfDepth[this.CD_box]  = hdepth; 
+
+        this.CD_box_bottom[this.CD_box] = bottom; 
+
+        // create the corner vertex
+        // scale normal by half dim
+        var px = v3_scale_new(nx,  hwidth);
+        var mx = v3_scale_new(nx, -hwidth);
+
+        var py = v3_scale_new(ny,  hheight);
+        var my = v3_scale_new(ny, -hheight);
+
+        var pz = v3_scale_new(nz,  hdepth);
+        var mz = v3_scale_new(nz, -hdepth);
+
+        //v3_addadd_new(a, b, c)
+        this.CD_box_corners0[this.CD_box] = [];
+        this.CD_box_corners[this.CD_box]  = [];
+        
+        // top
+        // ny + nx + nz
+        this.CD_box_corners0[this.CD_box][0] = v3_addadd_new(py, px, pz);
+        // ny + nx - nz
+        this.CD_box_corners0[this.CD_box][1] = v3_addadd_new(py, px, mz);
+
+        // ny - nx + nz
+        this.CD_box_corners0[this.CD_box][2] = v3_addadd_new(py, mx, pz);
+        // ny - nx - nz
+        this.CD_box_corners0[this.CD_box][3] = v3_addadd_new(py, mx, mz);
+
+        // bottom 
+        // -ny + nx + nz
+        this.CD_box_corners0[this.CD_box][4] = v3_addadd_new(my, px, pz);
+        // -ny + nx - nz
+        this.CD_box_corners0[this.CD_box][5] = v3_addadd_new(my, px, mz);
+
+        // -ny - nx + nz
+        this.CD_box_corners0[this.CD_box][6] = v3_addadd_new(my, mx, pz);
+        // -ny - nx - nz
+        this.CD_box_corners0[this.CD_box][7] = v3_addadd_new(my, mx, mz);
+
+        this.CD_box_corners[this.CD_box] = this.CD_box_corners0[this.CD_box].slice();
+
+        this.CD_box_preCull_r[this.CD_box] = Math.sqrt(hwidth*hwidth + hheight*hheight + hdepth*hdepth);
+        this.CD_box += 1;
         this.collisionDetection = true;
     }
 
@@ -434,6 +492,8 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.colSweepIndex = 0;
 
         this.currentPos = [ 0, 0, 0 ];
+
+        // TODO add roll-over of data after set amount of lines
     }
 
     setSize(nElements) {        
@@ -482,7 +542,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.CD_edge = 0;
         this.CD_sph = 0;
         this.CD_plane = 0;
-        this.CD_cube = 0;
+        this.CD_box = 0;
         this.collisionDetection = false;
     }
 
@@ -887,7 +947,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.setColor3f(idx, color);  
     }
 
-    addWireCube(loc, rot, size, color, addCubeCD, centerCross = false, sideCross = false) {
+    addWireCube(loc, rot, size, color, addBoxCD, centerCross = false, sideCross = false) {
         size[0] = Math.abs(size[0]) / 2;
         size[1] = Math.abs(size[1]) / 2;
         size[2] = Math.abs(size[2]) / 2;
@@ -958,11 +1018,11 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.addLine(brl, bfr, false, color); //b
             this.addLine(brr, bfl, false, color);
         }
-        if (addCubeCD) {
+        if (addBoxCD) {
 
-            let x = [1/size[0], 0, 0];
-            let y = [0, 1/size[1], 0];
-            let z = [0, 0, 1/size[2]];
+            let x = [1, 0, 0];
+            let y = [0, 1, 0];
+            let z = [0, 0, 1];
 
             m = m4_rotationZ_new(rot[2]);
             m4_rotateX_mod(m, rot[0]);
@@ -972,7 +1032,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             v3_applym4_mod(y, m);
             v3_applym4_mod(z, m);
 
-            this.pushCD_cube(loc, x, y, z);
+           this.pushCD_box(loc, x, y, z, size[0], size[1], size[2], true); 
         }
     }
 

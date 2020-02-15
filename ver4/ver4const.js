@@ -188,6 +188,12 @@ function v3_addadd_res(res, a, b, c) {
     res[2] = a[2] + b[2] + c[2];
 }
 
+// Triple vector addition
+function v3_addaddadd_new(a, b, c, d) {
+    return [ a[0] + b[0] + c[0] + d[0],
+             a[1] + b[1] + c[1] + d[1],
+             a[2] + b[2] + c[2] + d[2] ];
+}
 
 // Add scaled vector
 // = a + (b * f)

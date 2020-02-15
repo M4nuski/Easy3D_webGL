@@ -764,7 +764,7 @@ function shotgunAnimR() {
                     }                     
                 } // end for each sph data of each entities with fPlane CD
 
-                if (scn.entities[entIdx].CD_cube > 0) 
+                /*if (scn.entities[entIdx].CD_cube > 0) 
                 for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_cube; ++cdIdx) {
                     nHitTest++;
                     var offsetV0 = v3_sub_new(this.org[i], scn.entities[entIdx].CD_cube_p[cdIdx]);
@@ -810,6 +810,7 @@ function shotgunAnimR() {
                     }   
     
                 } // end for each sph data of each entities with cube CD
+                */
             }
 
             if (colList.length > 0) {
