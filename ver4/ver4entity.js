@@ -271,16 +271,17 @@ class E3D_entity {
     }
 
     resetMatrix(){
-        // recreate matrices from rotation and position
+        // Recreate matrices from rotation and position
+        // Evaluate rotation as Pitch Yaw Roll
+
         m4_rotationZ_res(this.normalMatrix, this.rotation[2]);
         m4_rotateX_mod(this.normalMatrix, this.rotation[0]);
         m4_rotateY_mod(this.normalMatrix, this.rotation[1]);
 
-        m4_translation_res(this.modelMatrix, this.position);
-        
-        m4_rotateZ_mod(this.modelMatrix, this.rotation[2]);
-        m4_rotateX_mod(this.modelMatrix, this.rotation[0]);
-        m4_rotateY_mod(this.modelMatrix, this.rotation[1]);
+        m4_copy(this.modelMatrix, this.normalMatrix);
+        this.modelMatrix[12] =  this.position[0];
+        this.modelMatrix[13] =  this.position[1];
+        this.modelMatrix[14] =  this.position[2];
 
         if (this.collisionDetection) {
             for (var i = 0; i < this.CD_vec; ++i) {
@@ -624,9 +625,9 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         let p3 = [-width, height, 0];
         
         let m = m4_translation_new(pos);
+        m4_rotateZ_mod(m, rot[2]);
         m4_rotateX_mod(m, rot[0]);
         m4_rotateY_mod(m, rot[1]);
-        m4_rotateZ_mod(m, rot[2]);
 
         v3_applym4_mod(p0, m);
         v3_applym4_mod(p1, m);
@@ -721,9 +722,9 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             let w = [1, 0, 0];
             let h = [0, 1, 0];
 
-            let rm = m4_rotationX_new(rot[0]);
+            let rm = m4_rotationZ_new(rot[2]);
+            m4_rotateX_mod(rm, rot[0]);
             m4_rotateY_mod(rm, rot[1]);
-            m4_rotateZ_mod(rm, rot[2]);
 
             v3_applym4_mod(n, rm);
             v3_applym4_mod(w, rm);

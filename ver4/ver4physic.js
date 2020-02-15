@@ -41,7 +41,7 @@ var nbCDpasses = 0;
 
 
 var animations = [];
-var testSph, targetEdge, targetEdge2, testPlanes, dev_CD, DEV_markers, phyTracers, DEV_wand; // entities
+var testSph, targetEdge, targetEdge2, testPlanes, dev_CD, DEV_markers, phyTracers, DEV_wand, DEV_axis; // entities
 var show_DEV_CD = false;
 var moveTarget = "p";
 var hitPoints = new Map();
@@ -57,7 +57,7 @@ var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var inputs = new E3D_input(can, true, true, false, false); // Mouse and Keyboard
-
+var resMngr = new ressourceManager(onRessource);
 
 log("Session Start", false);
 
@@ -257,11 +257,39 @@ function initEngine() {
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
+    resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
+    resMngr.loadAll("models");
+
     // Activate timer and set scene as active
 
     timer.run();
     scn.state = E3D_ACTIVE;
 }
+
+
+
+
+function onRessource(name, msg) {
+    if (msg == E3D_RES_FAIL) {
+        log("Failed to load ressource: " + name, false);        
+    }
+    if (msg == E3D_RES_ALL) {
+        log("All async ressources loaded for tag: " + name, true);       
+        resMngr.flushAll();   
+    }
+
+    if (msg == E3D_RES_LOAD) {
+        log("Async ressource loaded: " + name, true); 
+
+        if (resMngr.getRessourceType(name) == "Model") {
+            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1));
+            DEV_axis.position[1] = -100;
+            DEV_axis.visible = true;
+            scn.addEntity(DEV_axis);  
+        }  
+    } // msg loaded
+}
+
 
 
 var _parentView = { normalMatrix : m4_new() };
@@ -363,8 +391,11 @@ function prepRender() {
     DEV_markers.addWireSphere(v2, edge2_r*2, [1, 1, 1], 32, false, 5);
 
 
-    dev_CD.addPlane([0, 30, 0],  [PIx2 * range1.value / 1000, PIx2 * range2.value / 1000, PIx2 * range3.value / 1000], 256, 256, 8, [1,1,1], true);
-
+  //  dev_CD.addPlane([0, 30, 0],  [PIx2 * range1.value / 1000, PIx2 * range2.value / 1000, PIx2 * range3.value / 1000], 256, 256, 8, [1,1,1], true);
+if (DEV_axis.visible) {
+    DEV_axis.rotateTo([PIx2 * (range1.value -500) / 1000, PIx2 * (range2.value -500) / 1000, PIx2 * (range3.value -500) / 1000]);
+    DEV_axis.resetMatrix();
+}
 /*
       targetEdge.CD_edge_p[0]; // edge origin
       targetEdge.CD_edge_n[0]; // edge normal
