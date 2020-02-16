@@ -24,9 +24,9 @@ Current work-in-progress and next steps
 * Wrap animation and CD/CR/PHY into common classes and update all ver4 projects
 * --ver5:
 * flatten engine to reducre nested calls and hierarchy walking
-* Improved Collision Detection with Interpolation (point, edge, sphere, plane, box, triangles)
-* Regroup vertexArrays for mesh data
 * Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
+* Regroup vertexArrays for mesh data
+* Improved Collision Detection with Interpolation (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions
 * --Some kind of game:
 * Path interpolation for bots and animations.
@@ -44,6 +44,8 @@ Current work-in-progress and next steps
 * Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine
 * Basic Physics (hit, bounce, move etc) as body data attached to entity, mass, moment of rotation etc
 * Evaluate value of render culling on mobile
+* CD grouping / culling
+* CD cleaning to remove duplicate edges, edges in recesses
 * Replace per-vertex colors with textures, using a LUT texture and LUT data set if nothing else.
 
 
