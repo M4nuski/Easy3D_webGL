@@ -49,6 +49,7 @@ var DEV_anim_active = true;
 var sphCounter = 0;
 var DEV_lastAnimData = null;
 var gAccel, lgaccel = 0;
+var DEV_inbox = false;
 
 // Engine Core Components
 
@@ -682,25 +683,7 @@ CUBE_6P_tt             50.0650
 CUBE_6P_att             0.0437
 CUBE_6P_ath             0.3969
 */
-                        // top back, top right, top front, top left,
-                        // back right, front right, front left, back left,
-                        // bottom back, bottom right, bottom front, bottom left
-                        /*
-const _CD_box_edge_TopBack  = 0;
-const _CD_box_edge_TopRight = 1;
-const _CD_box_edge_TopFront = 2;
-const _CD_box_edge_TopLeft  = 3;
-
-const _CD_box_edge_BackRight  = 4;
-const _CD_box_edge_FrontRight = 5;
-const _CD_box_edge_FrontLeft  = 6;
-const _CD_box_edge_BackLeft   = 7;
-
-const _CD_box_edge_BottomBack  = 8;
-const _CD_box_edge_BottomRight = 9;
-const _CD_box_edge_BottomFront = 10;
-const _CD_box_edge_BottomLeft  = 11;
-*/                        
+                
 
 function CheckForAnimationCollisions(self){
 
@@ -786,7 +769,6 @@ function CheckForAnimationCollisions(self){
                                     phyTracers.addLine(firstHit, sphOffset, false, [0,0,1]);            
                                     phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0.5,0.5], 8, false, 3);
                                  // phyTracers.addWireSphere(ptsonsegment, 3, [1,0,1], 8, false, 3);
-                                 // log("edge hit v1t" + v1t + " p" + penetration + " vcos" + vcos + " t0" + t0, false);
                                 }               
                                 self.collisionDetected = true;
                                 self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-edge"];
@@ -834,7 +816,6 @@ function CheckForAnimationCollisions(self){
                                 v3_add_mod(self.target.position, sphOffset);
                                 self.target.resetMatrix();
                                 v3_add_mod(vectOrig, sphOffset);  // offset already calculated point
-                             //   v3_add_mod(vectOffset, sphOffset);
                                 //if (show_DEV_CD) log("par hit");                
                                 parallelHit = true; // prevent further hit testing with this plane
                             }                       
@@ -855,7 +836,6 @@ function CheckForAnimationCollisions(self){
                                 v3_add_mod(self.target.position, sphOffset);
                                 self.target.resetMatrix();
                                 v3_add_mod(vectOrig, sphOffset);  // offset already calculated point
-                              //  v3_add_mod(vectOffset, sphOffset);
                              //   if (show_DEV_CD) log("inside hit");  
                             }                       
                         } 
@@ -914,7 +894,7 @@ function CheckForAnimationCollisions(self){
                 if  (marker != self.lastHitMarker) {
                     nHitTest++;
 
-
+                    DEV_inbox = true;
 
                     // pre cull as capsule vs sph
                     if (capsuleSphereIntersect(self.target.CD_sph_r[0], 
@@ -942,7 +922,6 @@ function CheckForAnimationCollisions(self){
                         // TODO check if start position is inside on each faces
 
                         var edgesToCheck = [false, false, false, false,  false, false, false, false,  false, false, false, false];
-
                         // top back, top right, top front, top left,
                         // back right, front right, front left, back left,
                         // bottom back, bottom right, bottom front, bottom left
@@ -958,18 +937,19 @@ function CheckForAnimationCollisions(self){
                         // firstHit = closestP + closestN * (closestL * closestHit)
 
                         // check top face
-                        var OffsetDist = self.target.CD_sph_r[0] + scn.entities[i].CD_box_halfHeight[j];
+                        var OffsetDist = scn.entities[i].CD_box_halfHeight[j];
                         
                         // check if over face, going down
                         if ( (pydot > OffsetDist) && (dydot < 0.0) ) {
-                            // offset plane position by height and radius
+                            // offset plane position by height
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], OffsetDist);
 
                             // check plane intersect
                             var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], vectOrig, pathVect);
 
                             // check if inside
-                            if ( (hitRes) && (hitRes <= self.deltaLength)) {
+                            if ( (hitRes) && (hitRes <= self.deltaLength / -dydot)) {                              
+                                hitRes = hitRes - (self.target.CD_sph_r[0] / -dydot);
 
                                 v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                 v3_sub_res(sphOffset, firstHit, planePosition);
@@ -998,24 +978,23 @@ function CheckForAnimationCollisions(self){
 
                         // check bottom face, under, going up
                         if ( !planeHit && scn.entities[i].CD_box_bottom[j] && (pydot < -OffsetDist) && (dydot > 0.0) ) {
-                            // offset plane position by height and radius
+                            // offset plane position by height
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], -OffsetDist);
 
                             // check plane intersect
                             var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], vectOrig, pathVect);
 
                             // check if inside
-                            if ( (hitRes) && (hitRes <= self.deltaLength)) {
-
+                            if ( (hitRes) && (hitRes <= self.deltaLength / dydot)) {
+                                hitRes = hitRes - (self.target.CD_sph_r[0] / dydot);
                                 v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                 v3_sub_res(sphOffset, firstHit, planePosition);
 
                                 var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
                                     scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j], self.target.CD_sph_r[0]);
 
-
-                                    if (edgeRes == "I") { // inside hit
-                                        planeHit = true;
+                                if (edgeRes == "I") { // inside hit
+                                    planeHit = true;
                                     // add to the list of hits.
                                     if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                     v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
@@ -1038,7 +1017,7 @@ function CheckForAnimationCollisions(self){
 
 
                         // check front face
-                        OffsetDist = self.target.CD_sph_r[0] + scn.entities[i].CD_box_halfDepth[j];
+                        OffsetDist = scn.entities[i].CD_box_halfDepth[j];
                         
                         // check in front, going backward
                         if ( !planeHit && (pzdot > OffsetDist) && (dzdot < 0.0) ) {
@@ -1049,16 +1028,16 @@ function CheckForAnimationCollisions(self){
                             var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], vectOrig, pathVect);
 
                             // check if inside
-                            if ( (hitRes) && (hitRes <= self.deltaLength)) {
-
+                            if ( (hitRes) && (hitRes <= self.deltaLength / -dzdot)) {
+                                hitRes = hitRes - (self.target.CD_sph_r[0] / -dzdot);
                                 v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                 v3_sub_res(sphOffset, firstHit, planePosition);
 
                                 var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
                                     scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], self.target.CD_sph_r[0]);
 
-                                    if (edgeRes == "I") { // inside hit
-                                        planeHit = true;
+                                if (edgeRes == "I") { // inside hit
+                                    planeHit = true;
                                     // add to the list of hits.
                                     if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                     v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
@@ -1086,8 +1065,8 @@ function CheckForAnimationCollisions(self){
                             var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], vectOrig, pathVect);
 
                             // check if inside
-                            if ( (hitRes) && (hitRes <= self.deltaLength)) {
-
+                            if ( (hitRes) && (hitRes <= self.deltaLength / dzdot)) {
+                                hitRes = hitRes - (self.target.CD_sph_r[0] / dzdot);
                                 v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                 v3_sub_res(sphOffset, firstHit, planePosition);
 
@@ -1095,8 +1074,8 @@ function CheckForAnimationCollisions(self){
                                     scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], self.target.CD_sph_r[0]);
 
 
-                                    if (edgeRes == "I") { // inside hit
-                                        planeHit = true;
+                                if (edgeRes == "I") { // inside hit
+                                    planeHit = true;
                                     // add to the list of hits.
                                     if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                     v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
@@ -1120,7 +1099,7 @@ function CheckForAnimationCollisions(self){
 
 
                        // check right face, right, going left
-                       OffsetDist = self.target.CD_sph_r[0] + scn.entities[i].CD_box_halfWidth[j];
+                       OffsetDist = scn.entities[i].CD_box_halfWidth[j];
                         
                        // check right, going left
                        if ( !planeHit && (pxdot > OffsetDist) && (dxdot < 0.0) ) {
@@ -1131,8 +1110,8 @@ function CheckForAnimationCollisions(self){
                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], vectOrig, pathVect);
 
                            // check if inside
-                           if ( (hitRes) && (hitRes <= self.deltaLength)) {
-
+                           if ( (hitRes) && (hitRes <= self.deltaLength / -dxdot)) {
+                            hitRes = hitRes - (self.target.CD_sph_r[0] / -dxdot);
                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                v3_sub_res(sphOffset, firstHit, planePosition);
 
@@ -1141,7 +1120,7 @@ function CheckForAnimationCollisions(self){
 
 
                                 if (edgeRes == "I") { // inside hit
-                                    planeHit = true;
+                                   planeHit = true;
                                    // add to the list of hits.
                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                    v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
@@ -1160,6 +1139,7 @@ function CheckForAnimationCollisions(self){
                            }
                        }
 
+                       if (planeHit && edgesToTest) log("both;");
                        // check left face, left, going right
                        if ( !planeHit && (pxdot < -OffsetDist) && (dxdot > 0.0) ) {
                            // offset plane position by height and radius
@@ -1169,8 +1149,8 @@ function CheckForAnimationCollisions(self){
                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], vectOrig, pathVect);
 
                            // check if inside
-                           if ( (hitRes) && (hitRes <= self.deltaLength)) {
-
+                           if ( (hitRes) && (hitRes <= self.deltaLength / dxdot)) {
+                               hitRes = hitRes - (self.target.CD_sph_r[0] / dxdot);
                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                v3_sub_res(sphOffset, firstHit, planePosition);
 
@@ -1179,7 +1159,7 @@ function CheckForAnimationCollisions(self){
 
 
                                 if (edgeRes == "I") { // inside hit
-                                    planeHit = true;
+                                   planeHit = true;
                                    // add to the list of hits.
                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                    v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
@@ -1199,72 +1179,13 @@ function CheckForAnimationCollisions(self){
                            }
                         }
 
-
-                        // check edges
-                        /*        
-                        const _CD_box_corner_TopBackRight  = 0; 
-                        const _CD_box_corner_TopFrontRight = 1; 
-                        const _CD_box_corner_TopFrontLeft  = 2; 
-                        const _CD_box_corner_TopBackLeft   = 3; 
-
-                        const _CD_box_corner_BottomBackRight  = 4; 
-                        const _CD_box_corner_BottomFrontRight = 5; 
-                        const _CD_box_corner_BottomFrontLeft  = 6; 
-                        const _CD_box_corner_BottomBackLeft   = 7;
-                        */
-                       /*
-                               // collision detection - self.sph to edge (static edge)
-        if ((self.target.CD_sph > 0) && (scn.entities[i].CD_edge > 0)) {  
-
-            for (let j = 0; j < scn.entities[i].CD_edge; ++j) {
-                var marker = i+"e"+j;
-                if  (marker != self.lastHitMarker) {
-                    nHitTest++;
-
-
-                    var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
-                        scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j]);
-
-                    if (hitRes != false) {                       
-
-                            v3_addscaled_res(firstHit, vectOrig, self.delta, hitRes);
-                            var t0 = v3_distancesquared(firstHit, self.last_position);
-                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1]) ) ) {
-                                
-                                point_segment_point_res(sphOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
-                                v3_sub_res(hitNormal, firstHit, sphOffset);
-
-                                if (show_DEV_CD) {              
-                                 // phyTracers.addWireCross(self.target.CD_sph_p[0], 1, [1, 0, 0]);
-                                    phyTracers.addLine(firstHit, sphOffset, false, [0,0,1]);            
-                                    phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0.5,0.5], 8, false, 3);
-                                 // phyTracers.addWireSphere(ptsonsegment, 3, [1,0,1], 8, false, 3);
-                                 // log("edge hit v1t" + v1t + " p" + penetration + " vcos" + vcos + " t0" + t0, false);
-                                }               
-                                self.collisionDetected = true;
-                                self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-edge"];
-                            }
-
-                    }
-                }//marker different
-            }// for edges
-        } // sph - edge
-        */
-
-
                         if ( edgesToTest && !planeHit ) {
-                            closestHit = Infinity;
-                            var edgesToCheck = [true, true, true, true,  true, true, true, true,  true, true, true, true];
-
-
-
-                         //   dev_CD.addLineByNormalAndLength()
                             // Z
                             if (edgesToCheck[_CD_box_edge_TopRight]) {
                                 var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
-                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
+                                    scn.entities[i].CD_box_edge_p0[j][_CD_box_corner_TopBackRight],
                                      scn.entities[i].CD_box_z[j], 
-                                      scn.entities[i].CD_box_halfDepth[j] * 4);
+                                      scn.entities[i].CD_box_halfDepth[j] * 2);                           
                                 if ((hitRes != false) && (hitRes < closestHit)) {
                                     edgeHit = true;
                                     closestHit = hitRes;
@@ -1276,7 +1197,7 @@ function CheckForAnimationCollisions(self){
                             }
                             if (edgesToCheck[_CD_box_edge_BottomRight]) {
                                 var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
-                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
+                                    scn.entities[i].CD_box_edge_p0[j][_CD_box_corner_BottomBackRight],
                                      scn.entities[i].CD_box_z[j], 
                                       scn.entities[i].CD_box_halfDepth[j] * 2);
                                 if ((hitRes != false) && (hitRes < closestHit)) {
@@ -1290,9 +1211,10 @@ function CheckForAnimationCollisions(self){
                             }
                             if (edgesToCheck[_CD_box_edge_TopLeft]) {
                                 var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
-                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
+                                    scn.entities[i].CD_box_edge_p0[j][_CD_box_corner_TopBackLeft],
                                      scn.entities[i].CD_box_z[j], 
                                       scn.entities[i].CD_box_halfDepth[j] * 2);
+             
                                 if ((hitRes != false) && (hitRes < closestHit)) {
                                     edgeHit = true;
                                     closestHit = hitRes;
@@ -1438,9 +1360,6 @@ function CheckForAnimationCollisions(self){
                                 }
                             }
 
-
-
-
                             if (edgeHit) { // calc firstHit and hitNormal
                                 v3_addscaled_res(firstHit, vectOrig, self.delta, closestHit);
                                 point_segment_point_res(sphOffset, closestP, closestN, closestL, firstHit);
@@ -1452,8 +1371,10 @@ function CheckForAnimationCollisions(self){
                         hitPoints.set("box edgeHit", (edgeHit) ? 100 : 0);
                         hitPoints.set("box edgesToTest", (edgesToTest) ? 100 : 0);
 
+                        if (edgesToTest && !edgeHit) log("edge miss");
+
                         if (planeHit || edgeHit) {
-                           // if (show_DEV_CD) log("box hit");
+
                             // check dist, if dist less than current hit declare hit
                             var t0 = v3_distancesquared(firstHit, self.last_position);
                             if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
@@ -1466,38 +1387,18 @@ function CheckForAnimationCollisions(self){
 
                         }
 
+
                         var DEV_cubeStopTime = performance.now();
                         hitPoints.set("CUBE_BX_tt", hitPoints.get("CUBE_BX_tt") + (DEV_cubeStopTime - DEV_cubeStartTime));
                         hitPoints.set("CUBE_BX_att", hitPoints.get("CUBE_BX_tt") / hitPoints.get("CUBE_BX_nt"));    
                         if (self.collisionDetected) {
                             hitPoints.set("CUBE_BX_nh", hitPoints.get("CUBE_BX_nh") + 1);
                             hitPoints.set("CUBE_BX_ht", hitPoints.get("CUBE_BX_ht") + (DEV_cubeStopTime - DEV_cubeStartTime));
-                            hitPoints.set("CUBE_BX_ath", hitPoints.get("CUBE_BX_ht") / hitPoints.get("CUBE_BX_nh"));                
+                            hitPoints.set("CUBE_BX_ath", hitPoints.get("CUBE_BX_ht") / hitPoints.get("CUBE_BX_nh"));                                      
                         }
-
-
-
-                        /*if ( (Math.abs(pxdot) <= scn.entities[i].CD_box_halfWidth[j] + self.target.CD_sph_r[0]) && 
-                                (Math.abs(pydot) <= scn.entities[i].CD_box_halfHeight[j] + self.target.CD_sph_r[0]) &&
-                                     (Math.abs(pzdot) <= scn.entities[i].CD_box_halfDepth[j] + self.target.CD_sph_r[0]) ) {
-
-                            if (show_DEV_CD) {
-                                phyTracers.addWireCross(vectOrig, 2 * self.target.CD_sph_r[0], [1,1,1]);
-                                log("box hit");
-                            }
-                        }*/
-
+                        DEV_inbox = false;
 
                     } // pre-cull with sph sph capsule
-
-                    // if bottom
-                   // offset per box center
-                   //corners are relative to box center in world space
-                    // corners as sph
-                    // 5 or 6 planes
-                    // 8 or 12 edges
-                    // optimise for side of source
-
                 }//different marker
             }// for each boxes
         }//sph-box      
@@ -1507,7 +1408,6 @@ function CheckForAnimationCollisions(self){
 
 
         // TODO triangle as simplification of box
-
 
 
 
@@ -1522,10 +1422,6 @@ function CheckForAnimationCollisions(self){
                 hitPoints.set("CUBE_6P_ht", hitPoints.get("CUBE_6P_ht") + (DEV_cubeStopTime - DEV_cubeStartTime));
                 hitPoints.set("CUBE_6P_ath", hitPoints.get("CUBE_6P_ht") / hitPoints.get("CUBE_6P_nh"));                
             }
-        }
-
-        if (i == DEV_cube_BX_target) {
-
         }
 
 
@@ -1865,7 +1761,7 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
     //if (!potentialHit) { // end cap as the sphere at the end of the vector
         v3_add_res(_capsuleEdgeIntersect_capsuleEnd, _capsuleEdgeIntersect_capsuleVector, capOrigin);
         v3_sub_res(_capsuleEdgeIntersect_originDelta, _capsuleEdgeIntersect_capsuleEnd, edgeOrigin);
-        var endCap = vector_sph_t(edgeNormal, _capsuleEdgeIntersect_originDelta, capRadius);
+        var endCap = vector_sph_t(edgeNormal, _capsuleEdgeIntersect_originDelta, capRadiusSq);
 
         if (endCap != false) {
             var [st0, stca, st1] = endCap;    

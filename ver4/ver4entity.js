@@ -976,6 +976,23 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.setColor3f(idx, color);
     }
 
+    
+    addLineByPosNormLen(p, n, l, sweep, col= [1,1,1]) {
+        let idx = this.numElements;
+        this.increaseSize(2);
+
+        var color = (sweep) ? this.getNextSweepColor() : col;
+
+        v3_copy(this.currentPos, p);
+        this.setVertex3f(idx, this.currentPos);
+        this.setColor3f(idx, color);
+
+        v3_addscaled_mod(this.currentPos, n, l);
+        idx++;
+        this.setVertex3f(idx, this.currentPos);
+        this.setColor3f(idx, color);
+    }
+
     addWireCube(loc, rot, size, color, addBoxCD, centerCross = false, sideCross = false) {
         size[0] = Math.abs(size[0]) / 2;
         size[1] = Math.abs(size[1]) / 2;
