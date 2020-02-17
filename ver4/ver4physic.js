@@ -41,7 +41,7 @@ var nbCDpasses = 0;
 
 
 var animations = [];
-var testSph, targetEdge, targetEdge2, testPlanes, dev_CD, DEV_markers, phyTracers, DEV_wand, DEV_axis; // entities
+var testSph, targetEdge, targetEdge2, testPlanes, dev_CD, DEV_markers, phyTracers, DEV_wand, DEV_axis, DEV_boxPlanes, DEV_boxBox, DEV_boxDiscrete; // entities
 var show_DEV_CD = false;
 var moveTarget = "p";
 var hitPoints = new Map();
@@ -202,18 +202,66 @@ function initEngine() {
 
     testPlanes = new E3D_entity_wireframe_canvas("planes");
     testPlanes.addPlane([0, -50, 0], [PIdiv2, 0, 0], 2048, 2048, 64, [1,1,0], true);
-    //testPlanes.addPlane([150, -0, 0], [PIdiv2, 0.25, 0.5], 1024, 512, 64, [1,0,1], true);
-    //testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
-    testPlanes.addWireCube([0, 100, 100], [0,0,0], [50, 50, 50], [1, 0.8, 0.8], true, false, true);
+    testPlanes.addPlane([150, -0, 0], [PIdiv2, 0.25, 0.5], 1024, 512, 64, [1,0,1], true);
+    testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
+    //testPlanes.addWireCube([0, 100, 100], [0,0,0], [50, 50, 50], [1, 0.8, 0.8], true, false, true);
     testPlanes.visible = true;
-   // testPlanes.resetMatrix();
+   testPlanes.resetMatrix();
     scn.addEntity(testPlanes);
 
-   // testPlanes.pushCD_edge([-25, 75, 75], [0, 1, 0], 50);
-   // testPlanes.pushCD_edge([-25, 75, 125], [0, 1, 0], 50);
-   // testPlanes.pushCD_edge([25, 75, 75], [0, 1, 0], 50);
-   // testPlanes.pushCD_edge([25, 75, 125], [0, 1, 0], 50);
 
+    DEV_boxPlanes = new E3D_entity_wireframe_canvas("DEV_boxPlanes");
+    DEV_boxPlanes.position = [400, 50, 0];
+    DEV_boxPlanes.addPlane([0, 0, -25], [0, 0, 0], 50, 50, 2, [1,0,0], true);
+    DEV_boxPlanes.addPlane([0, 0,  25], [0, 0, 0], 50, 50, 2, [1,0,0], true);
+    DEV_boxPlanes.addPlane([0, -25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,0,0], true);
+    DEV_boxPlanes.addPlane([0,  25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,0,0], true);
+    DEV_boxPlanes.addPlane([-25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,0,0], true);
+    DEV_boxPlanes.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,0,0], true);
+    DEV_boxPlanes.visible = true;
+    DEV_boxPlanes.resetMatrix();
+    scn.addEntity(DEV_boxPlanes);
+
+    DEV_boxBox = new E3D_entity_wireframe_canvas("DEV_boxBox");
+    DEV_boxBox.position = [500, 50, 0];
+    DEV_boxBox.addWireCube([0, 0, 0], [0, 0, 0], [50, 50, 50], [0, 1, 0], true, false, true);
+    DEV_boxBox.visible = true;
+    DEV_boxBox.resetMatrix();
+    scn.addEntity(DEV_boxBox);
+
+    DEV_boxDiscrete = new E3D_entity_wireframe_canvas("DEV_boxDiscrete");
+    DEV_boxDiscrete.position = [600, 50, 0];
+    DEV_boxDiscrete.addPlane([0, 0, -25], [0, 0, 0], 50, 50, 2, [0,0,1], false);
+    DEV_boxDiscrete.addPlane([0, 0,  25], [0, 0, 0], 50, 50, 2, [0,0,1], false);
+    DEV_boxDiscrete.addPlane([0, -25, 0], [PIdiv2, 0, 0], 50, 50, 2, [0,0,1], false);
+    DEV_boxDiscrete.addPlane([0,  25, 0], [PIdiv2, 0, 0], 50, 50, 2, [0,0,1], false);
+    DEV_boxDiscrete.addPlane([-25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [0,0,1], false);
+    DEV_boxDiscrete.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [0,0,1], false);
+
+    DEV_boxDiscrete.pushCD_plane([  0,   0, -25],  [ 0, 0,-1], [ 1, 0, 0], [ 0, 1, 0], 25, 25);
+    DEV_boxDiscrete.pushCD_plane([  0,   0,  25],  [ 0, 0, 1], [ 1, 0, 0], [ 0, 1, 0], 25, 25);
+    DEV_boxDiscrete.pushCD_plane([  0, -25,   0],  [ 0,-1, 0], [ 1, 0, 0], [ 0, 0, 1], 25, 25);
+    DEV_boxDiscrete.pushCD_plane([  0,  25,   0],  [ 0, 1, 0], [ 1, 0, 0], [ 0, 0, 1], 25, 25);
+    DEV_boxDiscrete.pushCD_plane([-25,   0,   0],  [-1, 0, 0], [ 0, 1, 0], [ 0, 0, 1], 25, 25);
+    DEV_boxDiscrete.pushCD_plane([ 25,   0,   0],  [ 1, 0, 0], [ 0, 1, 0], [ 0, 0, 1], 25, 25);
+
+    DEV_boxDiscrete.pushCD_edge([-25, -25, -25], [0, 1, 0], 50); // bottom
+    DEV_boxDiscrete.pushCD_edge([-25, -25,  25], [0, 1, 0], 50);
+    DEV_boxDiscrete.pushCD_edge([ 25, -25, -25], [0, 1, 0], 50);
+    DEV_boxDiscrete.pushCD_edge([ 25, -25,  25], [0, 1, 0], 50);
+
+    DEV_boxDiscrete.pushCD_edge([-25, -25, -25], [0, 0, 1], 50); // back
+    DEV_boxDiscrete.pushCD_edge([-25,  25, -25], [0, 0, 1], 50);
+    DEV_boxDiscrete.pushCD_edge([ 25, -25, -25], [0, 0, 1], 50);
+    DEV_boxDiscrete.pushCD_edge([ 25,  25, -25], [0, 0, 1], 50);
+
+    DEV_boxDiscrete.pushCD_edge([-25, -25, -25], [1, 0, 0], 50); // left
+    DEV_boxDiscrete.pushCD_edge([-25, -25,  25], [1, 0, 0], 50);
+    DEV_boxDiscrete.pushCD_edge([-25,  25, -25], [1, 0, 0], 50);
+    DEV_boxDiscrete.pushCD_edge([-25,  25,  25], [1, 0, 0], 50);
+    DEV_boxDiscrete.visible = true;
+    DEV_boxDiscrete.resetMatrix();
+    scn.addEntity(DEV_boxDiscrete);
 
     targetEdge = new E3D_entity_wireframe_canvas("edgeHitTest");
     targetEdge.position = [25, 25, 25];
@@ -234,15 +282,9 @@ function initEngine() {
 
     DEV_wand = new E3D_entity_wireframe_canvas("wand");
     DEV_wand.position = [0, 50, 200];
-  //  DEV_wand.addLine([0, 0, 25], [0, 0, -25], false, [1, 1, 1]);
-  //  DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
-  //  DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
-    DEV_wand.addPlane([0, 0, -25], [0, 0, 0], 50, 50, 2, [1,1,1], true);
-    DEV_wand.addPlane([0, 0,  25], [0, 0, 0], 50, 50, 2, [1,1,1], true);
-    DEV_wand.addPlane([0, -25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,1,1], true);
-    DEV_wand.addPlane([0,  25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,1,1], true);
-    DEV_wand.addPlane([-25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,1,1], true);
-    DEV_wand.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,1,1], true);
+    DEV_wand.addLine([0, 0, 25], [0, 0, -25], false, [1, 1, 1]);
+    DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
+    DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
     DEV_wand.resetMatrix();
     DEV_wand.visible = true;
     scn.addEntity(DEV_wand);
@@ -1364,14 +1406,11 @@ function CheckForAnimationCollisions(self){
                                 v3_addscaled_res(firstHit, vectOrig, self.delta, closestHit);
                                 point_segment_point_res(sphOffset, closestP, closestN, closestL, firstHit);
                                 v3_sub_res(hitNormal, firstHit, sphOffset);
-                                if (show_DEV_CD) log("box edge hit");
+                                //if (show_DEV_CD) log("box edge hit");
                             }   
                         }
-                        hitPoints.set("box planeHit", (planeHit) ? 100 : 0);
-                        hitPoints.set("box edgeHit", (edgeHit) ? 100 : 0);
-                        hitPoints.set("box edgesToTest", (edgesToTest) ? 100 : 0);
 
-                        if (edgesToTest && !edgeHit) log("edge miss");
+                        if (show_DEV_CD && edgesToTest && !edgeHit) log("edge miss", false);
 
                         if (planeHit || edgeHit) {
 
