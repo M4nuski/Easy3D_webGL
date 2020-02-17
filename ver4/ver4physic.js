@@ -205,7 +205,13 @@ function initEngine() {
     //testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
     testPlanes.addWireCube([0, 100, 100], [0,0,0], [50, 50, 50], [1, 0.8, 0.8], true, false, true);
     testPlanes.visible = true;
+   // testPlanes.resetMatrix();
     scn.addEntity(testPlanes);
+
+   // testPlanes.pushCD_edge([-25, 75, 75], [0, 1, 0], 50);
+   // testPlanes.pushCD_edge([-25, 75, 125], [0, 1, 0], 50);
+   // testPlanes.pushCD_edge([25, 75, 75], [0, 1, 0], 50);
+   // testPlanes.pushCD_edge([25, 75, 125], [0, 1, 0], 50);
 
 
     targetEdge = new E3D_entity_wireframe_canvas("edgeHitTest");
@@ -539,7 +545,7 @@ if (DEV_axis.visible) {
             for (let j = 0; j < scn.entities[i].CD_plane; ++j) {
                 dev_CD.moveCursorTo(scn.entities[i].CD_plane_p[j]);
                 var norm = v3_scale_new(scn.entities[i].CD_plane_n[j], 10);
-                dev_CD.addLineBy(norm, false, [1.0,1.0,1.0]);
+                dev_CD.addLineByOffset(norm, false, [1.0,1.0,1.0]);
             }
 
         }
@@ -644,6 +650,7 @@ var DEV_cube_6P_target = 5;
 hitPoints.set("CUBE_6P_nt", 0); // num tests
 hitPoints.set("CUBE_6P_nh", 0); // num hits
 hitPoints.set("CUBE_6P_tt", 0); // total time
+hitPoints.set("CUBE_6P_ht", 0); // hit time
 hitPoints.set("CUBE_6P_att", 0); // avg time per test
 hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
 
@@ -651,6 +658,7 @@ var DEV_cube_BX_target = 2;
 hitPoints.set("CUBE_BX_nt", 0); // num tests
 hitPoints.set("CUBE_BX_nh", 0); // num hits
 hitPoints.set("CUBE_BX_tt", 0); // total time
+hitPoints.set("CUBE_BX_ht", 0); // hit time
 hitPoints.set("CUBE_BX_att", 0); // avg time per test
 hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
 
@@ -677,6 +685,7 @@ CUBE_6P_ath             0.3969
                         // top back, top right, top front, top left,
                         // back right, front right, front left, back left,
                         // bottom back, bottom right, bottom front, bottom left
+                        /*
 const _CD_box_edge_TopBack  = 0;
 const _CD_box_edge_TopRight = 1;
 const _CD_box_edge_TopFront = 2;
@@ -691,7 +700,7 @@ const _CD_box_edge_BottomBack  = 8;
 const _CD_box_edge_BottomRight = 9;
 const _CD_box_edge_BottomFront = 10;
 const _CD_box_edge_BottomLeft  = 11;
-
+*/                        
 
 function CheckForAnimationCollisions(self){
 
@@ -768,13 +777,13 @@ function CheckForAnimationCollisions(self){
                             v3_addscaled_res(firstHit, vectOrig, self.delta, hitRes);
                             var t0 = v3_distancesquared(firstHit, self.last_position);
                             if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1]) ) ) {
-      
-                                var ptsonsegment = point_segment_point(scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
-                                v3_sub_res(hitNormal, firstHit, ptsonsegment);
+                                
+                                point_segment_point_res(sphOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
+                                v3_sub_res(hitNormal, firstHit, sphOffset);
 
                                 if (show_DEV_CD) {              
                                  // phyTracers.addWireCross(self.target.CD_sph_p[0], 1, [1, 0, 0]);
-                                    phyTracers.addLine(firstHit, ptsonsegment, false, [0,0,1]);            
+                                    phyTracers.addLine(firstHit, sphOffset, false, [0,0,1]);            
                                     phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0.5,0.5], 8, false, 3);
                                  // phyTracers.addWireSphere(ptsonsegment, 3, [1,0,1], 8, false, 3);
                                  // log("edge hit v1t" + v1t + " p" + penetration + " vcos" + vcos + " t0" + t0, false);
@@ -932,29 +941,21 @@ function CheckForAnimationCollisions(self){
 
                         // TODO check if start position is inside on each faces
 
+                        var edgesToCheck = [false, false, false, false,  false, false, false, false,  false, false, false, false];
 
-                        var corners = (scn.entities[i].CD_box_bottom[j]) ? 
-                            [false, false, false, false,  true, true, true, true] :
-                                [false, false, false, false,  false, false, false, false];
-                        //             top back top right top front top left, 
-                        //             bot back bot right bot front bot left
-
-                        var edgesToCheck = [false, false, false, false,  false, false, false, false, false, false, false, false];
-                        var edgesChecked = (scn.entities[i].CD_box_bottom[j]) ? 
-                                   [false, false, false, false,  false, false, false, false,  true, true, true, true] :
-                                        [false, false, false, false,  false, false, false, false,  false, false, false, false];
-                //        var edgesToCheck = (scn.entities[i].CD_box_bottom[j]) ? 
-                 //           [false, false, false, false,  false, false, false, false,  true, true, true, true] :
-                  //              [false, false, false, false,  false, false, false, false,  false, false, false, false];
-                   //     var edgesChecked = (scn.entities[i].CD_box_bottom[j]) ? 
-                    //           [false, false, false, false,  false, false, false, false,  false, false, false, false] :
-                     //               [false, false, false, false,  false, false, false, false,  false, false, false, false];
                         // top back, top right, top front, top left,
                         // back right, front right, front left, back left,
                         // bottom back, bottom right, bottom front, bottom left
 
-                        var validHit = false; 
-                        var edgesToCheck = false;
+                        var planeHit = false; 
+                        var edgesToTest = false;
+                        var edgeHit = false;
+                        var closestHit = Infinity; // t
+
+                        var closestP = [0.0, 0.0, 0.0];
+                        var closestN = [0.0, 0.0, 0.0];
+                        var closestL = 0.0;
+                        // firstHit = closestP + closestN * (closestL * closestHit)
 
                         // check top face
                         var OffsetDist = self.target.CD_sph_r[0] + scn.entities[i].CD_box_halfHeight[j];
@@ -977,53 +978,26 @@ function CheckForAnimationCollisions(self){
                                     scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j], self.target.CD_sph_r[0]);
 
                                 if (edgeRes == "I") { // inside hit
-                                    validHit = true;
+                                    planeHit = true;
                                     // add to the list of hits.
                                     if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                     v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
-                                } else if (edgeRes != "F") { // margin hit, check edges that are not already checked
-                                    edgesToCheck = true;
-                                    if (edgeRes == "AP") {
-
-                                    } else if (edgeRes == "AN") {
-
-                                    } else if (edgeRes == "BP") {
-
-                                    } else if (edgeRes == "BN") {
-
-                                    } else if (edgeRes == "PP") {
-
-                                    } else if (edgeRes == "NN") {
-
-                                    } else if (edgeRes == "PN") {
-
-                                    } else if (edgeRes == "NP") {
-
-                                    }
-
-//var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
-                        //scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j]);
-
-
-                                }
-
-/*  
-                                 validHit = insidePlane(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                    scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j]);
-
-                                if (validHit) {
-                                    // add to the list of hits.
-                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
-                                    v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
-                                }
-*/
-
-                                //                    
+                                    closestHit = hitRes;                                       
+                                } else if (edgeRes != "F") { // margin hit
+                                    edgesToTest = true;
+                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, self.target.CD_sph_r[0], [0,1,1]);
+                                    // edge A
+                                    if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_TopRight] = true;         
+                                    if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_TopLeft] = true;
+                                    // edge B                                    
+                                    if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopFront] = true;
+                                    if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_TopBack] = true;
+                                }                  
                             }
                         }
 
                         // check bottom face, under, going up
-                        if ( !validHit && scn.entities[i].CD_box_bottom[j] && (pydot < -OffsetDist) && (dydot > 0.0) ) {
+                        if ( !planeHit && scn.entities[i].CD_box_bottom[j] && (pydot < -OffsetDist) && (dydot > 0.0) ) {
                             // offset plane position by height and radius
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], -OffsetDist);
 
@@ -1036,15 +1010,28 @@ function CheckForAnimationCollisions(self){
                                 v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                 v3_sub_res(sphOffset, firstHit, planePosition);
 
-                                validHit = insidePlane(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                    scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j]);
+                                var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
+                                    scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j], self.target.CD_sph_r[0]);
 
-                                if (validHit) {
+
+                                    if (edgeRes == "I") { // inside hit
+                                        planeHit = true;
                                     // add to the list of hits.
                                     if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                     v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
                                     v3_negate_mod(hitNormal);
-                                }
+                                    closestHit = hitRes; 
+                                } else if (edgeRes != "F") { // margin hit
+                                    edgesToTest = true;
+                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, self.target.CD_sph_r[0], [0,1,1]);
+                                    // edge A
+                                    if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_BottomRight] = true;         
+                                    if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BottomLeft] = true;
+                                    // edge B                                    
+                                    if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_BottomFront] = true;
+                                    if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomBack] = true;
+                                }                            
+
                             }
                         }
 
@@ -1054,7 +1041,7 @@ function CheckForAnimationCollisions(self){
                         OffsetDist = self.target.CD_sph_r[0] + scn.entities[i].CD_box_halfDepth[j];
                         
                         // check in front, going backward
-                        if ( !validHit && (pzdot > OffsetDist) && (dzdot < 0.0) ) {
+                        if ( !planeHit && (pzdot > OffsetDist) && (dzdot < 0.0) ) {
                             // offset plane position by height and radius
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_z[j], OffsetDist);
 
@@ -1067,19 +1054,31 @@ function CheckForAnimationCollisions(self){
                                 v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                 v3_sub_res(sphOffset, firstHit, planePosition);
 
-                                validHit = insidePlane(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                    scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j]);
+                                var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
+                                    scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], self.target.CD_sph_r[0]);
 
-                                if (validHit) {
+                                    if (edgeRes == "I") { // inside hit
+                                        planeHit = true;
                                     // add to the list of hits.
                                     if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                     v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
-                                }
+                                    closestHit = hitRes; 
+                                } else if (edgeRes != "F") { // margin hit
+                                    edgesToTest = true;
+                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, self.target.CD_sph_r[0], [0,1,1]);
+                                    // edge A
+                                    if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontRight] = true;         
+                                    if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_FrontLeft] = true;
+                                    // edge B                                    
+                                    if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopFront] = true;
+                                    if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomFront] = scn.entities[i].CD_box_bottom[j];
+                                }  
+
                             }
                         }
 
                         // check back face, behind, going forward 
-                        if ( !validHit && (pzdot < -OffsetDist) && (dzdot > 0.0) ) {
+                        if ( !planeHit && (pzdot < -OffsetDist) && (dzdot > 0.0) ) {
                             // offset plane position by height and radius
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_z[j], -OffsetDist);
 
@@ -1092,15 +1091,28 @@ function CheckForAnimationCollisions(self){
                                 v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                 v3_sub_res(sphOffset, firstHit, planePosition);
 
-                                validHit = insidePlane(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                    scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j]);
+                                var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
+                                    scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], self.target.CD_sph_r[0]);
 
-                                if (validHit) {
+
+                                    if (edgeRes == "I") { // inside hit
+                                        planeHit = true;
                                     // add to the list of hits.
                                     if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                     v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
                                     v3_negate_mod(hitNormal);
-                                }
+                                    closestHit = hitRes; 
+                                } else if (edgeRes != "F") { // margin hit
+                                    edgesToTest = true;
+                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, self.target.CD_sph_r[0], [0,1,1]);
+                                    // edge A
+                                    if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_BackRight] = true;         
+                                    if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
+                                    // edge B                                    
+                                    if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopBack] = true;
+                                    if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomBack] = scn.entities[i].CD_box_bottom[j];
+                                }  
+
                             }
                         }
 
@@ -1111,7 +1123,7 @@ function CheckForAnimationCollisions(self){
                        OffsetDist = self.target.CD_sph_r[0] + scn.entities[i].CD_box_halfWidth[j];
                         
                        // check right, going left
-                       if ( !validHit && (pxdot > OffsetDist) && (dxdot < 0.0) ) {
+                       if ( !planeHit && (pxdot > OffsetDist) && (dxdot < 0.0) ) {
                            // offset plane position by height and radius
                            v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_x[j], OffsetDist);
 
@@ -1124,19 +1136,32 @@ function CheckForAnimationCollisions(self){
                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                v3_sub_res(sphOffset, firstHit, planePosition);
 
-                               validHit = insidePlane(sphOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
-                                scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j]);
+                               var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
+                                scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], self.target.CD_sph_r[0]);
 
-                               if (validHit) {
+
+                                if (edgeRes == "I") { // inside hit
+                                    planeHit = true;
                                    // add to the list of hits.
                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                    v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
-                               }
+                                   closestHit = hitRes; 
+                                } else if (edgeRes != "F") { // margin hit
+                                    edgesToTest = true;
+                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, self.target.CD_sph_r[0], [0,1,1]);
+                                    // edge A
+                                    if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontRight] = true;         
+                                    if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackRight] = true;
+                                    // edge B                                    
+                                    if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopRight] = true;
+                                    if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomRight] = scn.entities[i].CD_box_bottom[j];
+                                }  
+      
                            }
                        }
 
-                       // check left face, left, goingright
-                       if ( !validHit && (pxdot < -OffsetDist) && (dxdot > 0.0) ) {
+                       // check left face, left, going right
+                       if ( !planeHit && (pxdot < -OffsetDist) && (dxdot > 0.0) ) {
                            // offset plane position by height and radius
                            v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_x[j], -OffsetDist);
 
@@ -1149,27 +1174,287 @@ function CheckForAnimationCollisions(self){
                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
                                v3_sub_res(sphOffset, firstHit, planePosition);
 
-                               validHit = insidePlane(sphOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
-                                scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j]);
+                               var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
+                                scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], self.target.CD_sph_r[0]);
 
-                               if (validHit) {
+
+                                if (edgeRes == "I") { // inside hit
+                                    planeHit = true;
                                    // add to the list of hits.
                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0]);
                                    v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
                                    v3_negate_mod(hitNormal);
-                               }
+                                   closestHit = hitRes; 
+                                } else if (edgeRes != "F") { // margin hit
+                                    edgesToTest = true;
+                                    if (show_DEV_CD) phyTracers.addWireCross(firstHit, self.target.CD_sph_r[0], [0,1,1]);
+                                    // edge A
+                                    if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontLeft] = true;         
+                                    if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
+                                    // edge B                                    
+                                    if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopLeft] = true;
+                                    if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomLeft] = scn.entities[i].CD_box_bottom[j];
+                                }  
+   
                            }
                         }
 
 
                         // check edges
+                        /*        
+                        const _CD_box_corner_TopBackRight  = 0; 
+                        const _CD_box_corner_TopFrontRight = 1; 
+                        const _CD_box_corner_TopFrontLeft  = 2; 
+                        const _CD_box_corner_TopBackLeft   = 3; 
+
+                        const _CD_box_corner_BottomBackRight  = 4; 
+                        const _CD_box_corner_BottomFrontRight = 5; 
+                        const _CD_box_corner_BottomFrontLeft  = 6; 
+                        const _CD_box_corner_BottomBackLeft   = 7;
+                        */
+                       /*
+                               // collision detection - self.sph to edge (static edge)
+        if ((self.target.CD_sph > 0) && (scn.entities[i].CD_edge > 0)) {  
+
+            for (let j = 0; j < scn.entities[i].CD_edge; ++j) {
+                var marker = i+"e"+j;
+                if  (marker != self.lastHitMarker) {
+                    nHitTest++;
 
 
-                        if (validHit) {
+                    var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                        scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j]);
 
+                    if (hitRes != false) {                       
+
+                            v3_addscaled_res(firstHit, vectOrig, self.delta, hitRes);
+                            var t0 = v3_distancesquared(firstHit, self.last_position);
+                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1]) ) ) {
+                                
+                                point_segment_point_res(sphOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
+                                v3_sub_res(hitNormal, firstHit, sphOffset);
+
+                                if (show_DEV_CD) {              
+                                 // phyTracers.addWireCross(self.target.CD_sph_p[0], 1, [1, 0, 0]);
+                                    phyTracers.addLine(firstHit, sphOffset, false, [0,0,1]);            
+                                    phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0.5,0.5], 8, false, 3);
+                                 // phyTracers.addWireSphere(ptsonsegment, 3, [1,0,1], 8, false, 3);
+                                 // log("edge hit v1t" + v1t + " p" + penetration + " vcos" + vcos + " t0" + t0, false);
+                                }               
+                                self.collisionDetected = true;
+                                self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-edge"];
+                            }
+
+                    }
+                }//marker different
+            }// for edges
+        } // sph - edge
+        */
+
+
+                        if ( edgesToTest && !planeHit ) {
+                            closestHit = Infinity;
+                            var edgesToCheck = [true, true, true, true,  true, true, true, true,  true, true, true, true];
+
+
+
+                         //   dev_CD.addLineByNormalAndLength()
+                            // Z
+                            if (edgesToCheck[_CD_box_edge_TopRight]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
+                                     scn.entities[i].CD_box_z[j], 
+                                      scn.entities[i].CD_box_halfDepth[j] * 4);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_z[j]);
+                                    closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                    if (show_DEV_CD) log("ToRi");
+                                }
+                            }
+                            if (edgesToCheck[_CD_box_edge_BottomRight]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
+                                     scn.entities[i].CD_box_z[j], 
+                                      scn.entities[i].CD_box_halfDepth[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_z[j]);
+                                    closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                    if (show_DEV_CD) log("BoRi");
+                                }
+                            }
+                            if (edgesToCheck[_CD_box_edge_TopLeft]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
+                                     scn.entities[i].CD_box_z[j], 
+                                      scn.entities[i].CD_box_halfDepth[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_z[j]);
+                                    closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                    if (show_DEV_CD) log("ToLe");
+                                }
+                            }
+                            if (edgesToCheck[_CD_box_edge_BottomLeft]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
+                                     scn.entities[i].CD_box_z[j], 
+                                      scn.entities[i].CD_box_halfDepth[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_z[j]);
+                                    closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                    if (show_DEV_CD) log("BoLe");
+                                }
+                            }
+
+                            // Y
+                            if (edgesToCheck[_CD_box_edge_BackLeft]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
+                                     scn.entities[i].CD_box_y[j], 
+                                      scn.entities[i].CD_plane_halfHeight[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_y[j]);
+                                    closestL = scn.entities[i].CD_plane_halfHeight[j] * 2;
+                                    if (show_DEV_CD) log("BaLe");
+                                }
+                            }
+
+                            if (edgesToCheck[_CD_box_edge_BackRight]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
+                                     scn.entities[i].CD_box_y[j], 
+                                      scn.entities[i].CD_plane_halfHeight[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_y[j]);
+                                    closestL = scn.entities[i].CD_plane_halfHeight[j] * 2;
+                                    if (show_DEV_CD) log("BaRi");
+                                }
+                            }
+
+                            if (edgesToCheck[_CD_box_edge_FrontLeft]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
+                                     scn.entities[i].CD_box_y[j], 
+                                      scn.entities[i].CD_plane_halfHeight[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_y[j]);
+                                    closestL = scn.entities[i].CD_plane_halfHeight[j] * 2;
+                                    if (show_DEV_CD) log("FrLe");
+                                }
+                            }
+
+                            if (edgesToCheck[_CD_box_edge_FrontRight]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight],
+                                     scn.entities[i].CD_box_y[j], 
+                                      scn.entities[i].CD_plane_halfHeight[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_y[j]);
+                                    closestL = scn.entities[i].CD_plane_halfHeight[j] * 2;
+                                    if (show_DEV_CD) log("FrRi");
+                                }
+                            }
+
+
+                            // X
+                            if (edgesToCheck[_CD_box_edge_TopBack]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
+                                        scn.entities[i].CD_box_x[j], 
+                                        scn.entities[i].CD_box_halfWidth[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_x[j]);
+                                    closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                    if (show_DEV_CD) log("ToBa");
+                                }
+                            }
+                            if (edgesToCheck[_CD_box_edge_BottomBack]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
+                                        scn.entities[i].CD_box_x[j], 
+                                        scn.entities[i].CD_box_halfWidth[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_x[j]);
+                                    closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                    if (show_DEV_CD) log("BoBa");
+                                }
+                            }
+
+                            if (edgesToCheck[_CD_box_edge_TopFront]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft],
+                                        scn.entities[i].CD_box_x[j], 
+                                        scn.entities[i].CD_box_halfWidth[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_x[j]);
+                                    closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                    if (show_DEV_CD) log("ToFr");
+                                }
+                            }
+                            if (edgesToCheck[_CD_box_edge_BottomFront]) {
+                                var hitRes = capsuleEdgeIntersect(self.target.CD_sph_r[0], vectOrig, pathVect, self.deltaLength,
+                                    scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
+                                        scn.entities[i].CD_box_x[j], 
+                                        scn.entities[i].CD_box_halfWidth[j] * 2);
+                                if ((hitRes != false) && (hitRes < closestHit)) {
+                                    edgeHit = true;
+                                    closestHit = hitRes;
+                                    v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
+                                    v3_copy(closestN, scn.entities[i].CD_box_x[j]);
+                                    closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                    if (show_DEV_CD) log("BoFr");
+                                }
+                            }
+
+
+
+
+                            if (edgeHit) { // calc firstHit and hitNormal
+                                v3_addscaled_res(firstHit, vectOrig, self.delta, closestHit);
+                                point_segment_point_res(sphOffset, closestP, closestN, closestL, firstHit);
+                                v3_sub_res(hitNormal, firstHit, sphOffset);
+                                if (show_DEV_CD) log("box edge hit");
+                            }   
+                        }
+                        hitPoints.set("box planeHit", (planeHit) ? 100 : 0);
+                        hitPoints.set("box edgeHit", (edgeHit) ? 100 : 0);
+                        hitPoints.set("box edgesToTest", (edgesToTest) ? 100 : 0);
+
+                        if (planeHit || edgeHit) {
+                           // if (show_DEV_CD) log("box hit");
                             // check dist, if dist less than current hit declare hit
-
-
                             var t0 = v3_distancesquared(firstHit, self.last_position);
                             if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
 
@@ -1179,17 +1464,18 @@ function CheckForAnimationCollisions(self){
                                 self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-box"];
                             }
 
+                        }
 
                         var DEV_cubeStopTime = performance.now();
                         hitPoints.set("CUBE_BX_tt", hitPoints.get("CUBE_BX_tt") + (DEV_cubeStopTime - DEV_cubeStartTime));
                         hitPoints.set("CUBE_BX_att", hitPoints.get("CUBE_BX_tt") / hitPoints.get("CUBE_BX_nt"));    
                         if (self.collisionDetected) {
                             hitPoints.set("CUBE_BX_nh", hitPoints.get("CUBE_BX_nh") + 1);
-                            hitPoints.set("CUBE_BX_ath", hitPoints.get("CUBE_BX_tt") / hitPoints.get("CUBE_BX_nh"));                
+                            hitPoints.set("CUBE_BX_ht", hitPoints.get("CUBE_BX_ht") + (DEV_cubeStopTime - DEV_cubeStartTime));
+                            hitPoints.set("CUBE_BX_ath", hitPoints.get("CUBE_BX_ht") / hitPoints.get("CUBE_BX_nh"));                
                         }
 
 
-                        }
 
                         /*if ( (Math.abs(pxdot) <= scn.entities[i].CD_box_halfWidth[j] + self.target.CD_sph_r[0]) && 
                                 (Math.abs(pydot) <= scn.entities[i].CD_box_halfHeight[j] + self.target.CD_sph_r[0]) &&
@@ -1233,7 +1519,8 @@ function CheckForAnimationCollisions(self){
             hitPoints.set("CUBE_6P_att", hitPoints.get("CUBE_6P_tt") / hitPoints.get("CUBE_6P_nt"));    
             if (self.collisionDetected) {
                 hitPoints.set("CUBE_6P_nh", hitPoints.get("CUBE_6P_nh") + 1);
-                hitPoints.set("CUBE_6P_ath", hitPoints.get("CUBE_6P_tt") / hitPoints.get("CUBE_6P_nh"));                
+                hitPoints.set("CUBE_6P_ht", hitPoints.get("CUBE_6P_ht") + (DEV_cubeStopTime - DEV_cubeStartTime));
+                hitPoints.set("CUBE_6P_ath", hitPoints.get("CUBE_6P_ht") / hitPoints.get("CUBE_6P_nh"));                
             }
         }
 
@@ -1285,7 +1572,7 @@ function anim_sph_firstPass() {
         if (show_DEV_CD) { 
             phyTracers.addLine(this.last_position, this.target.position, true);
           //  phyTracers.moveCursorTo(this.target.position);
-          //  phyTracers.addLineBy(this.delta, false, [1, 1, 1]);
+          //  phyTracers.addLineByOffset(this.delta, false, [1, 1, 1]);
         }
     }
 }
@@ -1489,8 +1776,8 @@ function insidePlane(SphPosMinusPlanePos, normalA, halfSizeA, normalB, halfSizeB
 
 // "F" no hit
 // "I" inside
-// "AP" inside margin A, positive side
-// "AN" inside margin A, negative side
+// "PA" inside margin A, positive side
+// "NA" inside margin A, negative side
 // "BP" inside margin B, positive side
 // "BN" inside margin B, negative side
 // "PP" inside margin corner, positive A and positive B
@@ -1516,9 +1803,9 @@ function insidePlaneOrMargin(SphPosMinusPlanePos, normalA, halfSizeA, normalB, h
         }
     } else if (adb <= halfSizeB) { // inside B but not A
         if (da > 0.0) { // positive A
-            return "AP";
+            return "PA";
         } else { // negative A
-            return "AN";
+            return "NA";
         }
     } else { // not inside A nor B (corner)
         if (da > 0.0) { // positive A
@@ -1578,7 +1865,7 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
     //if (!potentialHit) { // end cap as the sphere at the end of the vector
         v3_add_res(_capsuleEdgeIntersect_capsuleEnd, _capsuleEdgeIntersect_capsuleVector, capOrigin);
         v3_sub_res(_capsuleEdgeIntersect_originDelta, _capsuleEdgeIntersect_capsuleEnd, edgeOrigin);
-        var endCap = vector_sph_t(edgeNormal, _capsuleEdgeIntersect_originDelta, capRadiusSq);
+        var endCap = vector_sph_t(edgeNormal, _capsuleEdgeIntersect_originDelta, capRadius);
 
         if (endCap != false) {
             var [st0, stca, st1] = endCap;    
@@ -1696,6 +1983,12 @@ function point_segment_point(orig, norm, len, point) {
     if (t > len) t = len;
 
     return v3_addscaled_new(orig, norm, t);
+}
+function point_segment_point_res(res, orig, norm, len, point) {
+    var t = point_vector_t(orig, norm, point);
+    if (t < 0.0) t = 0.0;
+    if (t > len) t = len;
+    v3_addscaled_res(res, orig, norm, t);
 }
 function point_segment_distance(orig, norm, len, point) {
     return v3_distance(point, point_segment_point(orig, norm, len, point));

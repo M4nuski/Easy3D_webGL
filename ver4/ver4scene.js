@@ -218,7 +218,7 @@ class E3D_scene {
                 ent.dataSizeChanged = true;
             }
 
-            this.entities.push(ent);    
+            this.entities.push(ent);   
             return ent; // return reference to new entity
         }        
     }

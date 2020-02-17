@@ -162,12 +162,17 @@ class E3D_entity {
             this.CD_box_z0 = []; // depth normal Z original to model space
             this.CD_box_z  = []; // transformed to world space (rotation)
             this.CD_box_bottom = []; // bool to include bottom face
-            this.CD_box_corners0 = []; // 8 corners for edge testing array(per cube) of array(per corner) of array (v3)
-            this.CD_box_corners  = [];
+
+            this.CD_box_edge_p0 = []; // 8 box edges corners pos in model space
+            this.CD_box_edge_p  = []; // pos in world space
+        
+
+          
+         //   this.CD_box_edge_n0 = []; // 12 box edges normals in model space
+         //   this.CD_box_edge_n  = []; // normals in world space
+
             this.CD_box_preCull_r = [];
-            // CD_box_corners[boxIndex][cornerIndex][x y z]
-            // tfl tfr tbl tbr 
-            // if bottom: bfl bfr bbl bbr
+ 
             this.CD_box_halfWidth  = []; //x
             this.CD_box_halfHeight = []; //y
             this.CD_box_halfDepth  = []; //z 
@@ -218,7 +223,7 @@ class E3D_entity {
         if (entity.CD_plane > 0) {
             this.CD_plane = entity.CD_plane;
             this.CD_plane_p0 = v3a_clone(entity.CD_plane_p0);
-           this.CD_plane_p  = v3a_clone(entity.CD_plane_p);
+            this.CD_plane_p  = v3a_clone(entity.CD_plane_p);
             this.CD_plane_n0 = v3a_clone(entity.CD_plane_n0);
             this.CD_plane_n  = v3a_clone(entity.CD_plane_n);
             this.CD_plane_w0 = v3a_clone(entity.CD_plane_w0);
@@ -230,6 +235,7 @@ class E3D_entity {
         }
         if (entity.CD_box > 0) {
             this.CD_box = entity.CD_box;
+
             this.CD_box_p0  = v3a_clone(entity.CD_box_p0);
             this.CD_box_p = v3a_clone(entity.CD_box_p);
             this.CD_box_x0  = v3a_clone(entity.CD_box_x0);
@@ -239,12 +245,15 @@ class E3D_entity {
             this.CD_box_z0  = v3a_clone(entity.CD_box_z0);
             this.CD_box_z = v3a_clone(entity.CD_box_z);
 
-
             this.CD_box_bottom  = entity.CD_box_bottom.slice();
-            this.CD_box_corners0 = entity.CD_box_corners0.slice();
+
+            this.CD_box_edge_p0 = v3a_clone(entity.CD_box_edge_p0);//.slice();
+            this.CD_box_edge_p = v3a_clone(entity.CD_box_edge_p);//.slice();
+
             this.CD_box_halfWidth  = entity.CD_box_halfWidth.slice();
-            this.CD_box_halfHeight = entity.CD_box_halfHeight.slice();
+            this.CD_box_halfHeight = entity.CD_box_halfHeight.slice();            
             this.CD_box_halfDepth  = entity.CD_box_halfDepth.slice();
+
             this.CD_box_preCull_r  = entity.CD_box_preCull_r.slice();
         }
 
@@ -317,7 +326,7 @@ class E3D_entity {
                 v3_applym4_res(this.CD_box_x[i], this.CD_box_x0[i], this.normalMatrix);
                 v3_applym4_res(this.CD_box_y[i], this.CD_box_y0[i], this.normalMatrix);
                 v3_applym4_res(this.CD_box_z[i], this.CD_box_z0[i], this.normalMatrix);
-                for (var j = 0; j < 8; ++j) v3_applym4_res(this.CD_box_corners[i][j], this.CD_box_corners0[i][j], this.modelMatrix);
+                for (var j = 0; j < 8; ++j) v3_applym4_res(this.CD_box_edge_p[i][j], this.CD_box_edge_p0[i][j], this.modelMatrix);
             }
         }
     }
@@ -400,36 +409,40 @@ class E3D_entity {
         var mz = v3_scale_new(nz, -hdepth);
 
         //v3_addadd_new(a, b, c)
-        this.CD_box_corners0[this.CD_box] = [];
-        this.CD_box_corners[this.CD_box]  = [];
-        
-        // top
-        // ny + nx + nz
-        this.CD_box_corners0[this.CD_box][0] = v3_addadd_new(py, px, pz);
-        // ny + nx - nz
-        this.CD_box_corners0[this.CD_box][1] = v3_addadd_new(py, px, mz);
+        this.CD_box_edge_p0[this.CD_box] = [];
 
-        // ny - nx + nz
-        this.CD_box_corners0[this.CD_box][2] = v3_addadd_new(py, mx, pz);
-        // ny - nx - nz
-        this.CD_box_corners0[this.CD_box][3] = v3_addadd_new(py, mx, mz);
+/*        
+const _CD_box_corner_TopBackRight  = 0; 
+const _CD_box_corner_TopFrontRight = 1; 
+const _CD_box_corner_TopFrontLeft  = 2; 
+const _CD_box_corner_TopBackLeft   = 3; 
+
+const _CD_box_corner_BottomBackRight  = 4; 
+const _CD_box_corner_BottomFrontRight = 5; 
+const _CD_box_corner_BottomFrontLeft  = 6; 
+const _CD_box_corner_BottomBackLeft   = 7;
+*/
+
+        // top
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopBackRight]  = v3_addaddadd_new(p, py, px, mz);
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopFrontRight] = v3_addaddadd_new(p, py, px, pz);
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopFrontLeft]  = v3_addaddadd_new(p, py, mx, pz);
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopBackLeft]   = v3_addaddadd_new(p, py, mx, mz);
 
         // bottom 
-        // -ny + nx + nz
-        this.CD_box_corners0[this.CD_box][4] = v3_addadd_new(my, px, pz);
-        // -ny + nx - nz
-        this.CD_box_corners0[this.CD_box][5] = v3_addadd_new(my, px, mz);
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomBackRight]  = v3_addaddadd_new(p, my, px, mz);
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomFrontRight] = v3_addaddadd_new(p, my, px, pz);
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomFrontLeft]  = v3_addaddadd_new(p, my, mx, pz);
+        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomBackLeft]   = v3_addaddadd_new(p, my, mx, mz);
 
-        // -ny - nx + nz
-        this.CD_box_corners0[this.CD_box][6] = v3_addadd_new(my, mx, pz);
-        // -ny - nx - nz
-        this.CD_box_corners0[this.CD_box][7] = v3_addadd_new(my, mx, mz);
-
-        this.CD_box_corners[this.CD_box] = this.CD_box_corners0[this.CD_box].slice();
+        this.CD_box_edge_p[this.CD_box] = v3a_clone(this.CD_box_edge_p0[this.CD_box]);
 
         this.CD_box_preCull_r[this.CD_box] = Math.sqrt(hwidth*hwidth + hheight*hheight + hdepth*hdepth);
+
         this.CD_box += 1;
         this.collisionDetection = true;
+
+
     }
 
 
@@ -931,7 +944,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
 
-    addLineBy(p, sweep, col= [1,1,1]) {
+    addLineByOffset(p, sweep, col= [1,1,1]) {
         let idx = this.numElements;
         this.increaseSize(2);
 
@@ -945,6 +958,22 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         idx++;
         this.setVertex3f(idx, this.currentPos);
         this.setColor3f(idx, color);  
+    }
+
+    addLineByNormalAndLength(n, l, sweep, col= [1,1,1]) {
+        let idx = this.numElements;
+        this.increaseSize(2);
+
+        var color = (sweep) ? this.getNextSweepColor() : col;
+
+        this.setVertex3f(idx, this.currentPos);
+        this.setColor3f(idx, color);
+
+        v3_addscaled_mod(this.currentPos, n, l);
+
+        idx++;
+        this.setVertex3f(idx, this.currentPos);
+        this.setColor3f(idx, color);
     }
 
     addWireCube(loc, rot, size, color, addBoxCD, centerCross = false, sideCross = false) {
@@ -1032,7 +1061,24 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             v3_applym4_mod(y, m);
             v3_applym4_mod(z, m);
 
-           this.pushCD_box(loc, x, y, z, size[0], size[1], size[2], true); 
+            this.pushCD_box(loc, x, y, z, size[0], size[1], size[2], true); 
+
+           /*this.pushCD_edge(brl, x, size[0]*2);
+           this.pushCD_edge(bfl, x, size[0]*2);
+           this.pushCD_edge(tfl, x, size[0]*2);
+           this.pushCD_edge(trl, x, size[0]*2); // side
+            
+            this.pushCD_edge(brl, y, size[1]*2);
+            this.pushCD_edge(brr, y, size[1]*2);
+            this.pushCD_edge(bfl, y, size[1]*2);
+            this.pushCD_edge(bfr, y, size[1]*2); // vertical
+
+            this.pushCD_edge(brl, z, size[2]*2);
+            this.pushCD_edge(brr, z, size[2]*2);
+            this.pushCD_edge(trl, z, size[2]*2);
+            this.pushCD_edge(trr, z, size[2]*2); // hor*/
+
+
         }
     }
 
