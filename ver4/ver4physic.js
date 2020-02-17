@@ -35,6 +35,9 @@ var nHitTest = 0;
 var nHits = 0;
 var nbCDpasses = 0;
 
+var DEV_cube_6P_target;
+var DEV_cube_BX_target;
+var DEV_cube_DS_target;
 
 
 // Engine Content and state
@@ -206,9 +209,8 @@ function initEngine() {
     testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
     //testPlanes.addWireCube([0, 100, 100], [0,0,0], [50, 50, 50], [1, 0.8, 0.8], true, false, true);
     testPlanes.visible = true;
-   testPlanes.resetMatrix();
+    testPlanes.resetMatrix();
     scn.addEntity(testPlanes);
-
 
     DEV_boxPlanes = new E3D_entity_wireframe_canvas("DEV_boxPlanes");
     DEV_boxPlanes.position = [400, 50, 0];
@@ -220,14 +222,14 @@ function initEngine() {
     DEV_boxPlanes.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,0,0], true);
     DEV_boxPlanes.visible = true;
     DEV_boxPlanes.resetMatrix();
-    scn.addEntity(DEV_boxPlanes);
+    DEV_cube_6P_target = scn.addEntity(DEV_boxPlanes);
 
     DEV_boxBox = new E3D_entity_wireframe_canvas("DEV_boxBox");
     DEV_boxBox.position = [500, 50, 0];
     DEV_boxBox.addWireCube([0, 0, 0], [0, 0, 0], [50, 50, 50], [0, 1, 0], true, false, true);
     DEV_boxBox.visible = true;
     DEV_boxBox.resetMatrix();
-    scn.addEntity(DEV_boxBox);
+    DEV_cube_BX_target = scn.addEntity(DEV_boxBox);
 
     DEV_boxDiscrete = new E3D_entity_wireframe_canvas("DEV_boxDiscrete");
     DEV_boxDiscrete.position = [600, 50, 0];
@@ -261,7 +263,7 @@ function initEngine() {
     DEV_boxDiscrete.pushCD_edge([-25,  25,  25], [1, 0, 0], 50);
     DEV_boxDiscrete.visible = true;
     DEV_boxDiscrete.resetMatrix();
-    scn.addEntity(DEV_boxDiscrete);
+    DEV_cube_DS_target = scn.addEntity(DEV_boxDiscrete);
 
     targetEdge = new E3D_entity_wireframe_canvas("edgeHitTest");
     targetEdge.position = [25, 25, 25];
@@ -689,7 +691,7 @@ var vectOffset = [0.0, 0.0, 0.0];
 var planePosition = [0.0, 0.0, 0.0];
 
 var DEV_cubeStartTime;
-var DEV_cube_6P_target = 5;
+
 hitPoints.set("CUBE_6P_nt", 0); // num tests
 hitPoints.set("CUBE_6P_nh", 0); // num hits
 hitPoints.set("CUBE_6P_tt", 0); // total time
@@ -697,13 +699,19 @@ hitPoints.set("CUBE_6P_ht", 0); // hit time
 hitPoints.set("CUBE_6P_att", 0); // avg time per test
 hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
 
-var DEV_cube_BX_target = 2;
 hitPoints.set("CUBE_BX_nt", 0); // num tests
 hitPoints.set("CUBE_BX_nh", 0); // num hits
 hitPoints.set("CUBE_BX_tt", 0); // total time
 hitPoints.set("CUBE_BX_ht", 0); // hit time
 hitPoints.set("CUBE_BX_att", 0); // avg time per test
 hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
+
+hitPoints.set("CUBE_DS_nt", 0); // num tests
+hitPoints.set("CUBE_DS_nh", 0); // num hits
+hitPoints.set("CUBE_DS_tt", 0); // total time
+hitPoints.set("CUBE_DS_ht", 0); // hit time
+hitPoints.set("CUBE_DS_att", 0); // avg time per test
+hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
 
 /*
 prelim stats without edges
@@ -719,13 +727,32 @@ CUBE_BX_att             0.0054
 CUBE_BX_ath             0.0163
 */
 /* before refactored function
-UBE_6P_nt           1146.0000
+UBE_6P_nt            1146.0000
 CUBE_6P_nh            126.0000
 CUBE_6P_tt             50.0650
 CUBE_6P_att             0.0437
 CUBE_6P_ath             0.3969
 */
-                
+/* with 3 types but box still buggy
+CUBE_6P_nt            976.0000
+CUBE_6P_nh            104.0000
+CUBE_6P_tt             59.0650
+CUBE_6P_ht              8.4900
+CUBE_6P_att             0.0605
+CUBE_6P_ath             0.0816
+CUBE_BX_nt           1682.0000
+CUBE_BX_nh            162.0000
+CUBE_BX_tt             28.6500
+CUBE_BX_ht              3.1650
+CUBE_BX_att             0.0170
+CUBE_BX_ath             0.0195
+CUBE_DS_nt            960.0000
+CUBE_DS_nh            114.0000
+CUBE_DS_tt             33.9050
+CUBE_DS_ht              6.6450
+CUBE_DS_att             0.0202
+CUBE_DS_ath             0.0426
+*/
 
 function CheckForAnimationCollisions(self){
 
@@ -740,9 +767,16 @@ function CheckForAnimationCollisions(self){
         // collision detection - self.sph to other sph (static sph target) // TODO use path to path interpolation for both
 
         //stats
+        DEV_cubeStartTime = performance.now();
+
         if (i == DEV_cube_6P_target) {
-            DEV_cubeStartTime = performance.now();
             hitPoints.set("CUBE_6P_nt", hitPoints.get("CUBE_6P_nt") + 1);
+        }
+        if (i == DEV_cube_BX_target) {
+            hitPoints.set("CUBE_BX_nt", hitPoints.get("CUBE_BX_nt") + 1);
+        }
+        if (i == DEV_cube_DS_target) {
+            hitPoints.set("CUBE_DS_nt", hitPoints.get("CUBE_DS_nt") + 1);
         }
 
         if ((self.target.CD_sph > 0) && (scn.entities[i].CD_sph > 0)) {           
@@ -945,9 +979,6 @@ function CheckForAnimationCollisions(self){
                                                   self.deltaLength,
                                                    scn.entities[i].CD_box_p[j], 
                                                     scn.entities[i].CD_box_preCull_r[j]) != false) {
-
-                DEV_cubeStartTime = performance.now();
-                hitPoints.set("CUBE_BX_nt", hitPoints.get("CUBE_BX_nt") + 1);
 
                         v3_sub_res(vectOffset, vectOrig, scn.entities[i].CD_box_p[j]); // Delta of Origin point and Plane position 
 
@@ -1427,14 +1458,7 @@ function CheckForAnimationCollisions(self){
                         }
 
 
-                        var DEV_cubeStopTime = performance.now();
-                        hitPoints.set("CUBE_BX_tt", hitPoints.get("CUBE_BX_tt") + (DEV_cubeStopTime - DEV_cubeStartTime));
-                        hitPoints.set("CUBE_BX_att", hitPoints.get("CUBE_BX_tt") / hitPoints.get("CUBE_BX_nt"));    
-                        if (self.collisionDetected) {
-                            hitPoints.set("CUBE_BX_nh", hitPoints.get("CUBE_BX_nh") + 1);
-                            hitPoints.set("CUBE_BX_ht", hitPoints.get("CUBE_BX_ht") + (DEV_cubeStopTime - DEV_cubeStartTime));
-                            hitPoints.set("CUBE_BX_ath", hitPoints.get("CUBE_BX_ht") / hitPoints.get("CUBE_BX_nh"));                                      
-                        }
+
                         DEV_inbox = false;
 
                     } // pre-cull with sph sph capsule
@@ -1452,8 +1476,9 @@ function CheckForAnimationCollisions(self){
 
 
         //stats
+        var DEV_cubeStopTime = performance.now();
+
         if (i == DEV_cube_6P_target) {
-            var DEV_cubeStopTime = performance.now();
             hitPoints.set("CUBE_6P_tt", hitPoints.get("CUBE_6P_tt") + (DEV_cubeStopTime - DEV_cubeStartTime));
             hitPoints.set("CUBE_6P_att", hitPoints.get("CUBE_6P_tt") / hitPoints.get("CUBE_6P_nt"));    
             if (self.collisionDetected) {
@@ -1462,7 +1487,24 @@ function CheckForAnimationCollisions(self){
                 hitPoints.set("CUBE_6P_ath", hitPoints.get("CUBE_6P_ht") / hitPoints.get("CUBE_6P_nh"));                
             }
         }
-
+        if (i == DEV_cube_BX_target) {
+            hitPoints.set("CUBE_BX_tt", hitPoints.get("CUBE_BX_tt") + (DEV_cubeStopTime - DEV_cubeStartTime));
+            hitPoints.set("CUBE_BX_att", hitPoints.get("CUBE_BX_tt") / hitPoints.get("CUBE_BX_nt"));    
+            if (self.collisionDetected) {
+                hitPoints.set("CUBE_BX_nh", hitPoints.get("CUBE_BX_nh") + 1);
+                hitPoints.set("CUBE_BX_ht", hitPoints.get("CUBE_BX_ht") + (DEV_cubeStopTime - DEV_cubeStartTime));
+                hitPoints.set("CUBE_BX_ath", hitPoints.get("CUBE_BX_ht") / hitPoints.get("CUBE_BX_nh"));                                      
+            }
+        }
+        if (i == DEV_cube_DS_target) {
+            hitPoints.set("CUBE_DS_tt", hitPoints.get("CUBE_DS_tt") + (DEV_cubeStopTime - DEV_cubeStartTime));
+            hitPoints.set("CUBE_DS_att", hitPoints.get("CUBE_DS_tt") / hitPoints.get("CUBE_BX_nt"));    
+            if (self.collisionDetected) {
+                hitPoints.set("CUBE_DS_nh", hitPoints.get("CUBE_DS_nh") + 1);
+                hitPoints.set("CUBE_DS_ht", hitPoints.get("CUBE_DS_ht") + (DEV_cubeStopTime - DEV_cubeStartTime));
+                hitPoints.set("CUBE_DS_ath", hitPoints.get("CUBE_DS_ht") / hitPoints.get("CUBE_BX_nh"));                                      
+            }
+        }
 
 
     } // end for each other entity perform hit test
