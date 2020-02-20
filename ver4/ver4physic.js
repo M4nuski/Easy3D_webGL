@@ -999,8 +999,6 @@ function CheckForAnimationCollisions(self){
                         var dydot = v3_dot(pathVect, scn.entities[i].CD_box_y[j]);
                         var dzdot = v3_dot(pathVect, scn.entities[i].CD_box_z[j]);
 
-                        // TODO check if start position is inside on each faces
-
                         var edgesToCheck = [false, false, false, false,  false, false, false, false,  false, false, false, false];
                         // top back, top right, top front, top left,
                         // back right, front right, front left, back left,
@@ -1016,11 +1014,74 @@ function CheckForAnimationCollisions(self){
                         var closestL = 0.0;
                         // firstHit = closestP + closestN * (closestL * closestHit)
 
+                        var apxdot = Math.abs(pxdot);
+                        var apydot = Math.abs(pydot);
+                        var apzdot = Math.abs(pzdot);
+
+                        if ( (apxdot <= scn.entities[i].CD_box_halfWidth[j] + self.target.CD_sph_r[0]) &&
+                        (apydot <= scn.entities[i].CD_box_halfHeight[j] + self.target.CD_sph_r[0]) &&
+                        (apzdot <= scn.entities[i].CD_box_halfDepth[j] + self.target.CD_sph_r[0]) ) {
+                               // if (show_DEV_CD) log("inside box, level 1");
+
+                            if ( (apxdot <= scn.entities[i].CD_box_halfWidth[j]) &&
+                                 (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
+                                if (show_DEV_CD) log("inside box Z, level 2");
+                                var error = scn.entities[i].CD_box_halfDepth[j] + self.target.CD_sph_r[0];
+                                error = error - pzdot;
+
+                                v3_scale_res(sphOffset, scn.entities[i].CD_box_z[j], error);
+                                v3_add_mod(self.target.position, sphOffset);                            
+                                self.target.resetMatrix();
+
+                                v3_add_mod(vectOrig, sphOffset); 
+                                v3_copy(firstHit, vectOrig);
+                                v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
+                                if (error < 0.0) v3_negate_mod(hitNormal);
+                                planeHit = true;
+
+                            } else if ( (apxdot <= scn.entities[i].CD_box_halfWidth[j]) &&
+                                        (apzdot <= scn.entities[i].CD_box_halfDepth[j]) ) {
+
+                                if (show_DEV_CD) log("inside box Y, level 2");
+
+                                var error = scn.entities[i].CD_box_halfHeight[j] + self.target.CD_sph_r[0];
+                                error = error - pydot;
+
+                                v3_scale_res(sphOffset, scn.entities[i].CD_box_y[j], error);
+                                v3_add_mod(self.target.position, sphOffset);                            
+                                self.target.resetMatrix();
+
+                                v3_add_mod(vectOrig, sphOffset); 
+                                v3_copy(firstHit, vectOrig);
+                                v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
+                                if (error < 0.0) v3_negate_mod(hitNormal);
+                                planeHit = true;
+
+                        } else if ( (apzdot <= scn.entities[i].CD_box_halfDepth[j]) &&
+                                    (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
+
+                                if (show_DEV_CD) log("inside box X, level 2");
+                                
+                                var error = scn.entities[i].CD_box_halfWidth[j] + self.target.CD_sph_r[0];
+                                error = error - pxdot;
+
+                                v3_scale_res(sphOffset, scn.entities[i].CD_box_x[j], error);
+                                v3_add_mod(self.target.position, sphOffset);                            
+                                self.target.resetMatrix();
+
+                                v3_add_mod(vectOrig, sphOffset); 
+                                v3_copy(firstHit, vectOrig);
+                                v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
+                                if (error < 0.0) v3_negate_mod(hitNormal);
+                                planeHit = true;
+                            }
+                        }
+
                         // check top face
                         var OffsetDist = scn.entities[i].CD_box_halfHeight[j];
                         
                         // check if over face, going down
-                        if ( (pydot > OffsetDist) && (dydot < 0.0) ) {
+                        if (!planeHit && (pydot > OffsetDist) && (dydot < 0.0) ) {
                             // offset plane position by height
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], OffsetDist);
 
