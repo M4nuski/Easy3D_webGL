@@ -920,6 +920,17 @@ function CheckForAnimationCollisions(self){
                                 self.target.resetMatrix();
                                 v3_add_mod(vectOrig, sphOffset);  // offset already calculated point
                              //   if (show_DEV_CD) log("inside hit");  
+
+                             var t0 = v3_distancesquared(vectOrig, self.last_position);
+
+                             if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
+ 
+                            //     if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0,0], 8, false, 3);
+                                                 
+                                 self.collisionDetected = true;
+                                 self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(vectOrig), "Sph-Plane-Inside"];
+                             }
+
                             }                       
                         } 
                     }
@@ -1007,7 +1018,8 @@ function CheckForAnimationCollisions(self){
                         var planeHit = false; 
                         var edgesToTest = false;
                         var edgeHit = false;
-                        var closestHit = Infinity; // t
+                        var closestHit = Infinity; // t 
+                        var hitSuffix = "";
 
                         var closestP = [0.0, 0.0, 0.0];
                         var closestN = [0.0, 0.0, 0.0];
@@ -1038,6 +1050,7 @@ function CheckForAnimationCollisions(self){
                                 v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
                                 if (error < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
+                                hitSuffix = "-Inside";
 
                             } else if ( (apxdot <= scn.entities[i].CD_box_halfWidth[j]) &&
                                         (apzdot <= scn.entities[i].CD_box_halfDepth[j]) ) {
@@ -1056,6 +1069,7 @@ function CheckForAnimationCollisions(self){
                                 v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
                                 if (error < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
+                                hitSuffix = "-Inside";
 
                         } else if ( (apzdot <= scn.entities[i].CD_box_halfDepth[j]) &&
                                     (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
@@ -1074,6 +1088,7 @@ function CheckForAnimationCollisions(self){
                                 v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
                                 if (error < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
+                                hitSuffix = "-Inside";
                             }
                         }
 
@@ -1508,6 +1523,7 @@ function CheckForAnimationCollisions(self){
                                 point_segment_point_res(sphOffset, closestP, closestN, closestL, firstHit);
                                 v3_sub_res(hitNormal, firstHit, sphOffset);
                                 //if (show_DEV_CD) log("box edge hit");
+                                hitSuffix = "-Edge";
                             }   
                         }
 
@@ -1522,7 +1538,7 @@ function CheckForAnimationCollisions(self){
                                 if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0,0], 8, false, 3);
                                                 
                                 self.collisionDetected = true;
-                                self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-box"];
+                                self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-box" + hitSuffix];
                             }
 
                         }
