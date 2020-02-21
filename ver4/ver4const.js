@@ -547,6 +547,44 @@ function v3_rotateZ_res(res, a, ang) {
 }
 
 
+// Average of 2 v3 (middle)
+function v3_avg2_mod(a, b) {
+    a[0] = (a[0] + b[0]) / 2.0;
+    a[1] = (a[1] + b[1]) / 2.0;
+    a[2] = (a[2] + b[2]) / 2.0;
+}
+function v3_avg2_new(a, b) {
+    return [
+    (a[0] + b[0]) / 2.0,
+    (a[1] + b[1]) / 2.0,
+    (a[2] + b[2]) / 2.0
+    ];
+}
+function v3_avg2_res(res, a, b) {
+    res[0] = (a[0] + b[0]) / 2.0;
+    res[1] = (a[1] + b[1]) / 2.0;
+    res[2] = (a[2] + b[2]) / 2.0;
+}
+
+// Average of 3 v3
+function v3_avg3_mod(a, b, c) {
+    a[0] = (a[0] + b[0] + c[0]) / 3.0;
+    a[1] = (a[1] + b[1] + c[1]) / 3.0;
+    a[2] = (a[2] + b[2] + c[2]) / 3.0;
+}
+function v3_avg3_new(a, b, c) {
+    return [
+    (a[0] + b[0] + c[0]) / 3.0,
+    (a[1] + b[1] + c[1]) / 3.0,
+    (a[2] + b[2] + c[2]) / 3.0
+    ];
+}
+function v3_avg3_res(res, a, b, c) {
+    res[0] = (a[0] + b[0] + c[0]) / 3.0;
+    res[1] = (a[1] + b[1] + c[1]) / 3.0;
+    res[2] = (a[2] + b[2] + c[2]) / 3.0;
+}
+
 
 // v3 Arrays
 

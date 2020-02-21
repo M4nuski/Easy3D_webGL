@@ -436,6 +436,8 @@ class E3D_loader {
         }
 
         let newNormal = [0, 0, 0];
+        let d21 = [0, 0, 0];
+        let d31 = [0, 0, 0];
 
         // create face normals, add CD_triangle and CD_edge
         for (var i = 0; i < numFloats / 9; i++) { // for each face
@@ -443,9 +445,10 @@ class E3D_loader {
             var v2 = [positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]];
             var v3 = [positions[(i * 9) + 6], positions[(i * 9) + 7], positions[(i * 9) + 8]];
 
-            v3_sub_mod(v2, v1);
-            v3_sub_mod(v3, v1);
-            v3_cross_res(newNormal, v3, v2);
+
+            v3_sub_res(d21, v2, v1);
+            v3_sub_res(d31, v3, v1);
+            v3_cross_res(newNormal, d21, d31);
             v3_normalize_mod(newNormal);
 
             entity.pushCD_edge2p(v1, v2);
@@ -456,10 +459,12 @@ class E3D_loader {
 
 
         // TODO remove duplicate edges
+        // TODO remove edges in creases
 
         console.log("Loaded " + numFloats + " float locations");
         console.log((numFloats / 3) + " vertices");
         console.log((numFloats / 9) + " triangles");
+        console.log(entity.CD_edge + " edges");
         entity.collisionDetection = true;
     }
 

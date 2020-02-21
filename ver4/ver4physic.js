@@ -293,7 +293,7 @@ function initEngine() {
     //DEV_wand.addLine([0, 0, 25], [0, 0, -25], false, [1, 1, 1]);
    // DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
    // DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
-    DEV_wand.addTriangle([0, 20, 80], [30, 20, 150], [-30, 20, 150], [1, 1, 1], true);
+    DEV_wand.addTriangle([0, 20, 80], [-30, 20, 150], [30, 20, 150], [1, 1, 1], true);
    // DEV_wand.resetMatrix();
     DEV_wand.visible = true;
     scn.addEntity(DEV_wand);
@@ -326,6 +326,7 @@ function initEngine() {
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
+    //resMngr.addRessource("../Models/PYRA.raw", "Map", "Model");
     resMngr.addRessource("../Models/blob.raw", "Map", "Model");
     resMngr.loadAll("models");
 
@@ -351,10 +352,11 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1));
-            DEV_axis.position[1] = -100;
+            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1), false, v3_val(10, 10, 10));
+            DEV_axis.position[1] = 60;
+            DEV_axis.position[2] = 750;
             DEV_axis.visible = true;
-            E3D_loader.load_CD_Model_RAW(DEV_axis, resMngr.getData(name));
+            E3D_loader.load_CD_Model_RAW(DEV_axis, resMngr.getData(name), v3_val(10,10,10));
             scn.addEntity(DEV_axis);  
 
 
@@ -594,20 +596,65 @@ if (DEV_axis.visible) {
     if (show_DEV_CD) {
      //   dev_CD.clear();
         for (let i = 0; i < scn.entities.length; ++i) {
+            // vis culling
             if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
+
+            // sph
             for (let j = 0; j < scn.entities[i].CD_sph; ++j) {
                 dev_CD.addWireSphere(scn.entities[i].CD_sph_p[j], scn.entities[i].CD_sph_r[j] * 2, [1,0.5,0.5], 4, false);
             }
+
+            // plane
             for (let j = 0; j < scn.entities[i].CD_plane; ++j) {
-                dev_CD.moveCursorTo(scn.entities[i].CD_plane_p[j]);
-                var norm = v3_scale_new(scn.entities[i].CD_plane_n[j], 10);
-                dev_CD.addLineByOffset(norm, false, [1.0,1.0,1.0]);
+                dev_CD.addLineByPosNormLen(scn.entities[i].CD_plane_p[j], scn.entities[i].CD_plane_n[j], 10, false, [1.0,1.0,1.0]);
+
+                dev_CD.addLineByPosNormLen(scn.entities[i].CD_plane_p[j], scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j], false, [1.0,0.2,0.2]);
+                dev_CD.addLineByPosNormLen(scn.entities[i].CD_plane_p[j], scn.entities[i].CD_plane_w[j], -scn.entities[i].CD_plane_halfWidth[j], false, [1.0,0.0,0.0]);
+
+                dev_CD.addLineByPosNormLen(scn.entities[i].CD_plane_p[j], scn.entities[i].CD_plane_h[j],  scn.entities[i].CD_plane_halfHeight[j], false, [0.2,1.0,0.2]);
+                dev_CD.addLineByPosNormLen(scn.entities[i].CD_plane_p[j], scn.entities[i].CD_plane_h[j], -scn.entities[i].CD_plane_halfHeight[j], false, [0.0,1.0,0.0]);
+            }
+
+            // edge
+            for (let j = 0; j < scn.entities[i].CD_edge; ++j) {
+                dev_CD.addLineByPosNormLen(scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], false, [1,0.5,0]);
+            }
+
+            // box
+            for (let j = 0; j < scn.entities[i].CD_box; ++j) {
+                dev_CD.addLine( scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
+                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft], false, [1,0.5,0]);
+
+                dev_CD.addLine( scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
+                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight], false, [1,0.5,0]);
+
+                dev_CD.addLine( scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
+                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft], false, [1,0.5,0]);
+    
+                dev_CD.addLine( scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
+                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopFrontRight], false, [1,0.5,0]);
+            }
+
+            // triangle
+            var midpoint = [0,0,0];
+            for (let j = 0; j < scn.entities[i].CD_triangle; ++j) {
+                
+                v3_avg3_res(midpoint, scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p2[j], scn.entities[i].CD_triangle_p3[j]);
+
+                dev_CD.addLineByPosNormLen(midpoint, scn.entities[i].CD_triangle_n[j], 10, false, [1.0,1.0,1.0]);
+                dev_CD.addLine(midpoint, scn.entities[i].CD_triangle_p1[j], false, [1.0, 0.5, 0.5]);
+                dev_CD.addLine(midpoint, scn.entities[i].CD_triangle_p2[j], false, [0.5, 1.0, 0.5]);
+                dev_CD.addLine(midpoint, scn.entities[i].CD_triangle_p3[j], false, [0.5, 0.5, 1.0]);
             }
 
         }
+        DEV_wand.visible = false;
+
         dev_CD.visible = true;
         phyTracers.visible = true;
     } else {
+        DEV_wand.visible = true;
+
         dev_CD.visible = false;
         phyTracers.visible = false;
     }
@@ -1570,14 +1617,10 @@ function CheckForAnimationCollisions(self){
                 if  (marker != self.lastHitMarker) {
                     nHitTest++;
 
-  
-                    if (triangle_vector_intersect_res(firstHit, vectOrig, pathVect, 
+                    var hitRes = triangle_capsule_intersect_res(firstHit, vectOrig, pathVect, self.target.CD_sph_r[0],
                         scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p2[j], 
-                        scn.entities[i].CD_triangle_p3[j], scn.entities[i].CD_triangle_n[j]) ) {
-
-
-                            // TODO calc sin/cos of pathVect and adjust firstHit
-
+                        scn.entities[i].CD_triangle_p3[j], scn.entities[i].CD_triangle_n[j]);
+                    if ((hitRes != false) && (hitRes <= self.deltaLength) ) {      
                         // check dist, if dist less than current hit declare hit
                         var t0 = v3_distancesquared(firstHit, self.last_position);
                         if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
@@ -1589,7 +1632,7 @@ function CheckForAnimationCollisions(self){
                         }
 
 
-                        }
+                    } // if hitres
 
                 } // different marker
             } // foreach triangles
@@ -1863,7 +1906,7 @@ function planeIntersect(planePos, planeNormal, vectOrigin, vectDirection) {
 
     hitPoints.set("p-v t", t);
   //  if (t < 0.0) return false; // derriere    
-
+    if (t == 0) t = _v3_epsilon;
 	return t;
 }
 
@@ -1893,7 +1936,7 @@ function triangle_vector_intersect_res(firsthit, vOrig, vNormal, triP1, triP2, t
     v3_sub_res(_t_v_i_v1, triP2, triP1);
 
     v3_addscaled_res(firsthit, vOrig, vNormal, t);
-    if (show_DEV_CD) phyTracers.addWireCross(firsthit, 2, [1, 0, 0]);
+    //if (show_DEV_CD) phyTracers.addWireCross(firsthit, 2, [1, 0, 0]);
 
     v3_sub_res(_t_v_i_v2, firsthit, triP1);
 
@@ -1930,9 +1973,53 @@ return (u >= 0) && (v >= 0) && (u + v < 1)
 
     if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
         if (show_DEV_CD) phyTracers.addWireCross(firsthit, 4, [0, 1, 0]);
-        return true;
+        if (t == 0) t = _v3_epsilon;
+        return t;
     } else return false;
 }
+
+var _t_c_i_offset = [0.0, 0.0, 0.0];
+function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, triP2, triP3, triNorm) {
+    //https://blackpawn.com/texts/pointinpoly/default.html
+    
+        var angleCos = v3_dot(triNorm, vNormal);
+        if (Math.abs(angleCos) < _v3_epsilon) return false;
+
+        v3_addscaled_res(_t_c_i_offset, vOrig, triNorm, -vRad); //offset for sph end radius
+        
+        v3_sub_res(_t_v_i_v2, _t_c_i_offset, triP1);
+
+        var t = v3_dot(triNorm, _t_v_i_v2) / -angleCos;
+
+        if (t < -vRad) return false; // behind
+
+        v3_addscaled_res(firstHit, vOrig, vNormal, t); //position on plane
+
+        //if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, [1, 0, 0]);
+        
+        v3_sub_res(_t_v_i_v0, triP3, triP1); // TODO pre-calc in entity CD data
+        v3_sub_res(_t_v_i_v1, triP2, triP1); // pre-calc
+        v3_sub_res(_t_v_i_v2, firstHit, triP1);
+    
+        var dot00 = v3_lengthsquared(_t_v_i_v0); // pre-calc
+        var dot01 = v3_dot(_t_v_i_v0, _t_v_i_v1); // pre-calc
+        var dot02 = v3_dot(_t_v_i_v0, _t_v_i_v2);
+        var dot11 = v3_lengthsquared(_t_v_i_v1); // pre-calc
+        var dot12 = v3_dot(_t_v_i_v1, _t_v_i_v2);
+    
+        var invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+        if (isNaN(invDenom)) return false;
+        var u = (dot11 * dot02 - dot01 * dot12) * invDenom
+        var v = (dot00 * dot12 - dot01 * dot02) * invDenom
+    
+        if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
+            if (show_DEV_CD) phyTracers.addWireCross(firstHit, 4, [0, 1, 0]);
+            if (t == 0) t = _v3_epsilon;
+            return t;
+        } else return false;
+    }
+    
+
 
 
 
