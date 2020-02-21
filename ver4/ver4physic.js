@@ -290,10 +290,11 @@ function initEngine() {
 
     DEV_wand = new E3D_entity_wireframe_canvas("wand");
     DEV_wand.position = [0, 50, 200];
-    DEV_wand.addLine([0, 0, 25], [0, 0, -25], false, [1, 1, 1]);
-    DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
-    DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
-    DEV_wand.resetMatrix();
+    //DEV_wand.addLine([0, 0, 25], [0, 0, -25], false, [1, 1, 1]);
+   // DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
+   // DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
+    DEV_wand.addTriangle([0, 20, 80], [30, 20, 150], [-30, 20, 150], [1, 1, 1], true);
+   // DEV_wand.resetMatrix();
     DEV_wand.visible = true;
     scn.addEntity(DEV_wand);
 
@@ -1557,8 +1558,23 @@ function CheckForAnimationCollisions(self){
 
 
 
+        if ((self.target.CD_sph > 0) && (scn.entities[i].CD_triangle > 0)) {  
 
-        // TODO triangle as simplification of box
+            for (let j = 0; j < scn.entities[i].CD_triangle; ++j) {
+                var marker = i+"t"+j;
+                if  (marker != self.lastHitMarker) {
+                    nHitTest++;
+
+  
+                    triangle_vector_intersect(vectOrig, pathVect, 
+                        scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p2[j], 
+                        scn.entities[i].CD_triangle_p3[j], scn.entities[i].CD_triangle_n[j]);
+
+                } // different marker
+            } // foreach triangles
+        }// sph-triangle
+
+
 
 
 
@@ -1835,6 +1851,65 @@ function insidePlane(SphPosMinusPlanePos, normalA, halfSizeA, normalB, halfSizeB
     if (Math.abs(v3_dot(SphPosMinusPlanePos, normalA)) > halfSizeA) return false;
     if (Math.abs(v3_dot(SphPosMinusPlanePos, normalB)) > halfSizeB) return false;   
     return true;
+}
+
+
+var _t_v_i_v0 = [0.0, 0.0, 0.0];
+var _t_v_i_v1 = [0.0, 0.0, 0.0];
+var _t_v_i_v2 = [0.0, 0.0, 0.0];
+function triangle_vector_intersect(vOrig, vNormal, triP1, triP2, triP3, triNorm) {
+//https://blackpawn.com/texts/pointinpoly/default.html
+
+    var angleCos = v3_dot(triNorm, vNormal);
+    if (Math.abs(angleCos) < _v3_epsilon) return false;
+    
+	v3_sub_res(_t_v_i_v2, vOrig, triP1);
+    var t = v3_dot(triNorm, _t_v_i_v2) / -angleCos;
+    if (t < 0.0) return false; // behind
+
+    v3_sub_res(_t_v_i_v0, triP3, triP1);
+    v3_sub_res(_t_v_i_v1, triP2, triP1);
+
+    var P = v3_addscaled_new(vOrig, vNormal, t);
+    if (show_DEV_CD) phyTracers.addWireCross(P, 2, [1, 0, 0]);
+
+    v3_sub_res(_t_v_i_v2, P, triP1);
+
+    var dot00 = v3_lengthsquared(_t_v_i_v0);
+    var dot01 = v3_dot(_t_v_i_v0, _t_v_i_v1);
+    var dot02 = v3_dot(_t_v_i_v0, _t_v_i_v2);
+    var dot11 = v3_lengthsquared(_t_v_i_v1);
+    var dot12 = v3_dot(_t_v_i_v1, _t_v_i_v2);
+
+/*   
+v0 = C - A
+v1 = B - A
+v2 = P - A
+
+dot00 = dot(v0, v0)
+dot01 = dot(v0, v1)
+dot02 = dot(v0, v2)
+dot11 = dot(v1, v1)
+dot12 = dot(v1, v2)
+
+// Compute barycentric coordinates
+invDenom = 1 / (dot00 * dot11 - dot01 * dot01)
+u = (dot11 * dot02 - dot01 * dot12) * invDenom
+v = (dot00 * dot12 - dot01 * dot02) * invDenom
+
+// Check if point is in triangle
+return (u >= 0) && (v >= 0) && (u + v < 1)
+*/
+
+    var invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+    if (isNaN(invDenom)) return false;
+    var u = (dot11 * dot02 - dot01 * dot12) * invDenom
+    var v = (dot00 * dot12 - dot01 * dot02) * invDenom
+
+    if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
+        if (show_DEV_CD) phyTracers.addWireCross(P, 4, [0, 1, 0]);
+        return true;
+    } else return false;
 }
 
 

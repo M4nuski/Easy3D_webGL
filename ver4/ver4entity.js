@@ -138,7 +138,7 @@ class E3D_entity {
             this.CD_sph_r  = []; // radius
             this.CD_sph_rs = []; // radius squared
 
-            // Infinite Plane Target, on X-Y plane
+            // Plane Target, on X-Y plane
             this.CD_plane = 0;
             this.CD_plane_p0 = []; // center position original to model space
             this.CD_plane_p  = []; // transformed to world space
@@ -161,21 +161,29 @@ class E3D_entity {
             this.CD_box_y  = []; // transformed to world space (rotation)
             this.CD_box_z0 = []; // depth normal Z original to model space
             this.CD_box_z  = []; // transformed to world space (rotation)
-            this.CD_box_bottom = []; // bool to include bottom face
+
+            this.CD_box_bottom = []; // bool to include bottom face and edges
 
             this.CD_box_edge_p0 = []; // 8 box edges corners pos in model space
             this.CD_box_edge_p  = []; // pos in world space
-        
-
-          
-         //   this.CD_box_edge_n0 = []; // 12 box edges normals in model space
-         //   this.CD_box_edge_n  = []; // normals in world space
-
-            this.CD_box_preCull_r = [];
  
             this.CD_box_halfWidth  = []; //x
             this.CD_box_halfHeight = []; //y
             this.CD_box_halfDepth  = []; //z 
+            
+            this.CD_box_preCull_r = [];
+
+            // Triangle Target
+            this.CD_triangle = 0;
+            this.CD_triangle_p10 = []; // original to model space
+            this.CD_triangle_p1  = []; // transformed to world space
+            this.CD_triangle_p20 = []; // original to model space
+            this.CD_triangle_p2  = []; // transformed to world space
+            this.CD_triangle_p30 = []; // original to model space
+            this.CD_triangle_p3  = []; // transformed to world space
+            this.CD_triangle_n0 = [];  // original to model space
+            this.CD_triangle_n  = [];  // transformed to world space (rotation)
+
 
         this.resetMatrix();
     } 
@@ -257,6 +265,18 @@ class E3D_entity {
             this.CD_box_preCull_r  = entity.CD_box_preCull_r.slice();
         }
 
+        if (entity.CD_triangle > 0) {
+
+            this.CD_triangle = entity.CD_triangle;
+            this.CD_triangle_p10 = v3a_clone(entity.CD_triangle_p10); 
+            this.CD_triangle_p1  = v3a_clone(entity.CD_triangle_p1);
+            this.CD_triangle_p20 = v3a_clone(entity.CD_triangle_p20); 
+            this.CD_triangle_p2  = v3a_clone(entity.CD_triangle_p2); 
+            this.CD_triangle_p30 = v3a_clone(entity.CD_triangle_p30); 
+            this.CD_triangle_p3  = v3a_clone(entity.CD_triangle_p3); 
+            this.CD_triangle_n0 =  v3a_clone(entity.CD_triangle_n0); 
+            this.CD_triangle_n  =  v3a_clone(entity.CD_triangle_n); 
+        }
     }
 
 
@@ -328,6 +348,15 @@ class E3D_entity {
                 v3_applym4_res(this.CD_box_z[i], this.CD_box_z0[i], this.normalMatrix);
                 for (var j = 0; j < 8; ++j) v3_applym4_res(this.CD_box_edge_p[i][j], this.CD_box_edge_p0[i][j], this.modelMatrix);
             }
+            
+            for (var i = 0; i < this.CD_triangle; ++i) {
+                v3_applym4_res(this.CD_triangle_p1[i], this.CD_triangle_p10[i], this.modelMatrix);
+                v3_applym4_res(this.CD_triangle_p2[i], this.CD_triangle_p20[i], this.modelMatrix); 
+                v3_applym4_res(this.CD_triangle_p3[i], this.CD_triangle_p30[i], this.modelMatrix); 
+                v3_applym4_res(this.CD_triangle_n[i],  this.CD_triangle_n0[i],  this.normalMatrix); 
+            }
+
+
         }
     }
 
@@ -444,7 +473,20 @@ const _CD_box_corner_BottomBackLeft   = 7;
 
 
     }
+    
+    pushCD_triangle(n, p1, p2 ,p3) {
+        this.CD_triangle_p10[this.CD_triangle] = v3_clone(p1);
+        this.CD_triangle_p1[this.CD_triangle]  = v3_clone(p1);
+        this.CD_triangle_p20[this.CD_triangle] = v3_clone(p2);
+        this.CD_triangle_p2[this.CD_triangle]  = v3_clone(p2);
+        this.CD_triangle_p30[this.CD_triangle] = v3_clone(p3);
+        this.CD_triangle_p3[this.CD_triangle]  = v3_clone(p3);
+        this.CD_triangle_n0[this.CD_triangle]  = v3_clone(n);
+        this.CD_triangle_n[this.CD_triangle]   = v3_clone(n);
 
+        this.CD_triangle += 1;
+        this.collisionDetection = true;
+    }
 
 }
 
@@ -1096,6 +1138,41 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.pushCD_edge(trr, z, size[2]*2); // hor*/
 
 
+        }
+    }
+
+
+    addTriangle(p1, p2, p3, color = [1, 1, 1], addCD = false) {
+        
+        let idx = this.numElements; 
+        this.increaseSize(6);
+
+        this.setVertex3f(idx, p1);
+        this.setColor3f(idx, color);
+        idx++;
+        this.setVertex3f(idx, p2);
+        this.setColor3f(idx, color);
+
+        idx++;
+        this.setVertex3f(idx, p2);
+        this.setColor3f(idx, color);
+        idx++;
+        this.setVertex3f(idx, p3);
+        this.setColor3f(idx, color);
+
+        idx++;
+        this.setVertex3f(idx, p3);
+        this.setColor3f(idx, color);
+        idx++;
+        this.setVertex3f(idx, p1);
+        this.setColor3f(idx, color);
+
+        if (addCD) {
+            var da = v3_sub_new(p2, p1);
+            var db = v3_sub_new(p3, p1);
+            var n = v3_cross_new(da, db);
+            v3_normalize_mod(n);
+            this.pushCD_triangle(n, p1, p2, p3);
         }
     }
 
