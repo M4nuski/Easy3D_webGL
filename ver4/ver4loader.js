@@ -46,16 +46,16 @@ class E3D_loader {
 
         // remove empty and text lines
         let data = rawModelData.split("\n");
-        rawModelData = [];
+        var ModelData = [];
         for (var i = 0; i < data.length; i++) {
             if ((data[i] != "") && (data[i].split(" ").length != 1)) {
-                rawModelData.push(data[i]);
+                ModelData.push(data[i]);
             }
         }
 
         // parse locations
-        for (var i = 0; i < rawModelData.length; i++) {
-            var chunk = rawModelData[i].split(" ");
+        for (var i = 0; i < ModelData.length; i++) {
+            var chunk = ModelData[i].split(" ");
             for (var j = 0; j < chunk.length; j++) {
                 var n = chunk[j].trim();
                 if (n != "") {
@@ -386,6 +386,82 @@ class E3D_loader {
         return entity;
     }
 
+
+        
+    /**
+     * Load triangle CD data from Milkshape3D ascii raw data
+     *
+     * @param {E3D_entity} entity to apply the CD data
+     * @param {string} rawModelData the source data to parse
+     * @param {vec3} scale scale modifier of the entity data
+     * 
+     */
+    static load_CD_Model_RAW(entity, rawModelData, scale = _v3_unit) {
+
+        console.log("Parsing triangle CD data for entity " + entity.id);
+
+        let numFloats = 0;
+        let positions = [];
+        let normals = [];
+
+        // remove empty and text lines
+        let data = rawModelData.split("\n");
+        var ModelData = [];
+        for (var i = 0; i < data.length; i++) {
+            if ((data[i] != "") && (data[i].split(" ").length != 1)) {
+                ModelData.push(data[i]);
+            }
+        }
+
+        // parse locations
+        for (var i = 0; i < ModelData.length; i++) {
+            var chunk = ModelData[i].split(" ");
+            for (var j = 0; j < chunk.length; j++) {
+                var n = chunk[j].trim();
+                if (n != "") {
+                    positions.push(Number(chunk[j].trim()));
+                // colors.push(colorSweep[numFloats % 9]);
+                    numFloats++;
+                }
+            }
+        }
+
+        // apply scale
+        if (scale != _v3_unit) {
+            for (var i = 0; i < numFloats / 3; i++) { // for each vertex                
+            positions[(i * 3)] =     positions[(i * 3)]     * scale[0];
+            positions[(i * 3) + 1] = positions[(i * 3) + 1] * scale[1];
+            positions[(i * 3) + 2] = positions[(i * 3) + 2] * scale[2];
+            }
+        }
+
+        let newNormal = [0, 0, 0];
+
+        // create face normals, add CD_triangle and CD_edge
+        for (var i = 0; i < numFloats / 9; i++) { // for each face
+            var v1 = [positions[i * 9], positions[(i * 9) + 1], positions[(i * 9) + 2]];
+            var v2 = [positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]];
+            var v3 = [positions[(i * 9) + 6], positions[(i * 9) + 7], positions[(i * 9) + 8]];
+
+            v3_sub_mod(v2, v1);
+            v3_sub_mod(v3, v1);
+            v3_cross_res(newNormal, v3, v2);
+            v3_normalize_mod(newNormal);
+
+            entity.pushCD_edge2p(v1, v2);
+            entity.pushCD_edge2p(v2, v3);
+            entity.pushCD_edge2p(v3, v1);
+            entity.pushCD_triangle(newNormal, v1, v2, v3);
+        }
+
+
+        // TODO remove duplicate edges
+
+        console.log("Loaded " + numFloats + " float locations");
+        console.log((numFloats / 3) + " vertices");
+        console.log((numFloats / 9) + " triangles");
+        entity.collisionDetection = true;
+    }
 
 }
 

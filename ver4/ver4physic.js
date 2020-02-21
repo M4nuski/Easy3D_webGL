@@ -326,7 +326,7 @@ function initEngine() {
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
-    resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
+    resMngr.addRessource("../Models/blob.raw", "Map", "Model");
     resMngr.loadAll("models");
 
     // Activate timer and set scene as active
@@ -354,7 +354,11 @@ function onRessource(name, msg) {
             DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1));
             DEV_axis.position[1] = -100;
             DEV_axis.visible = true;
+            E3D_loader.load_CD_Model_RAW(DEV_axis, resMngr.getData(name));
             scn.addEntity(DEV_axis);  
+
+
+
         }  
     } // msg loaded
 }
@@ -1560,15 +1564,32 @@ function CheckForAnimationCollisions(self){
 
         if ((self.target.CD_sph > 0) && (scn.entities[i].CD_triangle > 0)) {  
 
+            // todo pre-cull whole CD stack
             for (let j = 0; j < scn.entities[i].CD_triangle; ++j) {
                 var marker = i+"t"+j;
                 if  (marker != self.lastHitMarker) {
                     nHitTest++;
 
   
-                    triangle_vector_intersect(vectOrig, pathVect, 
+                    if (triangle_vector_intersect_res(firstHit, vectOrig, pathVect, 
                         scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p2[j], 
-                        scn.entities[i].CD_triangle_p3[j], scn.entities[i].CD_triangle_n[j]);
+                        scn.entities[i].CD_triangle_p3[j], scn.entities[i].CD_triangle_n[j]) ) {
+
+
+                            // TODO calc sin/cos of pathVect and adjust firstHit
+
+                        // check dist, if dist less than current hit declare hit
+                        var t0 = v3_distancesquared(firstHit, self.last_position);
+                        if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
+
+                            if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0.8], 8, false, 3);
+                                            
+                            self.collisionDetected = true;
+                            self.closestCollision = [marker, t0, v3_clone(scn.entities[i].CD_triangle_n[j]), v3_clone(firstHit), "Sph-Tri"];
+                        }
+
+
+                        }
 
                 } // different marker
             } // foreach triangles
@@ -1857,7 +1878,7 @@ function insidePlane(SphPosMinusPlanePos, normalA, halfSizeA, normalB, halfSizeB
 var _t_v_i_v0 = [0.0, 0.0, 0.0];
 var _t_v_i_v1 = [0.0, 0.0, 0.0];
 var _t_v_i_v2 = [0.0, 0.0, 0.0];
-function triangle_vector_intersect(vOrig, vNormal, triP1, triP2, triP3, triNorm) {
+function triangle_vector_intersect_res(firsthit, vOrig, vNormal, triP1, triP2, triP3, triNorm) {
 //https://blackpawn.com/texts/pointinpoly/default.html
 
     var angleCos = v3_dot(triNorm, vNormal);
@@ -1865,15 +1886,16 @@ function triangle_vector_intersect(vOrig, vNormal, triP1, triP2, triP3, triNorm)
     
 	v3_sub_res(_t_v_i_v2, vOrig, triP1);
     var t = v3_dot(triNorm, _t_v_i_v2) / -angleCos;
+
     if (t < 0.0) return false; // behind
 
     v3_sub_res(_t_v_i_v0, triP3, triP1);
     v3_sub_res(_t_v_i_v1, triP2, triP1);
 
-    var P = v3_addscaled_new(vOrig, vNormal, t);
-    if (show_DEV_CD) phyTracers.addWireCross(P, 2, [1, 0, 0]);
+    v3_addscaled_res(firsthit, vOrig, vNormal, t);
+    if (show_DEV_CD) phyTracers.addWireCross(firsthit, 2, [1, 0, 0]);
 
-    v3_sub_res(_t_v_i_v2, P, triP1);
+    v3_sub_res(_t_v_i_v2, firsthit, triP1);
 
     var dot00 = v3_lengthsquared(_t_v_i_v0);
     var dot01 = v3_dot(_t_v_i_v0, _t_v_i_v1);
@@ -1907,7 +1929,7 @@ return (u >= 0) && (v >= 0) && (u + v < 1)
     var v = (dot00 * dot12 - dot01 * dot02) * invDenom
 
     if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
-        if (show_DEV_CD) phyTracers.addWireCross(P, 4, [0, 1, 0]);
+        if (show_DEV_CD) phyTracers.addWireCross(firsthit, 4, [0, 1, 0]);
         return true;
     } else return false;
 }

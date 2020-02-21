@@ -183,6 +183,8 @@ class E3D_entity {
             this.CD_triangle_p3  = []; // transformed to world space
             this.CD_triangle_n0 = [];  // original to model space
             this.CD_triangle_n  = [];  // transformed to world space (rotation)
+            // TODO pre calc delta vectors
+            // TODO add single total this.CD_triangle_preCull_r 
 
 
         this.resetMatrix();
@@ -373,6 +375,21 @@ class E3D_entity {
     pushCD_edge(p, n, l) {
         this.CD_edge_p0[this.CD_edge] = v3_clone(p);
         this.CD_edge_p[this.CD_edge] = v3_clone(p);
+        
+        this.CD_edge_n0[this.CD_edge] = v3_clone(n);
+        this.CD_edge_n[this.CD_edge] = v3_clone(n);
+
+        this.CD_edge_l[this.CD_edge] = l;
+        
+        this.CD_edge += 1;
+        this.collisionDetection = true;
+    }
+    pushCD_edge2p(p1, p2) {
+        var n = v3_sub_new(p2, p1);
+        var l = v3_length(n)
+        v3_invscale_mod(n, l);
+        this.CD_edge_p0[this.CD_edge] = v3_clone(p1);
+        this.CD_edge_p[this.CD_edge] = v3_clone(p1);
         
         this.CD_edge_n0[this.CD_edge] = v3_clone(n);
         this.CD_edge_n[this.CD_edge] = v3_clone(n);
