@@ -19,9 +19,10 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress and next steps
 ----------
-* Collision detection (vector, edge, sphere, plane, box)
-* refactor all ver4 project for CD and PHY
-* Wrap animation and CD/CR/PHY into common classes and update all ver4 projects
+* Fix sliding vs gravity on angled surfaces
+* Extract animation and CD/CR/PHY into global classes
+* refactor all ver4 project for Anim / CD / PHY
+* Maze game
 * --ver5:
 * flatten engine to reducre nested calls and hierarchy walking
 * Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
