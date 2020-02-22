@@ -21,6 +21,8 @@ class E3D_entity {
         this.position = v3_new();
         this.rotation = v3_new();
 
+        this.actualPosition = v3_new();
+
         // fustrum culling
         this.vis_culling = true; // Setting to false will force the entity to always be redrawn
         this.cull_dist = 0; // maximum vertex distance from object center for culling
@@ -312,7 +314,7 @@ class E3D_entity {
         v3_add_mod(this.rotation, offset);
     }
 
-    resetMatrix(){
+    resetMatrix(perfActual = false){
         // Recreate matrices from rotation and position
         // Evaluate rotation as Pitch Yaw Roll
 
@@ -321,10 +323,16 @@ class E3D_entity {
         m4_rotateY_mod(this.normalMatrix, this.rotation[1]);
 
         m4_copy(this.modelMatrix, this.normalMatrix);
-        this.modelMatrix[12] =  this.position[0];
-        this.modelMatrix[13] =  this.position[1];
-        this.modelMatrix[14] =  this.position[2];
-
+        if (perfActual) {
+            v3_lerp_mod(this.actualPosition, this.position, 0.75);
+            this.modelMatrix[12] =  this.actualPosition[0];
+            this.modelMatrix[13] =  this.actualPosition[1];
+            this.modelMatrix[14] =  this.actualPosition[2];
+        } else {
+            this.modelMatrix[12] =  this.position[0];
+            this.modelMatrix[13] =  this.position[1];
+            this.modelMatrix[14] =  this.position[2];
+        }
         if (this.collisionDetection) {
             for (var i = 0; i < this.CD_vec; ++i) {
                 v3_applym4_res(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);

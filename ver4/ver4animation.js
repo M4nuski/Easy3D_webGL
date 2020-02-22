@@ -43,6 +43,9 @@ class E3D_animation {
         this.vectNorm = v3_new();
         this.act = [];
         this.numPellets = 10;
+        this.startedYDelta = 0;
+
+        this.collidingNormal = v3_new();
 
         // For CD
         this.delta = [0, 0, 0]; // Position delta
@@ -64,9 +67,9 @@ class E3D_animation {
         }
     }
 
-    animateRePass() {
+    animateRePass(x) {
         if (this.animRePass) {
-            return this.animRePass();
+            return this.animRePass(x);
         }
     }
 
