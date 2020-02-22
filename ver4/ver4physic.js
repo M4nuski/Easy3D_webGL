@@ -327,7 +327,7 @@ function initEngine() {
     scn.addEntity(dev_CD);
 
     //resMngr.addRessource("../Models/PYRA.raw", "Map", "Model");
-    resMngr.addRessource("../Models/blob.raw", "Map", "Model");
+    resMngr.addRessource("../Models/M1.raw", "Map", "Model");
     resMngr.loadAll("models");
 
     // Activate timer and set scene as active
@@ -352,11 +352,12 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1), false, v3_val(10, 10, 10));
+            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1), false, v3_val(1, 1, 1));
             DEV_axis.position[1] = 60;
             DEV_axis.position[2] = 750;
             DEV_axis.visible = true;
-            E3D_loader.load_CD_Model_RAW(DEV_axis, resMngr.getData(name), v3_val(10,10,10));
+            E3D_loader.load_CD_Model_RAW(DEV_axis, resMngr.getData(name), v3_val(1,1,1));
+            DEV_axis.CD_edge = 0;
             scn.addEntity(DEV_axis);  
 
 
@@ -1622,7 +1623,7 @@ function CheckForAnimationCollisions(self){
                     if ((hitRes != false) && (hitRes <= self.deltaLength) ) {      
                         // check dist, if dist less than current hit declare hit
                         var t0 = 0.0;
-                        if (hitRes > 0.0) t0 = v3_distancesquared(firstHit, self.last_position);
+                     /*   if (hitRes > 0.0)*/ t0 = v3_distancesquared(firstHit, self.last_position);
                         if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
 
                             if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,1,0.8], 8, false, 3);
