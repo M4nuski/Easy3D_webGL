@@ -43,6 +43,7 @@ class E3D_animation {
         this.vectNorm = v3_new();
         this.act = [];
         this.numPellets = 10;
+        this.startObject = null;
         this.startedYDelta = 0;
 
         this.collidingNormal = v3_new();
@@ -61,9 +62,9 @@ class E3D_animation {
         this.lastHitMarker = ""; // marker of last hit target
     }
 
-    animateFirstPass() {
+    animateFirstPass(x) {
         if (this.animFirstPass) {
-            this.animFirstPass();
+            this.animFirstPass(x);
         }
     }
 
@@ -73,9 +74,9 @@ class E3D_animation {
         }
     }
 
-    animateLastPass() {
+    animateLastPass(x) {
         if (this.animLastPass) {
-            this.animLastPass();
+            this.animLastPass(x);
         }
     }
 
@@ -88,7 +89,8 @@ class E3D_animation {
     pause() {
         this.state = E3D_PAUSE;  
     }
-    restart() {
+    restart(x) {
+        this.startObject = x;
         this.state = E3D_RESTART;  
     }
     done() {

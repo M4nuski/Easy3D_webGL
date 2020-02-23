@@ -53,6 +53,8 @@ var sphCounter = 0;
 var DEV_lastAnimData = null;
 var gAccel, lgaccel = 0;
 var DEV_inbox = false;
+var DEV_lastFire = 0;
+var DEV_firing = false;
 
 // Engine Core Components
 
@@ -173,11 +175,13 @@ function initEngine() {
 
     // Input configuration // TODO in JSON config file
     inputs.keyMap.set("action_toggle_CD", "Backquote"); // #
+
     inputs.keyMap.set("action_switch_ctrl_player", "Digit1");
     inputs.keyMap.set("action_switch_ctrl_sphere", "Digit2");
     inputs.keyMap.set("action_switch_ctrl_vector", "Digit3");
     inputs.keyMap.set("action_switch_ctrl_edge", "Digit4");
-    inputs.keyMap.set("action_switch_ctrl_wand", "Digit5");
+    inputs.keyMap.set("action_switch_ctrl_wand", "Digit5");    
+    inputs.keyMap.set("action_toggle_fire", "Digit8");
 
     inputs.keyMap.set("action_anim_clear", "Digit0");
     inputs.keyMap.set("action_CD_clear", "Digit9");
@@ -589,7 +593,6 @@ if (DEV_axis.visible) {
 
 
 
-
     if (show_DEV_CD) {
      //   dev_CD.clear();
         for (let i = 0; i < scn.entities.length; ++i) {
@@ -685,7 +688,7 @@ function timerTick() {  // Game Loop
     if (inputs.checkCommand("action2", false)) {
         //  console.log("action0", true);
         for (var i = 0; i < 32; ++i) {
-            let newSph = scn.cloneEntity("sph", "sph" + sphCounter);
+            let newSph = scn.cloneEntity("sph", "sphR" + sphCounter);
             animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sphRain_firstPass, anim_sph_rePass, anim_sph_endPass));
             animations[animations.length-1].restart();
             animations[animations.length-1].target.animIndex = animations.length-1;
@@ -701,6 +704,8 @@ function timerTick() {  // Game Loop
     if (inputs.checkCommand("action_switch_ctrl_vector", true)) { moveTarget = "v";  inputs.mousePosDirection = -1; }
     if (inputs.checkCommand("action_switch_ctrl_edge", true)) { moveTarget = "e";  inputs.mousePosDirection = -1; }
     if (inputs.checkCommand("action_switch_ctrl_wand", true)) { moveTarget = "w";  inputs.mousePosDirection = -1; }
+
+    if (inputs.checkCommand("action_toggle_fire", true)) { DEV_firing = !DEV_firing; if (DEV_firing) DEV_lastFire = timer.lastTick; }
 
     if (inputs.checkCommand("action_CD_clear", true)) { phyTracers.clear(); }
 
@@ -722,6 +727,30 @@ function timerTick() {  // Game Loop
             animations[animations.length - 1].target.visible = true;
             animations[animations.length - 1].target.resetMatrix();
             animations[animations.length - 1].state = E3D_PLAY;
+        }
+    }
+
+    if (DEV_firing && DEV_anim_active) {
+        if ((timer.lastTick - DEV_lastFire) > 250) {
+            DEV_lastFire = timer.lastTick;
+
+            var xdelta = rndPM(30);
+
+            let newSph = scn.cloneEntity("sph", "sphF" + sphCounter);
+            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_AFfirstPass, anim_sph_rePass, anim_sph_endPass));
+            animations[animations.length-1].restart([400 + xdelta, 60, 75]);
+            animations[animations.length-1].target.animIndex = animations.length-1;
+
+            newSph = scn.cloneEntity("sph", "sphF" + sphCounter);
+            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_AFfirstPass, anim_sph_rePass, anim_sph_endPass));
+            animations[animations.length-1].restart([500 + xdelta, 60, 75]);
+            animations[animations.length-1].target.animIndex = animations.length-1;
+
+            newSph = scn.cloneEntity("sph", "sphF" + sphCounter);
+            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_AFfirstPass, anim_sph_rePass, anim_sph_endPass));
+            animations[animations.length-1].restart([600 + xdelta, 60, 75]);
+            animations[animations.length-1].target.animIndex = animations.length-1;
+
         }
     }
 
@@ -807,6 +836,26 @@ CUBE_DS_tt             33.9050
 CUBE_DS_ht              6.6450
 CUBE_DS_att             0.0202
 CUBE_DS_ath             0.0426
+*/
+/* 3 types fixed
+CUBE_6P_nt           6864.0000
+CUBE_6P_nh           1041.0000
+CUBE_6P_tt            123.7250
+CUBE_6P_ht             26.9800
+CUBE_6P_att             0.0180
+CUBE_6P_ath             0.0259
+CUBE_BX_nt           7805.0000
+CUBE_BX_nh           1043.0000
+CUBE_BX_tt             52.3700
+CUBE_BX_ht             14.3550
+CUBE_BX_att             0.0067
+CUBE_BX_ath             0.0138
+CUBE_DS_nt           6829.0000
+CUBE_DS_nh           1042.0000
+CUBE_DS_tt             79.7650
+CUBE_DS_ht             17.1350
+CUBE_DS_att             0.0102
+CUBE_DS_ath             0.0164
 */
 
 function CheckForAnimationCollisions(self){
@@ -1757,6 +1806,41 @@ function anim_sphRain_firstPass() {
         this.lastHitMarker = "";    
     }
 }
+function anim_sph_AFfirstPass() {
+    if (this.state == E3D_RESTART) {
+
+        v3_copy(this.target.position, this.startObject);
+        this.spd = [0, 0, -300];
+
+        this.spd[0] += rndPM(1);
+        this.spd[1] += rndPM(1);
+        this.spd[2] += rndPM(1);
+        this.ttl = 0.31;
+        
+        this.state = E3D_PLAY;
+        this.target.visible = true;
+        this.target.resetMatrix();
+        this.last_position = v3_clone(this.target.position);
+        
+    } else if (this.state == E3D_PLAY) {
+
+        v3_copy(this.last_position, this.target.position);
+
+        v3_scale_res(this.delta, this.spd, timer.delta);  
+        this.spd[1] = this.spd[1] - gAccel;
+
+        v3_add_mod(this.target.position, this.delta);
+        this.deltaLength = v3_length(this.delta);
+
+        this.target.resetMatrix();
+        this.lastHitMarker = ""; 
+    }
+}
+
+
+
+
+
 function anim_sph_rePass(itr) {
 
     if ((this.deltaLength > 0) && (this.collisionDetected)) {
