@@ -1087,7 +1087,7 @@ function CheckForAnimationCollisions(self){
                                  (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
                                 if (show_DEV_CD) log("inside box Z, level 2");
                                 var error = scn.entities[i].CD_box_halfDepth[j] + self.target.CD_sph_r[0];
-                                error = error - pzdot;
+                                error = error - apzdot;
 
                                 v3_scale_res(sphOffset, scn.entities[i].CD_box_z[j], error);
                                 v3_add_mod(self.target.position, sphOffset);                            
@@ -1096,7 +1096,7 @@ function CheckForAnimationCollisions(self){
                                 v3_add_mod(vectOrig, sphOffset); 
                                 v3_copy(firstHit, vectOrig);
                                 v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
-                                if (error < 0.0) v3_negate_mod(hitNormal);
+                                if (pzdot < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
                                 hitSuffix = "-Inside";
 
@@ -1106,7 +1106,7 @@ function CheckForAnimationCollisions(self){
                                 if (show_DEV_CD) log("inside box Y, level 2");
 
                                 var error = scn.entities[i].CD_box_halfHeight[j] + self.target.CD_sph_r[0];
-                                error = error - pydot;
+                                error = error - apydot;
 
                                 v3_scale_res(sphOffset, scn.entities[i].CD_box_y[j], error);
                                 v3_add_mod(self.target.position, sphOffset);                            
@@ -1115,17 +1115,17 @@ function CheckForAnimationCollisions(self){
                                 v3_add_mod(vectOrig, sphOffset); 
                                 v3_copy(firstHit, vectOrig);
                                 v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
-                                if (error < 0.0) v3_negate_mod(hitNormal);
+                                if (pydot < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
                                 hitSuffix = "-Inside";
 
-                        } else if ( (apzdot <= scn.entities[i].CD_box_halfDepth[j]) &&
-                                    (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
+                            } else if ( (apzdot <= scn.entities[i].CD_box_halfDepth[j]) &&
+                                        (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
 
                                 if (show_DEV_CD) log("inside box X, level 2");
                                 
                                 var error = scn.entities[i].CD_box_halfWidth[j] + self.target.CD_sph_r[0];
-                                error = error - pxdot;
+                                error = error - apxdot;
 
                                 v3_scale_res(sphOffset, scn.entities[i].CD_box_x[j], error);
                                 v3_add_mod(self.target.position, sphOffset);                            
@@ -1134,7 +1134,7 @@ function CheckForAnimationCollisions(self){
                                 v3_add_mod(vectOrig, sphOffset); 
                                 v3_copy(firstHit, vectOrig);
                                 v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
-                                if (error < 0.0) v3_negate_mod(hitNormal);
+                                if (pxdot < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
                                 hitSuffix = "-Inside";
                             }
