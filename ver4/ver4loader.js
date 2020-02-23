@@ -104,88 +104,16 @@ class E3D_loader {
             normals.push(newNormal[2]); 
         }
 
-
-
-
         if (smoothShading > -1.0) {
             console.log("Smooth Shading Normals");
-            // group vertex by locality (list of unique location)
-            // average normals per locality
-            // if diff < smoothShading normal is average
-            // else keep flat normal
 
             var indices = [];
-            var nbUniqueVertex = this.getUniqueVertices(positions, indices);
+            var uniques = [];
+            this.getUniqueVertices(positions, uniques, indices);
+            console.log("unique Vert: " + uniques.length);
 
-/*
-            let numVert =  (numFloats / 3);
-            console.log("numVert: " + numVert);
-            var uniqueVertex = [];
-            var indices = [numVert];
-
-            let curVert = [0, 0, 0];
-            for (var i = 0; i < numVert; ++i) {
-                var unique = true;
-                v3_val_res(curVert, positions[(i * 3)], positions[(i * 3) + 1], positions[(i * 3) + 2] );
-                for (var j = 0; j < uniqueVertex.length; ++j) {
-                    if ((unique) && (v3_equals(uniqueVertex[j], curVert))) {
-                        unique = false;
-                        indices[i] = j;
-                        break;
-                    }
-                }
-                if (unique) { 
-                    uniqueVertex.push(v3_clone(curVert));
-                    indices[i] = uniqueVertex.length-1;
-                } 
-            }*/
-
-            console.log("unique Vert: " + nbUniqueVertex);
-
-            /*
-            var avgNorms = new Array(nbUniqueVertex);
-            let curNorm = [0, 0, 0];
-            // for all unique, average normals
-            for (var i = 0; i < nbUniqueVertex; ++i) { // i index in uniqueVertex and avgNorms
-                avgNorms[i] = [0, 0, 0];
-
-                for (var j = 0; j < indices.length; ++j) { // j index in indices and normals*3 
-                    if (indices[j] == i) {
-                        v3_val_res(curNorm, normals[j * 3], normals[(j * 3) + 1], normals[(j * 3) + 2] );
-                        v3_add_mod(avgNorms[i], curNorm);
-                    }
-                }
-
-                v3_normalize_mod(avgNorms[i]);
-            }
-*/
             console.log("Smoothing...");
-            this.smoothNormals(indices, nbUniqueVertex, normals, smoothShading);
-/*
-            for (var i = 0; i < nbUniqueVertex; ++i) { // i index in uniqueVertex and avgNorms
-
-                for (var j = 0; j < indices.length; ++j) {// j index in indices and normals*3 
-                    if (indices[j] == i) {
-                        v3_val_res(curNorm, normals[j * 3], normals[(j * 3) + 1], normals[(j * 3) + 2] );
-
-                        if (v3_dot(avgNorms[i], curNorm) >= smoothShading) {
-                            normals[(j * 3)]     = avgNorms[i][0];
-                            normals[(j * 3) + 1] = avgNorms[i][1];
-                            normals[(j * 3) + 2] = avgNorms[i][2];
-                        }
-                    }
-                }
-            }
-*/
-           /* console.log("Expanding...");
-            for (var i = 0; i < numVert; ++i) {
-                var unique = true;
-                var curVert = [positions[i*3], positions[(i*3)+1], positions[(i*3)+2] ];
-                for (var j = 0; j < uniqueVertex.length; ++j) {
-                    if ((unique) && (v3_equals(uniqueVertex[j], curVert))) unique = false;
-                }
-                if (unique) uniqueVertex.push(v3_clone(curVert));
-            }*/
+            this.smoothNormals(indices, uniques.length, normals, smoothShading);
         }
 
         console.log("Loaded " + numFloats + " float locations");
@@ -303,14 +231,24 @@ class E3D_loader {
                 v3_sub_mod(p2, p0);
                 v3_cross_res(normal, p2, p1);
                 v3_normalize_mod(normal);
-                //TODO add smoothing
-                //TODO extract from all loaders 
             }
 
             normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);
             normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);
             normals.push(normal[0]);normals.push(normal[1]);normals.push(normal[2]);
 
+        }
+
+        if (smoothShading > -1.0) {
+            console.log("Smooth Shading Normals");
+
+            var indices = [];
+            var uniques = [];
+            this.getUniqueVertices(positions, uniques, indices);
+            console.log("unique Vert: " + uniques.length);
+
+            console.log("Smoothing...");
+            this.smoothNormals(indices, uniques.length, normals, smoothShading);
         }
 
         // Dump data into entity
@@ -375,11 +313,15 @@ class E3D_loader {
         let d21 = [0, 0, 0];
         let d31 = [0, 0, 0];
 
-        // create face normals, add CD_triangle and CD_edge
+        let v1 = [0, 0, 0];
+        let v2 = [0, 0, 0];
+        let v3 = [0, 0, 0];
+
+        // create face normals and triangle CD
         for (var i = 0; i < numFloats / 9; i++) { // for each face
-            var v1 = [positions[i * 9], positions[(i * 9) + 1], positions[(i * 9) + 2]];
-            var v2 = [positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]];
-            var v3 = [positions[(i * 9) + 6], positions[(i * 9) + 7], positions[(i * 9) + 8]];
+            v3_val_res(v1, positions[i * 9      ], positions[(i * 9) + 1], positions[(i * 9) + 2]);
+            v3_val_res(v2, positions[(i * 9) + 3], positions[(i * 9) + 4], positions[(i * 9) + 5]);
+            v3_val_res(v3, positions[(i * 9) + 6], positions[(i * 9) + 7], positions[(i * 9) + 8]);
 
 
             v3_sub_res(d21, v2, v1);
@@ -387,20 +329,48 @@ class E3D_loader {
             v3_cross_res(newNormal, d21, d31);
             v3_normalize_mod(newNormal);
 
-            entity.pushCD_edge2p(v1, v2);
-            entity.pushCD_edge2p(v2, v3);
-            entity.pushCD_edge2p(v3, v1);
+            normals.push(newNormal[0]); // flat shading
+            normals.push(newNormal[1]); 
+            normals.push(newNormal[2]); 
+
+            normals.push(newNormal[0]); // flat shading
+            normals.push(newNormal[1]); 
+            normals.push(newNormal[2]); 
+
+            normals.push(newNormal[0]); // flat shading
+            normals.push(newNormal[1]); 
+            normals.push(newNormal[2]);             
+
+            // add CD for the triangle face
             entity.pushCD_triangle(newNormal, v1, v2, v3);
         }
 
+        // get edges 
+        var indices = [];
+        var uniques = [];
+        this.getUniqueVertices(positions, uniques, indices);
+        console.log("unique Vert: " + uniques.length);
 
-        // TODO remove duplicate edges
-        // TODO remove edges in creases
+        var edges = this.getEdges(indices, normals);
+        console.log("edges: " + edges.length);
+
+
+        var centroid1 = v3_new();
+        var centroid2 = v3_new();
+        for (var i = 0; i < edges.length; ++i) { // for each edge
+
+            v3_avg3_res(centroid1, uniques[edges[i].index1], uniques[edges[i].index2], uniques[edges[i].index31]);
+            v3_avg3_res(centroid2, uniques[edges[i].index1], uniques[edges[i].index2], uniques[edges[i].index32]);
+            v3_sub_mod(centroid1, centroid2);
+            
+            if (v3_dot(centroid1, edges[i].normal2) < -0.001) entity.pushCD_edge2p(uniques[edges[i].index1], uniques[edges[i].index2]);
+        }
+
 
         console.log("Loaded " + numFloats + " float locations");
         console.log((numFloats / 3) + " vertices");
         console.log((numFloats / 9) + " triangles");
-        console.log(entity.CD_edge + " edges");
+        console.log(entity.CD_edge + " CD edges");
         entity.collisionDetection = true;
     }
 
@@ -412,32 +382,30 @@ class E3D_loader {
  *
  * @param {[float]} vertexArray expanded vertex array of float, 3 float per vertex (3 vertex per face)
  * @param {[int]} indexArray resulting list of indices matching vertexArray/3
- * @returns {int} number of unique vertices found in the input array
+
  */
-    static getUniqueVertices(vertexArray, indexArray) {
-        var uniqueVertex = [];
+    static getUniqueVertices(vertexArray, uniqueV3Array, indexArray) {
+
         let numVert = vertexArray.length / 3;
-       // indexArray = new Array(numVert);
+
 
         let curVert = [0, 0, 0];
 
         for (var i = 0; i < numVert; ++i) {
             var unique = true;
             v3_val_res(curVert, vertexArray[(i * 3)], vertexArray[(i * 3) + 1], vertexArray[(i * 3) + 2] );
-            for (var j = 0; j < uniqueVertex.length; ++j) {
-                if (v3_equals(uniqueVertex[j], curVert)) {
+            for (var j = 0; j < uniqueV3Array.length; ++j) {
+                if (v3_equals(uniqueV3Array[j], curVert)) {
                     unique = false;
                     indexArray[i] = j;
                     break;
                 }
             }
             if (unique) { 
-                uniqueVertex.push(v3_clone(curVert));
-                indexArray[i] = uniqueVertex.length-1;
+                uniqueV3Array.push(v3_clone(curVert));
+                indexArray[i] = uniqueV3Array.length-1;
             } 
         }
-
-        return uniqueVertex.length;
     }
 
 
@@ -480,10 +448,94 @@ class E3D_loader {
     }
 
 
-
     static getEdges(indexArray, normalArray) {
-        var edgeArray = [];
-        // { index1, index2, normal1, normal2 } 
+        var edgeArray = []; // of { done, index1, index2, normal1, normal2, index3a, index3b } 
+
+        // foreach face
+        for (var i = 0; i < indexArray.length / 3; ++i) { 
+
+            // edge 1
+            var unique = true;
+            for (var j = 0; j < edgeArray.length; ++j) if (!edgeArray[j].done) {
+                if ( ((edgeArray[j].index1 == indexArray[(i * 3)    ]) && (edgeArray[j].index2 == indexArray[(i * 3) + 1])) ||
+                     ((edgeArray[j].index1 == indexArray[(i * 3) + 1]) && (edgeArray[j].index2 == indexArray[(i * 3)    ])) ) {
+                    unique = false;
+                    v3_val_res(edgeArray[j].normal2, normalArray[i * 9], normalArray[i * 9 + 1], normalArray[i * 9 + 2] );
+                    edgeArray[j].done = true;
+                    edgeArray[j].index32 = indexArray[(i * 3) + 2];
+                    break;
+                }
+            }
+            if (unique)  {
+                edgeArray.push( {
+                    done : false,
+                    index1 : indexArray[(i * 3)    ],
+                    index2 : indexArray[(i * 3) + 1],
+                    normal1 : v3_val_new(normalArray[i * 9], normalArray[i * 9 + 1], normalArray[i * 9 + 2] ),
+                    normal2 : v3_new(),
+                    index31 : indexArray[(i * 3) + 2],
+                    index32 : 0
+                 }
+                );
+            }
+
+
+            // edge 2
+            unique = true;
+            for (var j = 0; j < edgeArray.length; ++j) if (!edgeArray[j].done) {
+                if ( ((edgeArray[j].index1 == indexArray[(i * 3) + 2]) && (edgeArray[j].index2 == indexArray[(i * 3) + 1])) ||
+                     ((edgeArray[j].index1 == indexArray[(i * 3) + 1]) && (edgeArray[j].index2 == indexArray[(i * 3) + 2])) ) {
+                    unique = false;
+                    v3_val_res(edgeArray[j].normal2, normalArray[i * 9], normalArray[i * 9 + 1], normalArray[i * 9 + 2] );
+                    edgeArray[j].done = true;
+                    edgeArray[j].index32 = indexArray[(i * 3)    ];
+                    break;
+                }
+            }
+            if (unique)  {
+                edgeArray.push( {
+                    done : false,
+                    index1 : indexArray[(i * 3) + 2],
+                    index2 : indexArray[(i * 3) + 1],
+                    normal1 : v3_val_new(normalArray[i * 9], normalArray[i * 9 + 1], normalArray[i * 9 + 2] ),
+                    normal2 : v3_new(),
+                    index31 : indexArray[(i * 3)    ],
+                    index32 : 0
+                 }
+                );
+            }
+
+
+            // edge 3
+            unique = true;
+            for (var j = 0; j < edgeArray.length; ++j) if (!edgeArray[j].done) {
+                if ( ((edgeArray[j].index1 == indexArray[(i * 3)    ]) && (edgeArray[j].index2 == indexArray[(i * 3) + 2])) ||
+                     ((edgeArray[j].index1 == indexArray[(i * 3) + 2]) && (edgeArray[j].index2 == indexArray[(i * 3)    ])) ) {
+                    unique = false;
+                    v3_val_res(edgeArray[j].normal2,  normalArray[i * 9], normalArray[i * 9 + 1], normalArray[i * 9 + 2] );
+                    edgeArray[j].done = true;
+                    edgeArray[j].index32 = indexArray[(i * 3) + 1];
+                    break;
+                }
+            }
+            if (unique)  {
+                edgeArray.push( {
+                    done : false,
+                    index1 : indexArray[(i * 3)    ],
+                    index2 : indexArray[(i * 3) + 2],
+                    normal1 : v3_val_new(normalArray[i * 9], normalArray[i * 9 + 1], normalArray[i * 9 + 2] ),
+                    normal2 : v3_new(),
+                    index31 : indexArray[(i * 3) + 1],
+                    index32 : 0
+                 }
+                );
+            }
+
+
+
+
+        }
+
 
         return edgeArray;
     }
@@ -493,5 +545,3 @@ class E3D_loader {
 
 
 
-
-    // TODO add edge detection 

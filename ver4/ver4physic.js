@@ -357,11 +357,7 @@ function onRessource(name, msg) {
             DEV_axis.position[2] = 750;
             DEV_axis.visible = true;
             E3D_loader.loadCD_fromRAW(DEV_axis, resMngr.getData(name), v3_val_new(1,1,1));
-            DEV_axis.CD_edge = 0;
-            scn.addEntity(DEV_axis);  
-
-
-
+            scn.addEntity(DEV_axis); 
         }  
     } // msg loaded
 }
@@ -649,12 +645,12 @@ if (DEV_axis.visible) {
             }
 
         }
-        DEV_wand.visible = false;
+        DEV_axis.visible = false;
 
         dev_CD.visible = true;
         phyTracers.visible = true;
     } else {
-        DEV_wand.visible = true;
+        DEV_axis.visible = true;
 
         dev_CD.visible = false;
         phyTracers.visible = false;
