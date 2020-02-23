@@ -118,7 +118,7 @@ class E3D_camera_persp extends E3D_camera {
 
     moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
         // adjust translation to current rotation
-        const t = v3_val(tx, ty, tz);
+        const t = v3_val_new(tx, ty, tz);
         v3_rotateX_mod(t, -this.rotation[0]);
         v3_rotateY_mod(t, -this.rotation[1]);
 
@@ -160,7 +160,7 @@ class E3D_camera_model extends E3D_camera_persp {
     }
 
     moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) { // tx and ty pan and move the pivot point, z is always away from that point
-        let t = v3_val(tx, ty, 0);
+        let t = v3_val_new(tx, ty, 0);
         v3_applym4_mod(t, this.inverseRotationMatrix);
         this.zDist -= tz;
         if (this.zDist > 0) {
@@ -232,7 +232,7 @@ class E3D_camera_space extends E3D_camera_persp {
 
     moveBy(tx, ty, tz, rx = 0, rz = 0, ry = 0) {
         //transform translation to local
-        const t = v3_val(tx, ty, tz);
+        const t = v3_val_new(tx, ty, tz);
         v3_applym4_mod(t, this.inverseRotationMatrix);
 
         v3_add_mod(this.position, t);

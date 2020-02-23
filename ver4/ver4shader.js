@@ -321,4 +321,5 @@ const attribList02_CS01 = ["aVertexPosition", "aVertexColor", "aVertexNormal" ];
 const uniformList02_CS01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", "uLight"];
 
 
+// TODO shader for lines/stokes
 // TODO shader with shadows

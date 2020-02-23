@@ -352,11 +352,11 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1), false, v3_val(1, 1, 1));
+            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, v3_val_new(1,1,1), false, v3_val_new(1, 1, 1));
             DEV_axis.position[1] = 60;
             DEV_axis.position[2] = 750;
             DEV_axis.visible = true;
-            E3D_loader.load_CD_Model_RAW(DEV_axis, resMngr.getData(name), v3_val(1,1,1));
+            E3D_loader.loadCD_fromRAW(DEV_axis, resMngr.getData(name), v3_val_new(1,1,1));
             DEV_axis.CD_edge = 0;
             scn.addEntity(DEV_axis);  
 
@@ -1994,7 +1994,7 @@ function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, t
         if (t >= 0.0) {
             v3_addscaled_res(firstHit, vOrig, vNormal, t); //position on plane
         } else {
-            v3_addscaled_res(firstHit, vOrig, triNorm, t * angleCos); 
+            v3_addscaled_res(firstHit, vOrig, triNorm, (t * angleCos)); 
         }
         //if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, [1, 0, 0]);
         

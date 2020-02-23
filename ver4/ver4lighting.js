@@ -5,7 +5,7 @@
 "use strict"
 
 class E3D_lighting {
-    constructor(vAmbiant = v3_val(0.1, 0.1, 0.1)) {
+    constructor(vAmbiant = v3_val_new(0.1, 0.1, 0.1)) {
         this.ambiant_color = vAmbiant;
 
         this.light0_color = v3_new();

@@ -113,13 +113,13 @@ document.addEventListener("DOMContentLoaded", function () {
             scn.program.bindLocations(attribList01, uniformList01);
     
             log("Lighting Initialization", false);
-            scn.lights =  new E3D_lighting(v3_val(0.25, 0.25, 0.25));
-            scn.lights.setColor0(v3_val(1.0, 1.0, 1.0));
-            scn.lights.setDirection0(v3_val(0.0, 0.0, 1.0)); 
+            scn.lights =  new E3D_lighting(v3_val_new(0.25, 0.25, 0.25));
+            scn.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
+            scn.lights.setDirection0(v3_val_new(0.0, 0.0, 1.0)); 
             scn.lights.light0_lockToCamera = true;
     
-            scn.lights.setColor1(v3_val(0.9, 0.9, 0.9));
-            scn.lights.setDirection1(v3_val(0.5, 1.0, 0.5));
+            scn.lights.setColor1(v3_val_new(0.9, 0.9, 0.9));
+            scn.lights.setDirection1(v3_val_new(0.5, 1.0, 0.5));
             scn.lights.light1_lockToCamera = false;
 
             scn.camera = new E3D_camera_model("model camera", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
@@ -165,13 +165,13 @@ document.addEventListener("DOMContentLoaded", function () {
         scn.state = E3D_ACTIVE;
 
         l0v = new E3D_entity_vector("pivot", false, 3.0, false);
-        //l0v.scale = v3_val(3, 3, 3);
+        //l0v.scale = v3_val_new(3, 3, 3);
         l0v.visible = true;
         l0v.vis_culling = false;    
         scn.addEntity(l0v);
 
         let l1v = new E3D_entity_vector("origin", false, 3.0, false);
-        //l1v.scale = v3_val(10, 10, 10);
+        //l1v.scale = v3_val_new(10, 10, 10);
         l1v.visible = true;
         l1v.vis_culling = false;    
         scn.addEntity(l1v);
@@ -292,7 +292,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let bb = calculate_bounding_box(mdl.vertexArray);
 
             // center object on top of origin
-            mdl.position = v3_val((bb.max[0] + bb.min[0]) / -2 , -bb.min[1], (bb.max[2] + bb.min[2]) / -2);
+            mdl.position = v3_val_new((bb.max[0] + bb.min[0]) / -2 , -bb.min[1], (bb.max[2] + bb.min[2]) / -2);
             scn.addEntity(mdl);
 
             let biggest = Math.max(bb.max[0] - bb.min[0],  bb.max[1] - bb.min[1] ) / 2;

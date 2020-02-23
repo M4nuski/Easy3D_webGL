@@ -76,13 +76,13 @@ function initEngine() {
         scn.strokeProgram.bindLocations(attribList02_CS00, uniformList02_CS00);
 
         log("Lighting Initialization", false);
-        scn.lights =  new E3D_lighting(v3_val(0.0, 0.0, 0.15));
-        scn.lights.setColor0(v3_val(1.0, 1.0, 1.0));
-        scn.lights.setDirection0(v3_val(-0.2, -0.2, -1.0)); 
+        scn.lights =  new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
+        scn.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
+        scn.lights.setDirection0(v3_val_new(-0.2, -0.2, -1.0)); 
         scn.lights.light0_lockToCamera = true;
 
-        scn.lights.setColor1(v3_val(1.0, 1.0, 0.85));
-        scn.lights.setDirection1(v3_val(1.0, -1.0, 0.8));
+        scn.lights.setColor1(v3_val_new(1.0, 1.0, 0.85));
+        scn.lights.setDirection1(v3_val_new(1.0, -1.0, 0.8));
         scn.lights.light1_lockToCamera = true;
 
         log("Camera Initialization", false);
@@ -153,19 +153,19 @@ function onRessource(name, msg) {
         if (resMngr.getRessourceType(name) == "Model") {
             let nm;
             if (name == "Deer Horns") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 8, [1.0, 0.2, 0.2 ]);
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -0.707, [1.0, 0.2, 0.2 ]);
             } else if (name == "Storm Trooper") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [ 1.0,1.0,1.0 ]);
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, [ 1.0,1.0,1.0 ]);
             } else if (name == "B M9") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.2,0.2,0.3 ]);
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -0.2, [ 0.2,0.2,0.3 ]);
                 nm.position = [-15, 0, 0];
                 nm.rotation = [0, 3.1415, 0];
             } else if (name == "Nissan GTR") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.5, [ 1.0 ,1.0, 0.25]);
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.707, [ 1.0 ,1.0, 0.25]);
                 nm.position = [25, -5, 0];
                 nm.rotation = [0, 0, 0];
             }  else {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 3, [ 0.5 ,0.5, 1.0]);
+                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, [ 0.5 ,0.5, 1.0]);
                 nm.position = [5, 15, -25];
                 nm.rotation = [0, 3.1415, 0];
             }

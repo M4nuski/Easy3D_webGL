@@ -185,13 +185,13 @@ function initEngine() {
         scn.program.bindLocations(attribList01, uniformList01);
 
         log("Lighting Initialization", false);
-        scn.lights =  new E3D_lighting(v3_val(0.0, 0.0, 0.15));
-        scn.lights.setColor0(v3_val(1.0, 1.0, 1.0));
-        scn.lights.setDirection0(v3_val(-0.2, -0.2, -1.0)); 
+        scn.lights =  new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
+        scn.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
+        scn.lights.setDirection0(v3_val_new(-0.2, -0.2, -1.0)); 
         scn.lights.light0_lockToCamera = true;
 
-        scn.lights.setColor1(v3_val(1.0, 1.0, 0.85));
-        scn.lights.setDirection1(v3_val(1.0, -1.0, 0.8));
+        scn.lights.setColor1(v3_val_new(1.0, 1.0, 0.85));
+        scn.lights.setDirection1(v3_val_new(1.0, -1.0, 0.8));
         scn.lights.light1_lockToCamera = false;
 
         log("Camera Initialization", false);
@@ -233,16 +233,16 @@ function initEngine() {
     resMngr.loadAll("models");
     
     l0v = new E3D_entity_axis("light0vect", true, 10.0, true);
-    l0v.position = v3_val(-5, 20, -5);
-    //l0v.scale = v3_val(5, 5, 5);
+    l0v.position = v3_val_new(-5, 20, -5);
+    //l0v.scale = v3_val_new(5, 5, 5);
     l0v.visible = true;
     l0v.vis_culling = false;
 
     scn.addEntity(l0v);
     
     l1v = new E3D_entity_axis("light1vect", true, 10.0, true);
-    l1v.position = v3_val(5, 20, 5);
-    //l1v.scale = v3_val(5, 5, 5);
+    l1v.position = v3_val_new(5, 20, 5);
+    //l1v.scale = v3_val_new(5, 5, 5);
     l1v.visible = true;
     l1v.vis_culling = false;
 
@@ -428,7 +428,7 @@ function onRessource(name, msg) {
 
         if (resMngr.getRessourceType(name) == "Model") {
             if (name == "ST") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, v3_val(1,1,1));
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, v3_val_new(1,1,1));
                 nm.position[2] = -120;
                 nm.visible = true;
 
@@ -439,7 +439,7 @@ function onRessource(name, msg) {
                 if (!cloned) cloneWar();
 
             } else if (name == "CM") {
-                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep", false, v3_val(5, 1, 5));
+                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), -1.0, "sweep", false, v3_val_new(5, 1, 5));
                 nm.position[1] = -120;
                 //nm.scale[0] = 5;
                 //nm.scale[2] = 5;
@@ -454,15 +454,15 @@ function onRessource(name, msg) {
                 nm.resetMatrix();
 
             } else if (name == "sph") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 2, [1.0,1.0,0.5]);
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, [1.0,1.0,0.5]);
                 nm.pushCD_sph(_v3_origin, 0.5);
                 scn.addEntity(nm);               
 
             } else if (name == "pyra") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, [1.0,0.8,0.0]);
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -1.0, [1.0,0.8,0.0]);
                 scn.addEntity(nm);   
             } else {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0, "sweep");
+                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -1.0, "sweep");
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.pushCD_sph(_v3_origin, 7.0);

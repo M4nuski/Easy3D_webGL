@@ -116,13 +116,28 @@ const _CD_box_corner_BottomFrontLeft  = 6;
 const _CD_box_corner_BottomBackLeft   = 7; 
 
 
+const _v3_white     = [ 1.0,  1.0,  1.0];
+const _v3_black     = [ 0.0,  0.0,  0.0];
+const _v3_red       = [ 1.0,  0.0,  0.0];
+const _v3_green     = [ 0.0,  1.0,  0.0];
+const _v3_blue      = [ 0.0,  0.0,  1.0];
+const _v3_cyan      = [ 0.0,  0.0,  1.0];
+const _v3_magenta   = [ 0.0,  0.0,  1.0];
+const _v3_yellow    = [ 0.0,  0.0,  1.0];
+const _v3_orange    = [ 0.0,  0.0,  1.0];
+const _v3_gray      = [ 0.50,  0.50,  0.50];
+const _v3_lightGray = [ 0.75,  0.75,  0.75];
+const _v3_darkGray  = [ 0.25,  0.25,  0.25];
+
 // v3, 3 axis vector as array of floats
 
 // Create new vector
 function v3_new() { return [ 0.0, 0.0, 0.0 ]; }
 
-// Create new vector from values
-function v3_val(x, y, z) { return [ x, y, z ]; } 
+// Vector from values
+function v3_val_new(x, y, z) { return [ x, y, z ]; } 
+
+function v3_val_res(res, x, y, z) { res[0] = x; res[1] = y; res[2] = z; } 
 
 // Return new vector equal to argument
 function v3_clone(a) {
