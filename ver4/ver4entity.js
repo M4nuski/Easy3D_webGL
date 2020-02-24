@@ -558,7 +558,7 @@ class E3D_entity_axis extends E3D_entity {
 
 // Entity which data is re-processed each frame, can be modified on the fly in code. Wireframe rendering.
 class E3D_entity_wireframe_canvas extends E3D_entity {
-    constructor(id) {
+    constructor(id, finiteSize = false) {
         super(id, "E3D_entity_wireframe_canvas/"+id, true);
         this.drawMode = 1; // gl.LINES;      
         this.arraySize = 512;
@@ -573,7 +573,9 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
         this.currentPos = [ 0, 0, 0 ];
 
-        // TODO add roll-over of data after set amount of lines
+        this.finiteSize = finiteSize;
+        this.arrayIndex = 0;
+        this.currentColor = _v3_white;
     }
 
     setSize(nElements) {        
@@ -624,13 +626,15 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.CD_plane = 0;
         this.CD_box = 0;
         this.collisionDetection = false;
+
+        this.arrayIndex = 0;
     }
 
     getColor3f(elem) {
         return this.colorArray.subarray(elem*3, (elem+1)*3);
     }    
     setColor3f(elem, col) {
-        this.colorArray.set(col, elem*3);
+        this.colorArray.set(col, elem * 3);
         this.dataContentChanged = true;
     }
     
@@ -650,30 +654,61 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.dataContentChanged = true;
     }
 
+    addV(vert) {
+        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        this.setVertex3f(this.arrayIndex, vert);
+        this.setColor3f(this.arrayIndex, this.currentColor);
+        this.arrayIndex++;
+        if ((this.finiteSize != false) && (this.arrayIndex >= this.finiteSize)) this.arrayIndex = 0;
+    }
+    addVC(vert, col) {
+        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        this.setVertex3f(this.arrayIndex, vert);
+        this.setColor3f(this.arrayIndex, col);
+        this.arrayIndex++;
+        if ((this.finiteSize != false) && (this.arrayIndex >= this.finiteSize)) this.arrayIndex = 0;
+    }
+    addVCN(vert, col, norm) {
+        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        this.setVertex3f(this.arrayIndex, vert);
+        this.setColor3f(this.arrayIndex, col);
+        this.setNormal3f(this.arrayIndex, norm);
+        this.arrayIndex++;
+        if ((this.finiteSize != false) && (this.arrayIndex > this.finiteSize)) this.arrayIndex = 0;
+    }
+    addVN(vert, norm) {
+        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        this.setVertex3f(this.arrayIndex, vert);
+        this.setColor3f(this.arrayIndex, this.currentColor);
+        this.setNormal3f(this.arrayIndex, norm);
+        this.arrayIndex++;
+        if ((this.finiteSize != false) && (this.arrayIndex >= this.finiteSize)) this.arrayIndex = 0;
+    }
+
     addWireSphere(location, dia, color, sides, addSphCD = false, numSegments = 1) {
+
         dia = dia / 2;
         if (addSphCD) this.pushCD_sph(location, dia);
+        this.currentColor = color;
 
-        let idx = this.numElements;
-      //  var x=0, y=0, z=0;
+        var baseOffset = PIdiv2 / numSegments;
 
-      var baseOffset = PIdiv2 / numSegments;
-
-      var matX = m4_new();
-      var matY = m4_new();
-      var matZ = m4_new();
-      
-      for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
+        var matX = m4_new();
+        var matY = m4_new();
+        var matZ = m4_new();
+        
+        for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
           
-          this.increaseSize(sides*6);
-          var si = Math.sin(0) * dia;
-          var ci = Math.cos(0) * dia;
+            var si = Math.sin(0) * dia;
+            var ci = Math.cos(0) * dia;
           
-          var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
+            var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
           
             m4_rotationX_res(matX, offsetAngle);
             m4_rotationY_res(matY, offsetAngle);
-            m4_rotationZ_res(matZ, offsetAngle);  
+            m4_rotationZ_res(matZ, offsetAngle); 
+            
+            var newLoc = v3_new();
 
             for (var i = 0; i < sides; ++i) { 
 
@@ -683,82 +718,64 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 //x
                 var v = [0, si, ci];
                 v3_applym4_mod(v, matY);
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
 
                 v = [0, sip, cip];
                 v3_applym4_mod(v, matY);
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
+   
                 
                 //y
                 v = [si, 0, ci];
                 v3_applym4_mod(v, matZ);
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
 
                 v = [sip, 0, cip];
                 v3_applym4_mod(v, matZ);
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
+
 
                 //z
                 v = [si, ci, 0];
                 v3_applym4_mod(v, matX);
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
 
                 v = [sip, cip, 0];
                 v3_applym4_mod(v, matX);
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
 
                 si = sip;
                 ci = cip;
             }
         }
-
     }
         
     addWireCross(location, size, color = [1,1,1]) {
-        let idx = this.numElements;
         size = size / 2;
-        this.increaseSize(6);
-            this.setVertex3f(idx, [location[0] + size, location[1], location[2] ]);
-            this.setColor3f(idx, color);
+        this.currentColor = color;
 
-            idx++;
-            this.setVertex3f(idx, [location[0] - size, location[1], location[2] ]);
-            this.setColor3f(idx, color);
+        this.addV( [ location[0] + size, location[1], location[2] ] );
+        this.addV( [ location[0] - size, location[1], location[2] ] );
 
-            idx++;
-            this.setVertex3f(idx, [location[0], location[1] + size, location[2] ]);
-            this.setColor3f(idx, color);
+        this.addV( [ location[0], location[1] + size, location[2] ] );
+        this.addV( [ location[0], location[1] - size, location[2] ] );
 
-            idx++;
-            this.setVertex3f(idx, [location[0], location[1] - size, location[2] ]);
-            this.setColor3f(idx, color);
-
-            idx++;
-            this.setVertex3f(idx, [location[0], location[1], location[2] + size]);
-            this.setColor3f(idx, color);
-
-            idx++;
-            this.setVertex3f(idx, [location[0], location[1], location[2] - size]);
-            this.setColor3f(idx, color);
+        this.addV( [ location[0], location[1], location[2] + size ] );
+        this.addV( [ location[0], location[1], location[2] - size ] );
     }
 
     addPlane(pos, rot, width, height, numSubdiv, color = [1,1,1], addCD = false) {
-        let idx = this.numElements;
+        this.currentColor = color;
 
         width = width / 2;
         height = height / 2;
+
         let p0 = [ width, height, 0];
         let p1 = [ width,-height, 0];
         let p2 = [-width,-height, 0];
@@ -774,85 +791,50 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         v3_applym4_mod(p2, m);
         v3_applym4_mod(p3, m);
 
-        this.increaseSize(8);
         
-            // around
-            this.setVertex3f(idx, p0);
-            this.setColor3f(idx, color);
-            idx++;
-            this.setVertex3f(idx, p1);
-            this.setColor3f(idx, color);
+        // around
+        this.addV(p0);
+        this.addV(p1);
 
-            idx++;
-            this.setVertex3f(idx, p1);
-            this.setColor3f(idx, color);
-            idx++;
-            this.setVertex3f(idx,p2);
-            this.setColor3f(idx, color);
+        this.addV(p1);
+        this.addV(p2);
 
-            idx++;
-            this.setVertex3f(idx,p2);
-            this.setColor3f(idx, color);
-            idx++;
-            this.setVertex3f(idx,p3);
-            this.setColor3f(idx, color);
+        this.addV(p2);
+        this.addV(p3);
 
-            idx++;
-            this.setVertex3f(idx,p3);
-            this.setColor3f(idx, color);
-            idx++;
-            this.setVertex3f(idx,p0);
-            this.setColor3f(idx, color);
-
-
+        this.addV(p3);  
+        this.addV(p0);
 
         if (numSubdiv == -1) {
-            this.increaseSize(4);   
             // X
-            idx++;
-            this.setVertex3f(idx,p0);
-            this.setColor3f(idx, color);
-            idx++;
-            this.setVertex3f(idx,p2);
-            this.setColor3f(idx, color);
+            this.addV(p0);
+            this.addV(p2);
 
-            idx++;
-            this.setVertex3f(idx,p1);
-            this.setColor3f(idx, color);
-            idx++;
-            this.setVertex3f(idx,p3);
-            this.setColor3f(idx, color);
+            this.addV(p1);
+            this.addV(p3);
         }
+
         if (numSubdiv > 0) {
-            this.increaseSize(4*numSubdiv); 
             let a = [0,0,0];
             let b = [0,0,0];
             let c = [0,0,0];
             let d = [0,0,0];
 
             for (var i = 0; i < numSubdiv; ++i){
+
                 let t = (i + 1) / (numSubdiv + 1);
+
                 v3_lerp_res(a, p1, p0, t);
                 v3_lerp_res(b, p2, p3, t);
 
                 v3_lerp_res(c, p1, p2, t);
                 v3_lerp_res(d, p0, p3, t);
 
-                idx++;
-                this.setVertex3f(idx, a);
-                this.setColor3f(idx, color);
-                idx++;
-                this.setVertex3f(idx, b);
-                this.setColor3f(idx, color);
-    
-                idx++;
-                this.setVertex3f(idx, c);
-                this.setColor3f(idx, color);
-                idx++;
-                this.setVertex3f(idx, d);
-                this.setColor3f(idx, color);
+                this.addV(a);
+                this.addV(b); 
 
-
+                this.addV(c);
+                this.addV(d);
             }
         } 
 
@@ -898,15 +880,14 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     addCylinder(location, dia, height, color, sides = 8, sideLineStep = 1, sections = 1, addCD = false) {
+        this.currentColor = color;
         dia = dia / 2;
-
-        let idx = this.numElements;
-
         if (sections < 1) sections = 1;
-        this.increaseSize((sides * 6) + (sides * 2 * (sections-1)));
 
         var si = Math.sin(0) * dia;
         var ci = Math.cos(0) * dia;
+
+        var newLoc = v3_new();
           
         for (var i = 0; i < sides; ++i) { 
 
@@ -915,50 +896,44 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
             // base
             var v = [si, 0, ci];
-            this.setVertex3f(idx, v3_add_new(v, location));
-            this.setColor3f(idx, color);
-            idx++;
+            v3_add_res(newLoc, v, location);
+            this.addV(newLoc);
 
             v = [sip, 0, cip];
-            this.setVertex3f(idx, v3_add_new(v, location));
-            this.setColor3f(idx, color);
-            idx++;
+            v3_add_res(newLoc, v, location);
+            this.addV(newLoc);
+ 
             
             // top
             v = [si, height, ci];  
-            this.setVertex3f(idx, v3_add_new(v, location));
-            this.setColor3f(idx, color);
-            idx++;
+            v3_add_res(newLoc, v, location);
+            this.addV(newLoc);  
 
             v = [sip, height, cip];            
-            this.setVertex3f(idx, v3_add_new(v, location));
-            this.setColor3f(idx, color);
-            idx++;
+            v3_add_res(newLoc, v, location);
+            this.addV(newLoc);
+    
 
             if ( (sideLineStep > 0) && ((i % sideLineStep) == 0) ) {
                 // side
                 v = [si, 0, ci];    
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
 
                 v = [si, height, ci];
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
             }
 
             for (var j = 1; j < sections; ++j) {
 
                 var v = [si, j * height / sections, ci];
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
 
                 v = [sip, j * height / sections, cip];
-                this.setVertex3f(idx, v3_add_new(v, location));
-                this.setColor3f(idx, color);
-                idx++;
+                v3_add_res(newLoc, v, location);
+                this.addV(newLoc);
             }
 
             si = sip;
@@ -983,81 +958,52 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     addLineTo(p, sweep, col= [1,1,1]) {
-        let idx = this.numElements;
-        this.increaseSize(2);
-
         var color = (sweep) ? this.getNextSweepColor() : col;
 
-        this.setVertex3f(idx, this.currentPos);
-        this.setColor3f(idx, color);
-        idx++;
-        this.setVertex3f(idx, p);
-        this.setColor3f(idx, color);
+        this.addVC(this.currentPos, color);
+        this.addVC(p, color);
 
         v3_copy(this.currentPos, p);
     }
 
     addLine(p0, p1, sweep, col= [1,1,1]) {
-        let idx = this.numElements;
-        this.increaseSize(2);
-
         var color = (sweep) ? this.getNextSweepColor() : col;
 
-        this.setVertex3f(idx, p0);
-        this.setColor3f(idx, color);
-        idx++;
-        this.setVertex3f(idx, p1);
-        this.setColor3f(idx, color);
+        this.addVC(p0, color);
+        this.addVC(p1, color);
     }
 
 
     addLineByOffset(p, sweep, col= [1,1,1]) {
-        let idx = this.numElements;
-        this.increaseSize(2);
-
         var color = (sweep) ? this.getNextSweepColor() : col;
 
-        this.setVertex3f(idx, this.currentPos);
-        this.setColor3f(idx, color);
+        this.addVC(this.currentPos, color);
 
         v3_add_mod(this.currentPos, p);
 
-        idx++;
-        this.setVertex3f(idx, this.currentPos);
-        this.setColor3f(idx, color);  
+        this.addVC(this.currentPos, color);  
     }
 
     addLineByNormalAndLength(n, l, sweep, col= [1,1,1]) {
-        let idx = this.numElements;
-        this.increaseSize(2);
-
         var color = (sweep) ? this.getNextSweepColor() : col;
 
-        this.setVertex3f(idx, this.currentPos);
-        this.setColor3f(idx, color);
+        this.addVC(this.currentPos, color);
 
         v3_addscaled_mod(this.currentPos, n, l);
 
-        idx++;
-        this.setVertex3f(idx, this.currentPos);
-        this.setColor3f(idx, color);
+        this.addVC(this.currentPos, color);
     }
 
     
     addLineByPosNormLen(p, n, l, sweep, col= [1,1,1]) {
-        let idx = this.numElements;
-        this.increaseSize(2);
-
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         v3_copy(this.currentPos, p);
-        this.setVertex3f(idx, this.currentPos);
-        this.setColor3f(idx, color);
+        this.addVC(this.currentPos, color);
 
         v3_addscaled_mod(this.currentPos, n, l);
-        idx++;
-        this.setVertex3f(idx, this.currentPos);
-        this.setColor3f(idx, color);
+
+        this.addVC(this.currentPos, color);
     }
 
     addWireCube(loc, rot, size, color, addBoxCD, centerCross = false, sideCross = false) {
@@ -1168,29 +1114,16 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
 
     addTriangle(p1, p2, p3, color = [1, 1, 1], addCD = false) {
-        
-        let idx = this.numElements; 
-        this.increaseSize(6);
+        this.currentColor = color;
 
-        this.setVertex3f(idx, p1);
-        this.setColor3f(idx, color);
-        idx++;
-        this.setVertex3f(idx, p2);
-        this.setColor3f(idx, color);
+        this.addV(p1);
+        this.addV(p2);
 
-        idx++;
-        this.setVertex3f(idx, p2);
-        this.setColor3f(idx, color);
-        idx++;
-        this.setVertex3f(idx, p3);
-        this.setColor3f(idx, color);
+        this.addV(p2);
+        this.addV(p3);
 
-        idx++;
-        this.setVertex3f(idx, p3);
-        this.setColor3f(idx, color);
-        idx++;
-        this.setVertex3f(idx, p1);
-        this.setColor3f(idx, color);
+        this.addV(p3);
+        this.addV(p1);
 
         if (addCD) {
             var da = v3_sub_new(p2, p1);

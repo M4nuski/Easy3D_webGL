@@ -319,7 +319,7 @@ function initEngine() {
     DEV_markers.vis_culling = false;
     scn.addEntity(DEV_markers);
 
-    phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces");
+    phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces", 1024*32);
     phyTracers.visible = true;
     phyTracers.vis_culling = false;
     scn.addEntity(phyTracers);
