@@ -43,6 +43,7 @@ const E3D_INP_W = 2; // mouse wheel / touch pinch
 
 // Premade vec and mat to avoid inline creation of instances
 const _v3_origin = [ 0,  0,  0];
+const _v3_null =   [ 0,  0,  0];
 const _v3_x =      [ 1,  0,  0];
 const _v3_y =      [ 0,  1,  0];
 const _v3_z =      [ 0,  0,  1];

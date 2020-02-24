@@ -10,8 +10,31 @@ var nHitTest = 0;
 var nHits = 0;
 var nbCDpasses = 0;
 var hitPoints = new Map();
+hitPoints.set("CUBE_6P_nt", 0); // num tests
+hitPoints.set("CUBE_6P_nh", 0); // num hits
+hitPoints.set("CUBE_6P_tt", 0); // total time
+hitPoints.set("CUBE_6P_ht", 0); // hit time
+hitPoints.set("CUBE_6P_att", 0); // avg time per test
+hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
+
+hitPoints.set("CUBE_BX_nt", 0); // num tests
+hitPoints.set("CUBE_BX_nh", 0); // num hits
+hitPoints.set("CUBE_BX_tt", 0); // total time
+hitPoints.set("CUBE_BX_ht", 0); // hit time
+hitPoints.set("CUBE_BX_att", 0); // avg time per test
+hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
+
+hitPoints.set("CUBE_DS_nt", 0); // num tests
+hitPoints.set("CUBE_DS_nh", 0); // num hits
+hitPoints.set("CUBE_DS_tt", 0); // total time
+hitPoints.set("CUBE_DS_ht", 0); // hit time
+hitPoints.set("CUBE_DS_att", 0); // avg time per test
+hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
+
 var show_DEV_CD = false;
 var phyTracers;
+var lgaccel, gAccel = 0;
+var timer = { delta : 0, start : 0 }; // dummy timer 
 
 var logElement = null;
 
@@ -72,7 +95,7 @@ var moveTarget = "p";
 var DEV_anim_active = true;
 var sphCounter = 0;
 var DEV_lastAnimData = null;
-var gAccel, lgaccel = 0;
+
 var DEV_lastFire = 0;
 var DEV_firing = false;
 
@@ -80,7 +103,7 @@ var DEV_firing = false;
 
 // TODO make global in core, add entities and anim, add core switch-over methods, add default engine init methods
 var gl; // webGL canvas rendering context
-var timer = new E3D_timing(false, 50, timerTick);
+timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var inputs = new E3D_input(can, true, true, false, false); // Mouse and Keyboard
 var resMngr = new ressourceManager(onRessource);
@@ -643,19 +666,31 @@ function timerTick() {  // Game Loop
     updateStatus();
     nHitTest = 0;
     nHits = 0;
+
     if (inputs.checkCommand("action1", true)) {
-      //  console.log("action0", true);
-        let newSph = scn.cloneEntity("sph", "sph" + sphCounter);
-        animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_firstPass, anim_sph_rePass, anim_sph_endPass));
-        animations[animations.length-1].restart();
+
+        let newSph = scn.cloneEntity("sph", "sph" + sphCounter++);
+        newSph.position[1] = 5;
+        newSph.rotation[0] = rndPM(PIx2);
+        newSph.rotation[1] = rndPM(PIx2);
+        animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
+             [rndPM(1), rndPM(1), rndPM(1) + ((inputs.checkCommand("action_speed", false)) ? -600 : -300)], _v3_null, true, 30, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
+
+        DEV_lastAnimData = { pos: v3_clone(newSph.position), spd: v3_clone(animations[animations.length-1].spd) }
+
     }
     if (inputs.checkCommand("action2", false)) {
         //  console.log("action0", true);
         for (var i = 0; i < 32; ++i) {
-            let newSph = scn.cloneEntity("sph", "sphR" + sphCounter);
-            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sphRain_firstPass, anim_sph_rePass, anim_sph_endPass));
-            animations[animations.length-1].restart();
+            let newSph = scn.cloneEntity("sph", "sphR" + sphCounter++);            
+            newSph.position[0] = rndPM(150);
+            newSph.position[1] = 150 + rndPM(50);        
+            newSph.position[2] = rndPM(500);
+            newSph.rotation[0] = rndPM(PIx2);
+            newSph.rotation[1] = rndPM(PIx2);
+            animations.push(newBaseAnim(newSph,                
+                [rndPM(10), rndPM(10), rndPM(10)], _v3_null, true, 30, true));
             animations[animations.length-1].target.animIndex = animations.length-1;
         }
       }
@@ -682,16 +717,10 @@ function timerTick() {  // Game Loop
     }
     if (inputs.checkCommand("action_anim_replay", true)) {
         if (DEV_lastAnimData != null) {
-            let newSph = scn.cloneEntity("sph", "sph" + sphCounter);
-            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_firstPass, anim_sph_rePass, anim_sph_endPass));
-            
-            animations[animations.length - 1].target.position = v3_clone(DEV_lastAnimData.pos);
-            animations[animations.length - 1].last_position = v3_clone(DEV_lastAnimData.pos);
-            animations[animations.length - 1].spd = v3_clone(DEV_lastAnimData.spd);
-            animations[animations.length - 1].ttl = 30;
-            animations[animations.length - 1].target.visible = true;
-            animations[animations.length - 1].target.resetMatrix();
-            animations[animations.length - 1].state = E3D_PLAY;
+            let newSph = scn.cloneEntity("sph", "sph" + sphCounter++);
+            newSph.moveTo(DEV_lastAnimData.pos);
+            animations.push(newBaseAnim(newSph, DEV_lastAnimData.spd, _v3_null, true, 30, true));
+            animations[animations.length-1].target.animIndex = animations.length-1;
         }
     }
 
@@ -700,20 +729,21 @@ function timerTick() {  // Game Loop
             DEV_lastFire = timer.lastTick;
 
             var xdelta = rndPM(30);
+            var speed = [rndPM(5), rndPM(5), rndPM(5) - 300];
 
-            let newSph = scn.cloneEntity("sph", "sphF" + sphCounter);
-            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_AFfirstPass, anim_sph_rePass, anim_sph_endPass));
-            animations[animations.length-1].restart([400 + xdelta, 60, 75]);
+            let newSph = scn.cloneEntity("sph", "sphF" + sphCounter++);
+            newSph.moveTo([400 + xdelta, 60, 75]);
+            animations.push(newBaseAnim(newSph, speed, _v3_null, false, 0.31, true ));
             animations[animations.length-1].target.animIndex = animations.length-1;
 
-            newSph = scn.cloneEntity("sph", "sphF" + sphCounter);
-            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_AFfirstPass, anim_sph_rePass, anim_sph_endPass));
-            animations[animations.length-1].restart([500 + xdelta, 60, 75]);
+            newSph = scn.cloneEntity("sph", "sphF" + sphCounter++);
+            newSph.moveTo([500 + xdelta, 60, 75]);
+            animations.push(newBaseAnim(newSph, speed, _v3_null, false, 0.31, true ));
             animations[animations.length-1].target.animIndex = animations.length-1;
 
-            newSph = scn.cloneEntity("sph", "sphF" + sphCounter);
-            animations.push(new E3D_animation("ball throw" + sphCounter++, newSph, scn, timer, anim_sph_AFfirstPass, anim_sph_rePass, anim_sph_endPass));
-            animations[animations.length-1].restart([600 + xdelta, 60, 75]);
+            newSph = scn.cloneEntity("sph", "sphF" + sphCounter++);
+            newSph.moveTo([600 + xdelta, 60, 75]);
+            animations.push(newBaseAnim(newSph, speed, _v3_null, false, 0.31, true ));
             animations[animations.length-1].target.animIndex = animations.length-1;
 
         }
@@ -727,220 +757,6 @@ function timerTick() {  // Game Loop
 }
 
 
-
-
-
-
-
-
-hitPoints.set("CUBE_6P_nt", 0); // num tests
-hitPoints.set("CUBE_6P_nh", 0); // num hits
-hitPoints.set("CUBE_6P_tt", 0); // total time
-hitPoints.set("CUBE_6P_ht", 0); // hit time
-hitPoints.set("CUBE_6P_att", 0); // avg time per test
-hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
-
-hitPoints.set("CUBE_BX_nt", 0); // num tests
-hitPoints.set("CUBE_BX_nh", 0); // num hits
-hitPoints.set("CUBE_BX_tt", 0); // total time
-hitPoints.set("CUBE_BX_ht", 0); // hit time
-hitPoints.set("CUBE_BX_att", 0); // avg time per test
-hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
-
-hitPoints.set("CUBE_DS_nt", 0); // num tests
-hitPoints.set("CUBE_DS_nh", 0); // num hits
-hitPoints.set("CUBE_DS_tt", 0); // total time
-hitPoints.set("CUBE_DS_ht", 0); // hit time
-hitPoints.set("CUBE_DS_att", 0); // avg time per test
-hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
-
-
-
-// animator functions
-
-function anim_sph_firstPass() {
-    if (this.state == E3D_RESTART) {
-        v3_copy(this.target.position, scn.camera.position);
-        this.target.position[1] += 5;
-        this.target.rotation[0] = rndPM(PIx2);
-        this.target.rotation[1] = rndPM(PIx2);
-
-        this.spd = scn.camera.adjustToCamera(v3_scale_new(_v3_nz, inputs.checkCommand("action_speed", false) ? 600 : 300));
-
-        this.spd[0] += rndPM(1);
-        this.spd[1] += rndPM(1);
-        this.spd[2] += rndPM(1);
-        this.ttl = 30;
-        
-        this.state = E3D_PLAY;
-        this.target.visible = true;
-        this.target.resetMatrix();
-        this.last_position = v3_clone(this.target.position);
-
-        DEV_lastAnimData = { pos: v3_clone(this.target.position), spd: v3_clone(this.spd) };
-
-        
-    } else if (this.state == E3D_PLAY) {
-
-        v3_copy(this.last_position, this.target.position);
-
-        v3_scale_res(this.delta, this.spd, timer.delta);  
-        this.spd[1] = this.spd[1] - gAccel;
-
-        v3_add_mod(this.target.position, this.delta);
-        this.deltaLength = v3_length(this.delta);
-
-        this.target.resetMatrix();
-
-        this.lastHitMarker = "";        
-        if (show_DEV_CD) phyTracers.addLine(this.last_position, this.target.position, true);
-    }
-}
-function anim_sphRain_firstPass() {
-    if (this.state == E3D_RESTART) {
-
-        this.target.position[0] = rndPM(150);
-        this.target.position[1] = 150 + rndPM(50);        
-        this.target.position[2] = rndPM(500);
-
-        v3_copy(this.target.actualPosition, this.target.position);
-
-        this.target.rotation[0] = rndPM(PIx2);
-        this.target.rotation[1] = rndPM(PIx2);
-
-        this.spd = [0, 0, 0];
-
-        this.spd[0] += rndPM(10);
-        this.spd[1] += rndPM(10);
-        this.spd[2] += rndPM(10);
-        this.ttl = 30;
-        
-        this.state = E3D_PLAY;
-        this.target.visible = true;
-        this.target.resetMatrix();
-        this.last_position = v3_clone(this.target.position);
-
-        this.startedYDelta = this.last_position[1];
-        this.expectedYDelta = 0;
-        
-    } else if (this.state == E3D_PLAY) {
-
-        v3_copy(this.last_position, this.target.position);
-
-        v3_scale_res(this.delta, this.spd, timer.delta);
-        this.spd[1] = this.spd[1] - gAccel; 
-        v3_add_mod(this.target.position, this.delta);
-        this.deltaLength = v3_length(this.delta);
-
-        this.target.resetMatrix();
-
-        this.lastHitMarker = "";    
-    }
-}
-function anim_sph_AFfirstPass() {
-    if (this.state == E3D_RESTART) {
-
-        v3_copy(this.target.position, this.startObject);
-        this.spd = [0, 0, -300];
-
-        this.spd[0] += rndPM(1);
-        this.spd[1] += rndPM(1);
-        this.spd[2] += rndPM(1);
-        this.ttl = 0.31;
-        
-        this.state = E3D_PLAY;
-        this.target.visible = true;
-        this.target.resetMatrix();
-        this.last_position = v3_clone(this.target.position);
-        
-    } else if (this.state == E3D_PLAY) {
-
-        v3_copy(this.last_position, this.target.position);
-
-        v3_scale_res(this.delta, this.spd, timer.delta);  
-        this.spd[1] = this.spd[1] - gAccel;
-
-        v3_add_mod(this.target.position, this.delta);
-        this.deltaLength = v3_length(this.delta);
-
-        this.target.resetMatrix();
-        this.lastHitMarker = ""; 
-    }
-}
-
-
-
-
-
-function anim_sph_rePass(itr) {
-
-    if ((this.deltaLength > 0) && (this.collisionDetected)) {
- 
-            nHits++;
-            this.lastHitMarker = this.closestCollision[0];
-            // closestCollision = [marker, penetration, n, firstHit, "SphVect-plane"];
-            //                       0          1       2     3              4
-            if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this.closestCollision[1];
-
-            v3_normalize_mod(this.closestCollision[2]);
-
-            this.spd[1] += gAccel;
-            
-            if (v3_dot(this.closestCollision[2], this.delta) < 0.0) { // face to face
-
-                v3_reflect_mod(this.spd, this.closestCollision[2]); // reflect per hit normal          
-                v3_copy(this.last_position, this.closestCollision[3]); // resset position as per firstHit
-           
-                var remainder = 1.0 - (Math.sqrt(this.closestCollision[1]) / this.deltaLength) ; // fraction remaining
-                remainder = remainder - 0.2;
-                if (remainder < 0.0) remainder = 0.0;
-                // TODO if less than 0.0, inside hit before move, cancel speed and delta, add error offset to direction
-
-                var drag = 0.8;
-                v3_scale_mod(this.spd, drag); // hit speed "drag"
-                var spdl = v3_lengthsquared(this.spd);
-                hitPoints.set("spd len", spdl);
-
-                v3_scale_res(this.delta, this.spd, remainder * timer.delta * drag); // new delta
-                this.deltaLength = v3_length(this.delta);
-                v3_add_res(this.target.position, this.last_position, this.delta); // new positions 
-            
-           
-                this.target.resetMatrix();
-            } // end face to face
-
-            this.spd[1] -= gAccel;
-
-        } // end collisionDetected
-
-        if (this.collisionFromOther) {
-
-            v3_normalize_mod(this.otherCollision[2]); // change direction on hit
-            v3_addscaled_mod(this.spd, this.otherCollision[2], -0.15 * v3_length(this.otherCollision[3])); 
-
-            v3_scale_mod(this.spd, 0.8); // hit "drag"
-
-            v3_scale_res(this.delta, this.spd, timer.delta);            
-            this.deltaLength = v3_length(this.delta);
-            if (this.deltaLength < _v3_epsilon) this.deltaLength = _v3_epsilon;
-            v3_add_res(this.target.position, this.last_position, this.delta); 
-
-            this.target.resetMatrix();
-        } // end collisionFromOther
-
-        this.collisionDetected = false;
-        this.collisionFromOther = false;
-}
-
-function anim_sph_endPass() {
-
-    this.ttl -= timer.delta;
-
-    if (this.ttl < 0) {
-        this.state = E3D_DONE;
-        this.target.visible = false;
-    } 
-}
 
 
 
