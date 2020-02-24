@@ -64,6 +64,7 @@ var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var inputs = new E3D_input(can, true, true, false, false); // Mouse and Keyboard
 var resMngr = new ressourceManager(onRessource);
+var meshLoader = new E3D_loader();
 
 log("Session Start", false);
 
@@ -356,11 +357,19 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-            DEV_axis = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, v3_val_new(1,1,1), false, v3_val_new(1, 1, 1));
+
+            DEV_axis = new E3D_entity(name, "", false);
+
+            meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), _v3_gray, _v3_unit);
+            meshLoader.addCDFromData(DEV_axis);
+            meshLoader.addStrokeData(DEV_axis);
+            meshLoader.smoothNormals(-0.9);
+            meshLoader.addModelData(DEV_axis);
+            
             DEV_axis.position[1] = 60;
             DEV_axis.position[2] = 750;
             DEV_axis.visible = true;
-            E3D_loader.loadCD_fromRAW(DEV_axis, resMngr.getData(name), v3_val_new(1,1,1));
+
             scn.addEntity(DEV_axis); 
         }  
     } // msg loaded

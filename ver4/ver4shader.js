@@ -118,6 +118,8 @@ attribute vec3 aVertexNormal;
 uniform mat4 uModelMatrix;
 uniform mat4 uNormalMatrix;
 
+uniform int strokePass; // 0: triangle pass, 1: stroke pass
+
 //from scene
 uniform mat4 uProjectionMatrix;
 
@@ -141,24 +143,33 @@ void main(void) {
     vec3 Color0;
     vec3 Color1;
 
-    if (aVertexNormal != vec3(0.0, 0.0, 0.0)) {
+    if (strokePass == 1) {
 
-        // Normals and diffuse computations
-        buf_normal = normalize(uNormalMatrix * vec4(aVertexNormal, 1.0));	
-        fact_diffuse0 = max(dot(buf_normal.xyz, uLight0_Direction), 0.0);
-        fact_diffuse1 = max(dot(buf_normal.xyz, uLight1_Direction), 0.0);
-
-        Color0 = fact_diffuse0 * uLight0_Color * aVertexColor;
-        Color1 = fact_diffuse1 * uLight1_Color * aVertexColor;
-
-        vColor = vec4(clamp(max(Color0, Color1), uLightA_Color * aVertexColor, aVertexColor) , 1.0);
+        vColor = vec4(0.0, 0.0, 0.0, 1.0);        
 
     } else {
-        vColor = vec4(aVertexColor, 1.0);
-    };
+
+        if (aVertexNormal != vec3(0.0, 0.0, 0.0)) {
+
+            // Normals and diffuse computations
+            buf_normal = normalize(uNormalMatrix * vec4(aVertexNormal, 1.0));	
+            fact_diffuse0 = max(dot(buf_normal.xyz, uLight0_Direction), 0.0);
+            fact_diffuse1 = max(dot(buf_normal.xyz, uLight1_Direction), 0.0);
+
+            Color0 = fact_diffuse0 * uLight0_Color * aVertexColor;
+            Color1 = fact_diffuse1 * uLight1_Color * aVertexColor;
+
+            vColor = vec4(clamp(max(Color0, Color1), uLightA_Color * aVertexColor, aVertexColor) , 1.0);
+
+        } else {
+            vColor = vec4(aVertexColor, 1.0);
+        };
+
+    }
 
     // Position (vertex trough modelMatrix trough projectionMatrix)
     gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
+
 }
 `;
 
@@ -183,7 +194,7 @@ void main(void) {
 const attribList01 = ["aVertexPosition", "aVertexColor", "aVertexNormal"];
 const uniformList01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", 
 "uLightA_Color", "uLight0_Color", "uLight1_Color", "uLight0_Direction", "uLight1_Direction",
-"uFogColor", "uFogLimit", "uFogFactor"];
+"uFogColor", "uFogLimit", "uFogFactor", "strokePass"];
 
 
 

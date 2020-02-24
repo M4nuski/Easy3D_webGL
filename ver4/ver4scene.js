@@ -80,6 +80,8 @@ class E3D_scene {
         this.context.uniform1f(this.program.shaderUniforms["uFogLimit"], this.fogLimit);
         this.context.uniform1f(this.program.shaderUniforms["uFogFactor"], this.fogFactor);
 
+        this.context.uniform1i(this.program.shaderUniforms["strokePass"], 0);
+
         this.drawnElemenets = 0;
 
         for (let i = 0; i < this.entities.length; ++i) {
@@ -121,6 +123,13 @@ class E3D_scene {
                 // Draw
                 this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
                 this.drawnElemenets += this.entities[i].numElements;
+
+                if (this.entities[i].drawStrokes) {
+            //        this.context.uniform1i(this.program.shaderUniforms["strokePass"], 1);
+                 //   this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
+
+                //    this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);                
+                }
             }
         }
 
@@ -165,6 +174,8 @@ class E3D_scene {
         ent.colorBuffer = this.context.createBuffer();
         ent.normalBuffer = this.context.createBuffer();
 
+        ent.strokeIndexBuffer = this.context.createBuffer();
+
         if (!ent.dynamic) { // if static initialize context data buffers and assign data right away
 
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
@@ -176,7 +187,11 @@ class E3D_scene {
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
             this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.STATIC_DRAW);
 
-        } else  { // if dynamic prepare buffers
+            this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
+            this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, this.context.STATIC_DRAW);
+
+        } else  { // if dynamic prepare buffers // TODO switch only context draw usage
+
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
             this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.DYNAMIC_DRAW);                
         
@@ -185,6 +200,9 @@ class E3D_scene {
 
             this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
             this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.DYNAMIC_DRAW);
+            
+            this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
+            this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, this.context.DYNAMIC_DRAW);
 
         }
         
@@ -209,12 +227,15 @@ class E3D_scene {
                 ent.vertexBuffer = this.context.createBuffer();
                 ent.colorBuffer = this.context.createBuffer();
                 ent.normalBuffer = this.context.createBuffer();
+                ent.strokeIndexBuffer = this.context.createBuffer();
                 this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
                 this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.DYNAMIC_DRAW);
                 this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
                 this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.DYNAMIC_DRAW);
                 this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
                 this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.DYNAMIC_DRAW);
+                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.strokeIndexBuffer);
+                this.context.bufferData(this.context.ARRAY_BUFFER, ent.strokeIndexArray, this.context.DYNAMIC_DRAW);
                 ent.dataSizeChanged = true;
             }
 
@@ -223,7 +244,7 @@ class E3D_scene {
         }        
     }
 
-    getEntityIndexFromId(id) {
+    getEntityIndexFromId(id) { // TODO use Map()
         for (let i = 0; i < this.entities.length; ++i) {
             if (this.entities[i].id == id) return i;
         }
@@ -237,6 +258,7 @@ class E3D_scene {
                 this.context.deleteBuffer(this.entities[idx].vertexBuffer);
                 this.context.deleteBuffer(this.entities[idx].colorBuffer);
                 this.context.deleteBuffer(this.entities[idx].normalBuffer);
+                this.context.deleteBuffer(this.entities[idx].strokeIndexBuffer);
             }
             this.entities.splice(idx, 1);
         }    
@@ -272,8 +294,8 @@ class E3D_scene {
 class E3D_scene_cell_shader extends E3D_scene {
     constructor(id, context, width, height, vBackColor = vec4.fromValues(0.9, 0.9, 0.9, 1.0), fogLimit = -1) {
         super(id, context, width, height, vBackColor, fogLimit);
-        this.strokeProgram = null ; // E3D_program for line strokes
-    //    this.entitiesStrokeIndices = [];
+
+        this.strokeProgram = null ; // E3D_program for cell shading
 
         this.strokeColor = [0.0, 0.0, 0.0, 1.0];
         this.farColor = [0.75, 0.75, 0.75, 1.0]; // color of stroke line at zFar 
@@ -295,8 +317,8 @@ class E3D_scene_cell_shader extends E3D_scene {
         this.context.uniform4fv(this.strokeProgram.shaderUniforms["uFarColor"], this.farColor );  
         this.context.uniform4fv(this.strokeProgram.shaderUniforms["uStrokeColor"], this.strokeColor );  
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], this.strokeDepth );  
-
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uFar"], this.camera.far);  
+        this.context.uniform1i(this.strokeProgram.shaderUniforms["strokePass"], 0);
         
         for (let i = 0; i < this.entities.length; ++i)
             if ((this.entities[i].visible) && (this.entities[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
@@ -315,10 +337,17 @@ class E3D_scene_cell_shader extends E3D_scene {
             this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
             
             // Draw
-           // this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER,this.entitiesStrokeIndices[i]);
-           // this.context.drawElements(this.context.LINES, this.entities[i].numElements * 2, this.context.UNSIGNED_SHORT, 0);
-           this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
-           this.drawnElemenets += this.entities[i].numElements;
+            this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
+            this.drawnElemenets += this.entities[i].numElements;
+            
+            if (this.entities[i].drawStrokes) {
+                this.context.uniform1i(this.strokeProgram.shaderUniforms["strokePass"], 1);
+                this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
+                this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);                
+            }
+
+
+
         }
 
         this.context.cullFace(this.context.BACK);
@@ -356,26 +385,4 @@ class E3D_scene_cell_shader extends E3D_scene {
             this.renderFunction(this);
         }
     }
-/*
-    addStrokeData(entity)  { // TODO add stroke data to entity
-        // static only for now
-        let indices = new Uint16Array(entity.numElements * 2);
-        for (var i = 0; i < entity.numElements / 3; ++i) {
-            indices[(6*i) + 0] = (0 + (i*3));
-            indices[(6*i) + 1] = (1 + (i*3));
-
-            indices[(6*i) + 2] = (1 + (i*3));
-            indices[(6*i) + 3] = (2 + (i*3));
-
-            indices[(6*i) + 4] = (2 + (i*3));
-            indices[(6*i) + 5] = (0 + (i*3));
-        }
-               
-        let bfr = this.context.createBuffer();
-        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, bfr);
-        this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, indices, this.context.STATIC_DRAW); 
-        
-        this.entitiesStrokeIndices.push(bfr);
-    }*/
-
 }

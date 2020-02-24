@@ -33,7 +33,7 @@ class E3D_entity {
 
         // Data
         this.numElements = 0; // Actual number of vertices to draw.
-        this.drawMode = 4;//gl.TRIANGLES;
+        this.drawMode = 4;
 
         // GL buffer data stores
         // TODO: combine to single data store (v1 v2 v3 n1 n2 n3 u  v  pad = face // smooth shaded
@@ -64,13 +64,17 @@ class E3D_entity {
         this.normalBuffer;
         this.colorBuffer; // TODO replace by texture
         //this.uvBuffer;
-
+        this.strokeIndexBuffer;
 
         // float32Array of raw data, can be flushed for static entities 
         // this.numElementStore = 1024 // Maximum number of vertices that the data arrays can hold.
         this.vertexArray; 
         this.normalArray;
         this.colorArray;
+        this.strokeIndexArray = new Uint16Array(0);
+
+        this.drawStrokes = false;
+        this.numStrokeElements = 0;
 
         //this.textureID = ""; // todo        
         this.filename = filename;
@@ -185,7 +189,7 @@ class E3D_entity {
             this.CD_triangle_p3  = []; // transformed to world space
             this.CD_triangle_n0 = [];  // original to model space
             this.CD_triangle_n  = [];  // transformed to world space (rotation)
-            // TODO pre calc delta vectors
+            // TODO pre calc delta vectors and dots
             // TODO add single total this.CD_triangle_preCull_r 
 
 
