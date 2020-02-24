@@ -40,6 +40,8 @@ class E3D_animation {  // TODO merge with entity
         this.delta_position = v3_new();
         this.mainVector = v3_new();
         this.spd = v3_new();
+        this.rspd = v3_new();
+        this.endState = E3D_DONE;
         this.vertOffset = v3_new();
         this.vect = v3_new();
         this.org = v3_new();
@@ -168,11 +170,27 @@ function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIteratio
 }
 
 
-function newTransformAnim(entity, pos_speed, rot_speed, gravity = false, ttl = -1, CD = false) {
+function newTransformAnim(entity, pos_speed, rot_speed, ttl = -1, CD = false, endState = E3D_DONE) {
+    var repassFunct = (CD) ? anim_Base_rePass : null;
+    var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
 
+    var anim = new E3D_animation("", entity, null, timer, anim_Transform_firstPass, repassFunct, endFunct, "");
+
+    v3_copy(anim.spd, pos_speed);
+    v3_copy(anim.rspd, rot_speed);
+
+    anim.endState = endState;
+    anim.ttl = ttl;
+    anim.gravity = false;
+    anim.state = E3D_PLAY;
+    anim.target.visible = true;
+    anim.target.resetMatrix();
+    anim.last_position = v3_clone(anim.target.position);
+
+    return anim;
 }
 
-function newBaseAnim(entity, pos_speed, rot_speed, gravity = false, ttl = -1, CD = false) {
+function newBaseAnim(entity, pos_speed, rot_speed, gravity = false, ttl = -1, CD = false, endState = E3D_DONE) {
 
     var repassFunct = (CD) ? anim_Base_rePass : null;
     var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
@@ -181,6 +199,7 @@ function newBaseAnim(entity, pos_speed, rot_speed, gravity = false, ttl = -1, CD
 
     v3_copy(anim.spd, pos_speed);
 
+    anim.endState = endState;
     anim.ttl = ttl;
     anim.gravity = gravity;
     anim.state = E3D_PLAY;
@@ -198,7 +217,7 @@ function addNoise(v3val, v3range) {
     return v3val;
 }
 
-function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, gravity = false, ttl = -1, CD = false) {
+function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, gravity = false, ttl = -1, CD = false, endState = E3D_DONE) {
     var repassFunct = (CD) ? anim_Base_rePass : null;
     var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
 
@@ -210,6 +229,7 @@ function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, grav
 
     anim.spd = camera.adjustToCamera(pos_speed);
 
+    anim.endState = endState;
     anim.ttl = ttl;
     anim.gravity = gravity;
     anim.state = E3D_PLAY;
@@ -221,7 +241,7 @@ function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, grav
 }    
 
 
-function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, gravity = false, ttl = -1, CD = false) {
+function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, gravity = false, ttl = -1, CD = false, endState = E3D_DONE) {
 
 }    
 
@@ -230,6 +250,8 @@ function newParticuleAnim_RelativeToCamera(entity, camera, spos_speed, rot_speed
     
 }    
 
+
+// First Passes
 
 function anim_Base_firstPass(){
     if (this.state == E3D_PLAY) {
@@ -242,6 +264,22 @@ function anim_Base_firstPass(){
 
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
+
+        this.target.resetMatrix();
+        this.lastHitMarker = ""; 
+    }
+}
+
+function anim_Transform_firstPass() {
+    if (this.state == E3D_PLAY) {
+
+        v3_copy(this.last_position, this.target.position);
+
+        v3_scale_res(this.delta, this.spd, timer.delta);  
+        v3_add_mod(this.target.position, this.delta);
+        this.deltaLength = v3_length(this.delta);
+
+        v3_addscaled_mod(this.target.rotation, this.rspd, timer.delta);
 
         this.target.resetMatrix();
         this.lastHitMarker = ""; 
@@ -318,7 +356,7 @@ function anim_Base_endPass_ttl() {
     this.ttl -= timer.delta;
 
     if (this.ttl < 0) {
-        this.state = E3D_DONE;
+        this.state = this.endState;
         this.target.visible = false;
     }
 }
@@ -327,3 +365,15 @@ function anim_Base_endPass() {
     if (this.state == E3D_DONE) this.target.visible = false;
 }
 
+
+
+function cleanupDoneAnimations(animations, scn) {
+    var someremoved = false;
+    for (let i = animations.length -1; i >=0; --i) if (animations[i].state == E3D_DONE) {
+        scn.removeEntity(animations[i].target.id, false);
+        animations.splice(i, 1);
+        someremoved = true;
+    }
+    // Recalc indices
+    if (someremoved) for (let i = 0; i < animations.length; ++i) animations[i].target.animIndex = i;
+}

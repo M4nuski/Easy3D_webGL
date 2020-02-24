@@ -4,6 +4,58 @@
 
 "use strict"
 
+var nHitTest = 0;
+var nHits = 0;
+var nbCDpasses = 0;
+var hitPoints = new Map();
+hitPoints.set("CUBE_6P_nt", 0); // num tests
+hitPoints.set("CUBE_6P_nh", 0); // num hits
+hitPoints.set("CUBE_6P_tt", 0); // total time
+hitPoints.set("CUBE_6P_ht", 0); // hit time
+hitPoints.set("CUBE_6P_att", 0); // avg time per test
+hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
+
+hitPoints.set("CUBE_BX_nt", 0); // num tests
+hitPoints.set("CUBE_BX_nh", 0); // num hits
+hitPoints.set("CUBE_BX_tt", 0); // total time
+hitPoints.set("CUBE_BX_ht", 0); // hit time
+hitPoints.set("CUBE_BX_att", 0); // avg time per test
+hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
+
+hitPoints.set("CUBE_DS_nt", 0); // num tests
+hitPoints.set("CUBE_DS_nh", 0); // num hits
+hitPoints.set("CUBE_DS_tt", 0); // total time
+hitPoints.set("CUBE_DS_ht", 0); // hit time
+hitPoints.set("CUBE_DS_att", 0); // avg time per test
+hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
+
+var show_DEV_CD = false;
+var phyTracers;
+var gAccel = 0;
+var timer = { delta : 0, start : 0 }; // dummy timer 
+
+var logElement = null;
+
+function log(text, silent = true) {
+    let ts = 0;
+    try {
+        ts = Date.now() - timer.start;
+    } catch (e) {
+        // timer was not yet defined
+        ts = "=";
+    } 
+    console.log("E3D[" + ts + "] " + text);
+    if (!silent) {
+        if (logElement == null) logElement = document.getElementById("logDiv");        
+        if (logElement == null) {
+            logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+            logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
+        } else {
+            console.log("[" + ts + "] " + text);
+        }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 log("DOMContentLoaded");
 
@@ -39,7 +91,7 @@ var nHitTest = 0;
 // Engine Components
 
 var gl; // webGL canvas rendering context
-var timer = new E3D_timing(false, 25, timerTick);
+timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var meshLoader = new E3D_loader();
@@ -89,16 +141,16 @@ function camChange() {
 
     let vmode = document.forms["moveTypeForm"].moveType.value; 
 
-    inputs.keyMap["ry_dec"] = "KeyQ";
-    inputs.keyMap["ry_inc"] = "KeyE";
+    inputs.keyMap.set("ry_dec", "KeyQ");
+    inputs.keyMap.set("ry_inc", "KeyE");
 
-    inputs.keyMap["rz_dec"] = "KeyZ";    
-    inputs.keyMap["rz_inc"] = "KeyX";
+    inputs.keyMap.set("rz_dec", "KeyZ");    
+    inputs.keyMap.set("rz_inc", "KeyX");
 
-    inputs.keyMap["rx_dec"] = "null";
-    inputs.keyMap["rx_inc"] = "null";
+    inputs.keyMap.set("rx_dec", "null");
+    inputs.keyMap.set("rx_inc", "null");
 
-    inputs.keyMap["action0"] = "KeyR";
+    inputs.keyMap.set("action0", "KeyR");
 
     if (vmode == "model") {
         scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
@@ -112,11 +164,11 @@ function camChange() {
         scn.camera = new E3D_camera_space("cam1s", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
 
-        inputs.keyMap["ry_dec"] = "KeyZ";
-        inputs.keyMap["ry_inc"] = "KeyX";
+        inputs.keyMap.set("ry_dec", "KeyZ");
+        inputs.keyMap.set("ry_inc", "KeyX");
 
-        inputs.keyMap["rz_dec"] = "KeyQ";
-        inputs.keyMap["rz_inc"] = "KeyE";
+        inputs.keyMap.set("rz_dec", "KeyQ");
+        inputs.keyMap.set("rz_inc", "KeyE");
     }
     else {
         scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
@@ -180,7 +232,6 @@ function initEngine() {
     
     l0v = new E3D_entity_axis("light0vect", true, 10.0, true);
     l0v.position = v3_val_new(-5, 20, -5);
-    //l0v.scale = v3_val_new(5, 5, 5);
     l0v.visible = true;
     l0v.vis_culling = false;
 
@@ -188,13 +239,13 @@ function initEngine() {
     
     l1v = new E3D_entity_axis("light1vect", true, 10.0, true);
     l1v.position = v3_val_new(5, 20, 5);
-    //l1v.scale = v3_val_new(5, 5, 5);
     l1v.visible = true;
     l1v.vis_culling = false;
 
     scn.addEntity(l1v);
 
     timer.run();
+    E3D_G = 32;
     scn.state = E3D_ACTIVE;
 
     testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
@@ -202,31 +253,29 @@ function initEngine() {
     testSph.addWireSphere([0,30,0], 20, [0,1,0], 24, true);
     testSph.addWireSphere([0,0,30], 20, [0,0,1], 24, true);
     testSph.visible = true;
-    //testSph.cull_dist2 = 2500;
     scn.addEntity(testSph);
 
     splos = new E3D_entity_wireframe_canvas("splosions");
     splos.visible = true;
-    splos.arrayIncrement = 2700; 
+    splos.arrayIncrement = 4096; 
     splos.vis_culling = false;
     scn.addEntity(splos);
 
     iplanes = new E3D_entity_wireframe_canvas("infinitePlanes");
-    iplanes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true, false);
-    iplanes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true, false);
-    iplanes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true, false);
-    iplanes.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true, false);
+    iplanes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true);
+    iplanes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true);
+    iplanes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true);
+    iplanes.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true);
     iplanes.visible = true;
     iplanes.vis_culling = false;
     scn.addEntity(iplanes);
 
     fplanes = new E3D_entity_wireframe_canvas("finitePlanes");
     fplanes.position = [25, -10, 25];
-    fplanes.addPlane([-25, 10, 25], [0, 0, 0], 20, 20, -1, [1,0,0], false, true);
-    fplanes.addPlane([25, -10, 0], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], false, true);
-    fplanes.addPlane([0, 30, 0], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], false, true);
+    fplanes.addPlane([-25, 10, 25], [0, 0, 0], 20, 20, -1, [1,0,0], true);
+    fplanes.addPlane([25, -10, 0], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], true);
+    fplanes.addPlane([0, 30, 0], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], true);
     fplanes.visible = true;
-    //fplanes.cull_dist2 = 4200;
     scn.addEntity(fplanes);
 
     cubes = new E3D_entity_wireframe_canvas("cubesTest");
@@ -236,11 +285,9 @@ function initEngine() {
     cubes.addWireCube([0, 0, 0], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
     cubes.addWireCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
     cubes.visible = true;
-    //cubes.cull_dist2 = 4200;
     scn.addEntity(cubes);
 
     dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
-
     dev_CD.visible = true;
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
@@ -249,6 +296,7 @@ function initEngine() {
 
 
 function prepRender() {
+
     // move camera per inputs
     let yf = (document.forms["moveTypeForm"].invertY.checked) ? -1.0 : 1.0;
     scn.camera.moveBy(-inputs.px_delta_smth,    inputs.py_delta_smth, inputs.pz_delta_smth, 
@@ -260,35 +308,13 @@ function prepRender() {
         l1v.updateVector(scn.lights.light1_adjusted);
     }
 
-    // Animate / Calculate Expected target position and state
-    // target orig, delta, dR2
-    for (let i = animations.length -1; i >=0; --i) if (animations[i].state == E3D_DONE) {
-            scn.removeEntity(animations[i].target.id, false);
-            animations.splice(i, 1);
-        } 
-        
-        
-        
-    for (var i = 0; i < animations.length; ++i) animations[i].animateFirstPass(); //if supported calculate next position but don't lock
+    // Run Animations
+    cleanupDoneAnimations(animations, scn);
+    collisionDetectionAnimator(animations, scn, 10);
 
-    // Cull Collission Detection with pos vs dR2
-
-    for (let i = 0; i < animations.length; ++i) { // animations are source
-        if (animations[i].delta2  > -1) for (let j = 0 ; j < scn.entities.length; ++j) { // all entities are targets
-            if ((scn.entities[j].collisionDetection) && (animations[i].target.id != scn.entities[j].id) ) { 
-                var deltaP = v3_distance( animations[i].target.position, scn.entities[j].position);
-                var deltaD = animations[i].delta2 + animations[i].target.cull_dist + scn.entities[j].cull_dist; 
-                animations[i].candidates[j] = (scn.entities[j].CD_iPlane > 0) || ( deltaP  <= deltaD );  
-            } else animations[i].candidates[j] = false;
-        }
-        animations[i].animateRePass();
-    }
-
-    for (let i = 0; i < animations.length; ++i) animations[i].animateLastPass();
-
-
+    // Display CD informations
     if (document.forms["displayForm"].CDP.checked) {
-        dev_CD.numElements = 0;
+        dev_CD.clear();
         for (let i = 0; i < scn.entities.length; ++i) {
             if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
         }
@@ -335,9 +361,18 @@ function timerTick() {  // Game Loop
     if (inputs.checkCommand("action0", true)) {
      //   log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
+        newSph.position[1] = 5;
+        newSph.rotation[0] = rndPM(PIx2);
+        newSph.rotation[1] = rndPM(PIx2);
+        animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
+             [rndPM(1), rndPM(1), rndPM(1) -100], _v3_null, true, 10, true));
+
+        animations[animations.length-1].target.animIndex = animations.length-1;
         //(id, targetEntity, sceneContext, timerclass, animFirstPass, animNPass = null, animLastPass =  null)
-        animations.push(new E3D_animation("ball throw" + timer.lastTick, newSph, scn, timer, sphAnimF, sphAnimR, sphAnimL));
-        animations[animations.length-1].restart();
+        //animations.push(new E3D_animation("ball throw" + timer.lastTick, newSph, scn, timer, sphAnimF, sphAnimR, sphAnimL));
+
+
+       // animations[animations.length-1].restart();
     }
     if (inputs.checkCommand("action1", true)) {
        // log("action1", true);      
@@ -369,15 +404,16 @@ function onRessource(name, msg) {
         if (resMngr.getRessourceType(name) == "Model") {
             if (name == "ST") {
                 let nm = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name));
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name));
                 meshLoader.smoothNormals(0.0);
                 meshLoader.addModelData(nm);
 
                 nm.position[2] = -120;
                 nm.visible = true;
 
-                animations.push(new E3D_animation("ST rotate", nm, scn, timer, rot0));
-                animations[animations.length-1].play();
+                animations.push(newTransformAnim(nm, _v3_null, [0, 1, 0]));
+              //  animations.push(new E3D_animation("ST rotate", nm, scn, timer, rot0));
+              //  animations[animations.length-1].play();
                 scn.addEntity(nm);  
 
                 if (!cloned) cloneWar();
@@ -569,12 +605,7 @@ function sphAnimL() {
 }
 
 
-function rot0() {
-    if (this.state == E3D_PLAY) {
-        this.target.rotation[1] += timer.delta;
-        this.target.resetMatrix();
-    }  
-}
+
 
 function shotgunAnimF () {
     if (this.state == E3D_RESTART) {
@@ -839,22 +870,7 @@ function splode(loc) {
 }
 
 
-// Logging and status information
-
-
-function log(text, silent = true) {
-    let ts = 0;
-    try {
-        ts = Date.now() - timer.start;
-    } catch (e) {
-        // timer was not yet defined
-    } 
-
-    console.log("E3D[" + ts + "] " + text);
-    if (!silent) {
-        logElement.innerHTML += "[" + ts + "] " + text + "<br />";
-    }
-}
+// Status information
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);

@@ -41,6 +41,9 @@ const E3D_INP_X = 0; // left right
 const E3D_INP_Y = 1; // up down
 const E3D_INP_W = 2; // mouse wheel / touch pinch
 
+// Physics Constants
+var E3D_G = 386.22;
+
 // Premade vec and mat to avoid inline creation of instances
 const _v3_origin = [ 0,  0,  0];
 const _v3_null =   [ 0,  0,  0];

@@ -3,6 +3,57 @@
 // Emmanuel Charette 2017-2019
 
 "use strict"
+var nHitTest = 0;
+var nHits = 0;
+var nbCDpasses = 0;
+var hitPoints = new Map();
+hitPoints.set("CUBE_6P_nt", 0); // num tests
+hitPoints.set("CUBE_6P_nh", 0); // num hits
+hitPoints.set("CUBE_6P_tt", 0); // total time
+hitPoints.set("CUBE_6P_ht", 0); // hit time
+hitPoints.set("CUBE_6P_att", 0); // avg time per test
+hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
+
+hitPoints.set("CUBE_BX_nt", 0); // num tests
+hitPoints.set("CUBE_BX_nh", 0); // num hits
+hitPoints.set("CUBE_BX_tt", 0); // total time
+hitPoints.set("CUBE_BX_ht", 0); // hit time
+hitPoints.set("CUBE_BX_att", 0); // avg time per test
+hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
+
+hitPoints.set("CUBE_DS_nt", 0); // num tests
+hitPoints.set("CUBE_DS_nh", 0); // num hits
+hitPoints.set("CUBE_DS_tt", 0); // total time
+hitPoints.set("CUBE_DS_ht", 0); // hit time
+hitPoints.set("CUBE_DS_att", 0); // avg time per test
+hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
+
+var show_DEV_CD = false;
+var phyTracers;
+var gAccel = 0;
+var timer = { delta : 0, start : 0 }; // dummy timer 
+
+var logElement = null;
+
+function log(text, silent = true) {
+    let ts = 0;
+    try {
+        ts = Date.now() - timer.start;
+    } catch (e) {
+        // timer was not yet defined
+        ts = "=";
+    } 
+    console.log("E3D[" + ts + "] " + text);
+    if (!silent) {
+        if (logElement == null) logElement = document.getElementById("logDiv");        
+        if (logElement == null) {
+            logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+            logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
+        } else {
+            console.log("[" + ts + "] " + text);
+        }
+    }
+}
 
 document.addEventListener("DOMContentLoaded", function () {
 log("DOMContentLoaded");
@@ -88,7 +139,7 @@ var nHitTest = 0;
 // Engine Components
 
 var gl; // webGL canvas rendering context
-var timer = new E3D_timing(false, 50, timerTick);
+timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var meshLoader = new E3D_loader();
@@ -948,25 +999,7 @@ function splode(loc) {
 }
 
 
-// Logging and status information
-
-
-function log(text, silent = true) {
-    let ts = 0;
-    try {
-        ts = Date.now() - timer.start;
-    } catch (e) {
-        // timer was not yet defined
-        ts = "=";
-    } 
-
-    console.log("E3D[" + ts + "] " + text);
-    if (!silent) {
-        logElement.innerHTML += "[" + ts + "] " + text + "<br />";
-        logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
-    }
-
-}
+// Status information
 
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);

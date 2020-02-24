@@ -19,7 +19,6 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress and next steps
 ----------
-* Extract animation and CD/CR/PHY into global classes
 * refactor all ver4 project for Anim / CD / PHY
 * proper maze mini-game
 * --ver5:

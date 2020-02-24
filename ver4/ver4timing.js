@@ -54,6 +54,8 @@ class E3D_timing {
         this.delta = (ts - this.lastTick) / 1000;
         this.lastTick = ts;
 
+        gAccel = this.delta * E3D_G;
+
         if (this.onTick) {             
             this.onTick(); 
         }

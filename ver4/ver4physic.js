@@ -565,16 +565,7 @@ if (DEV_axis.visible) {
 
 
     if (DEV_anim_active) {
-        // Cleanup
-        var someremoved = false;
-        for (let i = animations.length -1; i >=0; --i) if (animations[i].state == E3D_DONE) {
-            scn.removeEntity(animations[i].target.id, false);
-            animations.splice(i, 1);
-            someremoved = true;
-        }
-        // Recalc indices
-        if (someremoved) for (let i = 0; i < animations.length; ++i) animations[i].target.animIndex = i;
-
+        cleanupDoneAnimations(animations, scn);
         nbCDpasses = collisionDetectionAnimator(animations, scn, 10);
     }
 
@@ -662,8 +653,6 @@ function timerTick() {  // Game Loop
     inputs.processInputs(timer.delta);
     inputs.smoothRotation(6);
     inputs.smoothPosition(6);
-
-    gAccel = timer.delta * 386.22;
 
     updateStatus();
     nHitTest = 0;
