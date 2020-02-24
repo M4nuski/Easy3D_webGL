@@ -17,7 +17,7 @@
  * @param {function} animLastPass Delegate function to commit animation results or to post-process
  */
 class E3D_animation { 
-    constructor(id, targetEntity, sceneContext, timerclass, animFirstPass, animNPass = null, animLastPass =  null) {
+    constructor(id, targetEntity, sceneContext, timerclass, animFirstPass, animNPass = null, animLastPass =  null, group = "") {
         this.id = id;
         
         this.animFirstPass = animFirstPass; //  calculate ideal next position
@@ -28,6 +28,7 @@ class E3D_animation {
         this.scn = sceneContext;
         this.timer = timerclass;
 
+        this.group = group;
         this.state = E3D_RESET;
 
         this.ttl = 0;
@@ -97,3 +98,69 @@ class E3D_animation {
         this.state = E3D_DONE;  
     }
 }
+
+
+function singlePassAnimator(animList /*, animGroup*/) {
+    for (let i = 0; i < animList.length; ++i) animList[i].animateFirstPass();
+}
+
+function multiPassAnimator(animList /*, animGroup*/) {
+    for (let i = 0; i < animList.length; ++i) animList[i].animateFirstPass();
+    for (let i = 0; i < animList.length; ++i) animList[i].animateRePass();
+    for (let i = 0; i < animList.length; ++i) animList[i].animateLastPass();
+}
+
+function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIterations = 10) {
+    // Animate / Calculate Expected target position and state
+
+    // First pass, calculate expected next position
+    for (let i = 0; i < animList.length; ++i) {
+        animList[i].animateFirstPass();
+        animList[i].collisionDetected = false;
+        animList[i].collisionFromOther = false;
+    } 
+
+    // calc distance every time top 100% of 0.050s at 800 entities 
+    // map with distance and hash of ID 100 at 200 entities
+    // list in animation target entity at 700
+    //  list in both and map to lookup at 600
+    //  multi pass, only add if closest max at 600
+
+    // Cull Collission Detection
+    for (let i = 0; i < animList.length; ++i) { // CD culling
+        if (animList[i].deltaLength > -1) {
+            animList[i].candidates = [];
+            for (let j = 0; j < scn.entities.length; ++j) {// all entities are targets
+                animList[i].candidates[j] = false;
+                if ((scn.entities[j].collisionDetection) && (animList[i].target.id != scn.entities[j].id) ) { 
+                    var deltaP = v3_distance( animList[i].target.position, scn.entities[j].position);
+                    var deltaD = animList[i].deltaLength + animList[i].target.cull_dist + scn.entities[j].cull_dist; 
+                    animList[i].candidates[j] = deltaP <= deltaD;  
+                }
+            }
+        }
+    }
+
+    var numIter = maxCDIterations;
+    var hitDetected = true;
+
+    while ((numIter > 0) && (hitDetected)){
+
+        // Collision Detection
+        hitDetected = false;
+        for (let i = 0; i < animList.length; ++i) if (animList[i].deltaLength > 0.0) CheckForAnimationCollisions(animList[i], scn, animList);
+        
+        // Collision Response
+        for (let i = 0; i < animList.length; ++i) if ((animList[i].collisionDetected) || (animList[i].collisionFromOther)) {
+            animList[i].animateRePass(maxCDIterations - numIter); 
+            hitDetected = true;
+        }
+        numIter--;
+    }
+
+    // Last pass, post-process animation state after collisions are resolved
+    for (let i = 0; i < animList.length; ++i) animList[i].animateLastPass();
+    
+    return maxCDIterations - numIter;
+}
+
