@@ -877,8 +877,18 @@ CUBE_DS_ath             0.0164
                     nHitTest++;
 
                     var hitRes = triangle_capsule_intersect_res(firstHit, vectOrig, pathVect, self.target.CD_sph_r[0],
-                        scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p2[j], 
-                        scn.entities[i].CD_triangle_p3[j], scn.entities[i].CD_triangle_n[j]);
+                        scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p3p1[j], scn.entities[i].CD_triangle_p2p1[j], 
+                        scn.entities[i].CD_triangle_p3p1lenSq[j], scn.entities[i].CD_triangle_p2p1lenSq[j],
+                        scn.entities[i].CD_triangle_p3p2p1dot[j], scn.entities[i].CD_triangle_n[j]);
+
+                        /*
+                                    this.CD_triangle_p3p1 = []; // original to model space
+                                    this.CD_triangle_p2p1  = []; // transformed to world space
+
+                                    this.CD_triangle_p3p1lenSq = []; // original to model space
+                                    this.CD_triangle_p2p1lenSq = []; // transformed to world space
+                                    this.CD_triangle_p3p2p1dot = []; // original to model space
+            */
                     if ((hitRes != false) && (hitRes <= self.deltaLength) ) {      
                         // check dist, if dist less than current hit declare hit
                         var t0 = 0.0;
@@ -1019,10 +1029,10 @@ function insidePlane(SphPosMinusPlanePos, normalA, halfSizeA, normalB, halfSizeB
 }
 
 
-var _t_v_i_v0 = [0.0, 0.0, 0.0];
-var _t_v_i_v1 = [0.0, 0.0, 0.0];
+//var _t_v_i_v0 = [0.0, 0.0, 0.0];
+//var _t_v_i_v1 = [0.0, 0.0, 0.0];
 var _t_v_i_v2 = [0.0, 0.0, 0.0];
-function triangle_vector_intersect_res(firsthit, vOrig, vNormal, triP1, triP2, triP3, triNorm) {
+function triangle_vector_intersect_res(firsthit, vOrig, vNormal, triP1, triP3P1, triP2P1, triP3len, triP2len, tridP3P2dot, triNorm) {
 //https://blackpawn.com/texts/pointinpoly/default.html
 
     var angleCos = v3_dot(triNorm, vNormal);
@@ -1033,19 +1043,19 @@ function triangle_vector_intersect_res(firsthit, vOrig, vNormal, triP1, triP2, t
 
     if (t < 0.0) return false; // behind
 
-    v3_sub_res(_t_v_i_v0, triP3, triP1);
-    v3_sub_res(_t_v_i_v1, triP2, triP1);
+    //v3_sub_res(_t_v_i_v0, triP3, triP1);
+    //v3_sub_res(_t_v_i_v1, triP2, triP1);
 
     v3_addscaled_res(firsthit, vOrig, vNormal, t);
     //if (show_DEV_CD) phyTracers.addWireCross(firsthit, 2, [1, 0, 0]);
 
     v3_sub_res(_t_v_i_v2, firsthit, triP1);
 
-    var dot00 = v3_lengthsquared(_t_v_i_v0);
-    var dot01 = v3_dot(_t_v_i_v0, _t_v_i_v1);
-    var dot02 = v3_dot(_t_v_i_v0, _t_v_i_v2);
-    var dot11 = v3_lengthsquared(_t_v_i_v1);
-    var dot12 = v3_dot(_t_v_i_v1, _t_v_i_v2);
+    var dot00 = triP3len;//v3_lengthsquared(triP3P1);
+    var dot01 = tridP3P2dot;//v3_dot(_t_v_i_v0, _t_v_i_v1);
+    var dot02 = v3_dot(triP3P1, _t_v_i_v2);
+    var dot11 = triP2len;//v3_lengthsquared(triP2P1);
+    var dot12 = v3_dot(triP2P1, _t_v_i_v2);
 
 /*   
 v0 = C - A
@@ -1081,7 +1091,7 @@ return (u >= 0) && (v >= 0) && (u + v < 1)
 
 var _t_c_i_vOrig_corrected = [0.0, 0.0, 0.0];
 var _t_c_i_vOrig_P1_delta = [0.0, 0.0, 0.0];
-function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, triP2, triP3, triNorm) {
+function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, triP3P1, triP2P1, triP3len, triP2len, tridP3P2dot, triNorm) {
     //https://blackpawn.com/texts/pointinpoly/default.html
     
         var angleCos = v3_dot(triNorm, vNormal);
@@ -1104,15 +1114,16 @@ function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, t
         }
         //if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, [1, 0, 0]);
         
-        v3_sub_res(_t_v_i_v0, triP3, triP1); // TODO pre-calc in entity CD data
-        v3_sub_res(_t_v_i_v1, triP2, triP1); // pre-calc
+        //v3_sub_res(_t_v_i_v0, triP3, triP1); 
+        //v3_sub_res(_t_v_i_v1, triP2, triP1);
+
         v3_sub_res(_t_v_i_v2, firstHit, triP1);
     
-        var dot00 = v3_lengthsquared(_t_v_i_v0); // pre-calc
-        var dot01 = v3_dot(_t_v_i_v0, _t_v_i_v1); // pre-calc
-        var dot02 = v3_dot(_t_v_i_v0, _t_v_i_v2);
-        var dot11 = v3_lengthsquared(_t_v_i_v1); // pre-calc
-        var dot12 = v3_dot(_t_v_i_v1, _t_v_i_v2);
+        var dot00 = triP3len;// v3_lengthsquared(triP3P1); // pre-calc
+        var dot01 = tridP3P2dot;//v3_dot(triP3P1, triP2P1); // pre-calc
+        var dot02 = v3_dot(triP3P1, _t_v_i_v2);
+        var dot11 = triP2len;// v3_lengthsquared(triP2P1); // pre-calc
+        var dot12 = v3_dot(triP2P1, _t_v_i_v2);
     
         var invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
         if (isNaN(invDenom)) return false;

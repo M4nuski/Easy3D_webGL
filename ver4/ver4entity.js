@@ -67,7 +67,6 @@ class E3D_entity {
         this.strokeIndexBuffer;
 
         // float32Array of raw data, can be flushed for static entities 
-        // this.numElementStore = 1024 // Maximum number of vertices that the data arrays can hold.
         this.vertexArray; 
         this.normalArray;
         this.colorArray;
@@ -181,15 +180,19 @@ class E3D_entity {
 
             // Triangle Target
             this.CD_triangle = 0;
-            this.CD_triangle_p10 = []; // original to model space
-            this.CD_triangle_p1  = []; // transformed to world space
-            this.CD_triangle_p20 = []; // original to model space
-            this.CD_triangle_p2  = []; // transformed to world space
-            this.CD_triangle_p30 = []; // original to model space
-            this.CD_triangle_p3  = []; // transformed to world space
             this.CD_triangle_n0 = [];  // original to model space
             this.CD_triangle_n  = [];  // transformed to world space (rotation)
-            // TODO pre calc delta vectors and dots
+            this.CD_triangle_p10 = []; // original to model space
+            this.CD_triangle_p1  = []; // transformed to world space
+
+            this.CD_triangle_p3p10 = []; // original to model space
+            this.CD_triangle_p3p1 = []; // original to model space (rotation)
+            this.CD_triangle_p2p10  = []; // transformed to world space
+            this.CD_triangle_p2p1  = []; // transformed to world space (rotation)
+
+            this.CD_triangle_p3p1lenSq = [];
+            this.CD_triangle_p2p1lenSq = [];
+            this.CD_triangle_p3p2p1dot = [];
 
         this.resetMatrix();
     } 
@@ -266,8 +269,8 @@ class E3D_entity {
 
             this.CD_box_bottom  = entity.CD_box_bottom.slice();
 
-            this.CD_box_edge_p0 = v3a_clone(entity.CD_box_edge_p0);//.slice();
-            this.CD_box_edge_p = v3a_clone(entity.CD_box_edge_p);//.slice();
+            this.CD_box_edge_p0 = v3a_clone(entity.CD_box_edge_p0);
+            this.CD_box_edge_p = v3a_clone(entity.CD_box_edge_p);
 
             this.CD_box_halfWidth  = entity.CD_box_halfWidth.slice();
             this.CD_box_halfHeight = entity.CD_box_halfHeight.slice();            
@@ -281,12 +284,17 @@ class E3D_entity {
             this.CD_triangle = entity.CD_triangle;
             this.CD_triangle_p10 = v3a_clone(entity.CD_triangle_p10); 
             this.CD_triangle_p1  = v3a_clone(entity.CD_triangle_p1);
-            this.CD_triangle_p20 = v3a_clone(entity.CD_triangle_p20); 
-            this.CD_triangle_p2  = v3a_clone(entity.CD_triangle_p2); 
-            this.CD_triangle_p30 = v3a_clone(entity.CD_triangle_p30); 
-            this.CD_triangle_p3  = v3a_clone(entity.CD_triangle_p3); 
-            this.CD_triangle_n0 =  v3a_clone(entity.CD_triangle_n0); 
-            this.CD_triangle_n  =  v3a_clone(entity.CD_triangle_n); 
+            this.CD_triangle_n0  = v3a_clone(entity.CD_triangle_n0); 
+            this.CD_triangle_n   = v3a_clone(entity.CD_triangle_n); 
+
+            this.CD_triangle_p3p10 = v3a_clone(entity.CD_triangle_p3p10); 
+            this.CD_triangle_p2p10 = v3a_clone(entity.CD_triangle_p2p10); 
+            this.CD_triangle_p3p1  = v3a_clone(entity.CD_triangle_p3p1); 
+            this.CD_triangle_p2p1  = v3a_clone(entity.CD_triangle_p2p1); 
+    
+            this.CD_triangle_p3p1lenSq = entity.CD_triangle_p3p1lenSq.slice();
+            this.CD_triangle_p2p1lenSq = entity.CD_triangle_p2p1lenSq.slice();
+            this.CD_triangle_p3p2p1dot = entity.CD_triangle_p3p2p1dot.slice();
         }
     }
 
@@ -367,10 +375,10 @@ class E3D_entity {
             }
             
             for (var i = 0; i < this.CD_triangle; ++i) {
-                v3_applym4_res(this.CD_triangle_p1[i], this.CD_triangle_p10[i], this.modelMatrix);
-                v3_applym4_res(this.CD_triangle_p2[i], this.CD_triangle_p20[i], this.modelMatrix); 
-                v3_applym4_res(this.CD_triangle_p3[i], this.CD_triangle_p30[i], this.modelMatrix); 
-                v3_applym4_res(this.CD_triangle_n[i],  this.CD_triangle_n0[i],  this.normalMatrix); 
+                v3_applym4_res(this.CD_triangle_n[i],  this.CD_triangle_n0[i],  this.normalMatrix);
+                v3_applym4_res(this.CD_triangle_p1[i], this.CD_triangle_p10[i], this.modelMatrix);         
+                v3_applym4_res(this.CD_triangle_p3p1[i], this.CD_triangle_p3p10[i],  this.normalMatrix); 
+                v3_applym4_res(this.CD_triangle_p2p1[i], this.CD_triangle_p2p10[i],  this.normalMatrix); 
             }
 
 
@@ -469,20 +477,7 @@ class E3D_entity {
         var pz = v3_scale_new(nz,  hdepth);
         var mz = v3_scale_new(nz, -hdepth);
 
-        //v3_addadd_new(a, b, c)
         this.CD_box_edge_p0[this.CD_box] = [];
-
-/*        
-const _CD_box_corner_TopBackRight  = 0; 
-const _CD_box_corner_TopFrontRight = 1; 
-const _CD_box_corner_TopFrontLeft  = 2; 
-const _CD_box_corner_TopBackLeft   = 3; 
-
-const _CD_box_corner_BottomBackRight  = 4; 
-const _CD_box_corner_BottomFrontRight = 5; 
-const _CD_box_corner_BottomFrontLeft  = 6; 
-const _CD_box_corner_BottomBackLeft   = 7;
-*/
 
         // top
         this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopBackRight]  = v3_addaddadd_new(p, py, px, mz);
@@ -507,14 +502,22 @@ const _CD_box_corner_BottomBackLeft   = 7;
     }
     
     pushCD_triangle(n, p1, p2 ,p3) {
-        this.CD_triangle_p10[this.CD_triangle] = v3_clone(p1);
-        this.CD_triangle_p1[this.CD_triangle]  = v3_clone(p1);
-        this.CD_triangle_p20[this.CD_triangle] = v3_clone(p2);
-        this.CD_triangle_p2[this.CD_triangle]  = v3_clone(p2);
-        this.CD_triangle_p30[this.CD_triangle] = v3_clone(p3);
-        this.CD_triangle_p3[this.CD_triangle]  = v3_clone(p3);
         this.CD_triangle_n0[this.CD_triangle]  = v3_clone(n);
         this.CD_triangle_n[this.CD_triangle]   = v3_clone(n);
+        this.CD_triangle_p10[this.CD_triangle] = v3_clone(p1);
+        this.CD_triangle_p1[this.CD_triangle]  = v3_clone(p1);
+
+        var p3p1 = v3_sub_new(p3, p1);
+        var p2p1 = v3_sub_new(p2, p1);
+
+        this.CD_triangle_p3p10[this.CD_triangle] = v3_clone(p3p1);
+        this.CD_triangle_p3p1[this.CD_triangle]  = v3_clone(p3p1);
+        this.CD_triangle_p2p10[this.CD_triangle] = v3_clone(p2p1);
+        this.CD_triangle_p2p1[this.CD_triangle]  = v3_clone(p2p1);
+
+        this.CD_triangle_p3p1lenSq[this.CD_triangle] = v3_lengthsquared(p3p1);
+        this.CD_triangle_p2p1lenSq[this.CD_triangle] = v3_lengthsquared(p2p1);
+        this.CD_triangle_p3p2p1dot[this.CD_triangle] = v3_dot(p3p1, p2p1);
 
         this.CD_triangle += 1;
         this.collisionDetection = true;

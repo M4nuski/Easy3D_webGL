@@ -33,7 +33,7 @@ hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
 
 var show_DEV_CD = false;
 var phyTracers;
-var lgaccel, gAccel = 0;
+var gAccel = 0;
 var timer = { delta : 0, start : 0 }; // dummy timer 
 
 var logElement = null;
@@ -625,14 +625,17 @@ if (DEV_axis.visible) {
 
             // triangle
             var midpoint = [0,0,0];
+            var p2 = [0,0,0];
+            var p3 = [0,0,0];
             for (let j = 0; j < scn.entities[i].CD_triangle; ++j) {
-                
-                v3_avg3_res(midpoint, scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p2[j], scn.entities[i].CD_triangle_p3[j]);
+                v3_add_res(p2, scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p2p1[j]);
+                v3_add_res(p3, scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p3p1[j]);
+                v3_avg3_res(midpoint, scn.entities[i].CD_triangle_p1[j], p2, p3);
 
                 dev_CD.addLineByPosNormLen(midpoint, scn.entities[i].CD_triangle_n[j], 10, false, [1.0,1.0,1.0]);
                 dev_CD.addLine(midpoint, scn.entities[i].CD_triangle_p1[j], false, [1.0, 0.5, 0.5]);
-                dev_CD.addLine(midpoint, scn.entities[i].CD_triangle_p2[j], false, [0.5, 1.0, 0.5]);
-                dev_CD.addLine(midpoint, scn.entities[i].CD_triangle_p3[j], false, [0.5, 0.5, 1.0]);
+                dev_CD.addLine(midpoint, p2, false, [0.5, 1.0, 0.5]);
+                dev_CD.addLine(midpoint, p3, false, [0.5, 0.5, 1.0]);
             }
 
         }
@@ -660,7 +663,6 @@ function timerTick() {  // Game Loop
     inputs.smoothRotation(6);
     inputs.smoothPosition(6);
 
-    lgaccel = gAccel;
     gAccel = timer.delta * 386.22;
 
     updateStatus();
