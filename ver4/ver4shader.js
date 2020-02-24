@@ -145,7 +145,11 @@ void main(void) {
 
     if (strokePass == 1) {
 
-        vColor = vec4(0.0, 0.0, 0.0, 1.0);        
+        vColor = vec4(1.0, 1.0, 1.0, 1.0);
+        buf_normal = uProjectionMatrix * uModelMatrix * aVertexPosition;
+        buf_normal.w = buf_normal.w + 0.001;
+        gl_Position = buf_normal;
+
 
     } else {
 
@@ -165,10 +169,10 @@ void main(void) {
             vColor = vec4(aVertexColor, 1.0);
         };
 
+        // Position (vertex trough modelMatrix trough projectionMatrix)
+        gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
     }
 
-    // Position (vertex trough modelMatrix trough projectionMatrix)
-    gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
 
 }
 `;
@@ -332,5 +336,4 @@ const attribList02_CS01 = ["aVertexPosition", "aVertexColor", "aVertexNormal" ];
 const uniformList02_CS01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", "uLight"];
 
 
-// TODO shader for lines/stokes
 // TODO shader with shadows

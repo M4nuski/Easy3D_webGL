@@ -119,17 +119,21 @@ class E3D_scene {
                 // Entity Uniforms
                 this.context.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
                 this.context.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, this.entities[i].normalMatrix);
+
+                // Draw strokes
+                if (this.entities[i].drawStrokes) {
+                    this.context.uniform1i(this.program.shaderUniforms["strokePass"], 1);
+                    
+                    this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
+                    this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);  
+                    
+                    this.context.uniform1i(this.program.shaderUniforms["strokePass"], 0);
+                    this.drawnElemenets += this.entities[i].numStrokeElements;
+                }
                 
-                // Draw
+                // Draw triangles
                 this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
                 this.drawnElemenets += this.entities[i].numElements;
-
-                if (this.entities[i].drawStrokes) {
-            //        this.context.uniform1i(this.program.shaderUniforms["strokePass"], 1);
-                 //   this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
-
-                //    this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);                
-                }
             }
         }
 
@@ -173,39 +177,22 @@ class E3D_scene {
         ent.vertexBuffer = this.context.createBuffer();
         ent.colorBuffer = this.context.createBuffer();
         ent.normalBuffer = this.context.createBuffer();
-
         ent.strokeIndexBuffer = this.context.createBuffer();
 
-        if (!ent.dynamic) { // if static initialize context data buffers and assign data right away
+        var usage = (ent.dynamic) ? this.context.DYNAMIC_DRAW : this.context.STATIC_DRAW;
 
-            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.STATIC_DRAW);        
-        
-            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.STATIC_DRAW);            
-        
-            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.STATIC_DRAW);
+        this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
+        this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, usage);        
+    
+        this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
+        this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, usage);            
+    
+        this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
+        this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, usage);
 
-            this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
-            this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, this.context.STATIC_DRAW);
-
-        } else  { // if dynamic prepare buffers // TODO switch only context draw usage
-
-            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.DYNAMIC_DRAW);                
-        
-            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.DYNAMIC_DRAW);            
-
-            this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
-            this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.DYNAMIC_DRAW);
-            
-            this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
-            this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, this.context.DYNAMIC_DRAW);
-
-        }
-        
+        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
+        this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
+       
         ent.cull_dist = v3_length(E3D_scene.cull_calculate_max_pos(ent.vertexArray));
 
         ent.resetMatrix();
@@ -244,7 +231,7 @@ class E3D_scene {
         }        
     }
 
-    getEntityIndexFromId(id) { // TODO use Map()
+    getEntityIndexFromId(id) {
         for (let i = 0; i < this.entities.length; ++i) {
             if (this.entities[i].id == id) return i;
         }

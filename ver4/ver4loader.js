@@ -20,6 +20,7 @@ class E3D_loader {
         this.uniquesDone = false;
         this.uniques = [];
         this.indices = [];
+        this.reverseIndices = [];
         this.maxIndex = 0;
 
         this.edgesDone = false;
@@ -49,8 +50,8 @@ class E3D_loader {
         
         var strokeList = [];
         for (var i = 0; i < this.edges.length; ++i) if (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < 0.8) {
-            strokeList.push(this.edges[i].index1);
-            strokeList.push(this.edges[i].index2);
+            strokeList.push(this.reverseIndices[this.edges[i].index1]);
+            strokeList.push(this.reverseIndices[this.edges[i].index2]);
         }
         
         if (strokeList.length > 0) {
@@ -58,7 +59,7 @@ class E3D_loader {
             entity.numStrokeElements = strokeList.length;
             entity.drawStrokes = true;
         }
-        console.log(strokeList.length + " strokes");  
+        console.log((strokeList.length / 2) + " strokes");  
     }
 
 
@@ -336,6 +337,7 @@ class E3D_loader {
         let curVert = v3_new();
         this.uniques = [];
         this.indices = [];
+        this.reverseIndices = [];
 
         for (var i = 0; i < numVert; ++i) {
             var unique = true;
@@ -349,6 +351,7 @@ class E3D_loader {
             }
             if (unique) { 
                 this.uniques.push(v3_clone(curVert));
+                this.reverseIndices.push(i);
                 this.indices[i] = this.uniques.length-1;
             } 
         }
