@@ -132,12 +132,16 @@ class ressourceManager {
         var arrayBuffer;
         let idx = this.getIndex(name);
         if (idx > -1) {
+
             var fileReader = new FileReader();
             fileReader.onload = (event) => {
                 this.arrayBuffer = event.target.result;
             };
+
             fileReader.readAsArrayBuffer(this.ressList[idx].data);
+
             return arrayBuffer;
+
         } else return null;
     }
 

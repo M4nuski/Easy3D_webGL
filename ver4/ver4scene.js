@@ -80,7 +80,7 @@ class E3D_scene {
         this.context.uniform1f(this.program.shaderUniforms["uFogLimit"], this.fogLimit);
         this.context.uniform1f(this.program.shaderUniforms["uFogFactor"], this.fogFactor);
 
-        this.context.uniform1i(this.program.shaderUniforms["strokePass"], 0);
+        this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
 
         this.drawnElemenets = 0;
 
@@ -122,12 +122,12 @@ class E3D_scene {
 
                 // Draw strokes
                 if (this.entities[i].drawStrokes) {
-                    this.context.uniform1i(this.program.shaderUniforms["strokePass"], 1);
+                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
                     
                     this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
                     this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);  
                     
-                    this.context.uniform1i(this.program.shaderUniforms["strokePass"], 0);
+                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
                     this.drawnElemenets += this.entities[i].numStrokeElements;
                 }
                 
@@ -305,7 +305,6 @@ class E3D_scene_cell_shader extends E3D_scene {
         this.context.uniform4fv(this.strokeProgram.shaderUniforms["uStrokeColor"], this.strokeColor );  
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], this.strokeDepth );  
         this.context.uniform1f(this.strokeProgram.shaderUniforms["uFar"], this.camera.far);  
-        this.context.uniform1i(this.strokeProgram.shaderUniforms["strokePass"], 0);
         
         for (let i = 0; i < this.entities.length; ++i)
             if ((this.entities[i].visible) && (this.entities[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
@@ -323,17 +322,9 @@ class E3D_scene_cell_shader extends E3D_scene {
             // Entity Uniforms
             this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
             
-            // Draw
+            // Draw Outline extensions
             this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
             this.drawnElemenets += this.entities[i].numElements;
-            
-            if (this.entities[i].drawStrokes) {
-                this.context.uniform1i(this.strokeProgram.shaderUniforms["strokePass"], 1);
-                this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
-                this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);                
-            }
-
-
 
         }
 
@@ -344,6 +335,8 @@ class E3D_scene_cell_shader extends E3D_scene {
         
         this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getProjectionViewMatrix());     
         this.context.uniform3fv(this.program.shaderUniforms["uLight"], this.lights.light0_adjusted);
+        this.context.uniform1i(this.program.shaderUniforms["strokePass"], 0);
+        this.context.uniform4fv(this.program.shaderUniforms["uStrokeColor"], this.strokeColor);  
         
         for (let i = 0; i < this.entities.length; ++i)
             if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i) ) ) {
@@ -365,6 +358,17 @@ class E3D_scene_cell_shader extends E3D_scene {
                 // Draw
                 this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
                 this.drawnElemenets += this.entities[i].numElements;
+                            
+                // Draw strokes
+                if (this.entities[i].drawStrokes) {
+                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
+                    
+                    this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
+                    this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);  
+                    
+                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
+                    this.drawnElemenets += this.entities[i].numStrokeElements;
+                }
         }
 
 

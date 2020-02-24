@@ -30,6 +30,25 @@ class E3D_loader {
         // and convert to array of float only on "add"
     }
 
+    reset() {
+        this.file = "";
+
+        this.numFloats = 0;
+
+        this.colors = [];
+        this.positions = [];
+        this.normals = [];
+
+        this.uniquesDone = false;
+        this.uniques = [];
+        this.indices = [];
+        this.reverseIndices = [];
+        this.maxIndex = 0;
+
+        this.edgesDone = false;
+        this.edges = [];
+    }
+
 // Entity Data Writers
 
     addModelData(entity){
@@ -124,13 +143,11 @@ class E3D_loader {
     loadModel_RAW(dataSourcePath, rawModelData, color, scale = _v3_unit) {  
 
         console.log("Parsing RAW data (Milkshape3D)");
+
+        this.reset();
+
         this.file = dataSourcePath;
 
-        this.uniquesDone = false;
-        this.numFloats = 0;
-        this.colors = [];
-        this.positions = [];
-        this.normals = [];
 
         let colorSweep;
         if (color === "sweep") {
@@ -221,16 +238,13 @@ class E3D_loader {
  * @param {vec3} color if === "source" use source color, if === "sweep" per vertex r/g/b sweep, else single provided color is applied
  * @param {vec3} scale scale modifier of the entity data
  */
-    static loadModel_STL(dataSourcePath, rawModelData, color, scale = _v3_unit) {
+    loadModel_STL(dataSourcePath, rawModelData, color, scale = _v3_unit) {
 
         console.log("Loading STL data");
-        this.file = dataSourcePath;
+        
+        this.reset();
 
-        this.uniquesDone = false;
-        this.edgesDone = false;
-        this.colors = [];
-        this.positions = [];
-        this.normals = [];
+        this.file = dataSourcePath;
 
         let colorSweep = [
             1.0, 0.5, 0.5,
@@ -313,6 +327,13 @@ class E3D_loader {
                 v3_cross_res(normal, p2, p1);
                 v3_normalize_mod(normal);
             }
+
+            /*var v1 = new Vector3(p1.X - p0.X, p1.Y - p0.Y, p1.Z - p0.Z);
+            var v2 = new Vector3(p2.X - p0.X, p2.Y - p0.Y, p2.Z - p0.Z);
+            var res = Vector3.Cross(v1, v2);
+
+            res.Normalize();
+            return res;*/
 
             this.normals.push(normal[0]);this.normals.push(normal[1]);this.normals.push(normal[2]);
             this.normals.push(normal[0]);this.normals.push(normal[1]);this.normals.push(normal[2]);

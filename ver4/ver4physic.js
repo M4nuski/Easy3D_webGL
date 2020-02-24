@@ -332,7 +332,8 @@ function initEngine() {
     scn.addEntity(dev_CD);
 
     //resMngr.addRessource("../Models/PYRA.raw", "Map", "Model");
-    resMngr.addRessource("../Models/M1.raw", "Map", "Model");
+    //resMngr.addRessource("../Models/M1.raw", "Map", "Model");
+    resMngr.addRessource("../Models/BOX10.raw", "Map", "Model", false);
     resMngr.loadAll("models");
 
     // Activate timer and set scene as active
@@ -363,7 +364,7 @@ function onRessource(name, msg) {
             meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), _v3_gray, _v3_unit);
             meshLoader.addCDFromData(DEV_axis);
             meshLoader.addStrokeData(DEV_axis);
-            meshLoader.smoothNormals(-0.9);
+           // meshLoader.smoothNormals(-0.9);
             meshLoader.addModelData(DEV_axis);
             
             DEV_axis.position[1] = 60;

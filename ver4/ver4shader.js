@@ -118,7 +118,7 @@ attribute vec3 aVertexNormal;
 uniform mat4 uModelMatrix;
 uniform mat4 uNormalMatrix;
 
-uniform int strokePass; // 0: triangle pass, 1: stroke pass
+uniform int uStrokePass; // 0: triangle pass, 1: stroke pass
 
 //from scene
 uniform mat4 uProjectionMatrix;
@@ -143,7 +143,7 @@ void main(void) {
     vec3 Color0;
     vec3 Color1;
 
-    if (strokePass == 1) {
+    if (uStrokePass == 1) {
 
         vColor = vec4(1.0, 1.0, 1.0, 1.0);
         buf_normal = uProjectionMatrix * uModelMatrix * aVertexPosition;
@@ -157,8 +157,8 @@ void main(void) {
 
             // Normals and diffuse computations
             buf_normal = normalize(uNormalMatrix * vec4(aVertexNormal, 1.0));	
-            fact_diffuse0 = max(dot(buf_normal.xyz, uLight0_Direction), 0.0);
-            fact_diffuse1 = max(dot(buf_normal.xyz, uLight1_Direction), 0.0);
+            fact_diffuse0 = max(-dot(buf_normal.xyz, uLight0_Direction), 0.0);
+            fact_diffuse1 = max(-dot(buf_normal.xyz, uLight1_Direction), 0.0);
 
             Color0 = fact_diffuse0 * uLight0_Color * aVertexColor;
             Color1 = fact_diffuse1 * uLight1_Color * aVertexColor;
@@ -198,7 +198,7 @@ void main(void) {
 const attribList01 = ["aVertexPosition", "aVertexColor", "aVertexNormal"];
 const uniformList01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", 
 "uLightA_Color", "uLight0_Color", "uLight1_Color", "uLight0_Direction", "uLight1_Direction",
-"uFogColor", "uFogLimit", "uFogFactor", "strokePass"];
+"uFogColor", "uFogLimit", "uFogFactor", "uStrokePass"];
 
 
 
@@ -247,7 +247,7 @@ const uniformList01p = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix"];
 
 
 // cell shading tests
-
+// pass 1, stroke extent
 const vertShader02_CS00 = `
 attribute vec3 aVertexPosition;
 attribute vec3 aVertexNormal;
@@ -263,7 +263,7 @@ varying highp float zFact;
 void main(void) {
     vec4 extent = uProjectionMatrix * uModelMatrix * vec4(aVertexPosition, 1.0);
     zFact = 0.5 * (uFar - extent.z) / (uFar/2.0) ;
-    extent = vec4(aVertexPosition + (aVertexNormal * uStrokeDepth * extent.z * zFact), 1.0);
+    extent = vec4(aVertexPosition + (aVertexNormal * uStrokeDepth * -extent.z * zFact), 1.0);
     gl_Position = uProjectionMatrix * uModelMatrix * extent;
 }
 `;
@@ -283,7 +283,7 @@ const attribList02_CS00 = ["aVertexPosition", "aVertexNormal"];
 const uniformList02_CS00 = ["uModelMatrix", "uProjectionMatrix", "uStrokeColor", "uStrokeDepth", "uFar", "uFarColor"];
 
 
-
+// pass 2, cell/step shading
 const vertShader02_CS01 = `
 //from model
 attribute vec4 aVertexPosition;
@@ -292,11 +292,12 @@ attribute vec4 aVertexNormal;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uNormalMatrix;
+uniform lowp vec4 uStrokeColor;
 
 //from scene
 uniform mat4 uProjectionMatrix;
 uniform lowp vec3 uLight;
-
+uniform lowp int uStrokePass; // 0: triangle pass, 1: stroke pass
 
 //output to fragment shader
 varying lowp float vFactDiffuse;
@@ -305,12 +306,24 @@ varying lowp vec4 vOrigColor;
 void main(void) {
     
     vec4 buf_normal;
-    buf_normal = normalize(uNormalMatrix * aVertexNormal);	
-    
-    // outputs
-    vFactDiffuse = max(dot(buf_normal.xyz, uLight), 0.0);
-    gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
-    vOrigColor = aVertexColor;
+
+    if (uStrokePass == 1) {
+
+        vOrigColor = uStrokeColor;
+        buf_normal = uProjectionMatrix * uModelMatrix * aVertexPosition;
+        buf_normal.w = buf_normal.w + 0.001;
+        gl_Position = buf_normal;
+
+
+    } else {
+
+        buf_normal = normalize(uNormalMatrix * aVertexNormal);	
+        
+        // outputs
+        vFactDiffuse = max(-dot(buf_normal.xyz, uLight), 0.0);
+        gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
+        vOrigColor = aVertexColor;
+    }
 }
 `;
 
@@ -318,22 +331,27 @@ void main(void) {
 const fragShader02_CS01 = `
 varying lowp float vFactDiffuse;
 varying lowp vec4 vOrigColor;
+uniform lowp int uStrokePass;
 
 void main(void) {
-   lowp vec4 baseColor = vec4(0.0,0.0,0.0,1.0); // todo replace/ mix with texture
+    lowp vec4 baseColor = vec4(0.0, 0.0, 0.0, 1.0); // todo replace/ mix with texture
 
-    if (vFactDiffuse > 0.5) {
-        gl_FragColor =  vOrigColor;
-    } else if (vFactDiffuse > 0.25) {
-        gl_FragColor = mix(baseColor, vOrigColor, 0.50);
+    if (uStrokePass == 1) {
+        gl_FragColor =  vec4(0.0, 0.0, 0.0, 1.0);// vOrigColor;
     } else {
-        gl_FragColor = mix(baseColor, vOrigColor, 0.25);
+        if (vFactDiffuse > 0.5) {
+            gl_FragColor =  vOrigColor;
+        } else if (vFactDiffuse > 0.25) {
+            gl_FragColor = mix(baseColor, vOrigColor, 0.50);
+        } else {
+            gl_FragColor = mix(baseColor, vOrigColor, 0.25);
+        }
     }
 
 }
 `;
 const attribList02_CS01 = ["aVertexPosition", "aVertexColor", "aVertexNormal" ];
-const uniformList02_CS01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", "uLight"];
+const uniformList02_CS01 = ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", "uLight", "uStrokePass"];
 
 
 // TODO shader with shadows
