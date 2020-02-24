@@ -33,6 +33,7 @@ var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true, true, true);
+var meshLoader = new E3D_loader();
 
 
 log("Session Start", true);
@@ -151,24 +152,32 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-            let nm;
+            let nm = new E3D_entity(name, "", false);
+
             if (name == "Deer Horns") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -0.707, [1.0, 0.2, 0.2 ]);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 0.2, 0.2]);
+                meshLoader.smoothNormals( -0.707);
             } else if (name == "Storm Trooper") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, [ 1.0,1.0,1.0 ]);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 1.0]);
+                meshLoader.smoothNormals( 0.0);
             } else if (name == "B M9") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -0.2, [ 0.2,0.2,0.3 ]);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [0.2, 0.2, 0.3]);
+                meshLoader.smoothNormals( -0.2);
                 nm.position = [-15, 0, 0];
                 nm.rotation = [0, 3.1415, 0];
             } else if (name == "Nissan GTR") {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.707, [ 1.0 ,1.0, 0.25]);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.25]);
+                meshLoader.smoothNormals( 0.707);
                 nm.position = [25, -5, 0];
                 nm.rotation = [0, 0, 0];
             }  else {
-                nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, [ 0.5 ,0.5, 1.0]);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [0.5, 0.5, 1.0]);
+                meshLoader.smoothNormals( 0.0);
                 nm.position = [5, 15, -25];
                 nm.rotation = [0, 3.1415, 0];
             }
+
+            meshLoader.addModelData(nm);            
             scn.addEntity(nm);  
             nm.visible = true;
             nm.resetMatrix();

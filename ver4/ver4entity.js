@@ -190,8 +190,6 @@ class E3D_entity {
             this.CD_triangle_n0 = [];  // original to model space
             this.CD_triangle_n  = [];  // transformed to world space (rotation)
             // TODO pre calc delta vectors and dots
-            // TODO add single total this.CD_triangle_preCull_r 
-
 
         this.resetMatrix();
     } 
