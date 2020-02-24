@@ -200,14 +200,19 @@ class E3D_entity {
         this.vis_culling = entity.vis_culling;
         this.collisionDetection = entity.collisionDetection;
 
+        this.numStrokeElements = entity.numStrokeElements;
+        this.drawStrokes = entity.drawStrokes;
+
         if (entity.dynamic) {
             this.vertexArray = new Float32Array(entity.vertexArray); 
             this.normalArray = new Float32Array(entity.normalArray);
             this.colorArray = new Float32Array(entity.colorArray);
+            this.strokeIndexArray = new Uint16Array(entity.strokeIndexArray);
         } else {
             this.vertexBuffer = entity.vertexBuffer;
             this.normalBuffer = entity.normalBuffer;
             this.colorBuffer = entity.colorBuffer;
+            this.strokeIndexBuffer = entity.strokeIndexBuffer;
         }
 
         this.cull_dist = entity.cull_dist;

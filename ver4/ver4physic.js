@@ -213,8 +213,8 @@ function initEngine() {
     testPlanes.addPlane([150, -0, 0], [PIdiv2, 0.25, 0.5], 1024, 512, 64, [1,0,1], true);
     testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
     //testPlanes.addWireCube([0, 100, 100], [0,0,0], [50, 50, 50], [1, 0.8, 0.8], true, false, true);
+    
     testPlanes.visible = true;
-    testPlanes.resetMatrix();
     scn.addEntity(testPlanes);
 
     DEV_boxPlanes = new E3D_entity_wireframe_canvas("DEV_boxPlanes");
@@ -225,8 +225,8 @@ function initEngine() {
     DEV_boxPlanes.addPlane([0,  25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,0,0], true);
     DEV_boxPlanes.addPlane([-25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,0,0], true);
     DEV_boxPlanes.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,0,0], true);
+
     DEV_boxPlanes.visible = true;
-    DEV_boxPlanes.resetMatrix();
     DEV_cube_6P_target = scn.addEntity(DEV_boxPlanes);
 
     DEV_boxBox = new E3D_entity_wireframe_canvas("DEV_boxBox");
@@ -239,7 +239,6 @@ function initEngine() {
     DEV_boxBox.pushCD_edge([ 25, -25,  25], [0, 1, 0], 50);*/
 
     DEV_boxBox.visible = true;
-    DEV_boxBox.resetMatrix();
     DEV_cube_BX_target = scn.addEntity(DEV_boxBox);
 
     DEV_boxDiscrete = new E3D_entity_wireframe_canvas("DEV_boxDiscrete");
@@ -272,8 +271,8 @@ function initEngine() {
     DEV_boxDiscrete.pushCD_edge([-25, -25,  25], [1, 0, 0], 50);
     DEV_boxDiscrete.pushCD_edge([-25,  25, -25], [1, 0, 0], 50);
     DEV_boxDiscrete.pushCD_edge([-25,  25,  25], [1, 0, 0], 50);
+
     DEV_boxDiscrete.visible = true;
-    DEV_boxDiscrete.resetMatrix();
     DEV_cube_DS_target = scn.addEntity(DEV_boxDiscrete);
 
     targetEdge = new E3D_entity_wireframe_canvas("edgeHitTest");
@@ -299,7 +298,6 @@ function initEngine() {
    // DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
    // DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
     DEV_wand.addTriangle([0, 20, 80], [-30, 20, 150], [30, 20, 150], [1, 1, 1], true);
-   // DEV_wand.resetMatrix();
     DEV_wand.visible = true;
     scn.addEntity(DEV_wand);
 

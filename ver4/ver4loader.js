@@ -140,7 +140,7 @@ class E3D_loader {
  * @param {vec3} color the entity color, if === "sweep" per vertex r/g/b sweep applied
  * @param {vec3} scale scale modifier of the entity data
  */
-    loadModel_RAW(dataSourcePath, rawModelData, color, scale = _v3_unit) {  
+    loadModel_RAW(dataSourcePath, rawModelData, color = _v3_white, scale = _v3_unit) {  
 
         console.log("Parsing RAW data (Milkshape3D)");
 
@@ -238,10 +238,10 @@ class E3D_loader {
  * @param {vec3} color if === "source" use source color, if === "sweep" per vertex r/g/b sweep, else single provided color is applied
  * @param {vec3} scale scale modifier of the entity data
  */
-    loadModel_STL(dataSourcePath, rawModelData, color, scale = _v3_unit) {
+    loadModel_STL(dataSourcePath, rawModelData, color = _v3_white, scale = _v3_unit) {
 
         console.log("Loading STL data");
-        
+
         this.reset();
 
         this.file = dataSourcePath;

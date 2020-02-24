@@ -91,6 +91,7 @@ var gl; // webGL canvas rendering context
 var timer = new E3D_timing(false, 50, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
+var meshLoader = new E3D_loader();
 
 var inputs = new E3D_input(can, true, true, false, true);// don't support touch in main element, touch handling is done in virtual TS and TP
 inputs.onInput = onEngineInput;
@@ -427,42 +428,57 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
+            
             if (name == "ST") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, v3_val_new(1,1,1));
+                let nm = new E3D_entity(name, "", false);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), _v3_white, _v3_unit);
+                meshLoader.smoothNormals(0.0);
+                meshLoader.addModelData(nm);
+
                 nm.position[2] = -120;
                 nm.visible = true;
-
+                
                 animations.push(new E3D_animation("ST rotate", nm, scn, timer, rot0));
                 animations[animations.length-1].play();
+                
                 scn.addEntity(nm);  
-
                 if (!cloned) cloneWar();
 
             } else if (name == "CM") {
-                let nm = E3D_loader.loadModel_RAW(name+"_top", resMngr.getRessourcePath(name), resMngr.getData(name), -1.0, "sweep", false, v3_val_new(5, 1, 5));
+                let nm = new E3D_entity(name+"_top", "", false);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep", v3_val_new(5, 1, 5));
+                meshLoader.addModelData(nm);
+
                 nm.position[1] = -120;
-                //nm.scale[0] = 5;
-                //nm.scale[2] = 5;
                 nm.visible = true;
                 scn.addEntity(nm);  
 
                 nm = scn.cloneEntity("CM_top", "CM_bottom");
                 nm.position[1] = 120;
-                //nm.scale[0] = 5;
-                //nm.scale[2] = 5;
+
                 nm.visible = true;
                 nm.resetMatrix();
 
             } else if (name == "sph") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), 0.0, [1.0,1.0,0.5]);
+                let nm = new E3D_entity(name, "", false);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.5]);
+                meshLoader.smoothNormals(0.0);
+                meshLoader.addModelData(nm);
+
                 nm.pushCD_sph(_v3_origin, 0.5);
                 scn.addEntity(nm);               
 
             } else if (name == "pyra") {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -1.0, [1.0,0.8,0.0]);
+                let nm = new E3D_entity(name, "", false);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0,0.8,0.0]);
+                meshLoader.addModelData(nm);
+
                 scn.addEntity(nm);   
             } else {
-                let nm = E3D_loader.loadModel_RAW(name, resMngr.getRessourcePath(name), resMngr.getData(name), -1.0, "sweep");
+                let nm = new E3D_entity(name, "", false);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep");
+                meshLoader.addModelData(nm);
+                
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.pushCD_sph(_v3_origin, 7.0);
