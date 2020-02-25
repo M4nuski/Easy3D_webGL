@@ -1,5 +1,15 @@
+// Easy3D_WebGL
+// Collision detection methods
+// Emmanuel Charette 2019-2020
+
+"use strict"
+
+
+var nHitTest = 0;
+var nHits = 0;
 var nbCDpasses = 0;
 var hitPoints = new Map();
+
 hitPoints.set("CUBE_6P_nt", 0); // num tests
 hitPoints.set("CUBE_6P_nh", 0); // num hits
 hitPoints.set("CUBE_6P_tt", 0); // total time
@@ -21,42 +31,44 @@ hitPoints.set("CUBE_DS_ht", 0); // hit time
 hitPoints.set("CUBE_DS_att", 0); // avg time per test
 hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
 
-var firstHit = [0.0, 0.0, 0.0];
-var hitNormal = [0.0, 0.0, 0.0];
-var vectOrig = [0.0, 0.0, 0.0];
-var pathVect = [0.0, 0.0, 0.0];
-var sphOffset = [0.0, 0.0, 0.0];
-var vectOffset = [0.0, 0.0, 0.0];
-var planePosition = [0.0, 0.0, 0.0];
+
+
 
 var DEV_cube_6P_target;
 var DEV_cube_BX_target;
 var DEV_cube_DS_target;
 var DEV_inbox = false;
-
 var DEV_cubeStartTime;
 
 function CheckForAnimationCollisions_SphSource(self, scn, animations){
 //  [animIndex, entityIndex, t, normal, firstHitPosition] // t is fraction of self.deltaLength done when firstHit
 
+var firstHit  = [0.0, 0.0, 0.0];
+var hitNormal = [0.0, 0.0, 0.0];
+
+var posOffset  = [0.0, 0.0, 0.0];
+var posDelta = [0.0, 0.0, 0.0];
+
+var planePosition = [0.0, 0.0, 0.0];
+
+var sourceSph_p0 = [0.0, 0.0, 0.0];
+var sourceSph_n  = [0.0, 0.0, 0.0];
+
 // for each sph CD as source
 for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
         
-        let sourceSph_p = self.target.CD_sph_p[sphIndex];
-        let sourceSph_r = self.target.CD_sph_r[sphIndex];
-        //let sourceSph_rs = self.target.CD_sph_rs[sphIndex];
-        
+    let sourceSph_p = self.target.CD_sph_p[sphIndex];
+    let sourceSph_r = self.target.CD_sph_r[sphIndex];
+    v3_sub_res(sourceSph_p0, sourceSph_p, self.delta);
+    v3_invscale_res(sourceSph_n, self.delta, self.deltaLength); // TODO preserve actual last positions, or effective delta, (rot)    
+
     // for each candidate entity       
     for (let i = 0; i < self.candidates.length; ++i) if (self.candidates[i] == true) {
-
-        v3_sub_res(vectOrig, sourceSph_p, self.delta);
-        v3_invscale_res(pathVect, self.delta, self.deltaLength); // TODO preserve actual last positions, or effective delta
-                                                                        // TODO special cases when deltaLength is 0.0
-        // collision detection - self.sph to other sph (static sph target) // TODO use path to path interpolation for both
+    // TODO special cases when deltaLength is 0.0
+       
 
         //stats
         DEV_cubeStartTime = performance.now();
-
         if (i == DEV_cube_6P_target) {
             hitPoints.set("CUBE_6P_nt", hitPoints.get("CUBE_6P_nt") + 1);
         }
@@ -67,7 +79,9 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
             hitPoints.set("CUBE_DS_nt", hitPoints.get("CUBE_DS_nt") + 1);
         }
 
-        if (scn.entities[i].CD_sph > 0) {           
+
+        // collision detection - self.sph to other sph (static sph target)
+        if (scn.entities[i].CD_sph > 0) { // TODO use path to path interpolation for both     
 
 
             for (let j = 0; j < scn.entities[i].CD_sph; ++j) {
@@ -76,8 +90,8 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     nHitTest++;
 
                     var hitRes = capsuleSphereIntersect(sourceSph_r, 
-                                                         vectOrig, 
-                                                          pathVect,
+                                                         sourceSph_p0, 
+                                                          sourceSph_n,
                                                            self.deltaLength,
                                                             scn.entities[i].CD_sph_p[j], 
                                                              scn.entities[i].CD_sph_r[j]);
@@ -85,7 +99,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     if (hitRes != false) {
                         if (hitRes < 0.0) hitRes = 0.0;
 
-                        v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes);
+                        v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes);
                         var t0 = v3_distancesquared(firstHit, self.last_position);
 
                         if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision[1]))) {
@@ -117,21 +131,21 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     nHitTest++;
 
 
-                    var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                    var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                         scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j]);
 
                     if (hitRes != false) {                       
 
-                            v3_addscaled_res(firstHit, vectOrig, self.delta, hitRes);
+                            v3_addscaled_res(firstHit, sourceSph_p0, self.delta, hitRes);
                             var t0 = v3_distancesquared(firstHit, self.last_position);
                             if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1]) ) ) {
                                 
-                                point_segment_point_res(sphOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
-                                v3_sub_res(hitNormal, firstHit, sphOffset);
+                                point_segment_point_res(posOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
+                                v3_sub_res(hitNormal, firstHit, posOffset);
 
                                 if (show_DEV_CD) {              
                                  // phyTracers.addWireCross(sourceSph_p, 1, [1, 0, 0]);
-                                    phyTracers.addLine(firstHit, sphOffset, false, [0,0,1]);            
+                                    phyTracers.addLine(firstHit, posOffset, false, [0,0,1]);            
                                     phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0.5,0.5], 8, false, 3);
                                  // phyTracers.addWireSphere(ptsonsegment, 3, [1,0,1], 8, false, 3);
                                 }               
@@ -157,30 +171,30 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                     v3_copy(hitNormal, scn.entities[i].CD_plane_n[j]); 
 
-                    v3_sub_res(vectOffset, vectOrig, scn.entities[i].CD_plane_p[j]);// Delta of Origin point and Plane position 
+                    v3_sub_res(posDelta, sourceSph_p0, scn.entities[i].CD_plane_p[j]);// Delta of Origin point and Plane position 
 
-                    var d0 = v3_dot(vectOffset, hitNormal); 
+                    var d0 = v3_dot(posDelta, hitNormal); 
                     if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
 
                     var validHit = false;
                     var parallelHit = false;
 
-                    var p = v3_dot(pathVect, hitNormal);
+                    var p = v3_dot(sourceSph_n, hitNormal);
 
                     if (Math.abs(p) < _v3_epsilon) { // parallel
                         var hitDist = Math.abs(d0);
                         if (hitDist < sourceSph_r) { // parallel and closer that radius
 
                             // check if inside plane rectangle
-                            validHit = insidePlane(vectOffset, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
+                            validHit = insidePlane(posDelta, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
                                 scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
 
                             if (validHit) {
                                 // offset to get the entity out of the plane
-                                v3_scale_res(sphOffset, hitNormal, (sourceSph_r - hitDist) * 1.01);
-                                v3_add_mod(self.target.position, sphOffset);
+                                v3_scale_res(posOffset, hitNormal, (sourceSph_r - hitDist) * 1.01);
+                                v3_add_mod(self.target.position, posOffset);
                                 self.target.resetMatrix();
-                                v3_add_mod(vectOrig, sphOffset);  // offset already calculated point
+                                v3_add_mod(sourceSph_p0, posOffset);  // offset already calculated point
                                 if (show_DEV_CD) log("par hit");                
                                 parallelHit = true; // prevent further hit testing with this plane
                             }                       
@@ -192,25 +206,25 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         if (hitDist < sourceSph_r) { //  closer that radius
 
                             // check if inside plane rectangle
-                            validHit = insidePlane(vectOffset, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
+                            validHit = insidePlane(posDelta, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
                                 scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
 
                             if (validHit) {
                                 // offset to get the entity out of the plane
                                 var penetration = (sourceSph_r - hitDist);
-                                v3_scale_res(sphOffset, hitNormal, penetration);
-                                v3_add_mod(self.target.position, sphOffset);
+                                v3_scale_res(posOffset, hitNormal, penetration);
+                                v3_add_mod(self.target.position, posOffset);
                                 self.target.resetMatrix();
-                                v3_add_mod(vectOrig, sphOffset);  // offset already calculated point
+                                v3_add_mod(sourceSph_p0, posOffset);  // offset already calculated point
                                 if (show_DEV_CD) log("inside hit");  
 
 
-                                var t0 = v3_distancesquared(vectOrig, self.last_position);
+                                var t0 = v3_distancesquared(sourceSph_p0, self.last_position);
                                 if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
-                                    if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                                    if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                                     
                                     self.collisionDetected = true;
-                                    self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(vectOrig), "Sph-Plane-Inside"];
+                                    self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(sourceSph_p0), "Sph-Plane-Inside"];
                                 }
                             }                       
                         } 
@@ -218,25 +232,25 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                     var hitRes = false;
                     validHit = false;
-                    if (!parallelHit) hitRes = planeIntersect(scn.entities[i].CD_plane_p[j], hitNormal, vectOrig, pathVect);                 
+                    if (!parallelHit) hitRes = planeIntersect(scn.entities[i].CD_plane_p[j], hitNormal, sourceSph_p0, sourceSph_n);                 
 
                     if ((hitRes) && (hitRes >= -sourceSph_r)) { // some hit in front of vector
 
                         // offset for sph radius
-                        // new hit = firstHit - pathVect * radius / sin angle
+                        // new hit = firstHit - sourceSph_n * radius / sin angle
                         var offset = sourceSph_r / Math.abs(p);
                         var t0 = hitRes - offset;
 
-                        //if (show_DEV_CD) phyTracers.addWireCross(v3_addscaled_new(vectOrig, pathVect, t0), sourceSph_r, [0,0,1]);
+                        //if (show_DEV_CD) phyTracers.addWireCross(v3_addscaled_new(sourceSph_p0, sourceSph_n, t0), sourceSph_r, [0,0,1]);
 
                         if ( (t0 >= -sourceSph_r) && (t0 <= self.deltaLength)) { // if hit is still forward and before end of delta 
 
-                            v3_addscaled_res(firstHit, vectOrig, pathVect, t0); 
+                            v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, t0); 
                             if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2*sourceSph_r, [0,1,0]);
 
                             // check if inside
-                            v3_sub_res(sphOffset, firstHit, scn.entities[i].CD_plane_p[j]);
-                            validHit = insidePlane(sphOffset, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
+                            v3_sub_res(posOffset, firstHit, scn.entities[i].CD_plane_p[j]);
+                            validHit = insidePlane(posOffset, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
                                 scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
                         }
 
@@ -245,7 +259,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
 
-                                if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                                if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                                                 
                                 self.collisionDetected = true;
                                 self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-plane"];
@@ -273,23 +287,23 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                     // pre cull as capsule vs sph
                     if (capsuleSphereIntersect(sourceSph_r, 
-                                                vectOrig, 
-                                                 pathVect,
+                                                sourceSph_p0, 
+                                                 sourceSph_n,
                                                   self.deltaLength,
                                                    scn.entities[i].CD_box_p[j], 
                                                     scn.entities[i].CD_box_preCull_r[j]) != false) {
 
-                        v3_sub_res(vectOffset, vectOrig, scn.entities[i].CD_box_p[j]); // Delta of Origin point and Plane position 
+                        v3_sub_res(posDelta, sourceSph_p0, scn.entities[i].CD_box_p[j]); // Delta of Origin point and Plane position 
 
                         // cull on which side the sph is arriving from
-                        var pxdot = v3_dot(vectOffset, scn.entities[i].CD_box_x[j]);
-                        var pydot = v3_dot(vectOffset, scn.entities[i].CD_box_y[j]);
-                        var pzdot = v3_dot(vectOffset, scn.entities[i].CD_box_z[j]);
+                        var pxdot = v3_dot(posDelta, scn.entities[i].CD_box_x[j]);
+                        var pydot = v3_dot(posDelta, scn.entities[i].CD_box_y[j]);
+                        var pzdot = v3_dot(posDelta, scn.entities[i].CD_box_z[j]);
 
                         // relative sph movement
-                        var dxdot = v3_dot(pathVect, scn.entities[i].CD_box_x[j]);
-                        var dydot = v3_dot(pathVect, scn.entities[i].CD_box_y[j]);
-                        var dzdot = v3_dot(pathVect, scn.entities[i].CD_box_z[j]);
+                        var dxdot = v3_dot(sourceSph_n, scn.entities[i].CD_box_x[j]);
+                        var dydot = v3_dot(sourceSph_n, scn.entities[i].CD_box_y[j]);
+                        var dzdot = v3_dot(sourceSph_n, scn.entities[i].CD_box_z[j]);
 
                         var edgesToCheck = [false, false, false, false,  false, false, false, false,  false, false, false, false];
                         // top back, top right, top front, top left,
@@ -322,12 +336,12 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 var error = scn.entities[i].CD_box_halfDepth[j] + sourceSph_r;
                                 error = error - apzdot;
 
-                                v3_scale_res(sphOffset, scn.entities[i].CD_box_z[j], error);
-                                v3_add_mod(self.target.position, sphOffset);                            
+                                v3_scale_res(posOffset, scn.entities[i].CD_box_z[j], error);
+                                v3_add_mod(self.target.position, posOffset);                            
                                 self.target.resetMatrix();
 
-                                v3_add_mod(vectOrig, sphOffset); 
-                                v3_copy(firstHit, vectOrig);
+                                v3_add_mod(sourceSph_p0, posOffset); 
+                                v3_copy(firstHit, sourceSph_p0);
                                 v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
                                 if (pzdot < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
@@ -341,12 +355,12 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 var error = scn.entities[i].CD_box_halfHeight[j] + sourceSph_r;
                                 error = error - apydot;
 
-                                v3_scale_res(sphOffset, scn.entities[i].CD_box_y[j], error);
-                                v3_add_mod(self.target.position, sphOffset);                            
+                                v3_scale_res(posOffset, scn.entities[i].CD_box_y[j], error);
+                                v3_add_mod(self.target.position, posOffset);                            
                                 self.target.resetMatrix();
 
-                                v3_add_mod(vectOrig, sphOffset); 
-                                v3_copy(firstHit, vectOrig);
+                                v3_add_mod(sourceSph_p0, posOffset); 
+                                v3_copy(firstHit, sourceSph_p0);
                                 v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
                                 if (pydot < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
@@ -360,12 +374,12 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 var error = scn.entities[i].CD_box_halfWidth[j] + sourceSph_r;
                                 error = error - apxdot;
 
-                                v3_scale_res(sphOffset, scn.entities[i].CD_box_x[j], error);
-                                v3_add_mod(self.target.position, sphOffset);                            
+                                v3_scale_res(posOffset, scn.entities[i].CD_box_x[j], error);
+                                v3_add_mod(self.target.position, posOffset);                            
                                 self.target.resetMatrix();
 
-                                v3_add_mod(vectOrig, sphOffset); 
-                                v3_copy(firstHit, vectOrig);
+                                v3_add_mod(sourceSph_p0, posOffset); 
+                                v3_copy(firstHit, sourceSph_p0);
                                 v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
                                 if (pxdot < 0.0) v3_negate_mod(hitNormal);
                                 planeHit = true;
@@ -382,16 +396,16 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], OffsetDist);
 
                             // check plane intersect
-                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], vectOrig, pathVect);
+                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], sourceSph_p0, sourceSph_n);
 
                             // check if inside
                             if ( (hitRes) && (hitRes <= self.deltaLength / -dydot)) {                              
                                 hitRes = hitRes - (sourceSph_r / -dydot);
 
-                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
-                                v3_sub_res(sphOffset, firstHit, planePosition);
+                                v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
+                                v3_sub_res(posOffset, firstHit, planePosition);
 
-                                var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
+                                var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
                                     scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j], sourceSph_r);
 
                                 if (edgeRes == "I") { // inside hit
@@ -419,15 +433,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], -OffsetDist);
 
                             // check plane intersect
-                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], vectOrig, pathVect);
+                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], sourceSph_p0, sourceSph_n);
 
                             // check if inside
                             if ( (hitRes) && (hitRes <= self.deltaLength / dydot)) {
                                 hitRes = hitRes - (sourceSph_r / dydot);
-                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
-                                v3_sub_res(sphOffset, firstHit, planePosition);
+                                v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
+                                v3_sub_res(posOffset, firstHit, planePosition);
 
-                                var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
+                                var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
                                     scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j], sourceSph_r);
 
                                 if (edgeRes == "I") { // inside hit
@@ -462,15 +476,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_z[j], OffsetDist);
 
                             // check plane intersect
-                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], vectOrig, pathVect);
+                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], sourceSph_p0, sourceSph_n);
 
                             // check if inside
                             if ( (hitRes) && (hitRes <= self.deltaLength / -dzdot)) {
                                 hitRes = hitRes - (sourceSph_r / -dzdot);
-                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
-                                v3_sub_res(sphOffset, firstHit, planePosition);
+                                v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
+                                v3_sub_res(posOffset, firstHit, planePosition);
 
-                                var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
+                                var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
                                     scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
 
                                 if (edgeRes == "I") { // inside hit
@@ -499,15 +513,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_z[j], -OffsetDist);
 
                             // check plane intersect
-                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], vectOrig, pathVect);
+                            var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], sourceSph_p0, sourceSph_n);
 
                             // check if inside
                             if ( (hitRes) && (hitRes <= self.deltaLength / dzdot)) {
                                 hitRes = hitRes - (sourceSph_r / dzdot);
-                                v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
-                                v3_sub_res(sphOffset, firstHit, planePosition);
+                                v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
+                                v3_sub_res(posOffset, firstHit, planePosition);
 
-                                var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
+                                var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
                                     scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
 
 
@@ -544,15 +558,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                            v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_x[j], OffsetDist);
 
                            // check plane intersect
-                           var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], vectOrig, pathVect);
+                           var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], sourceSph_p0, sourceSph_n);
 
                            // check if inside
                            if ( (hitRes) && (hitRes <= self.deltaLength / -dxdot)) {
                             hitRes = hitRes - (sourceSph_r / -dxdot);
-                               v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
-                               v3_sub_res(sphOffset, firstHit, planePosition);
+                               v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
+                               v3_sub_res(posOffset, firstHit, planePosition);
 
-                               var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
+                               var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
                                 scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
 
 
@@ -583,15 +597,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                            v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_x[j], -OffsetDist);
 
                            // check plane intersect
-                           var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], vectOrig, pathVect);
+                           var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], sourceSph_p0, sourceSph_n);
 
                            // check if inside
                            if ( (hitRes) && (hitRes <= self.deltaLength / dxdot)) {
                                hitRes = hitRes - (sourceSph_r / dxdot);
-                               v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes); 
-                               v3_sub_res(sphOffset, firstHit, planePosition);
+                               v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
+                               v3_sub_res(posOffset, firstHit, planePosition);
 
-                               var edgeRes = insidePlaneOrMargin(sphOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
+                               var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
                                 scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
 
 
@@ -621,7 +635,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         if (/*true)*/  edgesToTest && !planeHit ) {
                             // Z
                             if (edgesToCheck[_CD_box_edge_TopRight]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
                                      scn.entities[i].CD_box_z[j], 
                                       scn.entities[i].CD_box_halfDepth[j] * 2); 
@@ -635,7 +649,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 }
                             }
                             if (edgesToCheck[_CD_box_edge_BottomRight]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
                                      scn.entities[i].CD_box_z[j], 
                                       scn.entities[i].CD_box_halfDepth[j] * 2);
@@ -649,7 +663,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 }
                             }
                             if (edgesToCheck[_CD_box_edge_TopLeft]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
                                      scn.entities[i].CD_box_z[j], 
                                       scn.entities[i].CD_box_halfDepth[j] * 2);
@@ -664,7 +678,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 }
                             }
                             if (edgesToCheck[_CD_box_edge_BottomLeft]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
                                      scn.entities[i].CD_box_z[j], 
                                       scn.entities[i].CD_box_halfDepth[j] * 2);
@@ -680,7 +694,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             // Y
                             if (edgesToCheck[_CD_box_edge_BackLeft]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
                                      scn.entities[i].CD_box_y[j], 
                                       scn.entities[i].CD_box_halfHeight[j] * 2);
@@ -695,7 +709,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             }
 
                             if (edgesToCheck[_CD_box_edge_BackRight]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
                                      scn.entities[i].CD_box_y[j], 
                                       scn.entities[i].CD_box_halfHeight[j] * 2);
@@ -710,7 +724,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             }
 
                             if (edgesToCheck[_CD_box_edge_FrontLeft]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
                                      scn.entities[i].CD_box_y[j], 
                                       scn.entities[i].CD_box_halfHeight[j] * 2);
@@ -725,7 +739,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             }
 
                             if (edgesToCheck[_CD_box_edge_FrontRight]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight],
                                      scn.entities[i].CD_box_y[j], 
                                       scn.entities[i].CD_box_halfHeight[j] * 2);
@@ -742,7 +756,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             // X
                             if (edgesToCheck[_CD_box_edge_TopBack]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
                                         scn.entities[i].CD_box_x[j], 
                                         scn.entities[i].CD_box_halfWidth[j] * 2);
@@ -756,7 +770,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 }
                             }
                             if (edgesToCheck[_CD_box_edge_BottomBack]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
                                         scn.entities[i].CD_box_x[j], 
                                         scn.entities[i].CD_box_halfWidth[j] * 2);
@@ -771,7 +785,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             }
 
                             if (edgesToCheck[_CD_box_edge_TopFront]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft],
                                         scn.entities[i].CD_box_x[j], 
                                         scn.entities[i].CD_box_halfWidth[j] * 2);
@@ -785,7 +799,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 }
                             }
                             if (edgesToCheck[_CD_box_edge_BottomFront]) {
-                                var hitRes = capsuleEdgeIntersect(sourceSph_r, vectOrig, pathVect, self.deltaLength,
+                                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                     scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
                                         scn.entities[i].CD_box_x[j], 
                                         scn.entities[i].CD_box_halfWidth[j] * 2);
@@ -800,9 +814,9 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             }
 
                             if (edgeHit) { // calc firstHit and hitNormal
-                                v3_addscaled_res(firstHit, vectOrig, self.delta, closestHit);
-                                point_segment_point_res(sphOffset, closestP, closestN, closestL, firstHit);
-                                v3_sub_res(hitNormal, firstHit, sphOffset);
+                                v3_addscaled_res(firstHit, sourceSph_p0, self.delta, closestHit);
+                                point_segment_point_res(posOffset, closestP, closestN, closestL, firstHit);
+                                v3_sub_res(hitNormal, firstHit, posOffset);
                                 //if (show_DEV_CD) log("box edge hit");
                                 hitSuffix = "-Edge";
                             }   
@@ -816,7 +830,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             var t0 = v3_distancesquared(firstHit, self.last_position);
                             if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
 
-                                if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                                if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                                                 
                                 self.collisionDetected = true;
                                 self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-box" + hitSuffix];
@@ -846,7 +860,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                 if  (marker != self.lastHitMarker) {
                     nHitTest++;
 
-                    var hitRes = triangle_capsule_intersect_res(firstHit, vectOrig, pathVect, sourceSph_r,
+                    var hitRes = triangle_capsule_intersect_res(firstHit, sourceSph_p0, sourceSph_n, sourceSph_r,
                         scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p3p1[j], scn.entities[i].CD_triangle_p2p1[j], 
                         scn.entities[i].CD_triangle_p3p1lenSq[j], scn.entities[i].CD_triangle_p2p1lenSq[j],
                         scn.entities[i].CD_triangle_p3p2p1dot[j], scn.entities[i].CD_triangle_n[j]);
@@ -865,7 +879,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                      /*   if (hitRes > 0.0)*/ t0 = v3_distancesquared(firstHit, self.last_position);
                         if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
 
-                            if (show_DEV_CD) if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                            if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                                             
                             self.collisionDetected = true;
                             self.closestCollision = [marker, t0, v3_clone(scn.entities[i].CD_triangle_n[j]), v3_clone(firstHit), "Sph-Tri"];
@@ -974,7 +988,7 @@ if (isNaN(thc)) throw "vector_sph_t thc NaN";
 
 
 var _planeIntersect_diff = [0.0, 0.0, 0.0];
-function planeIntersect(planePos, planeNormal, vectOrigin, vectDirection) {
+function planeIntersect(planePos, planeNormal, sourceSph_p0in, vectDirection) {
 // https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
     var angleCos = v3_dot(planeNormal, vectDirection);
     hitPoints.set("p-v cos", angleCos);
@@ -982,7 +996,7 @@ function planeIntersect(planePos, planeNormal, vectOrigin, vectDirection) {
       //  log("parallel");
         return false; // parallel, either too far or impossible to get there, edges testing would have catched it
     }
-	v3_sub_res(_planeIntersect_diff, planePos, vectOrigin);
+	v3_sub_res(_planeIntersect_diff, planePos, sourceSph_p0in);
     var t = v3_dot(planeNormal, _planeIntersect_diff) / angleCos;
 
     hitPoints.set("p-v t", t);

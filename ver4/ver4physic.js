@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Main testing program for physics and collisiion detection
-// Emmanuel Charette 2017-2020
+// Emmanuel Charette 2019-2020
 
 "use strict"
 

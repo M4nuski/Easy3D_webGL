@@ -1,12 +1,9 @@
 // Easy3D_WebGL
 // Main demo program for cell shading shaders/render
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 
-
-var nHitTest = 0;
-var nHits = 0;
 
 var show_DEV_CD = false;
 var phyTracers;

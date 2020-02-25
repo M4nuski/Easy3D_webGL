@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Main demo program for version 0.4
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

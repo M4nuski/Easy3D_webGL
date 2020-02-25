@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Entities classes ontaining mesh data, hit testing and matrix controls
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

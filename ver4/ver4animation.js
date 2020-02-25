@@ -154,7 +154,10 @@ function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIteratio
 
         // Collision Detection
         hitDetected = false;
-        for (let i = 0; i < animList.length; ++i) if ((animList[i].target.collisionDetection) && (animList[i].deltaLength > 0)) CheckForAnimationCollisions(animList[i], scn, animList);
+        for (let i = 0; i < animList.length; ++i) if ((animList[i].target.collisionDetection) && (animList[i].deltaLength > 0)) {
+            if (animList[i].target.CD_sph > 0) CheckForAnimationCollisions_SphSource(animList[i], scn, animList);
+            if (animList[i].target.CD_point > 0) CheckForAnimationCollisions_PointSource(animList[i], scn, animList);
+        }
         
         // Collision Response
         for (let i = 0; i < animList.length; ++i) if ((animList[i].collisionDetected) || (animList[i].collisionFromOther)) {
