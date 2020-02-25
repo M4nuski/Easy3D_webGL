@@ -4,30 +4,9 @@
 
 "use strict"
 
+
 var nHitTest = 0;
 var nHits = 0;
-var nbCDpasses = 0;
-var hitPoints = new Map();
-hitPoints.set("CUBE_6P_nt", 0); // num tests
-hitPoints.set("CUBE_6P_nh", 0); // num hits
-hitPoints.set("CUBE_6P_tt", 0); // total time
-hitPoints.set("CUBE_6P_ht", 0); // hit time
-hitPoints.set("CUBE_6P_att", 0); // avg time per test
-hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
-
-hitPoints.set("CUBE_BX_nt", 0); // num tests
-hitPoints.set("CUBE_BX_nh", 0); // num hits
-hitPoints.set("CUBE_BX_tt", 0); // total time
-hitPoints.set("CUBE_BX_ht", 0); // hit time
-hitPoints.set("CUBE_BX_att", 0); // avg time per test
-hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
-
-hitPoints.set("CUBE_DS_nt", 0); // num tests
-hitPoints.set("CUBE_DS_nh", 0); // num hits
-hitPoints.set("CUBE_DS_tt", 0); // total time
-hitPoints.set("CUBE_DS_ht", 0); // hit time
-hitPoints.set("CUBE_DS_att", 0); // avg time per test
-hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
 
 var show_DEV_CD = false;
 var phyTracers;
@@ -366,19 +345,19 @@ function timerTick() {  // Game Loop
         newSph.rotation[1] = rndPM(PIx2);
         animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
              [rndPM(1), rndPM(1), rndPM(1) -100], _v3_null, true, 10, true));
-
         animations[animations.length-1].target.animIndex = animations.length-1;
-        //(id, targetEntity, sceneContext, timerclass, animFirstPass, animNPass = null, animLastPass =  null)
-        //animations.push(new E3D_animation("ball throw" + timer.lastTick, newSph, scn, timer, sphAnimF, sphAnimR, sphAnimL));
-
-
-       // animations[animations.length-1].restart();
     }
     if (inputs.checkCommand("action1", true)) {
        // log("action1", true);      
-        let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
-        animations.push(new E3D_animation("shotgun " + timer.lastTick, newPyra, scn, timer, shotgunAnimF, shotgunAnimR, shotgunAnimL));
-        animations[animations.length-1].restart();
+        let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);  
+        newPyra.moveTo([10, -10, 0]); // originate from bottom right corner of view
+
+        animations.push(newParticuleAnim_RelativeToCamera(newPyra, scn.camera,
+            [rndPM(2), rndPM(2), -500 - rndPM(2) ], _v3_null, 10, 
+            shotgunPartPos, shotgunPartDir, false, 2.0, true));
+
+        newPyra.visible = true;
+        scn.addEntity(newPyra); 
     }
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
@@ -412,8 +391,7 @@ function onRessource(name, msg) {
                 nm.visible = true;
 
                 animations.push(newTransformAnim(nm, _v3_null, [0, 1, 0]));
-              //  animations.push(new E3D_animation("ST rotate", nm, scn, timer, rot0));
-              //  animations[animations.length-1].play();
+
                 scn.addEntity(nm);  
 
                 if (!cloned) cloneWar();
@@ -444,8 +422,9 @@ function onRessource(name, msg) {
             } else if (name == "pyra") {
                 let nm = new E3D_entity(name, "", false);
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0,0.8,0.0]);
+                meshLoader.removeNormals();
                 meshLoader.addModelData(nm);
-                scn.addEntity(nm);   
+                scn.addEntity(nm);
             } else {
                 let nm = new E3D_entity(name, "", false);
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep");
@@ -474,139 +453,50 @@ function cloneWar() {
     cloned = true;
 }
 
-
-// animator functions
-function sphAnimF() {
-    if (this.state == E3D_PLAY) { // initial animation pass (pass 1)
-
-        this.last_position = this.target.position.slice();
-        var dlt = v3_scale_new(this.spd, timer.delta);
-        v3_add_mod(this.target.position, dlt);
-        this.delta2 = v3_length(dlt);
-
-    } else if (this.state == E3D_RESTART) {
-
-        v3_copy(this.target.position, scn.camera.position);
-        this.target.position[1] += 5;
-        this.target.rotation[0] = rndPM(PIx2);
-        this.target.rotation[1] = rndPM(PIx2);
-
-        this.spd = scn.camera.adjustToCamera(v3_scale_new(_v3_nz, 100));
-        this.spd[0] += rndPM(1);
-        this.spd[1] += rndPM(1);
-        this.spd[2] += rndPM(1);
-        this.ttl = 10;
-        
-        this.state = E3D_PLAY;
-        this.target.visible = true;
-        this.target.resetMatrix();
-        this.last_position = this.target.position.slice();
-    } 
+function shotgunPartPos(n, nbPart) {
+    return [rndPM(10), rndPM(10), rndPM(3)];    
 }
 
-function sphAnimR() { // test and lock (pass 2)
-
-    if (this.state == E3D_PLAY) {
-
-        this.target.resetMatrix();  // update CD data  
-        splos.addLine(this.last_position, this.target.position, true);
-        var colList = [] ; // array of [entIdx, cdIdx, penetration, srcType, trgtType, normal]
-
-            // for each other entity
-            for (let i = 0; i < scn.entities.length; ++i ) if (this.candidates[i]) {
-                if (scn.entities[i].CD_sph > 0) {  // collision detection - this.sph to other sph  
-
-                    for (let j = 0; j < scn.entities[i].CD_sph; ++j) {
-                        nHitTest++;
-                        var d = v3_distancesquared(scn.entities[i].CD_sph_p[j], this.target.CD_sph_p[0]);
-                        var minD = this.target.CD_sph_rs[0] + scn.entities[i].CD_sph_rs[j];
-                        if (d <= minD) {
-                        //  log("hit sph-sph: " + this.target.id + " - " + scn.entities[i].id);
-                            var penetration = Math.sqrt(minD) - Math.sqrt(d);
-                            var n = [this.target.CD_sph_p[0][0] - scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - scn.entities[i].CD_sph_p[j][2] ];
-                            //colList.push([i, j, penetration, "sph", "sph", n]);
-                              splos.moveCursorTo(this.target.position);
-                            v3_reflect_mod(this.spd, n);
-                            v3_addscaled_mod(this.target.position, n, penetration);
-                            this.target.resetMatrix();
-                              splos.addLineTo(this.target.position, false);
-                        }
-                    }
-                } // sph
-
-                if (scn.entities[i].CD_iPlane > 0) {  // collision detection - this.sph to infinite plane
-                    var v = v3_sub_new(this.target.CD_sph_p[0], scn.entities[i].position);
-                    var last_v = v3_sub_new(this.last_position, scn.entities[i].position);
-
-                    for (let j = 0; j < scn.entities[i].CD_iPlane; ++j) {
-                        nHitTest++;
-
-                        var dist = v3_dot(v, scn.entities[i].CD_iPlane_n[j]) - scn.entities[i].CD_iPlane_d[j] ;
-                        var last_Dist = v3_dot(last_v, scn.entities[i].CD_iPlane_n[j]) - scn.entities[i].CD_iPlane_d[j];
-                                        
-                        var sgn = (dist > 0) ? 1 : -1;
-                        dist = Math.abs(dist) ;
-
-                        var last_sgn = (last_Dist > 0) ? 1 : -1;
-                        last_Dist = Math.abs(last_Dist) ;
-                    
-                        if ( dist < this.target.CD_sph_r[0]) { 
-                        //    log("hit sph-iPlane: " + this.target.id + " - " + scn.entities[i].id);
-                            var penetration = (sgn == last_sgn) ? (this.target.CD_sph_r[0] - dist) : (this.target.CD_sph_r[0] + dist);
-                            penetration *= last_sgn;
-                          //  colList.push([i, j, penetration, "sph", "iPlane", scn.entities[i].CD_iPlane_n[j]])
-                              splos.moveCursorTo(this.target.position);
-                            v3_reflect_mod(this.spd, scn.entities[i].CD_iPlane_n[j]);
-                            v3_addscaled_mod(this.target.position, scn.entities[i].CD_iPlane_n[j], penetration);
-                            this.target.resetMatrix();
-                              splos.addLineTo(this.target.position, false);
-
-                        } else { // if sph itself didn't hit plane, test for vector from last position to this one
-                            dist *= sgn;
-                            last_Dist *= last_sgn;
-                            if ( ( (dist > 0) && (last_Dist < 0) ) || ( (dist < 0) && (last_Dist > 0) ) ) {
-                            //  log("hit sph(vect)-iPlane: " + this.target.id + " - " + scn.entities[i].id);
-                                var penetration = ( Math.abs(last_Dist) +  Math.abs(dist)) * last_sgn;
-                                colList.push([i, j, penetration, "sph/vect", "iPlane", scn.entities[i].CD_iPlane_n[j]])
-                            }
-        
-                        }
-                    }         
-                } // iplane
-
-            } // end for each other entity perform hit test
-
-            // Go trough colList and resolve CD for vect
-            if (colList.length > 0) {
-                  splos.moveCursorTo(this.target.position);
-                colList.sort((a, b) => { return b[2] - a[2]; } );
-                v3_reflect_mod(this.spd, colList[0][5]);
-                v3_addscaled_mod(this.target.position, colList[0][5], colList[0][2]);
-                this.target.resetMatrix();
-                  splos.addLineTo(this.target.position, false);
-            }
-
-
-
-    }   // end state == PLAY
-
-
-
+function shotgunPartDir(pos, n, nbPart) {
+    return v3_clone(pos);
 }
-
-function sphAnimL() {
-    this.spd[1] -= timer.delta * 9.81;
-    this.ttl -= timer.delta;
-
-    if (this.ttl < 0) {
-        this.state = E3D_DONE;
-        this.target.visible = false;
-    } 
-}
-
-
-
-
+function collisionResult_asTarget_splode(loc) {
+    // log("sploded!", false);
+    // log(splos.numElements);
+      var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
+      var nvect = 18;
+      var iter = 20;
+      var dim = 0.1;
+      var dvect = Array(nvect);
+      var vect = Array(nvect);
+      for (i = 0; i < nvect; ++i) {
+          vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
+          dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
+      }
+      var idx = 0;
+      for (var i = 0; i < iter; ++i) {
+          var s = 2 - (dim * i);
+          for (var j=0; j < nvect; ++j) {
+  
+              splos.addWireCross(v3_add_new(loc, vect[j]), s, col[idx]);
+  
+              idx++;
+              if (idx >= col.length) idx = 0;
+          }
+          for (var j = 0; j < nvect; ++j) {
+              vect[j][0] += dvect[j][0];
+              vect[j][1] += dvect[j][1];
+              vect[j][2] += dvect[j][2];
+              dvect[j][0] *= 0.9;
+              dvect[j][1] -= 1;
+              dvect[j][2] *= 0.9; 
+              
+          }
+      }
+    //  log(splos.numElements);
+  }
+  
+/*
 function shotgunAnimF () {
     if (this.state == E3D_RESTART) {
         v3_copy(this.target.position, scn.camera.position);        
@@ -651,6 +541,8 @@ function shotgunAnimF () {
         scn.addEntity(this.target);        
     } 
 }
+*/
+/*
 function shotgunAnimL () {
 
     this.ttl -= timer.delta;
@@ -668,7 +560,7 @@ function shotgunAnimL () {
         this.target.cull_dist = 30;// override calculated cull dist
     }  
 }
-
+*/
 function shotgunAnimR() {
  
     if (this.state == E3D_PLAY) {
@@ -811,63 +703,6 @@ function shotgunAnimR() {
 } 
 
 
-function VectSphHit(v, so, sr2) { // translated to v origin
-    var t0 = 0; 
-    var t1 = 0;
-   // var sr2 = sr * sr;
-    var tca = v3_dot(so, v);
-
-    if  (tca < 0) return false;
-    // sph behind origin
-
-    var d2 = v3_dot(so, so) - tca * tca;
-
-    if (d2 > sr2) return false;
-    // tangential point farther than radius
-
-    var thc = Math.sqrt(sr2 - d2);
-    t0 = tca - thc;
-    t1 = tca + thc;
-
-    return (t0 < t1) ? t0 : t1;
-}
-
-
-function splode(loc) {
-  // log("sploded!", false);
-  // log(splos.numElements);
-    var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
-    var nvect = 18;
-    var iter = 20;
-    var dim = 0.1;
-    var dvect = Array(nvect);
-    var vect = Array(nvect);
-    for (i = 0; i < nvect; ++i) {
-        vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
-        dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
-    }
-    var idx = 0;
-    for (var i = 0; i < iter; ++i) {
-        var s = 2 - (dim * i);
-        for (var j=0; j < nvect; ++j) {
-
-            splos.addWireCross(v3_add_new(loc, vect[j]), s, col[idx]);
-
-            idx++;
-            if (idx >= col.length) idx = 0;
-        }
-        for (var j = 0; j < nvect; ++j) {
-            vect[j][0] += dvect[j][0];
-            vect[j][1] += dvect[j][1];
-            vect[j][2] += dvect[j][2];
-            dvect[j][0] *= 0.9;
-            dvect[j][1] -= 1;
-            dvect[j][2] *= 0.9; 
-            
-        }
-    }
-  //  log(splos.numElements);
-}
 
 
 // Status information

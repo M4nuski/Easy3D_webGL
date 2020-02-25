@@ -4,30 +4,9 @@
 
 "use strict"
 
+
 var nHitTest = 0;
 var nHits = 0;
-var nbCDpasses = 0;
-var hitPoints = new Map();
-hitPoints.set("CUBE_6P_nt", 0); // num tests
-hitPoints.set("CUBE_6P_nh", 0); // num hits
-hitPoints.set("CUBE_6P_tt", 0); // total time
-hitPoints.set("CUBE_6P_ht", 0); // hit time
-hitPoints.set("CUBE_6P_att", 0); // avg time per test
-hitPoints.set("CUBE_6P_ath", 0); // avg time per hit
-
-hitPoints.set("CUBE_BX_nt", 0); // num tests
-hitPoints.set("CUBE_BX_nh", 0); // num hits
-hitPoints.set("CUBE_BX_tt", 0); // total time
-hitPoints.set("CUBE_BX_ht", 0); // hit time
-hitPoints.set("CUBE_BX_att", 0); // avg time per test
-hitPoints.set("CUBE_BX_ath", 0); // avg time per hit
-
-hitPoints.set("CUBE_DS_nt", 0); // num tests
-hitPoints.set("CUBE_DS_nh", 0); // num hits
-hitPoints.set("CUBE_DS_tt", 0); // total time
-hitPoints.set("CUBE_DS_ht", 0); // hit time
-hitPoints.set("CUBE_DS_att", 0); // avg time per test
-hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
 
 var show_DEV_CD = false;
 var phyTracers;

@@ -47,7 +47,7 @@ class E3D_animation {  // TODO merge with entity
         this.org = v3_new();
         this.vectNorm = v3_new();
         this.act = [];
-        this.numPellets = 10;
+        this.nbPart = 10;
         this.startObject = null;
         this.startedYDelta = 0;
         this.gravity = 0.0;
@@ -132,18 +132,19 @@ function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIteratio
     //  multi pass, only add if closest max at 600
 
     // Cull Collission Detection
-    for (let i = 0; i < animList.length; ++i) { // CD culling
-        if (animList[i].deltaLength > -1) {
-            animList[i].candidates = [];
-            for (let j = 0; j < scn.entities.length; ++j) {// all entities are targets
-                animList[i].candidates[j] = false;
-                if ((scn.entities[j].collisionDetection) && (animList[i].target.id != scn.entities[j].id) ) { 
-                    var deltaP = v3_distance( animList[i].target.position, scn.entities[j].position);
-                    var deltaD = animList[i].deltaLength + animList[i].target.cull_dist + scn.entities[j].cull_dist; 
-                    animList[i].candidates[j] = deltaP <= deltaD;  
-                }
+    for (let i = 0; i < animList.length; ++i) // CD culling
+    if ((animList[i].target.collisionDetection) && (animList[i].deltaLength > -1)) { 
+
+        animList[i].candidates = [];
+        for (let j = 0; j < scn.entities.length; ++j) {// all entities are targets
+            animList[i].candidates[j] = false;
+            if ((scn.entities[j].collisionDetection == true) && (animList[i].target.id != scn.entities[j].id) ) { 
+                var deltaP = v3_distance( animList[i].target.position, scn.entities[j].position);
+                var deltaD = animList[i].deltaLength + animList[i].target.cull_dist + scn.entities[j].cull_dist; 
+                animList[i].candidates[j] = deltaP <= deltaD;  
             }
         }
+
     }
 
     var numIter = maxCDIterations;
@@ -153,7 +154,7 @@ function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIteratio
 
         // Collision Detection
         hitDetected = false;
-        for (let i = 0; i < animList.length; ++i) if (animList[i].deltaLength > 0.0) CheckForAnimationCollisions(animList[i], scn, animList);
+        for (let i = 0; i < animList.length; ++i) if ((animList[i].target.collisionDetection) && (animList[i].deltaLength > 0)) CheckForAnimationCollisions(animList[i], scn, animList);
         
         // Collision Response
         for (let i = 0; i < animList.length; ++i) if ((animList[i].collisionDetected) || (animList[i].collisionFromOther)) {
@@ -241,14 +242,97 @@ function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, grav
 }    
 
 
-function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, gravity = false, ttl = -1, CD = false, endState = E3D_DONE) {
+function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = false, ttl = -1, CD = false, endState = E3D_DONE) {
 
 }    
 
 
-function newParticuleAnim_RelativeToCamera(entity, camera, spos_speed, rot_speed, nbPart, gravity = false, ttl = -1, CD = false) {
+function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = false, ttl = -1, CD = false, endState = E3D_DONE) {
+    var repassFunct = (CD) ? anim_Base_rePass : null;
+    var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
+
+    var anim = new E3D_animation("", entity, null, timer, anim_Part_firstPass, repassFunct, endFunct, "");
+
+    var offset = camera.adjustToCamera(anim.target.position);
+    v3_copy(anim.target.position, camera.position);
+    v3_add_mod(anim.target.position, offset);
+
+    anim.spd = camera.adjustToCamera(pos_speed); // also now this.mainVector
+
+    anim.endState = endState;
+    anim.ttl = ttl;
+    anim.gravity = gravity;
+
+
+    anim.nbPart = nbPart;
+
+    anim.vertOffset = Array(nbPart); // vect noise for vertex
+    anim.vect = Array(nbPart); // mainVect + vect noise
+    anim.vectNorm = Array(nbPart); //opt normalized vect for CD
+    anim.org = Array(nbPart); // each pass org = org + vect, world coordinates
+    anim.act = Array(nbPart); // active
+
+    anim.target.setSize(anim.target.srcNumElements * anim.nbPart);
+
+
+    // gen starting positions
+    for (let i = 0; i < anim.nbPart; ++i) {
+        //new pellet
+        anim.target.copySource(anim.target.srcNumElements * i);
+        anim.act[i] = anim;
+        anim.vertOffset[i] = camera.adjustToCamera(    ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new())  );
+        anim.org[i] = v3_add_new(anim.target.position, anim.vertOffset[i]);
+    }
+
+    // gen particules direction
+    for (let i = 0; i < anim.nbPart; ++i) {
+
+        anim.vect[i] = camera.adjustToCamera(   ((partDirFunc != null) ? partPosFunc(anim.vertOffset[i], i, nbPart) : v3_new())  );
+        anim.vectNorm[i] = v3_normalize_new(anim.vect[i]);
+
+        //offset pelets vertex by new origin
+        for (var j = 0; j < anim.target.srcNumElements; ++j ) {
+            var idx = ( i * anim.target.srcNumElements) + j;
+            var b = anim.target.getVertex3f(idx);
+            v3_add_mod(b, anim.vertOffset[i])
+            //this.target.setNormal3f(idx, _v3_origin);
+
+        }
+
+        if (CD) {
+         //   anim.target.pushPointCD();
     
+        }
+
+    }
+
+
+
+    anim.target.collisionDetection = false;
+    anim.state = E3D_PLAY;
+    anim.target.visible = true;
+    anim.target.resetMatrix();
+    anim.last_position = v3_clone(anim.target.position);
+
+    return anim;
 }    
+
+
+function collisionResult_asSource_bounce(){
+
+}
+
+function collisionResult_asSource_mark(){
+
+}
+
+function collisionResult_asTarget_bounce(){
+
+}
+
+function collisionResult_asTarget_mark(){
+
+}
 
 
 // First Passes
@@ -284,6 +368,37 @@ function anim_Transform_firstPass() {
         this.target.resetMatrix();
         this.lastHitMarker = ""; 
     }
+}
+
+function anim_Part_firstPass() {
+
+    v3_copy(this.last_position, this.target.position);
+
+    v3_scale_res(this.delta, this.spd, timer.delta);  
+
+    if (this.gravity) this.spd[1] = this.spd[1] - gAccel;
+
+    v3_add_mod(this.target.position, this.delta);
+    this.deltaLength = v3_length(this.delta);
+
+    // animate particules
+    for (let i = 0; i < this.nbPart; ++i) if (this.act[i]) { // i is pallet index
+
+        // translate pellet entity elements
+        for (var j = 0; j < this.target.srcNumElements; ++j ) {
+            var b = this.target.getVertex3f((i*this.target.srcNumElements) + j); // b is a view in float32array
+            v3_addscaled_mod(b, this.vertOffset[i], timer.delta);
+        }
+
+        if (this.target.collisionDetection) {
+
+        }
+    }
+
+    this.target.resetMatrix();
+    this.lastHitMarker = ""; 
+
+
 }
 
 // Re Passes

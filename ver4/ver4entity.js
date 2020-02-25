@@ -121,12 +121,12 @@ class E3D_entity {
 
         // Collision Detection / Hit Test Data (faster split in different array than accessing single object.array[i].property)
 
-            // Vector Source (arrow)
-            this.CD_vec = 0;
-            this.CD_vec_p0 = []; // original to model space
-            this.CD_vec_p  = []; // transformed to world space
-            this.CD_vec_v0 = []; // original to model space
-            this.CD_vec_v  = []; // transformed to world space (rotation)
+            // Point Source (arrow)
+            this.CD_point = 0;
+            this.CD_point_p0 = []; // original to model space
+            this.CD_point_p  = []; // transformed to world space
+            //this.CD_point_v0 = []; // original to model space
+            //this.CD_point_v  = []; // transformed to world space (rotation)
 
             // Vector Target (edge)
             this.CD_edge = 0;
@@ -220,12 +220,12 @@ class E3D_entity {
 
         this.cull_dist = entity.cull_dist;
 
-        if (entity.CD_vec > 0) {
-            this.CD_vec = entity.CD_vec;
-            this.CD_vec_v0 = v3a_clone(entity.CD_vec_v0);
-            this.CD_vec_v  = v3a_clone(entity.CD_vec_v);
-            this.CD_vec_p0 = v3a_clone(entity.CD_vec_p0);
-            this.CD_vec_p  = v3a_clone(entity.CD_vec_p);
+        if (entity.CD_point > 0) {
+            this.CD_point = entity.CD_point;
+       //     this.CD_point_v0 = v3a_clone(entity.CD_point_v0);
+         //   this.CD_point_v  = v3a_clone(entity.CD_point_v);
+            this.CD_point_p0 = v3a_clone(entity.CD_point_p0);
+            this.CD_point_p  = v3a_clone(entity.CD_point_p);
         }
         if (entity.CD_edge > 0) {
             this.CD_edge = entity.CD_edge;
@@ -349,9 +349,9 @@ class E3D_entity {
             this.modelMatrix[14] =  this.position[2];
         }
         if (this.collisionDetection) {
-            for (var i = 0; i < this.CD_vec; ++i) {
-                v3_applym4_res(this.CD_vec_p[i], this.CD_vec_p0[i], this.modelMatrix);
-                v3_applym4_res(this.CD_vec_v[i], this.CD_vec_v0[i], this.normalMatrix);
+            for (var i = 0; i < this.CD_point; ++i) {
+                v3_applym4_res(this.CD_point_p[i], this.CD_point_p0[i], this.modelMatrix);
+             //  v3_applym4_res(this.CD_vec_v[i], this.CD_vec_v0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_edge; ++i) {
                 v3_applym4_res(this.CD_edge_p[i], this.CD_edge_p0[i], this.modelMatrix);
@@ -385,14 +385,14 @@ class E3D_entity {
         }
     }
 
-    pushCD_vec(p, v) { // TODO replace by point
-        this.CD_vec_p0[this.CD_vec] = v3_clone(p);
-        this.CD_vec_p[this.CD_vec] = v3_clone(p);
+    pushCD_point(p) {
+        this.CD_point_p0[this.CD_point] = v3_clone(p);
+        this.CD_point_p[this.CD_point] = v3_clone(p);
         
-        this.CD_vec_v0[this.CD_vec] = v3_clone(v);
-        this.CD_vec_v[this.CD_vec] = v3_clone(v);
+        //this.CD_vec_v0[this.CD_vec] = v3_clone(v);
+        //this.CD_vec_v[this.CD_vec] = v3_clone(v);
         
-        this.CD_vec += 1;
+        this.CD_point += 1;
         this.collisionDetection = true;
     }
     pushCD_edge(p, n, l) {
@@ -630,7 +630,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.numElements = 0;
         this.dataContentChanged = true;
 
-        this.CD_vec = 0;
+        this.CD_point = 0;
         this.CD_edge = 0;
         this.CD_sph = 0;
         this.CD_plane = 0;

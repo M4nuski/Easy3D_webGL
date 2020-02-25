@@ -125,7 +125,9 @@ class E3D_loader {
     }
 
 
-
+    removeNormals() {
+        for (var i = 0; i < this.normals.length; ++i) this.normals[i] = 0.0;
+    }
 
 
 // Mesh Data Loaders
