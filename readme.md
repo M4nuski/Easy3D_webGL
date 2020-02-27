@@ -23,6 +23,7 @@ Current work-in-progress and next steps
 * proper maze mini-game
 * --ver5:
 * flatten engine to reducre nested calls and hierarchy walking
+* extract all "DEV" stuff to a debug class
 * Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
 * Regroup vertexArrays for mesh data
 * Improved Collision Detection with Interpolation (point, edge, sphere, plane, box, triangles)
