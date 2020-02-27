@@ -61,14 +61,15 @@ class E3D_loader {
         entity.numElements = this.numFloats / 3;
     }
 
-    addStrokeData(entity)  {       
+    addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8)  {       
         entity.numStrokeElements = 0;
         entity.drawStrokes = false;
         
         if (!this.edgesDone) this.genEdges();
         
         var strokeList = [];
-        for (var i = 0; i < this.edges.length; ++i) if (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < 0.8) {
+        for (var i = 0; i < this.edges.length; ++i) if ( (addOrphanEdges && !this.edges[i].done) ||
+             (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit) ) {
             strokeList.push(this.reverseIndices[this.edges[i].index1]);
             strokeList.push(this.reverseIndices[this.edges[i].index2]);
         }

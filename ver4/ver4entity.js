@@ -348,7 +348,8 @@ class E3D_entity {
             this.modelMatrix[13] =  this.position[1];
             this.modelMatrix[14] =  this.position[2];
         }
-        if (this.collisionDetection) {
+        if (this.collisionDetection) { // TODO extract to own method, keep track of last positions
+        //    ( i * 2 + this.oldPos ) or ( i * 2 + this.pos )
             for (var i = 0; i < this.CD_point; ++i) {
                 v3_applym4_res(this.CD_point_p[i], this.CD_point_p0[i], this.modelMatrix);
              //  v3_applym4_res(this.CD_vec_v[i], this.CD_vec_v0[i], this.normalMatrix);

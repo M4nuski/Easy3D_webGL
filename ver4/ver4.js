@@ -271,6 +271,11 @@ function initEngine() {
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
+    phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces", 1024*32);
+    phyTracers.visible = true;
+    phyTracers.vis_culling = false;
+    scn.addEntity(phyTracers);
+
 }
 
 
@@ -355,7 +360,7 @@ function timerTick() {  // Game Loop
         animations.push(newParticuleAnim_RelativeToCamera(newPyra, scn.camera,
             [rndPM(2), rndPM(2), -500 - rndPM(2) ], _v3_null, 10, 
             shotgunPartPos, shotgunPartDir, false, 2.0, true));
-
+        animations[animations.length-1].target.animIndex = animations.length-1;
         newPyra.visible = true;
         scn.addEntity(newPyra); 
     }
@@ -564,7 +569,7 @@ function shotgunAnimL () {
 function shotgunAnimR() {
  
     if (this.state == E3D_PLAY) {
-        for (let i = 0; i < this.numPellets; ++i) if (this.act[i]) { // i is pallet index
+        for (let i = 0; i < this.numPellets; ++i) if (this.act[i]) { // i is pellet index
 
             // translate pellet entity elements
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
@@ -689,7 +694,7 @@ function shotgunAnimR() {
             }
 
             // update pellet origin
-            v3_addscaled_mod(this.org[i], this.vect[i], timer.delta);
+           //v3_addscaled_mod(this.org[i], this.vect[i], timer.delta);
 
         } // end for each active pellet
 

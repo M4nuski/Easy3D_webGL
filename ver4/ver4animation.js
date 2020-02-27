@@ -282,9 +282,9 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
     for (let i = 0; i < anim.nbPart; ++i) {
         //new pellet
         anim.target.copySource(anim.target.srcNumElements * i);
-        anim.act[i] = anim;
+        anim.act[i] = true; // TODO remove and replace by particule removal in collision resolver
         anim.vertOffset[i] = camera.adjustToCamera(    ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new())  );
-        anim.org[i] = v3_add_new(anim.target.position, anim.vertOffset[i]);
+        anim.org[i] = v3_new(anim.vertOffset[i]);
     }
 
     // gen particules direction
@@ -298,20 +298,14 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
             var idx = ( i * anim.target.srcNumElements) + j;
             var b = anim.target.getVertex3f(idx);
             v3_add_mod(b, anim.vertOffset[i])
-            //this.target.setNormal3f(idx, _v3_origin);
-
         }
 
-        if (CD) {
-         //   anim.target.pushPointCD();
-    
-        }
-
+        if (CD) anim.target.pushCD_point(anim.org[i]);
     }
 
 
 
-    anim.target.collisionDetection = false;
+    anim.target.collisionDetection = CD;
     anim.state = E3D_PLAY;
     anim.target.visible = true;
     anim.target.resetMatrix();
@@ -385,7 +379,7 @@ function anim_Part_firstPass() {
     this.deltaLength = v3_length(this.delta);
 
     // animate particules
-    for (let i = 0; i < this.nbPart; ++i) if (this.act[i]) { // i is pallet index
+    for (let i = 0; i < this.nbPart; ++i) if (this.act[i]) { // i is pellet index
 
         // translate pellet entity elements
         for (var j = 0; j < this.target.srcNumElements; ++j ) {
@@ -393,13 +387,13 @@ function anim_Part_firstPass() {
             v3_addscaled_mod(b, this.vertOffset[i], timer.delta);
         }
 
-        if (this.target.collisionDetection) {
-
-        }
+        v3_copy(this.org[i], this.target.CD_point_p[i]);
+        v3_addscaled_mod(this.target.CD_point_p0[i], this.vertOffset[i], timer.delta);
     }
 
     this.target.resetMatrix();
     this.lastHitMarker = ""; 
+
 
 
 }
@@ -409,7 +403,11 @@ function anim_Part_firstPass() {
 function anim_Base_rePass(itr) {
 
     if ((this.deltaLength > 0) && (this.collisionDetected)) {
- 
+
+
+  //TODO replace by functions for source and target such as collisionResult_asSource_bounce
+
+
             nHits++;
             this.lastHitMarker = this.closestCollision[0];
             // closestCollision = [marker, penetration, n, firstHit, "SphVect-plane"];
@@ -446,7 +444,7 @@ function anim_Base_rePass(itr) {
             if (this.gravity) this.spd[1] -= gAccel;
 
         } // end collisionDetected
-
+// if both, check and resolve first to happend
         if (this.collisionFromOther) {
 
             v3_normalize_mod(this.otherCollision[2]); // change direction on hit

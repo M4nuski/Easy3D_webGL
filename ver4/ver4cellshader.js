@@ -188,7 +188,7 @@ function onRessource(name, msg) {
             } else if (name == "Storm Trooper") {
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 1.0]);
                 meshLoader.addStrokeData(nm);
-                meshLoader.smoothNormals( 0.0);
+                meshLoader.smoothNormals(-0.9);
             } else if (name == "B M9") {
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [0.2, 0.2, 0.3]);
                 meshLoader.addStrokeData(nm);
@@ -198,12 +198,13 @@ function onRessource(name, msg) {
             } else if (name == "Nissan GTR") {
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.25]);
                 meshLoader.addStrokeData(nm);
-                meshLoader.smoothNormals( 0.707);
+                meshLoader.smoothNormals( -0.9);
                 nm.position = [25, -5, 0];
                 nm.rotation = [0, 0, 0];
             }  else {
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [0.5, 0.5, 1.0]);
-                meshLoader.smoothNormals( 0.0);
+                meshLoader.smoothNormals( -1.01);
+                meshLoader.addStrokeData(nm, true, 0.2);
                 nm.position = [5, 15, -25];
                 nm.rotation = [0, 3.1415, 0];
             }
