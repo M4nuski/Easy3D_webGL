@@ -10,6 +10,27 @@ var nHits = 0;
 var nbCDpasses = 0;
 var hitPoints = new Map();
 
+class CDresult {
+    constructor() {
+        this.marker = "";
+        this.t0 = Infinity;
+        this.n = [0, 0, 0];
+        this.p0 = [0, 0, 0];
+        this.source_ei = 0;
+        this.source_desc = ""; // CD desc
+        this.source_cdi = 0; // CD index
+        this.target_desc = "";
+        this.target_cdi = 0; 
+        this.s = [0, 0, 0]; // TODO remove when source_ai is source_ei and animations/entities are global, replace by target entity index
+    }
+
+    reset() {
+        this.marker = "";
+        this.t0 = Infinity;
+    }
+}
+
+
 hitPoints.set("CUBE_6P_nt", 0); // num tests
 hitPoints.set("CUBE_6P_nh", 0); // num hits
 hitPoints.set("CUBE_6P_tt", 0); // total time
@@ -41,9 +62,8 @@ var DEV_inbox = false;
 var DEV_cubeStartTime;
 
 function CheckForAnimationCollisions_SphSource(self, scn, animations){
-//  self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-Sph"]; // t is fraction of self.deltaLength done when firstHit
 
-var firstHit  = [0.0, 0.0, 0.0];
+    var firstHit  = [0.0, 0.0, 0.0];
 var hitNormal = [0.0, 0.0, 0.0];
 
 var posOffset  = [0.0, 0.0, 0.0];
@@ -102,18 +122,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes);
                         var t0 = v3_distancesquared(firstHit, self.last_position);
 
-                        if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision[1]))) {
+                        if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision.t0))) {
 
                             v3_sub_res(hitNormal, firstHit, scn.entities[i].CD_sph_p[j]);
-                            self.collisionDetected = true;
-                            self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-Sph"];
+                            self.collisionSource(marker, t0, hitNormal, firstHit, "Sph", "Sph", i, sphIndex, j);
 
                             if ((self.target.animIndex != -1) && (scn.entities[i].animIndex != -1)) {
-                                // TODO as other function collisionResult_asTarget_bounce
-                                // TODO check for distance, select shortest as target
-                                animations[scn.entities[i].animIndex].collisionFromOther = true;
-                                animations[scn.entities[i].animIndex].otherCollision = [self.target.animIndex + "s" + "0", t0, v3_clone(hitNormal), v3_clone(self.spd), "Sph-Sph"];
-                            }
+                                animations[scn.entities[i].animIndex].collisionTarget(marker, t0 / self.deltaLength, hitNormal, firstHit, "Sph", "Sph", i, sphIndex, j, self.spd);
+                            }                            
                         }
                     }
 
@@ -140,7 +156,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             v3_addscaled_res(firstHit, sourceSph_p0, self.delta, hitRes);
                             var t0 = v3_distancesquared(firstHit, self.last_position);
-                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1]) ) ) {
+                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision.t0) ) ) {
                                 
                                 point_segment_point_res(posOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
                                 v3_sub_res(hitNormal, firstHit, posOffset);
@@ -151,8 +167,8 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                     phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0.5,0.5], 8, false, 3);
                                  // phyTracers.addWireSphere(ptsonsegment, 3, [1,0,1], 8, false, 3);
                                 }               
-                                self.collisionDetected = true;
-                                self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-edge"];
+
+                                self.collisionSource(marker, t0, hitNormal, firstHit, "Sph", "Edge", i, sphIndex, j);
                             }
 
                     }
@@ -222,11 +238,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
                                 var t0 = v3_distancesquared(sourceSph_p0, self.last_position);
-                                if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
+                                if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision.t0)) ) {
+
                                     if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
-                                    
-                                    self.collisionDetected = true;
-                                    self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(sourceSph_p0), "Sph-Plane-Inside"];
+                                    self.collisionSource(marker, t0, hitNormal, sourceSph_p0, "Sph", "PlaneInside", i, sphIndex, j);
                                 }
                             }                       
                         } 
@@ -259,12 +274,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         if (validHit) {
                             var t0 = v3_distancesquared(firstHit, self.last_position);
 
-                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
+                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision.t0)) ) {
 
                                 if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
-                                                
-                                self.collisionDetected = true;
-                                self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-plane"];
+                                self.collisionSource(marker, t0, hitNormal, firstHit, "Sph", "Plane", i, sphIndex, j);
                             }
                         }
                     }
@@ -830,12 +843,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             // check dist, if dist less than current hit declare hit
                             var t0 = v3_distancesquared(firstHit, self.last_position);
-                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
+                            if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision.t0)) ) {
 
                                 if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
-                                                
-                                self.collisionDetected = true;
-                                self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-box" + hitSuffix];
+                                self.collisionSource(marker, t0, hitNormal, firstHit, "Sph", "Box" + hitSuffix, i, sphIndex, j);
                             }
 
                         }
@@ -867,27 +878,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         scn.entities[i].CD_triangle_p3p1lenSq[j], scn.entities[i].CD_triangle_p2p1lenSq[j],
                         scn.entities[i].CD_triangle_p3p2p1dot[j], scn.entities[i].CD_triangle_n[j]);
 
-                        /*
-                                    this.CD_triangle_p3p1 = []; // original to model space
-                                    this.CD_triangle_p2p1  = []; // transformed to world space
-
-                                    this.CD_triangle_p3p1lenSq = []; // original to model space
-                                    this.CD_triangle_p2p1lenSq = []; // transformed to world space
-                                    this.CD_triangle_p3p2p1dot = []; // original to model space
-            */
                     if ((hitRes != false) && (hitRes <= self.deltaLength) ) {      
                         // check dist, if dist less than current hit declare hit
                         var t0 = 0.0;
-                     /*   if (hitRes > 0.0)*/ t0 = v3_distancesquared(firstHit, self.last_position);
-                        if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision[1])) ) {
+                        t0 = v3_distancesquared(firstHit, self.last_position);
+                        if ( !self.collisionDetected || ( self.collisionDetected && (t0 < self.closestCollision.t0)) ) {
 
                             if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
-                                            
-                            self.collisionDetected = true;
-                            self.closestCollision = [marker, t0, v3_clone(scn.entities[i].CD_triangle_n[j]), v3_clone(firstHit), "Sph-Tri"];
+                            self.collisionSource(marker, t0, scn.entities[i].CD_triangle_n[j], firstHit, "Sph", "Triangle" + hitSuffix, i, sphIndex, j);
                         }
-
-
                     } // if hitres
 
                 } // different marker
@@ -987,11 +986,10 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
                     v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
                     var t0 = v3_distancesquared(firstHit, self.last_position);
-                    if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision[1]))) {
+                    if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision.t0))) {
                         v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
-                        self.collisionDetected = true;
-                        self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Point-Sph", pointIndex];
                         if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_red);
+                        self.collisionSource(marker, t0, hitNormal, firstHit, "Point", "Sph" + hitSuffix, i, pointIndex, j);
                     }
 
 
@@ -1001,10 +999,9 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                     if (hitRes != false) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_v, hitRes);
                         var t0 = v3_distancesquared(firstHit, self.last_position);    
-                        if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision[1]))) {    
+                        if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision.t0))) {    
                             v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
-                            self.collisionDetected = true;
-                            self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Point-Sph", pointIndex];
+                            self.collisionSource(marker, t0, hitNormal, firstHit, "Point", "Sph" + hitSuffix, i, pointIndex, j);
                             if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_white);
                         }
                     }

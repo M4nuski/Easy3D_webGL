@@ -1331,7 +1331,7 @@ t.test9c = function() {
 
     var dt = performance.now();
     for (var iter = 0; iter < numtst; ++iter) {
-        obj1.obj1a = [markers[iter % numData], t0[iter % numData], hitNormal[iter % numData], firstHit[iter % numData], type[iter % numData] ];
+        obj1.obj1a = [markers[iter % numData], t0[iter % numData], v3_clone(hitNormal[iter % numData]), v3_clone(firstHit[iter % numData]), type[iter % numData] ];
     }
     var et = performance.now();
     addLine("write, new [], clone v3 : " + (et-dt));
