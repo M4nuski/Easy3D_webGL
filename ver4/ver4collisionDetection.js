@@ -41,7 +41,7 @@ var DEV_inbox = false;
 var DEV_cubeStartTime;
 
 function CheckForAnimationCollisions_SphSource(self, scn, animations){
-//  [animIndex, entityIndex, t, normal, firstHitPosition] // t is fraction of self.deltaLength done when firstHit
+//  self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-Sph"]; // t is fraction of self.deltaLength done when firstHit
 
 var firstHit  = [0.0, 0.0, 0.0];
 var hitNormal = [0.0, 0.0, 0.0];
@@ -941,7 +941,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
 function CheckForAnimationCollisions_PointSource(self, scn, animations){
-    //  [animIndex, entityIndex, t, normal, firstHitPosition] // t is fraction of self.deltaLength done when firstHit
+    //  [pointIndex] // t is fraction of self.deltaLength done when firstHit
     
     var firstHit  = [0.0, 0.0, 0.0];
     var hitNormal = [0.0, 0.0, 0.0];
@@ -990,7 +990,7 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                     if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision[1]))) {
                         v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
                         self.collisionDetected = true;
-                        self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Point-Sph"];
+                        self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Point-Sph", pointIndex];
                         if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_red);
                     }
 
@@ -1004,7 +1004,7 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                         if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision[1]))) {    
                             v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
                             self.collisionDetected = true;
-                            self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Point-Sph"];
+                            self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Point-Sph", pointIndex];
                             if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_white);
                         }
                     }

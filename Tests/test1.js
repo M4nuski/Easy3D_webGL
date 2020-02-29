@@ -1004,7 +1004,7 @@ t.test8 = function() {
 }
 
 
-t.test9 = function() {
+t.test9a = function() {
 
     const numtst = 2500000;    
     addLine("Num iter: " + numtst);
@@ -1062,8 +1062,7 @@ t.test9 = function() {
         if ( obj1["prop" + x] < 5) le++;
     }
     var et = performance.now();
-    addLine("prop list, concat string : " + (et-dt) + " mo: " + mo + " le: " + le);
-
+    addLine("obj[\"str\" + index] concat string : " + (et-dt) + " mo: " + mo + " le: " + le);
 
 
     mo = 0;
@@ -1102,7 +1101,7 @@ t.test9 = function() {
 
     }
     var et = performance.now();
-    addLine("prop list, direct string : " + (et-dt) + " mo: " + mo + " le: " + le);
+    addLine("obj[\"string\"], const string : " + (et-dt) + " mo: " + mo + " le: " + le);
 
 
     mo = 0;
@@ -1141,7 +1140,7 @@ t.test9 = function() {
 
     }
     var et = performance.now();
-    addLine("prop normal access : " + (et-dt) + " mo: " + mo + " le: " + le);
+    addLine("obj.val normal access : " + (et-dt) + " mo: " + mo + " le: " + le);
 
 
     
@@ -1165,11 +1164,276 @@ t.test9 = function() {
     }
 
     et = performance.now();
-    addLine("obj[iter] : " + (et-dt) + " mo: " + mo + " le: " + le);
+    addLine("array[iter] : " + (et-dt) + " mo: " + mo + " le: " + le);
 
-    addLine("End Test 9");
+    addLine("End Test 9a");
 }
 
+
+
+t.test9b = function() {
+
+    const numtst = 10000000;    
+    addLine("Num iter: " + numtst);
+
+    let obj1 = {};  
+    let obj3 = [];
+    let obj4 = { prop: [] };
+    let obj5 = { prop: [] };
+
+    obj1["prop0"] = 0;
+    obj1["prop1"] = 1;
+    obj1["prop2"] = 2;
+    obj1["prop3"] = 3;
+    obj1["prop4"] = 4;
+    obj1["prop5"] = 5;
+    obj1["prop6"] = 6;
+    obj1["prop7"] = 7;
+    obj1["prop8"] = 8;
+    obj1["prop9"] = 9;
+
+    obj3.push(0);
+    obj3.push(1);
+    obj3.push(2);
+    obj3.push(3);
+    obj3.push(4);
+    obj3.push(5);
+    obj3.push(6);
+    obj3.push(7);
+    obj3.push(8);
+    obj3.push(9);
+
+    obj4.prop.push(0);
+    obj4.prop.push(1);
+    obj4.prop.push(2);
+    obj4.prop.push(3);
+    obj4.prop.push(4);
+    obj4.prop.push(5);
+    obj4.prop.push(6);
+    obj4.prop.push(7);
+    obj4.prop.push(8);
+    obj4.prop.push(9);
+
+    obj5.prop.push( { val: 0 } );
+    obj5.prop.push( { val: 1 } );
+    obj5.prop.push( { val: 2 } );
+    obj5.prop.push( { val: 3 } );
+    obj5.prop.push( { val: 4 } );
+    obj5.prop.push( { val: 5 } );
+    obj5.prop.push( { val: 6 } );
+    obj5.prop.push( { val: 7 } );
+    obj5.prop.push( { val: 8 } );
+    obj5.prop.push( { val: 9 } );
+
+    var mo = 0;
+    var le = 0;
+
+    var dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter) {
+        if ( obj1.prop0 >= 5) mo++;
+        if ( obj1.prop0 < 5) le++;
+
+        if ( obj1.prop1 >= 5) mo++;
+        if ( obj1.prop1 < 5) le++;
+
+        if ( obj1.prop2 >= 5) mo++;
+        if ( obj1.prop2 < 5) le++;
+
+        if ( obj1.prop3 >= 5) mo++;
+        if ( obj1.prop3 < 5) le++;
+
+        if ( obj1.prop4 >= 5) mo++;
+        if ( obj1.prop4 < 5) le++;
+
+        if ( obj1.prop5 >= 5) mo++;
+        if ( obj1.prop5 < 5) le++;
+
+        if ( obj1.prop6 >= 5) mo++;
+        if ( obj1.prop6 < 5) le++;
+
+        if ( obj1.prop7 >= 5) mo++;
+        if ( obj1.prop7 < 5) le++;
+
+        if ( obj1.prop8 >= 5) mo++;
+        if ( obj1.prop8 < 5) le++;
+
+        if ( obj1.prop9 >= 5) mo++;
+        if ( obj1.prop9 < 5) le++;
+
+    }
+    var et = performance.now();
+    addLine("obj.val : " + (et-dt) + " mo: " + mo + " le: " + le);
+
+
+    mo = 0;
+    le = 0;    
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter) for (var x= 0; x < 10; ++x) { 
+        if ( obj3[x] >= 5) mo++;
+        if ( obj3[x] < 5) le++;
+    }
+
+    et = performance.now();
+    addLine("array[index] : " + (et-dt) + " mo: " + mo + " le: " + le);
+
+
+    mo = 0;
+    le = 0;    
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter) for (var x= 0; x < 10; ++x) { 
+        if ( obj4.prop[x] >= 5) mo++;
+        if ( obj4.prop[x] < 5) le++;
+    }
+
+    et = performance.now();
+    addLine("obj.array[index] : " + (et-dt) + " mo: " + mo + " le: " + le);
+
+
+    mo = 0;
+    le = 0;    
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter) for (var x= 0; x < 10; ++x) { 
+        if ( obj5.prop[x].val >= 5) mo++;
+        if ( obj5.prop[x].val < 5) le++;
+    }
+
+    et = performance.now();
+    addLine("obj.array[index].val : " + (et-dt) + " mo: " + mo + " le: " + le);
+
+
+    addLine("End Test 9b");
+}
+
+//<div id="test9c" class="test">9c-Access time obj.a=new[], obj.a[i]=, obj.obj.p= </div>
+t.test9c = function() {
+    //self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-Sph"];
+    const numtst = 10000000;
+    const numData = 100;    
+    addLine("Num iter: " + numtst);
+
+    var markers = [];
+    for (var i = 0; i < numData; ++i) markers.push(randStr(6));
+    var t0 = [];
+    for (var i = 0; i < numData; ++i) t0.push(rand(1000));
+    var hitNormal = [];
+    for (var i = 0; i < numData; ++i) hitNormal.push(v3_val_new(rand(10), rand(10), rand(10)) );
+    var firstHit = [];
+    for (var i = 0; i < numData; ++i) firstHit.push(v3_val_new(rand(10), rand(10), rand(10)) );
+    var type = [];
+    for (var i = 0; i < numData; ++i) type.push(randStr(10));
+
+    String.fromCodePoint(65, 90); 
+    let obj1 = { obj1a : ["", 0, [0, 0, 0], [0, 0, 0], ""] }; // new [] clone v3
+    let obj2 = { obj2a : ["", 0, [0, 0, 0], [0, 0, 0], ""] }; // write to [] clone v3
+    let obj3 = { obj3a : ["", 0, [0, 0, 0], [0, 0, 0], ""] }; // write to [] copy v3
+    let obj4 = { obj4a : { m:"", t0:0, n:[0,0,0], p0:[0,0,0], d:""}  };  // copy to .obj.x
+    let obj5 = { obj5a : [{ m:"", t0:0, n:[0,0,0], p0:[0,0,0], d:""}]  };  // copy to [i].obj.x
+
+    var dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter) {
+        obj1.obj1a = [markers[iter % numData], t0[iter % numData], hitNormal[iter % numData], firstHit[iter % numData], type[iter % numData] ];
+    }
+    var et = performance.now();
+    addLine("write, new [], clone v3 : " + (et-dt));
+
+  
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter) {
+        obj2.obj2a[0] = markers[iter % numData];
+        obj2.obj2a[1] = t0[iter % numData];
+        obj2.obj2a[2] = v3_clone(hitNormal[iter % numData]);
+        obj2.obj2a[3] = v3_clone(firstHit[iter % numData]);
+        obj2.obj2a[4] = type[iter % numData];
+    }
+
+    et = performance.now();
+    addLine("write, [0], by const, v3 clone : " + (et-dt));
+
+
+    const _m = 0;
+    const _t = 1;
+    const _n = 2;
+    const _p = 3;
+    const _d = 4;
+
+
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter)  { 
+        obj2.obj2a[_m] = markers[iter % numData];
+        obj2.obj2a[_t] = t0[iter % numData];
+        obj2.obj2a[_n] = v3_clone(hitNormal[iter % numData]);
+        obj2.obj2a[_p] = v3_clone(firstHit[iter % numData]);
+        obj2.obj2a[_d] = type[iter % numData];
+    }
+
+    et = performance.now();
+    addLine("write, [_c], by var, v3_clone : " + (et-dt));
+
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter)  { 
+        obj3.obj3a[0] = markers[iter % numData];
+        obj3.obj3a[1] = t0[iter % numData];
+        v3_copy(obj3.obj3a[2], hitNormal[iter % numData]);
+        v3_copy(obj3.obj3a[3], firstHit[iter % numData]);
+        obj3.obj3a[4] = type[iter % numData];
+    }
+
+    et = performance.now();
+    addLine("write, [0], by const, v3_copy : " + (et-dt));
+
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter)  { 
+        obj3.obj3a[_m] = markers[iter % numData];
+        obj3.obj3a[_t] = t0[iter % numData];
+        v3_copy(obj3.obj3a[_n], hitNormal[iter % numData]);
+        v3_copy(obj3.obj3a[_p], firstHit[iter % numData]);
+        obj3.obj3a[_d] = type[iter % numData];
+    }
+
+    et = performance.now();
+    addLine("write, [_c], by var, v3_copy : " + (et-dt));
+
+
+ 
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter)  { 
+        obj4.obj4a.m = markers[iter % numData];
+        obj4.obj4a.t0 = t0[iter % numData];
+        v3_copy(obj4.obj4a.n, hitNormal[iter % numData]);
+        v3_copy(obj4.obj4a.p0, firstHit[iter % numData]);
+        obj4.obj4a.d = type[iter % numData];
+    }
+
+    et = performance.now();
+    addLine("write, obj.prop, v3_copy : " + (et-dt));
+
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter)  { 
+        obj5.obj5a[0].m = markers[iter % numData];
+        obj5.obj5a[0].t0 = t0[iter % numData];
+        v3_copy(obj5.obj5a[0].n, hitNormal[iter % numData]);
+        v3_copy(obj5.obj5a[0].p0, firstHit[iter % numData]);
+        obj5.obj5a[0].d = type[iter % numData];
+    }
+
+    et = performance.now();
+    addLine("write, obj.[0].prop, v3_copy : " + (et-dt));
+
+
+    dt = performance.now();
+    for (var iter = 0; iter < numtst; ++iter)  { 
+        obj5.obj5a[_m].m = markers[iter % numData];
+        obj5.obj5a[_m].t0 = t0[iter % numData];
+        v3_copy(obj5.obj5a[_m].n, hitNormal[iter % numData]);
+        v3_copy(obj5.obj5a[_m].p0, firstHit[iter % numData]);
+        obj5.obj5a[_m].d = type[iter % numData];
+    }
+
+    et = performance.now();
+    addLine("write, obj.[_c].prop, v3_copy : " + (et-dt));
+
+    addLine("End Test 9c");
+}
 
 var e = 0;
 var f = 0;
@@ -1355,6 +1619,13 @@ t.test12 = function() {
 
     var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] + f32b[j];
+    var et = performance.now();
+    addLine("f32 a + b : " + (et-dt));
+
+
+    var dt = performance.now();
+    for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] - f32b[j];
     var et = performance.now();
     addLine("f32 a - b : " + (et-dt));
@@ -1364,6 +1635,13 @@ t.test12 = function() {
         for (var j = 0; j < numNum; ++j) norr[j] = nora[j] - norb[j];
     var et = performance.now();
     addLine("nor a - b : " + (et-dt));
+
+    var dt = performance.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] - f32b[j];
+    var et = performance.now();
+    addLine("f32 a - b : " + (et-dt));
+
 
     var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
@@ -1379,6 +1657,12 @@ t.test12 = function() {
 
     var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] * f32b[j];
+    var et = performance.now();
+    addLine("f32 a * b : " + (et-dt));
+
+    var dt = performance.now();
+    for (var i = 0; i < numtst; ++i) 
         for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] / f32b[j];
     var et = performance.now();
     addLine("f32 a / b : " + (et-dt));
@@ -1388,6 +1672,12 @@ t.test12 = function() {
         for (var j = 0; j < numNum; ++j) norr[j] = nora[j] / norb[j];
     var et = performance.now();
     addLine("nor a / b : " + (et-dt));
+
+    var dt = performance.now();
+    for (var i = 0; i < numtst; ++i) 
+        for (var j = 0; j < numNum; ++j) f32r[j] = f32a[j] / f32b[j];
+    var et = performance.now();
+    addLine("f32 a / b : " + (et-dt));
 
     var dt = performance.now();
     for (var i = 0; i < numtst; ++i) 
@@ -1755,6 +2045,32 @@ function rndPM(val) { // random between plus or minus "val"
 
 function rand(x) {
     return Math.floor(Math.random() * x);
+}
+
+function randStr(l) {
+    var res = "";
+    for (var i = 0; i < l; ++i) res = res + (String.fromCodePoint(64+rand(64)));
+    return res;
+}
+
+// Create new vector
+function v3_new() { return [ 0.0, 0.0, 0.0 ]; }
+
+// Vector from values
+function v3_val_new(x, y, z) { return [ x, y, z ]; } 
+
+function v3_val_res(res, x, y, z) { res[0] = x; res[1] = y; res[2] = z; } 
+
+// Return new vector equal to argument
+function v3_clone(a) {
+    return [ a[0], a[1], a[2] ];
+}
+
+// Copy vector content to other vector
+function v3_copy(res, a) {
+    res[0] = a[0];
+    res[1] = a[1];
+    res[2] = a[2];
 }
 
 function v3_rotateX_resRecalc(res, a, ang) {
