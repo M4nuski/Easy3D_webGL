@@ -128,7 +128,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             self.collisionSource(marker, t0, hitNormal, firstHit, "Sph", "Sph", i, sphIndex, j);
 
                             if ((self.target.animIndex != -1) && (scn.entities[i].animIndex != -1)) {
-                                animations[scn.entities[i].animIndex].collisionTarget(marker, t0 / self.deltaLength, hitNormal, firstHit, "Sph", "Sph", i, sphIndex, j, self.spd);
+                                animations[scn.entities[i].animIndex].collisionTarget(marker, t0 / self.deltaLength, hitNormal, firstHit, "Sph", "Sph", i, sphIndex, j, self.pspd);
                             }                            
                         }
                     }
@@ -950,24 +950,25 @@ function CheckForAnimationCollisions_PointSource(self, scn, animations){
     
     //var planePosition = [0.0, 0.0, 0.0];
 
+    var sourcePts_p0 = [0.0, 0.0, 0.0];
+    var sourcePts_p1 = [0.0, 0.0, 0.0];
 
-    var sourcePts_v  =  [0.0, 0.0, 0.0];
-    var sourcePts_n  =  [0.0, 0.0, 0.0];
+    var sourcePts_v = [0.0, 0.0, 0.0];
+    var sourcePts_n = [0.0, 0.0, 0.0];
+    var sourcePts_l = 0.0;
     
 // for each point CD as source
 for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
         
-    var sourcePts_p0 = self.org[pointIndex];
-    var sourcePts_p1 = self.target.CD_point_p[pointIndex];
-    v3_sub_res(sourcePts_v, sourcePts_p1, sourcePts_p0); // TODO optimize out in anim 1st pass
-    var sourcePts_l  = v3_length(sourcePts_v); // TODO optimize out in anim 1st pass
-    v3_invscale_res(sourcePts_n, sourcePts_v, sourcePts_l); // TODO optimize out in anim 1st pass
-
+    v3_add_res(sourcePts_p0, self.pLastPos[pointIndex], self.last_position);
+    v3_copy(sourcePts_p1, self.target.CD_point_p[pointIndex]);
+    v3_sub_res(sourcePts_v, sourcePts_p1, sourcePts_p0);
+    var sourcePts_l = v3_length(sourcePts_v);
+    v3_invscale_res(sourcePts_n, sourcePts_v, sourcePts_l);
 
     for (var targetIndex = 0; targetIndex < scn.entities.length; ++targetIndex) if (self.candidates[targetIndex]) { // for each candidate entities
 
-
-    // collision detection - self.point vs target.sph
+    // collision detection - self.point vs targetEntity.sph
         for (let j = 0; j < scn.entities[targetIndex].CD_sph; ++j) {
             var marker = "p"+targetIndex+"s"+j;
             if (marker != self.lastHitMarker) {
@@ -989,20 +990,20 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                     if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision.t0))) {
                         v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
                         if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_red);
-                        self.collisionSource(marker, t0, hitNormal, firstHit, "Point", "Sph" + hitSuffix, i, pointIndex, j);
+                        self.collisionSource(marker, t0, hitNormal, firstHit, "Point", "Sph", targetIndex, pointIndex, j);
                     }
 
 
                 } else { // static
                     v3_sub_res(posOffset, scn.entities[targetIndex].CD_sph_p[j], sourcePts_p0);
-                    var hitRes = VectSphHit(sourcePts_n, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
-                    if (hitRes != false) {
+                    var hitRes = VectSphHit(sourcePts_v, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
+                    if ((hitRes != false) && (hitRes <= 1.0) && (hitRes >= 0.0)) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_v, hitRes);
+                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_white);
                         var t0 = v3_distancesquared(firstHit, self.last_position);    
                         if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision.t0))) {    
                             v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
-                            self.collisionSource(marker, t0, hitNormal, firstHit, "Point", "Sph" + hitSuffix, i, pointIndex, j);
-                            if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_white);
+                            self.collisionSource(marker, t0, hitNormal, firstHit, "Point", "Sph", targetIndex, pointIndex, j);
                         }
                     }
                 }
@@ -1088,7 +1089,7 @@ if (isNaN(thc)) throw "vector_sph_t thc NaN";
 
 var _planeIntersect_diff = [0.0, 0.0, 0.0];
 function planeIntersect(planePos, planeNormal, sourceSph_p0in, vectDirection) {
-// https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
+// https://en.wikipedia.pLastPos/wiki/Line%E2%80%93plane_intersection
     var angleCos = v3_dot(planeNormal, vectDirection);
     hitPoints.set("p-v cos", angleCos);
 	if (Math.abs(angleCos) < _v3_epsilon) {

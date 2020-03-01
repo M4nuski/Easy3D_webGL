@@ -428,14 +428,14 @@ function timerTick() {  // Game Loop
     if (inputs.checkCommand("action0", true)) {
       //  console.log("action0", true);
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
-        animations.push(new E3D_animation("ball throw" + timer.lastTick, newSph, scn, timer, sphAnimF, sphAnimR, sphAnimL));
-        animations[animations.length-1].restart();
+   //     animations.push(new E3D_animation("ball throw" + timer.lastTick, newSph, scn, timer, sphAnimF, sphAnimR, sphAnimL));
+    //    animations[animations.length-1].restart();
     }
     if (inputs.checkCommand("action1", true)) {
       //  console.log("action1", true);      
         let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);          
-        animations.push(new E3D_animation("shotgun " + timer.lastTick, newPyra, scn, timer, shotgunAnimF, shotgunAnimR, shotgunAnimL));
-        animations[animations.length-1].restart();
+  //      animations.push(new E3D_animation("shotgun " + timer.lastTick, newPyra, scn, timer, shotgunAnimF, shotgunAnimR, shotgunAnimL));
+   //     animations[animations.length-1].restart();
     }
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
@@ -543,10 +543,10 @@ function sphAnimF(){
         this.target.rotation[0] = rndPM(PIx2);
         this.target.rotation[1] = rndPM(PIx2);
 
-        this.spd = scn.camera.adjustToCamera(v3_scale_new(_v3_nz, 100));
-        this.spd[0] += rndPM(1);
-        this.spd[1] += rndPM(1);
-        this.spd[2] += rndPM(1);
+        this.pspd = scn.camera.adjustToCamera(v3_scale_new(_v3_nz, 100));
+        this.pspd[0] += rndPM(1);
+        this.pspd[1] += rndPM(1);
+        this.pspd[2] += rndPM(1);
         this.ttl = 30;
         
         this.state = E3D_PLAY;
@@ -555,13 +555,13 @@ function sphAnimF(){
         this.last_position = this.target.position.slice();
     } else {
         this.last_position = this.target.position.slice();
-        var dlt = v3_scale_new(this.spd, timer.delta);
+        var dlt = v3_scale_new(this.pspd, timer.delta);
         v3_add_mod(this.target.position, dlt);
         this.delta2 = v3_length(dlt);
     }
 }
 function sphAnimL() {
-    this.spd[1] -= timer.delta * 9.81; // or whatever is G in this scale and projection
+    this.pspd[1] -= timer.delta * 9.81; // or whatever is G in this scale and projection
     this.ttl -= timer.delta;
 
     if (this.ttl < 0) {
@@ -591,8 +591,8 @@ function sphAnimR() {
                             var n = [this.target.CD_sph_p[0][0] - scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - scn.entities[i].CD_sph_p[j][2] ];
                             //colList.push([i, j, penetration, "sph", "sph", n]);
                               splos.moveCursorTo(this.target.position);
-                            v3_reflect_mod(this.spd, n);
-                            v3_scale_mod(this.spd, 0.8);
+                            v3_reflect_mod(this.pspd, n);
+                            v3_scale_mod(this.pspd, 0.8);
                             v3_addscaled_mod(this.target.position, n, penetration);
                             this.target.resetMatrix();
                               splos.addLineTo(this.target.position, false);
@@ -622,8 +622,8 @@ function sphAnimR() {
                             penetration *= last_sgn;
                           //  colList.push([i, j, penetration, "sph", "iPlane", scn.entities[i].CD_iPlane_n[j]])
                               splos.moveCursorTo(this.target.position);
-                            v3_reflect_mod(this.spd, scn.entities[i].CD_iPlane_n[j]);
-                            v3_scale_mod(this.spd, 0.8);
+                            v3_reflect_mod(this.pspd, scn.entities[i].CD_iPlane_n[j]);
+                            v3_scale_mod(this.pspd, 0.8);
                             v3_addscaled_mod(this.target.position, scn.entities[i].CD_iPlane_n[j], penetration);
                             this.target.resetMatrix();
                               splos.addLineTo(this.target.position, false);
@@ -658,7 +658,7 @@ function sphAnimR() {
                             var n = [this.target.CD_sph_p[0][0] - scn.entities[i].CD_sph_p[j][0], this.target.CD_sph_p[0][1] - scn.entities[i].CD_sph_p[j][1], this.target.CD_sph_p[0][2] - scn.entities[i].CD_sph_p[j][2] ];
                             //colList.push([i, j, penetration, "sph", "sph", n]);
                               splos.moveCursorTo(this.target.position);
-                            v3reflect_mod(this.spd, n);
+                            v3reflect_mod(this.pspd, n);
                             v3_addscaled_mod(this.target.position, n, penetration);
                             this.target.resetMatrix();
                               splos.addLineTo(this.target.position, false);
@@ -674,7 +674,7 @@ function sphAnimR() {
             if (colList.length > 0) {
                   splos.moveCursorTo(this.target.position);
                 colList.sort((a, b) => { return b[2] - a[2]; } );
-                v3_reflect_mod(this.spd, colList[0][5]);
+                v3_reflect_mod(this.pspd, colList[0][5]);
                 v3_addscaled_mod(this.target.position, colList[0][5], colList[0][2]);
                 this.target.resetMatrix();
                   splos.addLineTo(this.target.position, false);
@@ -699,10 +699,10 @@ function shotgunAnimF() {
         this.vertOffset = Array(this.numPellets); // vect noise for vertex
         this.vect = Array(this.numPellets); // mainVect + vect noise
         this.vectNorm = Array(this.numPellets); //opt normalized vect for CD
-        this.org = Array(this.numPellets); // each pass org = org + vect, world coordinates
+        this.pLastPos = Array(this.numPellets); // each pass org = org + vect, world coordinates
 
         this.ttl = 2.0;
-        this.act = Array(this.numPellets); // active
+        this.pActive = Array(this.numPellets); // active
 
         this.mainVector = scn.camera.adjustToCamera([ rndPM(2), rndPM(2), -500 - rndPM(2) ] );         
 
@@ -711,11 +711,11 @@ function shotgunAnimF() {
         for (let i = 0; i < this.numPellets; ++i) {
             //new pellet
             this.target.copySource(this.target.srcNumElements * i);
-            this.act[i] = true;
+            this.pActive[i] = true;
             
             //pellet vector
             this.vertOffset[i] = scn.camera.adjustToCamera([rndPM(10), rndPM(10), rndPM(3) ]); // some noise
-            this.org[i] = v3_add_new(this.target.position, this.vertOffset[i]); // starting point is on noise.
+            this.pLastPos[i] = v3_add_new(this.target.position, this.vertOffset[i]); // starting point is on noise.
 
             this.vect[i] = v3_add_new(this.vertOffset[i], this.mainVector); 
             this.vectNorm[i] = v3_normalize_new(this.vect[i] );
@@ -758,7 +758,7 @@ function shotgunAnimR() {
 
     if (this.state == E3D_PLAY) {
 
-        for (let i = 0; i < this.numPellets; ++i) if (this.act[i]) { // i is pallet index
+        for (let i = 0; i < this.numPellets; ++i) if (this.pActive[i]) { // i is pallet index
 
             // translate pellet entity elements
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
@@ -769,7 +769,7 @@ function shotgunAnimR() {
             // current tranlation vector, world coordinates
             var vd = v3_scale_new(this.vect[i], timer.delta); // vector delta
             var so = v3_new(); // sphere origin
-            var v1 = v3_add_new(this.org[i], vd); // vector end
+            var v1 = v3_add_new(this.pLastPos[i], vd); // vector end
    
             var colList = [] ; // array of [entIdx, cdIdx, t, srcType, trgtType, newloc]
 
@@ -778,7 +778,7 @@ function shotgunAnimR() {
                 if (scn.entities[entIdx].CD_sph > 0) 
                 for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_sph; ++cdIdx) {
                     nHitTest++;
-                    v3_sub_res(so, scn.entities[entIdx].CD_sph_p[cdIdx], this.org[i]);
+                    v3_sub_res(so, scn.entities[entIdx].CD_sph_p[cdIdx], this.pLastPos[i]);
                     var t = VectSphHit(this.vectNorm[i], so, scn.entities[entIdx].CD_sph_rs[cdIdx]);                    
                     if (t != false) colList.push( [entIdx, cdIdx, t, "vec", "sph"] );                         
                 } // end for each sph data of each entities with sph CD
@@ -786,11 +786,11 @@ function shotgunAnimR() {
                 if (scn.entities[entIdx].CD_iPlane > 0) 
                 for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_iPlane; ++cdIdx) {
                     nHitTest++;
-                    var d0 = v3_dot(this.org[i], scn.entities[entIdx].CD_iPlane_n[cdIdx]) - scn.entities[entIdx].CD_iPlane_d[cdIdx];
+                    var d0 = v3_dot(this.pLastPos[i], scn.entities[entIdx].CD_iPlane_n[cdIdx]) - scn.entities[entIdx].CD_iPlane_d[cdIdx];
                     var d1 = v3_dot(v1, scn.entities[entIdx].CD_iPlane_n[cdIdx]) - scn.entities[entIdx].CD_iPlane_d[cdIdx];
                     if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) {
                         var t = -d0 / (d1 - d0);
-                        var newloc = v3_lerp_new(this.org[i], v1, t);
+                        var newloc = v3_lerp_new(this.pLastPos[i], v1, t);
                         colList.push( [entIdx, cdIdx, t, "vec", "iPlane", newloc] );
                     }                     
                 } // end for each sph data of each entities with iPlane CD
@@ -798,7 +798,7 @@ function shotgunAnimR() {
                 if (scn.entities[entIdx].CD_fPlane > 0) 
                 for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_fPlane; ++cdIdx) {
                     nHitTest++;
-                    var offsetV0 = v3_sub_new(this.org[i], scn.entities[entIdx].CD_fPlane_d[cdIdx]);
+                    var offsetV0 = v3_sub_new(this.pLastPos[i], scn.entities[entIdx].CD_fPlane_d[cdIdx]);
                     var offsetV1 = v3_sub_new(v1, scn.entities[entIdx].CD_fPlane_d[cdIdx]);
                     var d0 = v3_dot(offsetV0, scn.entities[entIdx].CD_fPlane_n[cdIdx]);
                     var d1 = v3_dot(offsetV1, scn.entities[entIdx].CD_fPlane_n[cdIdx]);
@@ -814,7 +814,7 @@ function shotgunAnimR() {
                 /*if (scn.entities[entIdx].CD_cube > 0) 
                 for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_cube; ++cdIdx) {
                     nHitTest++;
-                    var offsetV0 = v3_sub_new(this.org[i], scn.entities[entIdx].CD_cube_p[cdIdx]);
+                    var offsetV0 = v3_sub_new(this.pLastPos[i], scn.entities[entIdx].CD_cube_p[cdIdx]);
                     var offsetV1 = v3_sub_new(v1, scn.entities[entIdx].CD_cube_p[cdIdx]);
 
                     var d0 = v3_dot(offsetV0, scn.entities[entIdx].CD_cube_x[cdIdx]);
@@ -869,9 +869,9 @@ function shotgunAnimR() {
                     if (colList.length > 1) colList.sort((a, b) => { return a[2] - b[2]; } );
 
                     //deactive pellet, log, and do something...
-                    this.act[i] = false;
+                    this.pActive[i] = false;
                   //  log("Hit pellet: " +colList[0][3] + " ent[" + colList[0][0] + "] " + colList[0][4] + " CD[" + colList[0][1] +"]");
-                    var newloc = (colList[0][5]) ? colList[0][5] : v3_addscaled_new(this.org[i], this.vectNorm[i], colList[0][2]);
+                    var newloc = (colList[0][5]) ? colList[0][5] : v3_addscaled_new(this.pLastPos[i], this.vectNorm[i], colList[0][2]);
                     if (scn.entities[colList[0][0]].id.indexOf("sph") > -1) {
                         splode(newloc);
                     } else {
@@ -881,7 +881,7 @@ function shotgunAnimR() {
             }
 
             // update pellet origin
-            v3_addscaled_mod(this.org[i], this.vect[i], timer.delta);
+            v3_addscaled_mod(this.pLastPos[i], this.vect[i], timer.delta);
 
         } // end for each active pellet
     }

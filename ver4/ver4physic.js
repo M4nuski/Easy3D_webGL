@@ -643,10 +643,10 @@ function timerTick() {  // Game Loop
         newSph.rotation[0] = rndPM(PIx2);
         newSph.rotation[1] = rndPM(PIx2);
         animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
-             [rndPM(1), rndPM(1), rndPM(1) + ((inputs.checkCommand("action_speed", false)) ? -600 : -300)], _v3_null, true, 30, true));
+             [rndPM(1), rndPM(1), rndPM(1) + ((inputs.checkCommand("action_speed", false)) ? -600 : -300)], _v3_null, 1.0, 30, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
 
-        DEV_lastAnimData = { pos: v3_clone(newSph.position), spd: v3_clone(animations[animations.length-1].spd) }
+        DEV_lastAnimData = { pos: v3_clone(newSph.position), spd: v3_clone(animations[animations.length-1].pspd) }
 
     }
     if (inputs.checkCommand("action2", false)) {
@@ -659,7 +659,7 @@ function timerTick() {  // Game Loop
             newSph.rotation[0] = rndPM(PIx2);
             newSph.rotation[1] = rndPM(PIx2);
             animations.push(newBaseAnim(newSph,                
-                [rndPM(10), rndPM(10), rndPM(10)], _v3_null, true, 30, true));
+                [rndPM(10), rndPM(10), rndPM(10)], _v3_null, 1.0, 30, true));
             animations[animations.length-1].target.animIndex = animations.length-1;
         }
       }
@@ -688,7 +688,7 @@ function timerTick() {  // Game Loop
         if (DEV_lastAnimData != null) {
             let newSph = scn.cloneEntity("sph", "sph" + sphCounter++);
             newSph.moveTo(DEV_lastAnimData.pos);
-            animations.push(newBaseAnim(newSph, DEV_lastAnimData.spd, _v3_null, true, 30, true));
+            animations.push(newBaseAnim(newSph, DEV_lastAnimData.pspd, _v3_null, 1.0, 30, true));
             animations[animations.length-1].target.animIndex = animations.length-1;
         }
     }
@@ -702,17 +702,17 @@ function timerTick() {  // Game Loop
 
             let newSph = scn.cloneEntity("sph", "sphF" + sphCounter++);
             newSph.moveTo([400 + xdelta, 60, 75]);
-            animations.push(newBaseAnim(newSph, speed, _v3_null, false, 0.31, true ));
+            animations.push(newBaseAnim(newSph, speed, _v3_null, 0, 0.31, true ));
             animations[animations.length-1].target.animIndex = animations.length-1;
 
             newSph = scn.cloneEntity("sph", "sphF" + sphCounter++);
             newSph.moveTo([500 + xdelta, 60, 75]);
-            animations.push(newBaseAnim(newSph, speed, _v3_null, false, 0.31, true ));
+            animations.push(newBaseAnim(newSph, speed, _v3_null, 0, 0.31, true ));
             animations[animations.length-1].target.animIndex = animations.length-1;
 
             newSph = scn.cloneEntity("sph", "sphF" + sphCounter++);
             newSph.moveTo([600 + xdelta, 60, 75]);
-            animations.push(newBaseAnim(newSph, speed, _v3_null, false, 0.31, true ));
+            animations.push(newBaseAnim(newSph, speed, _v3_null, 0, 0.31, true ));
             animations[animations.length-1].target.animIndex = animations.length-1;
 
         }

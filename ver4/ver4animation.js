@@ -20,6 +20,7 @@
  */
 class E3D_animation {  // TODO merge with entity
     constructor(id, targetEntity, animFirstPass, collResolver_asSource = null, collResolver_asTarget = null, animLastPass =  null, group = 0) {
+
         this.id = id;
         
         this.animFirstPass = animFirstPass; //  calculate ideal next position
@@ -28,32 +29,30 @@ class E3D_animation {  // TODO merge with entity
         this.animLastPass = animLastPass; // commit final state after collision detections are completed or prep next pass
 
         this.target = targetEntity;
-
         this.group = group;
+        
+        this.ttl = 0; // -1 to disable
         this.state = E3D_RESET;
-
-        this.ttl = 0;
+        this.endState = E3D_DONE; // once ttl reached 0
 
         // Custom data
         this.last_position = v3_new();
-        this.delta_position = v3_new();
-        this.mainVector = v3_new();
-        this.spd = v3_new();
+        
+        // Tranforms
+        this.pspd = v3_new();
         this.rspd = v3_new();
-        this.endState = E3D_DONE;
-        this.vertOffset = v3_new();
-        this.vect = v3_new();
-        this.org = v3_new();
-        this.vectNorm = v3_new();
-        this.act = [];
-        this.nbPart = 10;
-        this.startObject = null;
-        this.startedYDelta = 0;
         this.gravity = 0.0;
 
-       // this.collidingNormal = v3_new();
+        // Particules
+        this.pNum = 10;
+        this.pActive = [];
+        this.pLastPos = [];
+        this.pPos = [];
+        this.pSpd = [];
+        this.pSpdLength = [];
+        this.pCD = false;
 
-        // For CD
+        // For Collision Detection
         this.delta = [0, 0, 0]; // Position delta
         this.deltaLength = -1; // length of this.delta during animation step for culling, -1 anim target is not a source
 
@@ -251,7 +250,7 @@ function newTransformAnim(entity, pos_speed, rot_speed, ttl = -1, CD = false, en
 
     var anim = new E3D_animation("", entity, anim_Transform_firstPass, null, null, endFunct, 0);
 
-    v3_copy(anim.spd, pos_speed);
+    v3_copy(anim.pspd, pos_speed);
     v3_copy(anim.rspd, rot_speed);
 
     anim.endState = endState;
@@ -272,7 +271,8 @@ function newBaseAnim(entity, pos_speed, rot_speed, gravity = 0, ttl = -1, CD = f
     var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
     var anim = new E3D_animation("", entity, anim_Base_firstPass, SrepassFunct, TrepassFunct, endFunct, 0);
 
-    v3_copy(anim.spd, pos_speed);
+    v3_copy(anim.pspd, pos_speed);
+    v3_copy(anim.rspd, rot_speed);
 
     anim.endState = endState;
     anim.ttl = ttl;
@@ -304,7 +304,8 @@ function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, grav
     v3_copy(anim.target.position, camera.position);
     v3_add_mod(anim.target.position, offset);
 
-    anim.spd = camera.adjustToCamera(pos_speed);
+    anim.pspd = camera.adjustToCamera(pos_speed);
+    anim.rspd = camera.adjustToCamera(rot_speed);
 
     anim.endState = endState;
     anim.ttl = ttl;
@@ -334,50 +335,49 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
     v3_copy(anim.target.position, camera.position);
     v3_add_mod(anim.target.position, offset);
 
-    anim.spd = camera.adjustToCamera(pos_speed); // also now this.mainVector
+    anim.pspd = camera.adjustToCamera(pos_speed);
+    anim.rspd = camera.adjustToCamera(rot_speed);
 
     anim.endState = endState;
     anim.ttl = ttl;
     anim.gravity = gravity;
+    anim.pCD = CD;
 
+    anim.pNum = nbPart;
+    anim.pActive = Array(nbPart);
+    anim.pLastPos = Array(nbPart);
+    anim.pPos = Array(nbPart);
+    anim.pSpd = Array(nbPart);
+    anim.pSpdLength = Array(nbPart);
 
-    anim.nbPart = nbPart;
-
-    anim.vertOffset = Array(nbPart); // vect noise for vertex
-    anim.vect = Array(nbPart); // mainVect + vect noise
-    anim.vectNorm = Array(nbPart); //opt normalized vect for CD
-    anim.org = Array(nbPart); // each pass org = org + vect, world coordinates
-    anim.act = Array(nbPart); // active
-
-    anim.target.setSize(anim.target.srcNumElements * anim.nbPart);
-
+    // clone elements to make the number of particules
+    anim.target.setSize(anim.target.srcNumElements * anim.pNum);
 
     // gen starting positions
-    for (let i = 0; i < anim.nbPart; ++i) {
+    for (let i = 0; i < anim.pNum; ++i) {
         //new pellet
         anim.target.copySource(anim.target.srcNumElements * i);
-        anim.act[i] = true; // TODO remove and replace by particule removal in collision resolver
-        anim.vertOffset[i] = camera.adjustToCamera(    ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new())  );
-        anim.org[i] = v3_new(anim.vertOffset[i]);
+        anim.pActive[i] = true;
+        anim.pLastPos[i] = ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new());
     }
-
+    
     // gen particules direction
-    for (let i = 0; i < anim.nbPart; ++i) {
+    for (let i = 0; i < anim.pNum; ++i) {
+        anim.pSpd[i] = camera.adjustToCamera( ((partDirFunc != null) ? partPosFunc(anim.pPos[i], i, nbPart) : v3_new()) );
+        anim.pSpdLength[i] = v3_length(anim.pSpd[i]);        
 
-        anim.vect[i] = camera.adjustToCamera(   ((partDirFunc != null) ? partPosFunc(anim.vertOffset[i], i, nbPart) : v3_new())  );
-        anim.vectNorm[i] = v3_normalize_new(anim.vect[i]);
+        anim.pLastPos[i] = camera.adjustToCamera(anim.pLastPos[i]);
+        anim.pPos[i] = v3_clone(anim.pLastPos[i]);
 
         //offset pelets vertex by new origin
         for (var j = 0; j < anim.target.srcNumElements; ++j ) {
             var idx = ( i * anim.target.srcNumElements) + j;
             var b = anim.target.getVertex3f(idx);
-            v3_add_mod(b, anim.vertOffset[i])
+            v3_add_mod(b, anim.pPos[i])
         }
 
-        if (CD) anim.target.pushCD_point(anim.org[i]);
+        if (CD) anim.target.pushCD_point(anim.pPos[i]);
     }
-
-
 
     anim.target.collisionDetection = CD;
     anim.state = E3D_PLAY;
@@ -399,16 +399,17 @@ function collisionResult_asSource_bounce(){
 
         nHits++;
         this.lastHitMarker = ""+this.closestCollision.marker;
-
-        if (this.closestCollision.t0 < 0.0) throw "collision behind initial position: " + this.closestCollision.marker + "@" + this.closestCollision.t0;
+// sort hit ascending
+// select closest
+        //if (this.closestCollision.t0 < 0.0) throw "collision behind initial position: " + this.closestCollision.marker + "@" + this.closestCollision.t0;
       
         v3_normalize_mod(this.closestCollision.n);
       
-        if (this.gravity) this.spd[1] += gAccel * this.gravity;
+        if (this.gravity) this.pspd[1] += gAccel * this.gravity;
                   
         if (v3_dot(this.closestCollision.n, this.delta) < 0.0) { // face to face
       
-            v3_reflect_mod(this.spd, this.closestCollision.n);       
+            v3_reflect_mod(this.pspd, this.closestCollision.n);       
             v3_copy(this.last_position, this.closestCollision.p0); // resset position as per firstHit
         
             var remainder = 1.0 - (Math.sqrt(this.closestCollision.t0) / this.deltaLength) ; // fraction remaining
@@ -416,27 +417,27 @@ function collisionResult_asSource_bounce(){
             if (remainder < 0.0) remainder = 0.0;
 
             var drag = 0.8;
-            v3_scale_mod(this.spd, drag); // hit speed "drag"
+            v3_scale_mod(this.pspd, drag); // hit speed "drag"
 
-            v3_scale_res(this.delta, this.spd, remainder * timer.delta * drag); // new delta
+            v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
             this.deltaLength = v3_length(this.delta);
             v3_add_res(this.target.position, this.last_position, this.delta); // new position        
         
             this.target.resetMatrix();
         } 
       
-        if (this.gravity) this.spd[1] -= gAccel * this.gravity;
+        if (this.gravity) this.pspd[1] -= gAccel * this.gravity;
 
     } else v3_copy(this.last_position, this.closestCollision.p0); // resset position as per firstHit
 }
 
 function collisionResult_asTarget_bounce(){
     v3_normalize_mod(this.otherCollision.n); // change direction on hit
-    v3_addscaled_mod(this.spd, this.otherCollision.n, -0.15 * v3_length(this.otherCollision.s)); 
+    v3_addscaled_mod(this.pspd, this.otherCollision.n, -0.15 * v3_length(this.otherCollision.s)); 
 
-    v3_scale_mod(this.spd, 0.8); // hit "drag"
+    v3_scale_mod(this.pspd, 0.8); // hit "drag"
 
-    v3_scale_res(this.delta, this.spd, timer.delta);            
+    v3_scale_res(this.delta, this.pspd, timer.delta);            
     this.deltaLength = v3_length(this.delta);
     if (this.deltaLength < _v3_epsilon) this.deltaLength = _v3_epsilon;
     v3_add_res(this.target.position, this.last_position, this.delta); 
@@ -446,10 +447,14 @@ function collisionResult_asTarget_bounce(){
 
 
 function collisionResult_asSource_mark(){
+    this.lastHitMarker = "";
     v3_normalize_mod(this.closestCollision.n);
     if (show_DEV_CD) { 
         phyTracers.addWireCross(this.closestCollision.p0, 2, _v3_green);
         phyTracers.addLineByPosNormLen(this.closestCollision.p0, this.closestCollision.n, 2, false, _v3_white);
+    }
+    if (this.closestCollision.source_desc == "Point") {
+        this.pActive[this.closestCollision.source_cdi] = false;
     }
 }
 
@@ -472,9 +477,9 @@ function anim_Base_firstPass(){
 
         v3_copy(this.last_position, this.target.position);
 
-        v3_scale_res(this.delta, this.spd, timer.delta);  
+        v3_scale_res(this.delta, this.pspd, timer.delta);  
 
-        if (this.gravity) this.spd[1] = this.spd[1] - gAccel;
+        if (this.gravity) this.pspd[1] = this.pspd[1] - (gAccel * this.gravity);
 
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
@@ -489,7 +494,7 @@ function anim_Transform_firstPass() {
 
         v3_copy(this.last_position, this.target.position);
 
-        v3_scale_res(this.delta, this.spd, timer.delta);  
+        v3_scale_res(this.delta, this.pspd, timer.delta);  
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
@@ -501,128 +506,50 @@ function anim_Transform_firstPass() {
 }
 
 function anim_Part_firstPass() {
+    if (this.state == E3D_PLAY) {
 
-    v3_copy(this.last_position, this.target.position);
+        // Transform
+        v3_copy(this.last_position, this.target.position);
+        v3_scale_res(this.delta, this.pspd, timer.delta);  
+        if (this.gravity) this.pspd[1] = this.pspd[1] - (gAccel * this.gravity);
+        v3_add_mod(this.target.position, this.delta);
+        this.deltaLength = v3_length(this.delta);
 
-    v3_scale_res(this.delta, this.spd, timer.delta);  
-
-    if (this.gravity) this.spd[1] = this.spd[1] - gAccel;
-
-    v3_add_mod(this.target.position, this.delta);
-    this.deltaLength = v3_length(this.delta);
-
-    // remove deactivated particules
-
-    // animate particules
-    for (let i = 0; i < this.nbPart; ++i) if (this.act[i]) { // i is pellet index
-
-        // translate pellet entity elements
-        for (var j = 0; j < this.target.srcNumElements; ++j ) {
-            var b = this.target.getVertex3f((i*this.target.srcNumElements) + j); // b is a view in float32array
-            v3_addscaled_mod(b, this.vertOffset[i], timer.delta);
+        // Remove deactivated particules
+        for (let i = this.pNum-1; i >= 0; --i) if (!this.pActive[i]) {
+            this.pNum--;
+            this.pActive.splice(i, 1);
+            this.pLastPos.splice(i, 1);
+            this.pPos.splice(i, 1);
+            this.pSpd.splice(i, 1);
+            this.pSpdLength.splice(i, 1);
+            if (this.pCD) {
+                this.target.CD_point--;
+                this.target.CD_point_p0.splice(i, 1);
+                this.target.CD_point_p.splice(i, 1);
+            }
         }
 
-        v3_copy(this.org[i], this.target.CD_point_p[i]);
-        v3_addscaled_mod(this.target.CD_point_p0[i], this.vertOffset[i], timer.delta);
+        // Animate particules
+        for (let i = 0; i < this.pNum; ++i) { 
+
+            v3_copy(this.pLastPos[i], this.pPos[i]);
+            v3_addscaled_mod(this.pPos[i], this.pSpd[i], timer.delta);
+
+            // translate pellet entity elements
+            for (var j = 0; j < this.target.srcNumElements; ++j ) {
+                var b = this.target.getVertex3f( ( i * this.target.srcNumElements ) + j); // b is a view in float32array
+                v3_addscaled_mod(b, this.pSpd[i], timer.delta);
+            }
+
+            if (this.pCD) v3_copy(this.target.CD_point_p0[i], this.pPos[i]); 
+        }
+
+        this.target.resetMatrix();
+        this.lastHitMarker = ""; 
     }
-
-    this.target.resetMatrix();
-    this.lastHitMarker = ""; 
-
-
-
 }
 
-
-
-// Re Passes
-/*
-function anim_Base_rePass(itr) {
-
-    if ((this.deltaLength > 0) && (this.collisionDetected)) {
-
-
-  //TODO replace by functions for source and target such as collisionResult_asSource_bounce
-
-
-            nHits++;
-            this.lastHitMarker = this.closestCollision[0];
-            // closestCollision = [marker, penetration, n, firstHit, "SphVect-plane", partIndex];
-            //                       0          1       2     3              4            5
-            if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this.closestCollision[1];
-
-            v3_normalize_mod(this.closestCollision[2]);
-
-            if (this.gravity) this.spd[1] += gAccel;
-            
-            if (v3_dot(this.closestCollision[2], this.delta) < 0.0) { // face to face
-
-                v3_reflect_mod(this.spd, this.closestCollision[2]); // reflect per hit normal          
-                v3_copy(this.last_position, this.closestCollision[3]); // resset position as per firstHit
-           
-                var remainder = 1.0 - (Math.sqrt(this.closestCollision[1]) / this.deltaLength) ; // fraction remaining
-                remainder = remainder - 0.2;
-                if (remainder < 0.0) remainder = 0.0;
-                // TODO if less than 0.0, inside hit before move, cancel speed and delta, add error offset to direction
-
-                var drag = 0.8;
-                v3_scale_mod(this.spd, drag); // hit speed "drag"
-                var spdl = v3_lengthsquared(this.spd);
-                hitPoints.set("spd len", spdl);
-
-                v3_scale_res(this.delta, this.spd, remainder * timer.delta * drag); // new delta
-                this.deltaLength = v3_length(this.delta);
-                v3_add_res(this.target.position, this.last_position, this.delta); // new positions 
-            
-           
-                this.target.resetMatrix();
-            } // end face to face
-
-            if (this.gravity) this.spd[1] -= gAccel;
-
-        } // end collisionDetected
-// if both, check and resolve first to happend
-        if (this.collisionFromOther) {
-
-            v3_normalize_mod(this.otherCollision[2]); // change direction on hit
-            v3_addscaled_mod(this.spd, this.otherCollision[2], -0.15 * v3_length(this.otherCollision[3])); 
-
-            v3_scale_mod(this.spd, 0.8); // hit "drag"
-
-            v3_scale_res(this.delta, this.spd, timer.delta);            
-            this.deltaLength = v3_length(this.delta);
-            if (this.deltaLength < _v3_epsilon) this.deltaLength = _v3_epsilon;
-            v3_add_res(this.target.position, this.last_position, this.delta); 
-
-            this.target.resetMatrix();
-        } // end collisionFromOther
-
-        this.collisionDetected = false;
-        this.collisionFromOther = false;
-}
-*/
-/*
-function anim_Part_rePass(itr) {
-
-    if ((this.deltaLength > 0) && (this.collisionDetected)) {
-
-        nHits++;
-        this.lastHitMarker = this.closestCollision[0];
-            // closestCollision = [marker, penetration, n, firstHit, "SphVect-plane"];
-            //                       0          1       2     3              4
-            if (this.closestCollision[1] < 0.0) throw "col behind initial position: " + this.closestCollision[1];
-      
-            phyTracers.addWireCross(this.closestCollision[3], 1, _v3_red); // resset position as per firstHit
-            // act[index] = false;
-
-
-        } // end collisionDetected
-
-
-        this.collisionDetected = false;
-        this.collisionFromOther = false;
-}
-*/
 
 
 // End pass basic functions
