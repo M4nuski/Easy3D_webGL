@@ -6,8 +6,6 @@
 
 
 
-
-
 /**
  * Animation class
  * 
@@ -56,11 +54,17 @@ class E3D_animation {  // TODO merge with entity
         this.delta = [0, 0, 0]; // Position delta
         this.deltaLength = -1; // length of this.delta during animation step for culling, -1 anim target is not a source
 
+        this.colNumStart = 3;
         this.collisionDetected = false;
-        this.closestCollision = new CDresult(); 
+        this.colNum = 0;
+        this.closestCollision = new Array(this.colNumStart);
+        for (var i = 0; i < this.colNumStart; ++i) this.closestCollision[i] = new CDresult(); 
 
         this.collisionFromOther = false;
-        this.otherCollision = new CDresult(); 
+        this.otherColNum = 0;
+        this.otherCollision = new Array(this.colNumStart);
+        for (var i = 0; i < this.colNumStart; ++i) this.otherCollision[i] = new CDresult(); 
+
 
         this.candidates = []; // for all other entities, bool to test for CD after culling pass
         this.lastHitMarker = ""; // marker of last hit target to ignore on next pass
@@ -120,46 +124,55 @@ class E3D_animation {  // TODO merge with entity
 
 
     resetCollisions() {             
-        this.closestCollision.reset();
-        this.otherCollision.reset();   
+        for (var i = 0; i < this.colNum; ++i) this.closestCollision[i].reset();
+        for (var i = 0; i < this.otherColNum; ++i) this.otherCollision[i].reset();
+
         this.collisionDetected = false;
         this.collisionFromOther = false;
+
+        this.colNum = 0;
+        this.otherColNum = 0;
     }
 
-    collisionSource(m, t, n, p, sDesc, tDesc, sei, scdi, tcdi) {
-        this.closestCollision.marker = m;
-        this.closestCollision.t0 = t;
-        v3_copy(this.closestCollision.n, n);
-        v3_copy(this.closestCollision.p0, p);
-
-        this.closestCollision.source_desc = sDesc;
-        this.closestCollision.target_desc = tDesc;
-        this.closestCollision.source_ei = sei;
-        this.closestCollision.source_cdi = scdi;
-        this.closestCollision.target_cdi = tcdi; 
-
+    pushCollisionSource(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi) {
+        if (this.colNum >= this.closestCollision.length) this.closestCollision.push(new CDresult());
+        
+        this.closestCollision[this.colNum].marker = ""+m;
+        this.closestCollision[this.colNum].t0 = t;
+        v3_copy(this.closestCollision[this.colNum].n, n);
+        v3_copy(this.closestCollision[this.colNum].p0, p);
+        
+        this.closestCollision[this.colNum].source_desc = sDesc;
+        this.closestCollision[this.colNum].source_cdi = scdi;
+        this.closestCollision[this.colNum].target_ei = tei;
+        this.closestCollision[this.colNum].target_desc = tDesc;
+        this.closestCollision[this.colNum].target_cdi = tcdi; 
+        
+        this.colNum++;
         this.collisionDetected = true;
     }
 
 
 
-    collisionTarget(m, t, n, p, sDesc, tDesc, sei, scdi, tcdi, s) {
-        if (t < this.otherCollision.t0) {            
-            this.otherCollision.marker = m;
-            this.otherCollision.t0 = t;
-            v3_copy(this.otherCollision.n, n);
-            v3_copy(this.otherCollision.p0, p);
-            
-            this.otherCollision.source_desc = sDesc;
-            this.otherCollision.target_desc = tDesc;
-            this.otherCollision.source_ei = sei;
-            this.otherCollision.source_cdi = scdi;
-            this.otherCollision.target_cdi = tcdi; 
-            
-            v3_copy(this.otherCollision.s, s);
+    pushCollisionTarget(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi, s) {
+        if (this.otherColNum >= this.otherCollision.length) this.otherCollision.push(new CDresult());
+       
+        this.otherCollision[this.otherColNum].marker = ""+m;
+        this.otherCollision[this.otherColNum].t0 = t;
+        v3_copy(this.otherCollision[this.otherColNum].n, n);
+        v3_copy(this.otherCollision[this.otherColNum].p0, p);
+        
+        this.otherCollision[this.otherColNum].source_desc = sDesc;
+        this.otherCollision[this.otherColNum].source_cdi = scdi;
+        this.otherCollision[this.otherColNum].target_ei = tei;
+        this.otherCollision[this.otherColNum].target_desc = tDesc;
+        this.otherCollision[this.otherColNum].target_cdi = tcdi; 
+        
+        v3_copy(this.otherCollision[this.otherColNum].s, s);
 
-            this.collisionFromOther = true;
-        } 
+        this.otherColNum++;
+        this.collisionFromOther = true;
+
     }
 
 
@@ -398,21 +411,36 @@ function collisionResult_asSource_bounce(){
     if (this.deltaLength > 0) {
 
         nHits++;
-        this.lastHitMarker = ""+this.closestCollision.marker;
-// sort hit ascending
-// select closest
-        //if (this.closestCollision.t0 < 0.0) throw "collision behind initial position: " + this.closestCollision.marker + "@" + this.closestCollision.t0;
-      
-        v3_normalize_mod(this.closestCollision.n);
-      
-        if (this.gravity) this.pspd[1] += gAccel * this.gravity;
-                  
-        if (v3_dot(this.closestCollision.n, this.delta) < 0.0) { // face to face
-      
-            v3_reflect_mod(this.pspd, this.closestCollision.n);       
-            v3_copy(this.last_position, this.closestCollision.p0); // resset position as per firstHit
+        var firstCol = this.closestCollision[0];
+        if (this.colNum > 1) {
+            var firstColt0 = this.closestCollision[0].t0;
+            for (var i = 1; i < this.colNum; ++i) if (this.closestCollision[i].t0 < firstColt0) {
+                firstColt0 = this.closestCollision[i].t0;
+                firstCol = this.closestCollision[i]; 
+            }
+        }
+
+        this.lastHitMarker = ""+firstCol.marker;
+
+        /*if (show_DEV_CD) { 
+            phyTracers.addWireCross(this.last_position, 1, _v3_red);
+            phyTracers.addWireCross(firstCol.p0, 1, _v3_green);
+            phyTracers.addWireCross(this.target.position, 1, _v3_blue);
+        }*/
         
-            var remainder = 1.0 - (Math.sqrt(this.closestCollision.t0) / this.deltaLength) ; // fraction remaining
+        
+        if (firstCol.t0 < 0.0) throw "collision behind initial position: " + firstCol.marker + "@" + firstCol.t0;
+        
+        v3_normalize_mod(firstCol.n);
+        
+        if (this.gravity) this.pspd[1] += (gAccel * this.gravity);
+        
+        if (v3_dot(firstCol.n, this.delta) < 0.0) { // face to face
+            
+            v3_reflect_mod(this.pspd, firstCol.n);
+            v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit
+            
+            var remainder = 1.0 - firstCol.t0; // remaining fraction
             remainder = remainder - 0.2;
             if (remainder < 0.0) remainder = 0.0;
 
@@ -424,16 +452,25 @@ function collisionResult_asSource_bounce(){
             v3_add_res(this.target.position, this.last_position, this.delta); // new position        
         
             this.target.resetMatrix();
-        } 
+        }  //else v3_copy(this.target.position, firstCol.p0);
       
-        if (this.gravity) this.pspd[1] -= gAccel * this.gravity;
+        if (this.gravity) this.pspd[1] -= (gAccel * this.gravity);
 
-    } else v3_copy(this.last_position, this.closestCollision.p0); // resset position as per firstHit
+    } //else v3_copy(this.last_position, firstCol.p0); // resset position as per firstHit
 }
 
 function collisionResult_asTarget_bounce(){
-    v3_normalize_mod(this.otherCollision.n); // change direction on hit
-    v3_addscaled_mod(this.pspd, this.otherCollision.n, -0.15 * v3_length(this.otherCollision.s)); 
+    var firstCol = this.otherCollision[0];
+    if (this.otherColNum > 1) {
+        var firstColt0 = this.otherCollision[0].t0;
+        for (var i = 1; i < this.otherColNum; ++i) if (this.otherCollision[i].t0 < firstColt0) {
+            firstColt0 = this.otherCollision[i].t0;
+            firstCol = this.otherCollision[i]; 
+        }
+    }
+
+    v3_normalize_mod(firstCol.n); // change direction on hit
+    v3_addscaled_mod(this.pspd, firstCol.n, -0.15 * v3_length(firstCol.s)); 
 
     v3_scale_mod(this.pspd, 0.8); // hit "drag"
 
@@ -448,21 +485,25 @@ function collisionResult_asTarget_bounce(){
 
 function collisionResult_asSource_mark(){
     this.lastHitMarker = "";
-    v3_normalize_mod(this.closestCollision.n);
-    if (show_DEV_CD) { 
-        phyTracers.addWireCross(this.closestCollision.p0, 2, _v3_green);
-        phyTracers.addLineByPosNormLen(this.closestCollision.p0, this.closestCollision.n, 2, false, _v3_white);
-    }
-    if (this.closestCollision.source_desc == "Point") {
-        this.pActive[this.closestCollision.source_cdi] = false;
+    for (var i = 0; i < this.colNum; ++i) {
+        v3_normalize_mod(this.closestCollision[i].n);
+        if (show_DEV_CD) { 
+            phyTracers.addWireCross(this.closestCollision[i].p0, 2, _v3_green);
+            phyTracers.addLineByPosNormLen(this.closestCollision[i].p0, this.closestCollision[i].n, 2, false, _v3_white);
+        }
+        if (this.closestCollision[i].source_desc == "Point") {
+            this.pActive[this.closestCollision[i].source_cdi] = false;
+        }
     }
 }
 
 function collisionResult_asTarget_mark(){
-    v3_normalize_mod(this.collisionFromOther.n);
-    if (show_DEV_CD) { 
-        phyTracers.addWireCross(this.collisionFromOther.p0, 2, _v3_red);
-        phyTracers.addLineByPosNormLen(this.collisionFromOther.p0, this.collisionFromOther.n, 2, false, _v3_white);
+    for (var i = 0; i < this.otherColNum; ++i) {
+        v3_normalize_mod(this.collisionFromOther[i].n);
+        if (show_DEV_CD) { 
+            phyTracers.addWireCross(this.collisionFromOther[i].p0, 2, _v3_red);
+            phyTracers.addLineByPosNormLen(this.collisionFromOther[i].p0, this.collisionFromOther[i].n, 2, false, _v3_white);
+        }
     }
 }
 
@@ -479,7 +520,7 @@ function anim_Base_firstPass(){
 
         v3_scale_res(this.delta, this.pspd, timer.delta);  
 
-        if (this.gravity) this.pspd[1] = this.pspd[1] - (gAccel * this.gravity);
+        if (this.gravity) this.pspd[1] -= (gAccel * this.gravity);
 
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
@@ -511,7 +552,7 @@ function anim_Part_firstPass() {
         // Transform
         v3_copy(this.last_position, this.target.position);
         v3_scale_res(this.delta, this.pspd, timer.delta);  
-        if (this.gravity) this.pspd[1] = this.pspd[1] - (gAccel * this.gravity);
+        if (this.gravity) this.pspd[1] -= (gAccel * this.gravity);
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
@@ -523,11 +564,21 @@ function anim_Part_firstPass() {
             this.pPos.splice(i, 1);
             this.pSpd.splice(i, 1);
             this.pSpdLength.splice(i, 1);
+
+            for (var k = i+1; k < this.pNum; ++k) { // bubble up the remeaining vertex
+                for (var j = 0; j < this.target.srcNumElements; ++j ) {
+                    var nextIndex = ( k * this.target.srcNumElements) + j;
+                    var prevIndex = ( (k-1) * this.target.srcNumElements) + j;
+                    this.target.setVertex3f(prevIndex, this.target.getVertex3f(nextIndex));
+                }
+            }
+            this.target.numElements -= this.target.srcNumElements;
             if (this.pCD) {
                 this.target.CD_point--;
                 this.target.CD_point_p0.splice(i, 1);
                 this.target.CD_point_p.splice(i, 1);
             }
+
         }
 
         // Animate particules

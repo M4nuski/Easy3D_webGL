@@ -360,7 +360,7 @@ function timerTick() {  // Game Loop
         newPyra.moveTo([10, -10, 0]); // originate from bottom right corner of view
 
         animations.push(newParticuleAnim_RelativeToCamera(newPyra, scn.camera,
-            [rndPM(2), rndPM(2), -500 - rndPM(2) ], _v3_null, 10, 
+            [rndPM(2), rndPM(2), -50 - rndPM(2) ], _v3_null, 10, 
             shotgunPartPos, shotgunPartDir, 0.2, 2.0, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
         newPyra.visible = true;

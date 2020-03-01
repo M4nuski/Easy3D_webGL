@@ -23,11 +23,11 @@ function log(text, silent = true) {
     } catch (e) {
         // timer was not yet defined
         ts = "=";
+        console.log("E3D[" + ts + "] " + text);
     } 
-    console.log("E3D[" + ts + "] " + text);
     if (!silent) {
         if (logElement == null) logElement = document.getElementById("logDiv");        
-        if (logElement == null) {
+        if (logElement != null) {
             logElement.innerHTML += "[" + ts + "] " + text + "<br />";
             logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
         } else {
@@ -67,7 +67,7 @@ const _zFar = 1024.0;
 
 var animations = [];
 var testSph, targetEdge, targetEdge2, testPlanes, dev_CD, DEV_markers, DEV_wand, DEV_axis, DEV_boxPlanes, DEV_boxBox, DEV_boxDiscrete; // entities
-
+var DEV_anim_step = false;
 var moveTarget = "p";
 
 var DEV_anim_active = true;
@@ -193,6 +193,8 @@ function initEngine() {
     inputs.keyMap.set("action_anim_clear", "Digit0");
     inputs.keyMap.set("action_CD_clear", "Digit9");
     inputs.keyMap.set("action_anim_replay", "KeyR");
+    inputs.keyMap.set("action_anim_step", "KeyT");
+    inputs.keyMap.set("rx_dec", E3D_INP_DISABLED);
 
     inputs.keyMap.set("action_speed", "ShiftLeft");
 
@@ -545,6 +547,12 @@ if (DEV_axis.visible) {
     if (DEV_anim_active) {
         cleanupDoneAnimations(animations, scn);
         nbCDpasses = collisionDetectionAnimator(animations, scn, 10);
+    } else if (DEV_anim_step) {
+        timer.delta = 0.050;
+        timer.gAccel = E3D_G * 0.050;
+        cleanupDoneAnimations(animations, scn);
+        nbCDpasses = collisionDetectionAnimator(animations, scn, 10);
+        DEV_anim_step = false;
     }
 
 
@@ -678,6 +686,8 @@ function timerTick() {  // Game Loop
 
     if (inputs.checkCommand("action_CD_clear", true)) { phyTracers.clear(); }
 
+    if (inputs.checkCommand("action_anim_step", true)) { DEV_anim_step = true; }
+
     if (inputs.checkCommand("action_anim_clear", true)) {
         for (let i = animations.length -1; i >=0; --i) {
             scn.removeEntity(animations[i].target.id, false);
@@ -688,7 +698,7 @@ function timerTick() {  // Game Loop
         if (DEV_lastAnimData != null) {
             let newSph = scn.cloneEntity("sph", "sph" + sphCounter++);
             newSph.moveTo(DEV_lastAnimData.pos);
-            animations.push(newBaseAnim(newSph, DEV_lastAnimData.pspd, _v3_null, 1.0, 30, true));
+            animations.push(newBaseAnim(newSph, DEV_lastAnimData.spd, _v3_null, 1.0, 30, true));
             animations[animations.length-1].target.animIndex = animations.length-1;
         }
     }
