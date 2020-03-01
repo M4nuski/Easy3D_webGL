@@ -30,7 +30,7 @@ class CDresult {
     }
 }
 
-
+/*
 hitPoints.set("CUBE_6P_nt", 0); // num tests
 hitPoints.set("CUBE_6P_nh", 0); // num hits
 hitPoints.set("CUBE_6P_tt", 0); // total time
@@ -52,7 +52,7 @@ hitPoints.set("CUBE_DS_ht", 0); // hit time
 hitPoints.set("CUBE_DS_att", 0); // avg time per test
 hitPoints.set("CUBE_DS_ath", 0); // avg time per hit
 
-
+*/
 
 
 var DEV_cube_6P_target;
@@ -82,7 +82,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
     let sourceSph_r = self.target.CD_sph_r[sphIndex];
     v3_sub_res(sourceSph_p0, sourceSph_p, self.delta);
     v3_invscale_res(sourceSph_n, self.delta, self.deltaLength); // TODO preserve actual last positions, or effective delta, (rot)    
-
+    if (show_DEV_CD) {
+        dev_Hits.addWireSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
+        dev_Hits.addWireSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
+    }
     var _tempCDRes_t0  = Infinity;
     var _tempCDRes_n   = [0.0, 0.0, 0.0];
     var _tempCDRes_p0  = [0.0, 0.0, 0.0];
@@ -172,7 +175,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                         if (show_DEV_CD) {              
                         //    phyTracers.addLine(firstHit, posOffset, false, [0,1,1]);            
-                            phyTracers.addWireSphere(firstHit, 1.9 * sourceSph_r, [1,0.5,0.5], 8, false, 3);
+                      //      phyTracers.addWireSphere(firstHit, 1.9 * sourceSph_r, [1,0.5,0.5], 8, false, 3);
                         }      
 
                     if ( t0 < _tempCDRes_t0 ) {                                
@@ -180,8 +183,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         v3_sub_res(hitNormal, firstHit, posOffset);   
                         
                         if (show_DEV_CD) {              
-                            //    phyTracers.addLine(firstHit, posOffset, false, [0,1,1]);            
-                                phyTracers.addWireSphere(firstHit, 2.0 * sourceSph_r, [0.5,1.0,0.5], 8, false, 3);
+                            //    phyTracers.addLine(firstHit, posOffset, false, [0,1,1]);        
+                            //   dev_Hits.addWireSphere(sourceSph_p0, 1.8 * sourceSph_r, [0.5,0.5,1.0], 8, false, 3);
+                            //   dev_Hits.addWireSphere(sourceSph_p, 1.8 * sourceSph_r, [0.5,1.0,0.5], 8, false, 3);    
+                                dev_Hits.addWireSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
                             }   
 
                         _tempCDRes_marker = ""+marker;
@@ -1364,6 +1369,9 @@ var _capsuleEdgeIntersect_p2 = [0.0, 0.0, 0.0];
 var _capsuleEdgeIntersect_originDelta = [0.0, 0.0, 0.0];
 var _capsuleEdgeIntersect_capsuleEnd = [0.0, 0.0, 0.0];
 function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOrigin, edgeNormal, edgeLength) {
+    hitPoints.set("edge type closest", 0);
+    hitPoints.set("edge type endcap", 0);
+
     var distsq;
     var capRadiusSq = capRadius * capRadius;
     // closest points between paths, v1t is t along delta, v2t is t along edge (0.0 - 1.0), -1 is behind
@@ -1373,7 +1381,7 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
     var [v1t, v2t] = vector_vector_t(capOrigin, _capsuleEdgeIntersect_capsuleVector, edgeOrigin, _capsuleEdgeIntersect_edgeVector);
 
     // check if closest points are within both vectors
-    var potentialHit = ( (v1t > 0.0) && (v1t <= 1.0) && (v2t >= 0.0) && (v2t <= 1.0) );
+    var potentialHit = ( (v1t >= 0.0) && (v1t <= 1.0) && (v2t >= 0.0) && (v2t <= 1.0) );
 
     if (potentialHit) {
         if (DEV_inbox && show_DEV_CD) log("check potential");
@@ -1382,6 +1390,8 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
         distsq = v3_distancesquared(_capsuleEdgeIntersect_p1, _capsuleEdgeIntersect_p2);
         potentialHit = distsq <= capRadiusSq;
         if (show_DEV_CD && potentialHit) log("closest");
+        hitPoints.set("edge closest dis",  Math.sqrt(distsq));
+        hitPoints.set("edge type closest", 1);
     } //else {
     // not "else", recheck potentialHit as it can be invalidated in previous block
     if (!potentialHit) { // end cap as the sphere at the end of the vector
@@ -1393,8 +1403,8 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
 
         if (endCap != false) {
             var [st0, stca, st1] = endCap;    
-            var st0_inside = (st0 >= 0.0) && (st0 <= 1.0);
-            var st1_inside = (st1 >= 0.0) && (st1 <= 1.0);
+            var st0_inside = (st0 >= 0.0) && (st0 <= edgeLength);
+            var st1_inside = (st1 >= 0.0) && (st1 <= edgeLength);
 
             if (st0_inside && st1_inside) { // check closest point
                 v3_addscaled_res(_capsuleEdgeIntersect_p1, edgeOrigin, edgeNormal, st0);
@@ -1412,15 +1422,18 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
             }
 
             if (potentialHit) {
+                hitPoints.set("edge type endcap", 1);
                 if (show_DEV_CD) log("endcap hit");
                 v1t = 1.0; // end cap hit
                 distsq = v3_distancesquared(_capsuleEdgeIntersect_capsuleEnd, _capsuleEdgeIntersect_p1);
+                hitPoints.set("edge endcap dis",  Math.sqrt(distsq));
                 if (Math.abs(distsq - capRadiusSq) > _v3_epsilon) { // last sanity check
                     log("failed, distsq " + distsq + " >  sph rs" + capRadiusSq);
                     throw "Edge check failed as end cap";
                 }
             } else {
                 if (DEV_inbox && show_DEV_CD) log("endcap miss");
+                hitPoints.set("edge type", "miss");
             }
 
             if (show_DEV_CD) { 
@@ -1433,15 +1446,15 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
 
     if (potentialHit) {
 
-        var penetration = capRadius - Math.sqrt(distsq);
+        var penetration = Math.sqrt((capRadius * capRadius) - distsq);
         var vcos = v3_dot(capNormal, edgeNormal); // adjust for "slope"
 
-        penetration = penetration / Math.abs(1.0 - (vcos * vcos));// as path length
+        penetration = penetration / Math.sqrt(1.0 - (vcos * vcos));// as path length
 
         v1t = v1t - (penetration / capLength); // as path t
-        if (v1t <= 0.0) v1t = _v3_epsilon;
-        hitPoints.set("edge vcos", vcos);
-
+        if (v1t == 0.0) v1t = _v3_epsilon;
+        hitPoints.set("edge vcos",  vcos);
+        hitPoints.set("edge vsin",  Math.sqrt(1.0 - (vcos * vcos)));
         return v1t;
     } else return false;
 }

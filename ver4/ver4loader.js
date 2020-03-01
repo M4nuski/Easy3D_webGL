@@ -79,7 +79,7 @@ class E3D_loader {
             entity.numStrokeElements = strokeList.length;
             entity.drawStrokes = true;
         }
-        console.log((strokeList.length / 2) + " strokes");  
+        log((strokeList.length / 2) + " strokes");  
     }
 
 
@@ -105,7 +105,7 @@ class E3D_loader {
             v3_normalize_mod(newNormal);
             entity.pushCD_triangle(newNormal, v1, v2, v3);
         }
-        console.log(entity.CD_triangle + " CD triangles");
+        log(entity.CD_triangle + " CD triangles");
 
         if (!this.edgesDone) this.genEdges();
 
@@ -121,7 +121,7 @@ class E3D_loader {
             if (v3_dot(centroid1, this.edges[i].normal2) < -0.001) entity.pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
         }
 
-        console.log(entity.CD_edge + " CD edges");
+        log(entity.CD_edge + " CD edges");
         entity.collisionDetection = true;
     }
 
@@ -145,7 +145,7 @@ class E3D_loader {
  */
     loadModel_RAW(dataSourcePath, rawModelData, color = _v3_white, scale = _v3_unit) {  
 
-        console.log("Parsing RAW data (Milkshape3D)");
+        log("Parsing RAW data (Milkshape3D)");
 
         this.reset();
 
@@ -227,9 +227,9 @@ class E3D_loader {
             this.normals.push(newNormal[2]); 
         }
 
-        console.log("Loaded " + this.numFloats + " float locations");
-        console.log((this.numFloats / 3) + " vertices");
-        console.log((this.numFloats / 9) + " triangles"); 
+        log("Loaded " + this.numFloats + " float locations");
+        log((this.numFloats / 3) + " vertices");
+        log((this.numFloats / 9) + " triangles"); 
     }
 
    
@@ -243,7 +243,7 @@ class E3D_loader {
  */
     loadModel_STL(dataSourcePath, rawModelData, color = _v3_white, scale = _v3_unit) {
 
-        console.log("Loading STL data");
+        log("Loading STL data");
 
         this.reset();
 
@@ -265,8 +265,8 @@ class E3D_loader {
         let header = "";
         for (var i = 0; i < 80; ++i) header += String.fromCharCode(mData.getUint8(i));
 
-        console.log("Header " + header);
-        console.log("num triangles 0x" + NumTriangle.toString(16) + " dec " + NumTriangle);
+        log("Header " + header);
+        log("num triangles 0x" + NumTriangle.toString(16) + " dec " + NumTriangle);
 
         let idx = 0;
         if (NumTriangle > 0) for (let i = 0 ; i < NumTriangle; ++i) {
@@ -344,7 +344,7 @@ class E3D_loader {
 
         }
 
-        console.log(NumTriangle + " triangles"); 
+        log(NumTriangle + " triangles"); 
     }
 
 
@@ -381,7 +381,7 @@ class E3D_loader {
         }
 
         this.uniquesDone = true;
-        console.log("unique Vert: " + this.uniques.length);
+        log("unique Vert: " + this.uniques.length);
     }
 
 
@@ -518,7 +518,7 @@ class E3D_loader {
 
 
         this.edgesDone = true;
-        console.log("edges: " + this.edges.length);
+        log("edges: " + this.edges.length);
     }
 
     

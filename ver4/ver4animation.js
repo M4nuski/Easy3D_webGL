@@ -40,6 +40,7 @@ class E3D_animation {  // TODO merge with entity
         this.pspd = v3_new();
         this.rspd = v3_new();
         this.gravity = 0.0;
+        this.frameG = 0.0;
 
         // Particules
         this.pNum = 10;
@@ -433,7 +434,7 @@ function collisionResult_asSource_bounce(){
         
         v3_normalize_mod(firstCol.n);
         
-        if (this.gravity) this.pspd[1] += (gAccel * this.gravity);
+        this.pspd[1] += this.frameG;
         
         if (v3_dot(firstCol.n, this.delta) < 0.0) { // face to face
             
@@ -454,7 +455,7 @@ function collisionResult_asSource_bounce(){
             this.target.resetMatrix();
         }  //else v3_copy(this.target.position, firstCol.p0);
       
-        if (this.gravity) this.pspd[1] -= (gAccel * this.gravity);
+        this.pspd[1] -= this.frameG;
 
     } //else v3_copy(this.last_position, firstCol.p0); // resset position as per firstHit
 }
@@ -517,10 +518,10 @@ function anim_Base_firstPass(){
     if (this.state == E3D_PLAY) {
 
         v3_copy(this.last_position, this.target.position);
-
         v3_scale_res(this.delta, this.pspd, timer.delta);  
 
-        if (this.gravity) this.pspd[1] -= (gAccel * this.gravity);
+        this.frameG = gAccel * this.gravity;
+        this.pspd[1] -= this.frameG;
 
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
@@ -552,7 +553,10 @@ function anim_Part_firstPass() {
         // Transform
         v3_copy(this.last_position, this.target.position);
         v3_scale_res(this.delta, this.pspd, timer.delta);  
-        if (this.gravity) this.pspd[1] -= (gAccel * this.gravity);
+
+        this.frameG = gAccel * this.gravity;
+        this.pspd[1] -= this.frameG;
+        
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
 

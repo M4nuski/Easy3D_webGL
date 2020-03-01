@@ -10,30 +10,22 @@ var nHitTest = 0;
 var nHits = 0;
 
 var show_DEV_CD = false;
-var phyTracers;
+var phyTracers, dev_CD, dev_Hits;
 var gAccel = 0;
-var timer = { delta : 0, start : 0 }; // dummy timer 
+var timer = { delta : 0, start : Date.now() }; // dummy timer 
 
 var logElement = null;
 
 function log(text, silent = true) {
-    let ts = 0;
-    try {
-        ts = Date.now() - timer.start;
-    } catch (e) {
-        // timer was not yet defined
-        ts = "=";
-        console.log("E3D[" + ts + "] " + text);
-    } 
+    let ts = Date.now() - timer.start;
     if (!silent) {
         if (logElement == null) logElement = document.getElementById("logDiv");        
         if (logElement != null) {
             logElement.innerHTML += "[" + ts + "] " + text + "<br />";
             logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
-        } else {
-            console.log("[" + ts + "] " + text);
-        }
+        } 
     }
+    console.log("[" + ts + "] " + text);
 }
 
 
@@ -66,7 +58,7 @@ const _zFar = 1024.0;
 
 
 var animations = [];
-var testSph, targetEdge, targetEdge2, testPlanes, dev_CD, DEV_markers, DEV_wand, DEV_axis, DEV_boxPlanes, DEV_boxBox, DEV_boxDiscrete; // entities
+var testSph, targetEdge, targetEdge2, targetEdge3, testPlanes, DEV_markers, DEV_wand, DEV_axis, DEV_boxPlanes, DEV_boxBox, DEV_boxDiscrete; // entities
 var DEV_anim_step = false;
 var moveTarget = "p";
 
@@ -218,8 +210,8 @@ function initEngine() {
 
     testPlanes = new E3D_entity_wireframe_canvas("planes");
     testPlanes.addPlane([0, -50, 0], [PIdiv2, 0, 0], 2048, 2048, 64, [1,1,0], true);
-    testPlanes.addPlane([150, -0, 0], [PIdiv2, 0.25, 0.5], 1024, 512, 64, [1,0,1], true);
-    testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
+   // testPlanes.addPlane([150, -0, 0], [PIdiv2, 0.25, 0.5], 1024, 512, 64, [1,0,1], true);
+    //testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
     //testPlanes.addWireCube([0, 100, 100], [0,0,0], [50, 50, 50], [1, 0.8, 0.8], true, false, true);
 
     testPlanes.visible = true;
@@ -237,17 +229,13 @@ function initEngine() {
     DEV_boxPlanes.visible = true;
     DEV_cube_6P_target = scn.addEntity(DEV_boxPlanes);
 
+
     DEV_boxBox = new E3D_entity_wireframe_canvas("DEV_boxBox");
     DEV_boxBox.position = [500, 50, 0];
     DEV_boxBox.addWireCube([0, 0, 0], [0, 0, 0], [50, 50, 50], [0, 1, 0], true, false, true);
-    
- /*   DEV_boxBox.pushCD_edge([-25, -25, -25], [0, 1, 0], 50); // bottom
-    DEV_boxBox.pushCD_edge([-25, -25,  25], [0, 1, 0], 50);
-    DEV_boxBox.pushCD_edge([ 25, -25, -25], [0, 1, 0], 50);
-    DEV_boxBox.pushCD_edge([ 25, -25,  25], [0, 1, 0], 50);*/
-
     DEV_boxBox.visible = true;
     DEV_cube_BX_target = scn.addEntity(DEV_boxBox);
+
 
     DEV_boxDiscrete = new E3D_entity_wireframe_canvas("DEV_boxDiscrete");
     DEV_boxDiscrete.position = [600, 50, 0];
@@ -283,6 +271,7 @@ function initEngine() {
     DEV_boxDiscrete.visible = true;
     DEV_cube_DS_target = scn.addEntity(DEV_boxDiscrete);
 
+
     targetEdge = new E3D_entity_wireframe_canvas("edgeHitTest");
     targetEdge.position = [25, 25, 25];
     targetEdge.addCylinder([0, 0, 0], 20, 100, [1, 0, 0], 32, 4, 10, false);
@@ -300,25 +289,28 @@ function initEngine() {
     targetEdge2.vis_culling = false;
     scn.addEntity(targetEdge2);
 
+
     DEV_wand = new E3D_entity_wireframe_canvas("wand");
-    DEV_wand.position = [0, 50, 200];
-    //DEV_wand.addLine([0, 0, 25], [0, 0, -25], false, [1, 1, 1]);
-   // DEV_wand.addWireSphere([0,0, -25], 10, [1, 1 ,0], 32, false, 8);
+    DEV_wand.position = [0, 50, 100];
+    DEV_wand.addLine([0, 0, 0], [0, 25, 0], false, [1, 1, 1]);
+    DEV_wand.pushCD_edge([0, 0, 0], [0, 1, 0], 25);
+    DEV_wand.addCylinder([0, 0, 0], 8, 25, [0.6, 0.6, 0.6], 32, 4, 10, false);
+    DEV_wand.addWireSphere([0, 0, 0], 8, [0, 0 ,1], 32, true, 8);
+    DEV_wand.addWireSphere([0, 25, 0], 8, [0, 1 ,0], 32, true, 8);
    // DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
-    DEV_wand.addTriangle([0, 20, 80], [-30, 20, 150], [30, 20, 150], [1, 1, 1], true);
+   // DEV_wand.addTriangle([0, 20, 80], [-30, 20, 150], [30, 20, 150], [1, 1, 1], true);
     DEV_wand.visible = true;
     scn.addEntity(DEV_wand);
 
 
-    /*cubes = new E3D_entity_wireframe_canvas("cubesTest");
-    cubes.position = [0, 50, -50];
-    cubes.addWireCube([0, -50, 0], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
-    cubes.addWireCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
-    cubes.addWireCube([0, 0, 0], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
-    cubes.addWireCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
-    cubes.visible = true;
-    //cubes.cull_dist2 = 4200;
-    scn.addEntity(cubes);*/
+    targetEdge3 = new E3D_entity_wireframe_canvas("edge3HitTest");
+    targetEdge3.position = [0, 50, 125];
+    targetEdge3.addCylinder([0, 0, 0], 1, 150, [0, 1, 0], 8, 2, 5, false);
+    targetEdge3.pushCD_edge([0, 0, 0], [0, 1, 0], 150);
+    targetEdge3.visible = true;
+    targetEdge3.vis_culling = false;
+    scn.addEntity(targetEdge3);
+
 
     DEV_markers = new E3D_entity_wireframe_canvas("CD_hits_markers");
     DEV_markers.addWireSphere([0,0,0], 1, [1,1,1], 8, false);
@@ -326,16 +318,24 @@ function initEngine() {
     DEV_markers.vis_culling = false;
     scn.addEntity(DEV_markers);
 
+
     phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces", 1024*32);
     phyTracers.visible = true;
     phyTracers.vis_culling = false;
     scn.addEntity(phyTracers);
 
 
+    dev_Hits = new E3D_entity_wireframe_canvas("PHY_hits");
+    dev_Hits.visible = true;
+    dev_Hits.vis_culling = false;
+    scn.addEntity(dev_Hits);
+
+
     dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
     dev_CD.visible = false;
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
+
 
     //resMngr.addRessource("../Models/PYRA.raw", "Map", "Model");
     resMngr.addRessource("../Models/M1.raw", "Map", "Model");
@@ -387,8 +387,10 @@ function onRessource(name, msg) {
 var _parentView = { normalMatrix : m4_new() };
 function prepRender() {
 
-    if (show_DEV_CD) dev_CD.clear();
-
+    if (show_DEV_CD) {
+        dev_CD.clear();
+        if (DEV_anim_active || DEV_anim_step) dev_Hits.clear();
+    }
     // Move per inputs
     switch (moveTarget) {
         case 'e': // edge2        
@@ -540,6 +542,37 @@ if (DEV_axis.visible) {
     v3_addscaled_res(so, cylEdgeOffset, edgeAxis, edgeLen);
     hitPoints.set("w0_edg dot", v3_dot(cylAxis, so)); // is end within cyl length
     
+
+
+
+    var sph_p0 = DEV_wand.CD_sph_p[0];
+    var sph_p = DEV_wand.CD_sph_p[1];
+    var sph_r = 4;
+    var sph_n = v3_sub_new(sph_p, sph_p0);
+    var sph_l = v3_length(sph_n);
+    v3_invscale_mod(sph_n, sph_l);
+
+    var edge_p = targetEdge3.CD_edge_p[0];
+    var edge_n = targetEdge3.CD_edge_n[0];
+    var edge_l = targetEdge3.CD_edge_l[0];
+
+    var hitRes = capsuleEdgeIntersect(sph_r, sph_p0, sph_n, sph_l, edge_p, edge_n, edge_l);
+
+    if (hitRes != false) {
+        var firstHit = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
+        DEV_markers.addWireSphere(firstHit, sph_r * 2, _v3_red, 16, false, 8);
+    }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
