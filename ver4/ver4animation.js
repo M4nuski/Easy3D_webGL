@@ -421,7 +421,7 @@ function collisionResult_asSource_bounce(){
             }
         }
 
-        this.lastHitMarker = ""+firstCol.marker;
+        this.lastHitMarker = ""+firstCol.marker;        
 
         /*if (show_DEV_CD) { 
             phyTracers.addWireCross(this.last_position, 1, _v3_red);
@@ -432,6 +432,7 @@ function collisionResult_asSource_bounce(){
         
         if (firstCol.t0 < 0.0) throw "collision behind initial position: " + firstCol.marker + "@" + firstCol.t0;
         
+        firstCol.t0 = Math.sqrt(Math.abs(firstCol.t0));
         v3_normalize_mod(firstCol.n);
         
         this.pspd[1] += this.frameG;
@@ -470,6 +471,7 @@ function collisionResult_asTarget_bounce(){
         }
     }
 
+    firstCol.t0 = Math.sqrt(Math.abs(firstCol.t0));
     v3_normalize_mod(firstCol.n); // change direction on hit
     v3_addscaled_mod(this.pspd, firstCol.n, -0.15 * v3_length(firstCol.s)); 
 
@@ -556,7 +558,7 @@ function anim_Part_firstPass() {
 
         this.frameG = gAccel * this.gravity;
         this.pspd[1] -= this.frameG;
-        
+
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
