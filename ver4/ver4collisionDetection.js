@@ -124,12 +124,8 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
             if (marker != self.lastHitMarker) {
                 nHitTest++;
 
-                var hitRes = capsuleSphereIntersect(sourceSph_r, 
-                                                        sourceSph_p0, 
-                                                        sourceSph_n,
-                                                        self.deltaLength,
-                                                        scn.entities[i].CD_sph_p[j], 
-                                                            scn.entities[i].CD_sph_r[j]);
+                var hitRes = capsuleSphereIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                                                    scn.entities[i].CD_sph_p[j], scn.entities[i].CD_sph_r[j]);
 
                 if (hitRes != false) {
                     if (hitRes < 0.0) hitRes = 0.0;
@@ -173,21 +169,11 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     v3_addscaled_res(firstHit, sourceSph_p0, self.delta, hitRes);
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 
-                        if (show_DEV_CD) {              
-                        //    phyTracers.addLine(firstHit, posOffset, false, [0,1,1]);            
-                      //      phyTracers.addWireSphere(firstHit, 1.9 * sourceSph_r, [1,0.5,0.5], 8, false, 3);
-                        }      
-
                     if ( t0 < _tempCDRes_t0 ) {                                
                         point_segment_point_res(posOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
                         v3_sub_res(hitNormal, firstHit, posOffset);   
                         
-                        if (show_DEV_CD) {              
-                            //    phyTracers.addLine(firstHit, posOffset, false, [0,1,1]);        
-                            //   dev_Hits.addWireSphere(sourceSph_p0, 1.8 * sourceSph_r, [0.5,0.5,1.0], 8, false, 3);
-                            //   dev_Hits.addWireSphere(sourceSph_p, 1.8 * sourceSph_r, [0.5,1.0,0.5], 8, false, 3);    
-                                dev_Hits.addWireSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
-                            }   
+                        if (show_DEV_CD) dev_Hits.addWireSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
 
                         _tempCDRes_marker = ""+marker;
                         _tempCDRes_t0 = t0;
@@ -1188,6 +1174,13 @@ function planeIntersect(planePos, planeNormal, sourceSph_p0in, vectDirection) {
     if (t == 0) t = _v3_epsilon;
 	return t;
 }
+function vectorPlaneIntersect(vectPosMinusPlanePos, planeNormal, vectNormal) {
+    var angleCos = v3_dot(planeNormal, vectNormal);
+    if (Math.abs(angleCos) < _v3_epsilon) return false; // parallel
+    var t = v3_dot(planeNormal, vectPosMinusPlanePos) / -angleCos;
+    if (t == 0) t = _v3_epsilon;
+    return t;
+}
 
 
 function insidePlane(SphPosMinusPlanePos, normalA, halfSizeA, normalB, halfSizeB) {
@@ -1640,4 +1633,122 @@ function vector_vector_distance(orig1, v1, orig2, v2) {
     v3_sub_mod(_vector_vector_distance_dP, _vector_vector_distance_tcv);
 
     return v3_length(_vector_vector_distance_dP);
+}
+
+
+
+
+var _capsulePlaneIntersect_n = [0.0, 0.0, 0.0]; 
+var _capsulePlaneIntersect_pDelta = [0.0, 0.0, 0.0]; 
+
+function capsulePlaneIntersect(capRadius, capOrigin, capNormal, capLength, planeNormal, planeOrigin, planeWNorm, planeHWidth, planeHNorm, planeHHeight) {
+    var firstHit = [0,0,0];
+    var posOffset = [0,0,0];
+    v3_copy(_capsulePlaneIntersect_n, planeNormal); 
+    v3_sub_res(_capsulePlaneIntersect_pDelta, capOrigin, planeOrigin);// Delta of Origin point and Plane position 
+
+    var d0 = v3_dot(_capsulePlaneIntersect_pDelta, _capsulePlaneIntersect_n); 
+    if (d0 < 0.0) v3_negate_mod(_capsulePlaneIntersect_n); // if d >= 0 on side of normal, else on opposite side of normal
+
+    var validHit = false;
+    var parallelHit = false;
+
+    var p = v3_dot(capNormal, _capsulePlaneIntersect_n);
+
+    if (Math.abs(p) < _v3_epsilon) { // parallel
+        var hitDist = Math.abs(d0);
+        if (hitDist < capRadius) { // parallel and closer that radius
+
+            // check if inside plane rectangle
+            validHit = insidePlane(_capsulePlaneIntersect_pDelta, planeWNorm, planeHWidth, planeHNorm, planeHHeight);// TODO inline
+
+            if (validHit) {
+                // offset to get the entity out of the plane
+                v3_scale_res(posOffset, _capsulePlaneIntersect_n, (capRadius - hitDist) * 1.001);
+                //v3_add_mod(self.target.position, posOffset);
+               // self.target.resetMatrix();
+               // v3_add_mod(sourceSph_p0, posOffset);  // offset already calculated point
+                if (show_DEV_CD) log("par hit");                
+                parallelHit = true; // prevent further hit testing with this plane
+                return _v3_epsilon;
+            }                       
+        }
+
+    } else { // if not parallel check if already inside
+
+        var hitDist =  Math.abs(d0);
+        if (hitDist < capRadius) { // closer that radius
+
+            // check if inside plane rectangle
+            validHit = insidePlane(_capsulePlaneIntersect_pDelta, planeWNorm, planeHWidth, planeHNorm, planeHHeight);// TODO inline
+
+            if (validHit) {
+                // offset to get the entity out of the plane
+                var penetration = (capRadius - hitDist);
+                // TODO add cosine compensation
+                v3_scale_res(posOffset, _capsulePlaneIntersect_n, penetration);
+          //      v3_add_mod(self.target.position, posOffset);
+        //        self.target.resetMatrix();
+            //    v3_add_mod(capOrigin, posOffset);  // offset already calculated point
+                if (show_DEV_CD) log("inside hit");  
+
+                return -penetration / capLength;
+               /*         var t0 = v3_distancesquared(capOrigin, self.last_position) * Math.sign(hitRes);
+                        if ( t0 < _tempCDRes_t0 ) {
+                            if (show_DEV_CD) if (v3_distancesquared(firstHit, capOrigin) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * capRadius, [1,0,0], 8, false, 3);
+                            _tempCDRes_marker = ""+marker;
+                            _tempCDRes_t0 = t0;
+                            v3_copy(_tempCDRes_n, _capsulePlaneIntersect_n);
+                            v3_copy(_tempCDRes_p0, capOrigin);
+                            _tempCDRes_target_desc = "PlaneInside";
+                            _tempCDRes_target_cdi = j;
+                            //self.pushCollisionSource(marker, t0 / self.deltaLength, _capsulePlaneIntersect_n, capOrigin, "Sph", "PlaneInside", i, sphIndex, j);
+                        }  */ 
+            }                    
+        } 
+    }
+
+    var hitRes = false;
+    validHit = false;
+    if (!parallelHit) hitRes = vectorPlaneIntersect(_capsulePlaneIntersect_pDelta, _capsulePlaneIntersect_n, capNormal);// TODO inline
+
+    if ((hitRes) && (hitRes >= -capRadius)) { // some hit in front of vector
+
+                // offset for sph radius
+                // new hit = firstHit - sourceSph_n * radius / sin angle
+                var offset = capRadius / Math.abs(p);
+                var t0 = hitRes - offset;
+            //    return t0 / capLength;
+
+                //if (show_DEV_CD) phyTracers.addWireCross(v3_addscaled_new(capOrigin, capNormal, t0), capRadius, [0,0,1]);
+
+                if ( (t0 >= -capRadius) && (t0 <= capLength) ) { // if hit is still forward and before end of delta 
+
+                    v3_addscaled_res(firstHit, capOrigin, capNormal, t0); 
+                  //  if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2*capRadius, [0,1,0]);
+
+                    // check if inside
+                    v3_sub_res(posOffset, firstHit, planeOrigin);
+                    validHit = insidePlane(posOffset, planeWNorm, planeHWidth, planeHNorm, planeHHeight);
+                        if (validHit) return t0 / capLength;
+                }
+
+                 /*  if (validHit) {
+                 var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(t0);
+
+                    if ( t0 < _tempCDRes_t0 ) {
+
+                        if (show_DEV_CD) if (v3_distancesquared(firstHit, capOrigin) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * capRadius, [1,0,0], 8, false, 3);
+                        _tempCDRes_marker = ""+marker;
+                        _tempCDRes_t0 = t0;
+                        v3_copy(_tempCDRes_n, _capsulePlaneIntersect_n);
+                        v3_copy(_tempCDRes_p0, firstHit);
+                        _tempCDRes_target_desc = "Plane";
+                        _tempCDRes_target_cdi = j;
+                        //self.pushCollisionSource(marker, t0 / self.deltaLength, _capsulePlaneIntersect_n, firstHit, "Sph", "Plane", i, sphIndex, j);
+                    }
+                }*/
+            }
+
+
 }
