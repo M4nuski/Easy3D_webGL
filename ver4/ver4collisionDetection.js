@@ -1161,6 +1161,15 @@ if (isNaN(thc)) throw "vector_sph_t thc NaN";
     return [t0, tca, t1];
 }
 
+function vector_sph_min_t(n, sphO_minus_vectO, sphRadSquared) { 
+    var tca = v3_dot(sphO_minus_vectO, n);    
+    if (tca < 0) return false;
+
+    var d2 = v3_lengthsquared(sphO_minus_vectO) - (tca * tca);
+    if (d2 > sphRadSquared) return false;
+
+    return tca - Math.sqrt(sphRadSquared - d2);
+}
 
 var _planeIntersect_diff = [0.0, 0.0, 0.0];
 function planeIntersect(planePos, planeNormal, sourceSph_p0in, vectDirection) {
@@ -1351,7 +1360,12 @@ function insidePlaneOrMargin(SphPosMinusPlanePos, normalA, halfSizeA, normalB, h
 }
 
 
+
+
+
+
 var _capsuleSphereIntersect_offset = [0.0, 0.0, 0.0];
+
 function capsuleSphereIntersect(capRadius, capOrigin, capNormal, capLength, sphPosition, sphRadius) {
     var sumR = capRadius + sphRadius;
     v3_sub_res(_capsuleSphereIntersect_offset, sphPosition, capOrigin);
@@ -1360,7 +1374,12 @@ function capsuleSphereIntersect(capRadius, capOrigin, capNormal, capLength, sphP
     return false;
 }
 
+
+
 //TODO capsuleCapsuleIntersect(capAradius, capAorigin, capAnormal, capAlength, capBradius, capBorigin, capBnormal, capBlength) {}
+
+
+
 
 var _capsuleEdgeIntersect_edgeVector = [0.0, 0.0, 0.0];
 var _capsuleEdgeIntersect_capsuleVector = [0.0, 0.0, 0.0];
@@ -1368,95 +1387,100 @@ var _capsuleEdgeIntersect_p1 = [0.0, 0.0, 0.0];
 var _capsuleEdgeIntersect_p2 = [0.0, 0.0, 0.0];
 var _capsuleEdgeIntersect_originDelta = [0.0, 0.0, 0.0];
 var _capsuleEdgeIntersect_capsuleEnd = [0.0, 0.0, 0.0];
+
 function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOrigin, edgeNormal, edgeLength) {
-    hitPoints.set("edge type closest", 0);
-    hitPoints.set("edge type endcap", 0);
+    hitPoints.set("edge step", 0);
 
-    var distsq;
+    var distsq;    
     var capRadiusSq = capRadius * capRadius;
-    // closest points between paths, v1t is t along delta, v2t is t along edge (0.0 - 1.0), -1 is behind
+    var vcos = v3_dot(capNormal, edgeNormal); // adjust for "slope"
+    var vsin = Math.sqrt(1.0 - (vcos * vcos));
 
+    hitPoints.set("edge vcos", vcos);
+    hitPoints.set("edge vsin", vsin);
+    
+    var capRadiusMargin = capRadius / vsin;
+    
     v3_scale_res(_capsuleEdgeIntersect_edgeVector, edgeNormal, edgeLength);
     v3_scale_res(_capsuleEdgeIntersect_capsuleVector, capNormal, capLength);
-    var [v1t, v2t] = vector_vector_t(capOrigin, _capsuleEdgeIntersect_capsuleVector, edgeOrigin, _capsuleEdgeIntersect_edgeVector);
+
+    // closest points between paths, v1t is t along delta, v2t is t along edge (0.0 - 1.0), -1 is behind
+    var [v1t, v2t] = vector_vector_t(capOrigin, _capsuleEdgeIntersect_capsuleVector, edgeOrigin, _capsuleEdgeIntersect_edgeVector); // TODO replace by normal
+
+    hitPoints.set("edge v1t", v1t);
+    hitPoints.set("edge v2t", v2t);
 
     // check if closest points are within both vectors
-    var potentialHit = ( (v1t >= 0.0) && (v1t <= 1.0) && (v2t >= 0.0) && (v2t <= 1.0) );
+    var potentialHit = ( (v1t >= 0.0) && (v1t <= ((capLength + capRadiusMargin) / capLength)) && (v2t >= (-capRadiusMargin / edgeLength)) && (v2t <= (capRadiusMargin + edgeLength) / edgeLength) );
 
-    if (potentialHit) {
-        if (DEV_inbox && show_DEV_CD) log("check potential");
-        v3_addscaled_res(_capsuleEdgeIntersect_p1, capOrigin, _capsuleEdgeIntersect_capsuleVector, v1t);
-        v3_addscaled_res(_capsuleEdgeIntersect_p2, edgeOrigin, _capsuleEdgeIntersect_edgeVector, v2t);
-        distsq = v3_distancesquared(_capsuleEdgeIntersect_p1, _capsuleEdgeIntersect_p2);
-        potentialHit = distsq <= capRadiusSq;
-        if (show_DEV_CD && potentialHit) log("closest");
-        hitPoints.set("edge closest dis",  Math.sqrt(distsq));
-        hitPoints.set("edge type closest", 1);
-    } //else {
-    // not "else", recheck potentialHit as it can be invalidated in previous block
-    if (!potentialHit) { // end cap as the sphere at the end of the vector
-      //  if (DEV_inbox && show_DEV_CD) log("check endcap");
+    if (!potentialHit) return false;
 
-        v3_add_res(_capsuleEdgeIntersect_capsuleEnd, _capsuleEdgeIntersect_capsuleVector, capOrigin);
-        v3_sub_res(_capsuleEdgeIntersect_originDelta, _capsuleEdgeIntersect_capsuleEnd, edgeOrigin);
-        var endCap = vector_sph_t(edgeNormal, _capsuleEdgeIntersect_originDelta, capRadiusSq);
+    hitPoints.set("edge step", 1);
 
-        if (endCap != false) {
-            var [st0, stca, st1] = endCap;    
-            var st0_inside = (st0 >= 0.0) && (st0 <= edgeLength);
-            var st1_inside = (st1 >= 0.0) && (st1 <= edgeLength);
+    v3_addscaled_res(_capsuleEdgeIntersect_p1, capOrigin, _capsuleEdgeIntersect_capsuleVector, v1t);
+    v3_addscaled_res(_capsuleEdgeIntersect_p2, edgeOrigin, _capsuleEdgeIntersect_edgeVector, v2t);
 
-            if (st0_inside && st1_inside) { // check closest point
-                v3_addscaled_res(_capsuleEdgeIntersect_p1, edgeOrigin, edgeNormal, st0);
-                v3_addscaled_res(_capsuleEdgeIntersect_p2, edgeOrigin, edgeNormal, st1);
-                var d1 = v3_lengthsquared(_capsuleEdgeIntersect_p1, capOrigin);                            
-                var d2 = v3_lengthsquared(_capsuleEdgeIntersect_p2, capOrigin);
-                if (d2 < d1) v3_copy(_capsuleEdgeIntersect_p1, _capsuleEdgeIntersect_p2);
-                potentialHit = true;
-            } else if (st0_inside) { // use t0
-                v3_addscaled_res(_capsuleEdgeIntersect_p1, edgeOrigin, edgeNormal, st0);
-                potentialHit = true;
-            } else if (st1_inside) { // use t1
-                v3_addscaled_res(_capsuleEdgeIntersect_p1, edgeOrigin, edgeNormal, st1);
-                potentialHit = true;
-            }
+    distsq = v3_distancesquared(_capsuleEdgeIntersect_p1, _capsuleEdgeIntersect_p2);
+    potentialHit = distsq <= capRadiusSq;
 
-            if (potentialHit) {
-                hitPoints.set("edge type endcap", 1);
-                if (show_DEV_CD) log("endcap hit");
-                v1t = 1.0; // end cap hit
-                distsq = v3_distancesquared(_capsuleEdgeIntersect_capsuleEnd, _capsuleEdgeIntersect_p1);
-                hitPoints.set("edge endcap dis",  Math.sqrt(distsq));
-                if (Math.abs(distsq - capRadiusSq) > _v3_epsilon) { // last sanity check
-                    log("failed, distsq " + distsq + " >  sph rs" + capRadiusSq);
-                    throw "Edge check failed as end cap";
-                }
-            } else {
-                if (DEV_inbox && show_DEV_CD) log("endcap miss");
-                hitPoints.set("edge type", "miss");
-            }
+    hitPoints.set("edge closest dist",  Math.sqrt(distsq));
+    
+    if (!potentialHit) return false;
+    
+    hitPoints.set("edge step", 2);
+    
+    var penetration = Math.sqrt(capRadiusSq - distsq);
+    penetration = penetration / vsin;// as path length
+    v1t = v1t - (penetration / capLength); // as path t
 
-            if (show_DEV_CD) { 
-        //        phyTracers.addWireSphere(p1p, 2, [1,7.5,1], 8, false, 3);
-         //       phyTracers.addWireSphere(p2p, 2, [0.75,1,1], 8, false, 3);
-              //  if (potentialHit) log("endcap");
-            }
-        }
+    hitPoints.set("edge v1t'", v1t);
+    
+    // update firstHit after slope offset
+    v3_addscaled_res(_capsuleEdgeIntersect_p1, capOrigin, _capsuleEdgeIntersect_capsuleVector, v1t);
+
+    
+    v3_sub_res(_capsuleEdgeIntersect_originDelta, _capsuleEdgeIntersect_p1, edgeOrigin);
+    
+    v2t = v3_dot(_capsuleEdgeIntersect_originDelta, edgeNormal);
+    hitPoints.set("edge v2t'", v2t);
+    
+    // inside edge
+    if ( (v1t >= 0.0) && (v1t <= 1.0) && (v2t >= 0.0) && (v2t <= 1.0) ) {
+        if (v1t == 0.0) v1t =_v3_epsilon;
+        if (show_DEV_CD) log("along edge");
+        return v1t;
+    }
+    
+    hitPoints.set("edge step", 3);
+    
+    if (v2t <= edgeLength / 2) { // test as sphere cap at edge origin
+        v3_sub_res(_capsuleEdgeIntersect_originDelta, edgeOrigin, capOrigin);
+        var endCap = vector_sph_min_t(capNormal, _capsuleEdgeIntersect_originDelta, capRadiusSq);
+
+        if (endCap == false) return false;
+        hitPoints.set("edge step", 3.1);
+        v1t = endCap / capLength;;
+        if (v1t > 1.0) return false;
+        if (v1t == 0.0) v1t =_v3_epsilon;
+        return v1t;
+
+    } else if (v2t >= edgeLength / 2) { // test as sphere cap at end of edge        
+        v3_sub_res(_capsuleEdgeIntersect_originDelta, edgeOrigin, capOrigin);
+        v3_add_mod(_capsuleEdgeIntersect_originDelta, _capsuleEdgeIntersect_edgeVector);
+        var endCap = vector_sph_min_t(capNormal, _capsuleEdgeIntersect_originDelta, capRadiusSq);
+
+        if (endCap == false) return false;
+        hitPoints.set("edge step", 3.2);
+
+        v1t = endCap / capLength;
+        if (v1t > 1.0) return false;
+        if (v1t == 0.0) v1t =_v3_epsilon;
+        return v1t;
     }
 
-    if (potentialHit) {
+    hitPoints.set("edge step", 4);
 
-        var penetration = Math.sqrt((capRadius * capRadius) - distsq);
-        var vcos = v3_dot(capNormal, edgeNormal); // adjust for "slope"
-
-        penetration = penetration / Math.sqrt(1.0 - (vcos * vcos));// as path length
-
-        v1t = v1t - (penetration / capLength); // as path t
-        if (v1t == 0.0) v1t = _v3_epsilon;
-        hitPoints.set("edge vcos",  vcos);
-        hitPoints.set("edge vsin",  Math.sqrt(1.0 - (vcos * vcos)));
-        return v1t;
-    } else return false;
+    return false;
 }
 
 
