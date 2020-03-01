@@ -305,13 +305,18 @@ function initEngine() {
 
     targetEdge3 = new E3D_entity_wireframe_canvas("edge3HitTest");
     targetEdge3.position = [0, 50, 125];
-    targetEdge3.addCylinder([0, 0, 0], 1, 150, [0, 1, 0], 8, 2, 5, false);
-    targetEdge3.pushCD_edge([0, 0, 0], [0, 1, 0], 150);
+    // capsuleEdge test
+    //targetEdge3.addCylinder([0, 0, 0], 1, 150, [0, 1, 0], 8, 2, 5, false);
+    //targetEdge3.pushCD_edge([0, 0, 0], [0, 1, 0], 150);
+    // capsuleSphere test
+    //targetEdge3.addWireSphere([0, 0, 0], 24, [0.25, 1.0 ,0.25], 32, true, 8);
+    // sph/capsule plane test
+    targetEdge3.addPlane([ 0, -10, 0], [0, PIdiv2, 0], 14, 28, 2, [0.25, 1.0, 0.25], true);
     targetEdge3.visible = true;
     targetEdge3.vis_culling = false;
     scn.addEntity(targetEdge3);
 
-
+    
     DEV_markers = new E3D_entity_wireframe_canvas("CD_hits_markers");
     DEV_markers.addWireSphere([0,0,0], 1, [1,1,1], 8, false);
     DEV_markers.visible = true;
@@ -544,7 +549,7 @@ if (DEV_axis.visible) {
     
 
 
-
+/*    // capsuleEdgeIntersect test 
     var sph_p0 = DEV_wand.CD_sph_p[0];
     var sph_p = DEV_wand.CD_sph_p[1];
     var sph_r = 4;
@@ -562,10 +567,44 @@ if (DEV_axis.visible) {
         var firstHit = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
         DEV_markers.addWireSphere(firstHit, sph_r * 2, _v3_red, 16, false, 8);
     }
+*/
 
+/*    // capsuleSphereIntersect test
+    var cap_p0 = DEV_wand.CD_sph_p[0];
+    var cap_p  = DEV_wand.CD_sph_p[1];
+    var cap_r = 4;
+    var cap_n = v3_sub_new(cap_p, cap_p0);
+    var cap_l = v3_length(cap_n);
+    v3_invscale_mod(cap_n, cap_l);
 
+    var sph_p0 = targetEdge3.CD_sph_p[0];
+    var sph_r  = targetEdge3.CD_sph_r[0];
 
+    var hitRes = capsuleSphereIntersect(cap_r, cap_p0, cap_n, cap_l, sph_p0, sph_r);
 
+    if (hitRes != false) {
+        var firstHit = v3_addscaled_new(cap_p0, cap_n, hitRes);
+        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
+    }
+*/
+
+    // sph / capsule plane intersect test
+    var cap_p0 = DEV_wand.CD_sph_p[0];
+    var cap_p  = DEV_wand.CD_sph_p[1];
+    var cap_r = 4;
+    var cap_n = v3_sub_new(cap_p, cap_p0);
+    var cap_l = v3_length(cap_n);
+    v3_invscale_mod(cap_n, cap_l);
+
+    var hitRes = capsulePlaneIntersect(cap_r, cap_p0, cap_n, cap_l, 
+        targetEdge3.CD_plane_n[0], targetEdge3.CD_plane_p[0], 
+        targetEdge3.CD_plane_w[0], targetEdge3.CD_plane_halfWidth[0],
+        targetEdge3.CD_plane_h[0], targetEdge3.CD_plane_halfHeight[0]);
+
+    if (hitRes != false) {
+        var firstHit = v3_addscaled_new(cap_p0, cap_n, hitRes * cap_l);
+        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
+    }
 
 
 
