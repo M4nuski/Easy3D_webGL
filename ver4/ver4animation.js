@@ -430,8 +430,9 @@ function collisionResult_asSource_bounce(){
         }*/
         
         
-        if (firstCol.t0 < 0.0) throw "collision behind initial position: " + firstCol.marker + "@" + firstCol.t0;
+        //if (firstCol.t0 < 0.0) { //throw "collision behind initial position: " + firstCol.marker + "@" + firstCol.t0;
         
+       // }
         firstCol.t0 = Math.sqrt(Math.abs(firstCol.t0));
         v3_normalize_mod(firstCol.n);
         

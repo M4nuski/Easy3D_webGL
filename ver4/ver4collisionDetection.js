@@ -197,12 +197,36 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
             if  (marker != self.lastHitMarker) {
                 nHitTest++;
 
-                v3_copy(hitNormal, scn.entities[i].CD_plane_n[j]); 
+                
+                
+                var hitRes = capsulePlaneIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                    scn.entities[i].CD_plane_n[j], scn.entities[i].CD_plane_p[j],
+                    scn.entities[i].CD_plane_w[j], scn.entities[i].CD_plane_halfWidth[j],
+                    scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
+                    
+                    if (hitRes != false) {
+                        v3_copy(hitNormal, scn.entities[i].CD_plane_n[j]);
+                        v3_sub_res(posDelta, sourceSph_p0, scn.entities[i].CD_plane_p[j]);// Delta of Origin point and Plane position 
+                        var d0 = v3_dot(posDelta, hitNormal); 
+                        if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
 
-                v3_sub_res(posDelta, sourceSph_p0, scn.entities[i].CD_plane_p[j]);// Delta of Origin point and Plane position 
+                        v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes * self.deltaLength); 
 
-                var d0 = v3_dot(posDelta, hitNormal); 
-                if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
+                        var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
+                        if ( t0 < _tempCDRes_t0 ) {
+                            if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                            _tempCDRes_marker = ""+marker;
+                            _tempCDRes_t0 = t0;
+                            v3_copy(_tempCDRes_n, hitNormal);
+                            v3_copy(_tempCDRes_p0, sourceSph_p0);
+                            _tempCDRes_target_desc = "Plane";
+                            _tempCDRes_target_cdi = j;
+                        }
+                }
+
+                /*
+
+
 
                 var validHit = false;
                 var parallelHit = false;
@@ -302,7 +326,8 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         }
                     }
                 }
-            }
+                */
+            } // different marker
         } // sph - plane
 
 
@@ -1264,32 +1289,30 @@ function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, t
 
         var t = v3_dot(triNorm, _t_c_i_vOrig_P1_delta);
 
-        if (t < -vRad) return false; // behind
+        //hitPoints.set("tri-cap t", t);
+        //hitPoints.set("tri-cap acos", angleCos);
 
+        if (t < -vRad) return false; // behind
+        if (angleCos > -_v3_epsilon) return false; // facing away
+       
         t = t / -angleCos; // compensate for angle between vectors
 
         if (t >= 0.0) {
             v3_addscaled_res(firstHit, vOrig, vNormal, t); //position on plane
         } else {
-            v3_addscaled_res(firstHit, vOrig, triNorm, (t * angleCos)); 
+            v3_addscaled_res(firstHit, vOrig, triNorm, t * angleCos); //corret position over plane
         }
         //if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, [1, 0, 0]);
         
-        //v3_sub_res(_t_v_i_v0, triP3, triP1); 
-        //v3_sub_res(_t_v_i_v1, triP2, triP1);
-
         v3_sub_res(_t_v_i_v2, firstHit, triP1);
     
-        var dot00 = triP3len;// v3_lengthsquared(triP3P1); // pre-calc
-        var dot01 = tridP3P2dot;//v3_dot(triP3P1, triP2P1); // pre-calc
         var dot02 = v3_dot(triP3P1, _t_v_i_v2);
-        var dot11 = triP2len;// v3_lengthsquared(triP2P1); // pre-calc
         var dot12 = v3_dot(triP2P1, _t_v_i_v2);
     
-        var invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+        var invDenom = 1.0 / (triP3len * triP2len - tridP3P2dot * tridP3P2dot);
         if (isNaN(invDenom)) return false;
-        var u = (dot11 * dot02 - dot01 * dot12) * invDenom
-        var v = (dot00 * dot12 - dot01 * dot02) * invDenom
+        var u = (triP2len * dot02 - tridP3P2dot * dot12) * invDenom
+        var v = (triP3len * dot12 - tridP3P2dot * dot02) * invDenom
     
         if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
             if (show_DEV_CD) phyTracers.addWireCross(firstHit, 4, [0, 1, 0]);
