@@ -311,9 +311,9 @@ function initEngine() {
     // capsuleSphere test
     //targetEdge3.addWireSphere([0, 0, 0], 24, [0.25, 1.0 ,0.25], 32, true, 8);
     // capsulePlane test
-    //targetEdge3.addPlane([ 0, -10, 0], [0, PIdiv2, 0], 14, 28, 2, [0.25, 1.0, 0.25], true);
+    targetEdge3.addPlane([ 0, -10, 0], [0, PIdiv2, 0], 14, 28, 2, [0.25, 1.0, 0.25], true);
     // capsuleTriangle test
-    targetEdge3.addTriangle([0, 0, 0], [-30, 40, 150], [30, 20, 150], [1, 1, 1], true);
+    //targetEdge3.addTriangle([0, 0, 0], [-30, 40, 150], [30, 20, 150], [1, 1, 1], true);
     targetEdge3.visible = true;
     targetEdge3.vis_culling = false;
     scn.addEntity(targetEdge3);
@@ -589,7 +589,7 @@ if (DEV_axis.visible) {
         DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
     }
 */
-/*
+
     // capsule plane intersect test
     var cap_p0 = DEV_wand.CD_sph_p[0];
     var cap_p  = DEV_wand.CD_sph_p[1];
@@ -598,17 +598,17 @@ if (DEV_axis.visible) {
     var cap_l = v3_length(cap_n);
     v3_invscale_mod(cap_n, cap_l);
 
-    var hitRes = capsulePlaneIntersect(cap_r, cap_p0, cap_n, cap_l, 
+    var firstHit = v3_new();
+    var hitRes = capsulePlaneIntersect_res(firstHit, cap_r, cap_p0, cap_n, 
         targetEdge3.CD_plane_n[0], targetEdge3.CD_plane_p[0], 
         targetEdge3.CD_plane_w[0], targetEdge3.CD_plane_halfWidth[0],
         targetEdge3.CD_plane_h[0], targetEdge3.CD_plane_halfHeight[0]);
 
-    if (hitRes != false) {
-        var firstHit = v3_addscaled_new(cap_p0, cap_n, hitRes * cap_l);
+    if ((hitRes != false) && (hitRes <= cap_l)) {
         DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
     }
-*/
 
+/*
     // capsule triangle intersect test
     var cap_p0 = DEV_wand.CD_sph_p[0];
     var cap_p  = DEV_wand.CD_sph_p[1];
@@ -623,12 +623,11 @@ if (DEV_axis.visible) {
         targetEdge3.CD_triangle_p3p1lenSq[0], targetEdge3.CD_triangle_p2p1lenSq[0], targetEdge3.CD_triangle_p3p2p1dot[0],
         targetEdge3.CD_triangle_n[0]);
 
-    if ((hitRes != false) && (hitRes <= cap_l) ) {
-        //var firstHit = v3_addscaled_new(cap_p0, cap_n, hitRes * cap_l);
+    if ((hitRes != false) && (hitRes <= cap_l)) {
         DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
     }
 
-
+*/
 
 
 

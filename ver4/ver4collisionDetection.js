@@ -197,20 +197,18 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
             if  (marker != self.lastHitMarker) {
                 nHitTest++;
 
-                
-                
-                var hitRes = capsulePlaneIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                var hitRes = capsulePlaneIntersect_res(firstHit, sourceSph_r, sourceSph_p0, sourceSph_n,
                     scn.entities[i].CD_plane_n[j], scn.entities[i].CD_plane_p[j],
                     scn.entities[i].CD_plane_w[j], scn.entities[i].CD_plane_halfWidth[j],
                     scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
                     
-                    if (hitRes != false) {
-                        v3_copy(hitNormal, scn.entities[i].CD_plane_n[j]);
+                    if ((hitRes != false) && (hitRes <= self.deltaLength)) {
+
                         v3_sub_res(posDelta, sourceSph_p0, scn.entities[i].CD_plane_p[j]);// Delta of Origin point and Plane position 
                         var d0 = v3_dot(posDelta, hitNormal); 
+                        
+                        v3_copy(hitNormal, scn.entities[i].CD_plane_n[j]);
                         if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
-
-                        v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes * self.deltaLength); 
 
                         var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
@@ -218,115 +216,11 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             _tempCDRes_marker = ""+marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
-                            v3_copy(_tempCDRes_p0, sourceSph_p0);
-                            _tempCDRes_target_desc = "Plane";
-                            _tempCDRes_target_cdi = j;
-                        }
-                }
-
-                /*
-
-
-
-                var validHit = false;
-                var parallelHit = false;
-
-                var p = v3_dot(sourceSph_n, hitNormal);
-
-                if (Math.abs(p) < _v3_epsilon) { // parallel
-                    var hitDist = Math.abs(d0);
-                    if (hitDist < sourceSph_r) { // parallel and closer that radius
-
-                        // check if inside plane rectangle
-                        validHit = insidePlane(posDelta, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
-                            scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
-
-                        if (validHit) {
-                            // offset to get the entity out of the plane
-                            v3_scale_res(posOffset, hitNormal, (sourceSph_r - hitDist) * 1.01);
-                            v3_add_mod(self.target.position, posOffset);
-                            self.target.resetMatrix();
-                            v3_add_mod(sourceSph_p0, posOffset);  // offset already calculated point
-                            if (show_DEV_CD) log("par hit");                
-                            parallelHit = true; // prevent further hit testing with this plane
-                        }                       
-                    }
-
-                } else { // if not parallel check if already inside
-
-                    var hitDist =  Math.abs(d0);
-                    if (hitDist < sourceSph_r) { //  closer that radius
-
-                        // check if inside plane rectangle
-                        validHit = insidePlane(posDelta, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
-                            scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
-
-                        if (validHit) {
-                            // offset to get the entity out of the plane
-                            var penetration = (sourceSph_r - hitDist);
-                            v3_scale_res(posOffset, hitNormal, penetration);
-                            v3_add_mod(self.target.position, posOffset);
-                            self.target.resetMatrix();
-                            v3_add_mod(sourceSph_p0, posOffset);  // offset already calculated point
-                            if (show_DEV_CD) log("inside hit");  
-
-
-                            var t0 = v3_distancesquared(sourceSph_p0, self.last_position) * Math.sign(hitRes);
-                            if ( t0 < _tempCDRes_t0 ) {
-                                if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
-                                _tempCDRes_marker = ""+marker;
-                                _tempCDRes_t0 = t0;
-                                v3_copy(_tempCDRes_n, hitNormal);
-                                v3_copy(_tempCDRes_p0, sourceSph_p0);
-                                _tempCDRes_target_desc = "PlaneInside";
-                                _tempCDRes_target_cdi = j;
-                                //self.pushCollisionSource(marker, t0 / self.deltaLength, hitNormal, sourceSph_p0, "Sph", "PlaneInside", i, sphIndex, j);
-                            }
-                        }                       
-                    } 
-                }
-
-                var hitRes = false;
-                validHit = false;
-                if (!parallelHit) hitRes = planeIntersect(scn.entities[i].CD_plane_p[j], hitNormal, sourceSph_p0, sourceSph_n);                 
-
-                if ((hitRes) && (hitRes >= -sourceSph_r)) { // some hit in front of vector
-
-                    // offset for sph radius
-                    // new hit = firstHit - sourceSph_n * radius / sin angle
-                    var offset = sourceSph_r / Math.abs(p);
-                    var t0 = hitRes - offset;
-
-                    //if (show_DEV_CD) phyTracers.addWireCross(v3_addscaled_new(sourceSph_p0, sourceSph_n, t0), sourceSph_r, [0,0,1]);
-
-                    if ( (t0 >= -sourceSph_r) && (t0 <= self.deltaLength)) { // if hit is still forward and before end of delta 
-
-                        v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, t0); 
-                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2*sourceSph_r, [0,1,0]);
-
-                        // check if inside
-                        v3_sub_res(posOffset, firstHit, scn.entities[i].CD_plane_p[j]);
-                        validHit = insidePlane(posOffset, scn.entities[i].CD_plane_w[j],  scn.entities[i].CD_plane_halfWidth[j],
-                            scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
-                    }
-
-                    if (validHit) {
-                        var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(t0);
-
-                        if ( t0 < _tempCDRes_t0 ) {
-
-                            if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
-                            _tempCDRes_marker = ""+marker;
-                            _tempCDRes_t0 = t0;
-                            v3_copy(_tempCDRes_n, hitNormal);
                             v3_copy(_tempCDRes_p0, firstHit);
                             _tempCDRes_target_desc = "Plane";
                             _tempCDRes_target_cdi = j;
-                            //self.pushCollisionSource(marker, t0 / self.deltaLength, hitNormal, firstHit, "Sph", "Plane", i, sphIndex, j);
                         }
-                    }
                 }
-                */
             } // different marker
         } // sph - plane
 
@@ -1713,6 +1607,61 @@ function capsulePlaneIntersect(capRadius, capOrigin, capNormal, capLength, plane
             v3_sub_res(posOffset, firstHit, planeOrigin);
             validHit = insidePlane(posOffset, planeWNorm, planeHWidth, planeHNorm, planeHHeight);
             if (validHit) return hitRes / capLength;
+        }
+    }
+    return false;
+}
+
+
+
+
+function capsulePlaneIntersect_res(firstHit, capRadius, capOrigin, capNormal, planeNormal, planeOrigin, planeWNorm, planeHWidth, planeHNorm, planeHHeight) {
+    var posOffset = [0,0,0];
+    v3_copy(_capsulePlaneIntersect_n, planeNormal); 
+    v3_sub_res(_capsulePlaneIntersect_pDelta, capOrigin, planeOrigin);// Delta of Origin point and Plane position 
+
+    var p0 = v3_dot(capNormal, _capsulePlaneIntersect_n);
+    var d0 = v3_dot(_capsulePlaneIntersect_pDelta, _capsulePlaneIntersect_n); 
+    if (d0 < 0.0) v3_negate_mod(_capsulePlaneIntersect_n); // if d >= 0 on side of normal, else on opposite side of normal
+
+    var validHit = false;
+    var parallelHit = false;
+
+    var p = v3_dot(capNormal, _capsulePlaneIntersect_n);
+
+    if (Math.abs(p) < _v3_epsilon) return false;  // parallel
+        
+     // if not parallel check if already inside
+    var hitDist = Math.abs(d0);
+    if (hitDist < capRadius) { // closer that radius
+
+        // check if inside plane rectangle
+        validHit = insidePlane(_capsulePlaneIntersect_pDelta, planeWNorm, planeHWidth, planeHNorm, planeHHeight);
+
+        if (validHit) {
+            // offset to get the entity out of the plane
+            var penetration = (capRadius - hitDist);
+            v3_addscaled_res(firstHit, capOrigin, _capsulePlaneIntersect_n, penetration); 
+            return (Math.sign(d0) * penetration / p0);
+        }                    
+    }
+
+    var hitRes = false;
+    validHit = false;
+    if (!parallelHit) hitRes = vectorPlaneIntersect(_capsulePlaneIntersect_pDelta, _capsulePlaneIntersect_n, capNormal);
+
+    if ((hitRes) && (hitRes >= -capRadius)) { // some hit in front of vector
+
+        // offset for sph radius
+        // new hit = firstHit - sourceSph_n * radius / sin angle
+        var offset = capRadius / Math.abs(p);
+        hitRes = hitRes - offset;
+        if (hitRes >= -capRadius) { // if hit is still forward and before end of delta 
+            v3_addscaled_res(firstHit, capOrigin, capNormal, hitRes); 
+            // check if inside
+            v3_sub_res(posOffset, firstHit, planeOrigin);
+            validHit = insidePlane(posOffset, planeWNorm, planeHWidth, planeHNorm, planeHHeight);
+            if (validHit) return hitRes;
         }
     }
     return false;
