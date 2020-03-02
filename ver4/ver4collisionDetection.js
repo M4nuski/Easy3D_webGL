@@ -921,7 +921,7 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
     var _tempCDRes_n   = [0.0, 0.0, 0.0];
     var _tempCDRes_p0  = [0.0, 0.0, 0.0];
     var _tempCDRes_source_desc = "Point";
-    var _tempCDRes_source_cdi  = sphIndex;
+    var _tempCDRes_source_cdi  = pointIndex;
 
     var _tempCDRes_marker = "";
     var _tempCDRes_target_desc = "";

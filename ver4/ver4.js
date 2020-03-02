@@ -360,8 +360,8 @@ function timerTick() {  // Game Loop
         newPyra.moveTo([10, -10, 0]); // originate from bottom right corner of view
 
         animations.push(newParticuleAnim_RelativeToCamera(newPyra, scn.camera,
-            [rndPM(2), rndPM(2), -50 - rndPM(2) ], _v3_null, 10, 
-            shotgunPartPos, shotgunPartDir, 0.2, 2.0, true));
+            [rndPM(2), rndPM(2), -150 - rndPM(2) ], _v3_null, 10, 
+            shotgunPartPos, shotgunPartDir, 0.25, 10.0, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
         newPyra.visible = true;
         scn.addEntity(newPyra); 
@@ -461,11 +461,11 @@ function cloneWar() {
 }
 
 function shotgunPartPos(n, nbPart) {
-    return [rndPM(10), rndPM(10), rndPM(3)];    
+    return [rndPM(5), rndPM(5), rndPM(5)];    
 }
 
 function shotgunPartDir(pos, n, nbPart) {
-    return v3_clone(pos);
+    return v3_scale_new(pos, 0.01);
 }
 function collisionResult_asTarget_splode(loc) {
     // log("sploded!", false);

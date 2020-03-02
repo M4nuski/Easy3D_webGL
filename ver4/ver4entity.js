@@ -121,14 +121,12 @@ class E3D_entity {
 
         // Collision Detection / Hit Test Data (faster split in different array than accessing single object.array[i].property)
 
-            // Point Source (arrow)
+            // Point Source
             this.CD_point = 0;
             this.CD_point_p0 = []; // original to model space
             this.CD_point_p  = []; // transformed to world space
-            //this.CD_point_v0 = []; // original to model space
-            //this.CD_point_v  = []; // transformed to world space (rotation)
 
-            // Vector Target (edge)
+            // Edge Target
             this.CD_edge = 0;
             this.CD_edge_p0 = []; // original to model space
             this.CD_edge_p  = []; // transformed to world space
@@ -222,8 +220,6 @@ class E3D_entity {
 
         if (entity.CD_point > 0) {
             this.CD_point = entity.CD_point;
-       //     this.CD_point_v0 = v3a_clone(entity.CD_point_v0);
-         //   this.CD_point_v  = v3a_clone(entity.CD_point_v);
             this.CD_point_p0 = v3a_clone(entity.CD_point_p0);
             this.CD_point_p  = v3a_clone(entity.CD_point_p);
         }
@@ -349,10 +345,9 @@ class E3D_entity {
             this.modelMatrix[14] =  this.position[2];
         }
         if (this.collisionDetection) { // TODO extract to own method, keep track of last positions
-        //    ( i * 2 + this.oldPos ) or ( i * 2 + this.pos )
+        //    ( i * 2 + this.oldPos ) or ( i * 2 + this.pos ) or ref switching
             for (var i = 0; i < this.CD_point; ++i) {
                 v3_applym4_res(this.CD_point_p[i], this.CD_point_p0[i], this.modelMatrix);
-             //  v3_applym4_res(this.CD_vec_v[i], this.CD_vec_v0[i], this.normalMatrix);
             }
             for (var i = 0; i < this.CD_edge; ++i) {
                 v3_applym4_res(this.CD_edge_p[i], this.CD_edge_p0[i], this.modelMatrix);

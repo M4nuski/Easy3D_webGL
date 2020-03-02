@@ -588,6 +588,7 @@ function anim_Part_firstPass() {
 
         }
 
+        var max = v3_new();
         // Animate particules
         for (let i = 0; i < this.pNum; ++i) { 
 
@@ -598,11 +599,16 @@ function anim_Part_firstPass() {
             for (var j = 0; j < this.target.srcNumElements; ++j ) {
                 var b = this.target.getVertex3f( ( i * this.target.srcNumElements ) + j); // b is a view in float32array
                 v3_addscaled_mod(b, this.pSpd[i], timer.delta);
+                if (Math.abs(b[0]) > max[0]) max[0] = Math.abs(b[0]);
+                if (Math.abs(b[1]) > max[1]) max[1] = Math.abs(b[1]);
+                if (Math.abs(b[2]) > max[2]) max[2] = Math.abs(b[2]);
             }
 
             if (this.pCD) v3_copy(this.target.CD_point_p0[i], this.pPos[i]); 
         }
 
+        this.target.cull_dist = v3_length(max);
+        this.target.dataContentChanged = true;
         this.target.resetMatrix();
         this.lastHitMarker = ""; 
     }
