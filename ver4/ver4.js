@@ -4,7 +4,6 @@
 
 "use strict"
 
-
 var nHitTest = 0;
 var nHits = 0;
 
@@ -353,6 +352,8 @@ function timerTick() {  // Game Loop
         animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
              [rndPM(1), rndPM(1), rndPM(1) -100], _v3_null, 1.0, 10, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
+
+        animations[animations.length-1].group = "splodable";      
     }
     if (inputs.checkCommand("action1", true)) {
        // log("action1", true);      
@@ -361,8 +362,9 @@ function timerTick() {  // Game Loop
 
         animations.push(newParticuleAnim_RelativeToCamera(newPyra, scn.camera,
             [rndPM(2), rndPM(2), -150 - rndPM(2) ], _v3_null, 10, 
-            shotgunPartPos, shotgunPartDir, 0.25, 10.0, true));
+            shotgunPartPos, shotgunPartDir, 0.2, 2.0, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
+        animations[animations.length-1].animLastPass = collisionResult_lastPass_splode;
         newPyra.visible = true;
         scn.addEntity(newPyra); 
     }
@@ -461,113 +463,66 @@ function cloneWar() {
 }
 
 function shotgunPartPos(n, nbPart) {
-    return [rndPM(5), rndPM(5), rndPM(5)];    
+    return [rndPM(5), rndPM(5), rndPM(2)];    
 }
 
 function shotgunPartDir(pos, n, nbPart) {
     return v3_scale_new(pos, 0.01);
 }
-function collisionResult_asTarget_splode(loc) {
+
+//animLastPass
+function collisionResult_lastPass_splode(loc) {
     // log("sploded!", false);
     // log(splos.numElements);
-      var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
-      var nvect = 18;
-      var iter = 20;
-      var dim = 0.1;
-      var dvect = Array(nvect);
-      var vect = Array(nvect);
-      for (i = 0; i < nvect; ++i) {
-          vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
-          dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
-      }
-      var idx = 0;
-      for (var i = 0; i < iter; ++i) {
-          var s = 2 - (dim * i);
-          for (var j=0; j < nvect; ++j) {
-  
-              splos.addWireCross(v3_add_new(loc, vect[j]), s, col[idx]);
-  
-              idx++;
-              if (idx >= col.length) idx = 0;
-          }
-          for (var j = 0; j < nvect; ++j) {
-              vect[j][0] += dvect[j][0];
-              vect[j][1] += dvect[j][1];
-              vect[j][2] += dvect[j][2];
-              dvect[j][0] *= 0.9;
-              dvect[j][1] -= 1;
-              dvect[j][2] *= 0.9; 
-              
-          }
-      }
-    //  log(splos.numElements);
+    this.lastHitMarker = "";
+   // log(this.colNum + "hits");
+    for (var hitIndex = 0; hitIndex < this.colNum; ++hitIndex) {
+        this.pActive[this.closestCollision[hitIndex].source_cdi] = false;
+        var ent = scn.entities[this.closestCollision[hitIndex].target_ei];
+        var anim = animations[ent.animIndex];
+        if ((ent.animIndex != -1) && (anim.group == "splodable")) { 
+           // phyTracers.addWireCross(this.closestCollision[hitIndex].p0, 10); 
+            anim.state = E3D_DONE;
+
+
+            var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
+            var nvect = 18;
+            var iter = 20;
+            var dim = 0.1;
+            var dvect = Array(nvect);
+            var vect = Array(nvect);
+            for (i = 0; i < nvect; ++i) {
+                vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
+                dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
+            }
+            var idx = 0;
+            for (var i = 0; i < iter; ++i) {
+                var s = 2 - (dim * i);
+                for (var j=0; j < nvect; ++j) {
+        
+                    splos.addWireCross(v3_add_new(this.closestCollision[hitIndex].p0, vect[j]), s, col[idx]);
+        
+                    idx++;
+                    if (idx >= col.length) idx = 0;
+                }
+                for (var j = 0; j < nvect; ++j) {
+                    vect[j][0] += dvect[j][0];
+                    vect[j][1] += dvect[j][1];
+                    vect[j][2] += dvect[j][2];
+                    dvect[j][0] *= 0.9;
+                    dvect[j][1] -= 1;
+                    dvect[j][2] *= 0.9; 
+                    
+                }
+            }
+
+
+        } else {
+            anim_Base_endPass_ttl.call(this); // call default
+        }
+    }
   }
   
-/*
-function shotgunAnimF () {
-    if (this.state == E3D_RESTART) {
-        v3_copy(this.target.position, scn.camera.position);        
-        v3_add_mod(this.target.position, scn.camera.adjustToCamera([10, -10, 0])); // originate from bottom right corner of view
-
-        this.vertOffset = Array(this.numPellets); // vect noise for vertex
-        this.vect = Array(this.numPellets); // mainVect + vect noise
-        this.vectNorm = Array(this.numPellets); //opt normalized vect for CD
-        this.pLastPos = Array(this.numPellets); // each pass org = org + vect, world coordinates
-
-        this.ttl = 2.0;
-        this.pActive = Array(this.numPellets); // active
-
-        this.mainVector = scn.camera.adjustToCamera([ rndPM(2), rndPM(2), -500 - rndPM(2) ] );         
-
-        this.target.setSize(this.target.srcNumElements * this.numPellets);
-
-        for (let i = 0; i < this.numPellets; ++i) {
-            //new pellet
-            this.target.copySource(this.target.srcNumElements * i);
-            this.pActive[i] = true;
-            
-            //pellet vector
-            this.vertOffset[i] = scn.camera.adjustToCamera([rndPM(10), rndPM(10), rndPM(3) ]); // some noise
-            this.pLastPos[i] = v3_add_new(this.target.position, this.vertOffset[i]); // starting point is on noise.
-
-            this.vect[i] = v3_add_new(this.vertOffset[i], this.mainVector); 
-            this.vectNorm[i] = v3_normalize_new(this.vect[i]);
-
-            //offset pelets vertex by new origin and invalidate normal
-            for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                var idx = (i*this.target.srcNumElements) + j;
-                var b = this.target.getVertex3f(idx);
-                v3_add_mod(b, this.vertOffset[i])
-                this.target.setNormal3f(idx, _v3_origin);
-            }
-        }
-
-        this.state = E3D_PLAY;
-        this.target.visible = true;
-        this.target.vis_culling = true; // for now, to see vis and CD sphere
-        scn.addEntity(this.target);        
-    } 
-}
-*/
-/*
-function shotgunAnimL () {
-
-    this.ttl -= timer.delta;
-
-    if (this.ttl  <= 0) {
-        this.state = E3D_DONE;
-        this.target.visible = false;
-    } else  {
-        this.last_position = this.target.position.slice();
-        this.delta_position = v3_scale_new(this.mainVector, timer.delta);
-        v3_add_mod(this.target.position, this.delta_position);
-        this.delta2 = v3_length(this.delta_position);
-
-        this.target.resetMatrix();
-        this.target.cull_dist = 30;// override calculated cull dist
-    }  
-}
-*/
 function shotgunAnimR() {
  
     if (this.state == E3D_PLAY) {

@@ -82,10 +82,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
     let sourceSph_r = self.target.CD_sph_r[sphIndex];
     v3_sub_res(sourceSph_p0, sourceSph_p, self.delta);
     v3_invscale_res(sourceSph_n, self.delta, self.deltaLength); // TODO preserve actual last positions, or effective delta, (rot)    
-    if (show_DEV_CD) {
-        dev_Hits.addWireSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
-        dev_Hits.addWireSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
-    }
+    //if (show_DEV_CD && (dev_Hits != undefined)) {
+    //    dev_Hits.addWireSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
+     //   dev_Hits.addWireSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
+    //}
     var _tempCDRes_t0  = Infinity;
     var _tempCDRes_n   = [0.0, 0.0, 0.0];
     var _tempCDRes_p0  = [0.0, 0.0, 0.0];
@@ -917,6 +917,8 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
     var sourcePts_l = v3_length(sourcePts_v);
     v3_invscale_res(sourcePts_n, sourcePts_v, sourcePts_l);
 
+    //if (show_DEV_CD) phyTracers.addLine(sourcePts_p0, sourcePts_p1, true);
+
     var _tempCDRes_t0  = Infinity;
     var _tempCDRes_n   = [0.0, 0.0, 0.0];
     var _tempCDRes_p0  = [0.0, 0.0, 0.0];
@@ -948,29 +950,34 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                     var hitRes = capsuleEdgeIntersect(scn.entities[targetIndex].CD_sph_r[j], targetSphOrigin,
                         posDelta_n, targetSph_deltaLength, sourcePts_p0, sourcePts_n, sourcePts_l);
 
-                    v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                    var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes); 
-                    if ( t0 < _tempCDRes_t0) {
-                        v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
-                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_red);
-                        _tempCDRes_marker = ""+marker;
-                        _tempCDRes_t0 = t0;
-                        v3_copy(_tempCDRes_n, hitNormal);
-                        v3_copy(_tempCDRes_p0, firstHit);
-                        _tempCDRes_target_desc = "Sph";
-                        _tempCDRes_target_cdi = j;
-                        //self.pushCollisionSource(marker, t0 / self.deltaLength, hitNormal, firstHit, "Point", "Sph", targetIndex, pointIndex, j);
-                    }
+                    if (hitRes != false) {
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes); 
+                        if ( t0 < _tempCDRes_t0) {
+                            v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
+                            if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_red);
+                            _tempCDRes_marker = ""+marker;
+                            _tempCDRes_t0 = t0;
+                            v3_copy(_tempCDRes_n, hitNormal);
+                            v3_copy(_tempCDRes_p0, firstHit);
+                            _tempCDRes_target_desc = "Sph";
+                            _tempCDRes_target_cdi = j;
 
+                            if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_white);
+                            if (show_DEV_CD) phyTracers.addWireSphere(firstHit,scn.entities[targetIndex].CD_sph_p[j] * 2, _v3_red, 8, false);
+                            //self.pushCollisionSource(marker, t0 / self.deltaLength, hitNormal, firstHit, "Point", "Sph", targetIndex, pointIndex, j);
+                        } // end <t0
+                    }// end hitres
 
                 } else { // static
                     v3_sub_res(posOffset, scn.entities[targetIndex].CD_sph_p[j], sourcePts_p0);
-                    var hitRes = VectSphHit(sourcePts_v, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
-                    if ((hitRes != false) && (hitRes <= 1.0) && (hitRes >= 0.0)) {
+                    var hitRes = vector_sph_min_t(sourcePts_v, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= 1.0)) {
+
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_v, hitRes);
-                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_white);
+                        
                         var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);  
-                        if ((!self.collisionDetected) || ((self.collisionDetected) && (t0 < self.closestCollision.t0))) {    
+                        if ( t0 < _tempCDRes_t0) {    
                             v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
                             _tempCDRes_marker = ""+marker;
                             _tempCDRes_t0 = t0;
@@ -978,6 +985,8 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                             v3_copy(_tempCDRes_p0, firstHit);
                             _tempCDRes_target_desc = "Sph";
                             _tempCDRes_target_cdi = j;
+
+                            if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2, _v3_white);
                             //self.pushCollisionSource(marker, t0 / self.deltaLength, hitNormal, firstHit, "Point", "Sph", targetIndex, pointIndex, j);
                         }
                     }
