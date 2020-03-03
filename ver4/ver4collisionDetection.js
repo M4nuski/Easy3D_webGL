@@ -996,7 +996,42 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
 
 
+        // collision detection - self.point to plane (static)
+        for (let j = 0; j < scn.entities[targetIndex].CD_plane; ++j) {
+            var marker = "p"+targetIndex+"p"+j;
+            if  (marker != self.lastHitMarker) {
+                nHitTest++;
 
+                v3_copy(hitNormal, scn.entities[targetIndex].CD_plane_n[j]);
+                v3_sub_res(posOffset, sourcePts_p0, scn.entities[targetIndex].CD_plane_p[j]);// Delta of Origin point and Plane position 
+
+                var hitRes = vectorPlaneIntersect(posOffset, hitNormal, sourcePts_n);
+                
+                if ((hitRes != false) && (hitRes <= self.deltaLength)) {
+                    
+                    var d0 = v3_dot(posOffset, hitNormal); 
+                    v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+
+                    v3_sub_res(posOffset, firstHit, scn.entities[targetIndex].CD_plane_p[j]);
+                    if (insidePlane(posOffset, scn.entities[targetIndex].CD_plane_h[j], scn.entities[targetIndex].CD_plane_halfHeight[j],
+                        scn.entities[targetIndex].CD_plane_w[j],  scn.entities[targetIndex].CD_plane_halfWidth[j]) ) {
+
+                        if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
+
+                        var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
+                        if ( t0 < _tempCDRes_t0 ) {
+                        //    if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                            _tempCDRes_marker = ""+marker;
+                            _tempCDRes_t0 = t0;
+                            v3_copy(_tempCDRes_n, hitNormal);
+                            v3_copy(_tempCDRes_p0, firstHit);
+                            _tempCDRes_target_desc = "Plane";
+                            _tempCDRes_target_cdi = j;
+                        } // <t0 
+                    } // inside plane
+                } // plane intersect
+            } // different marker
+        } // point - plane
 
 
 
@@ -1086,7 +1121,7 @@ function vector_sph_min_t(n, sphO_minus_vectO, sphRadSquared) {
 }
 
 var _planeIntersect_diff = [0.0, 0.0, 0.0];
-function planeIntersect(planePos, planeNormal, sourceSph_p0in, vectDirection) {
+function planeIntersect(planePos, planeNormal, vectPos, vectDirection) {
 // https://en.wikipedia.pLastPos/wiki/Line%E2%80%93plane_intersection
     var angleCos = v3_dot(planeNormal, vectDirection);
     hitPoints.set("p-v cos", angleCos);
@@ -1094,7 +1129,7 @@ function planeIntersect(planePos, planeNormal, sourceSph_p0in, vectDirection) {
       //  log("parallel");
         return false; // parallel, either too far or impossible to get there, edges testing would have catched it
     }
-	v3_sub_res(_planeIntersect_diff, planePos, sourceSph_p0in);
+	v3_sub_res(_planeIntersect_diff, planePos, vectPos);
     var t = v3_dot(planeNormal, _planeIntersect_diff) / angleCos;
 
     hitPoints.set("p-v t", t);

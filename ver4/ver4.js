@@ -105,6 +105,14 @@ if (process) {
 log("Session Start", true);
 initEngine();
 
+// Status information
+
+function updateStatus() {
+    usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
+    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + " pY:" + Math.floor(scn.camera.position[1]) + " pZ:" + Math.floor(scn.camera.position[2])+ " rX: " + Math.floor(inputs.rx * RadToDeg) + " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
+    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
+    "nAnims: " + animations.length + " nHitTests: " + nHitTest;
+}
 
 
 function winResize() {
@@ -450,6 +458,7 @@ function onRessource(name, msg) {
 }
 
 
+// Creates copies of the StormTrooper entity
 function cloneWar() {
     for (let j = 1; j < 36; ++j) {
         var newGuy = scn.cloneEntity("ST", "ST" + j);
@@ -462,219 +471,74 @@ function cloneWar() {
     cloned = true;
 }
 
+// Returns the starting positions of the shotgun's pellet particules
 function shotgunPartPos(n, nbPart) {
     return [rndPM(5), rndPM(5), rndPM(2)];    
 }
 
+// Returns the direction of the shotgun pellets
 function shotgunPartDir(pos, n, nbPart) {
     return v3_scale_new(pos, 0.01);
 }
 
-//animLastPass
-function collisionResult_lastPass_splode(loc) {
-    // log("sploded!", false);
-    // log(splos.numElements);
-    this.lastHitMarker = "";
-   // log(this.colNum + "hits");
+//animLastPass override, when a shotgun pellet hit a ball, remove the ball and create an explosion
+function collisionResult_lastPass_splode() {
     for (var hitIndex = 0; hitIndex < this.colNum; ++hitIndex) {
         this.pActive[this.closestCollision[hitIndex].source_cdi] = false;
         var ent = scn.entities[this.closestCollision[hitIndex].target_ei];
         var anim = animations[ent.animIndex];
+
         if ((ent.animIndex != -1) && (anim.group == "splodable")) { 
-           // phyTracers.addWireCross(this.closestCollision[hitIndex].p0, 10); 
-            anim.state = E3D_DONE;
 
+            anim.state = E3D_DONE; // remove animation
 
-            var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
+            var col = [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ]; // color sweep
             var nvect = 18;
             var iter = 20;
             var dim = 0.1;
             var dvect = Array(nvect);
             var vect = Array(nvect);
+            var location = v3_new();
             for (i = 0; i < nvect; ++i) {
                 vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
                 dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
             }
-            var idx = 0;
+            var colorIndex = 0;
             for (var i = 0; i < iter; ++i) {
                 var s = 2 - (dim * i);
                 for (var j=0; j < nvect; ++j) {
+
+                    v3_add_res(location, this.closestCollision[hitIndex].p0, vect[j]);
+                    splos.addWireCross(location, s, col[colorIndex]);
         
-                    splos.addWireCross(v3_add_new(this.closestCollision[hitIndex].p0, vect[j]), s, col[idx]);
-        
-                    idx++;
-                    if (idx >= col.length) idx = 0;
+                    colorIndex++;
+                    if (colorIndex >= col.length) colorIndex = 0;
                 }
                 for (var j = 0; j < nvect; ++j) {
                     vect[j][0] += dvect[j][0];
                     vect[j][1] += dvect[j][1];
                     vect[j][2] += dvect[j][2];
-                    dvect[j][0] *= 0.9;
-                    dvect[j][1] -= 1;
-                    dvect[j][2] *= 0.9; 
+                    dvect[j][0] *= 0.9; // falloff
+                    dvect[j][1] -= 1; // "gravity"
+                    dvect[j][2] *= 0.9;  // falloff
                     
                 }
             }
 
 
-        } else {
-            anim_Base_endPass_ttl.call(this); // call default
         }
-    }
-  }
-  
-function shotgunAnimR() {
- 
-    if (this.state == E3D_PLAY) {
-        for (let i = 0; i < this.numPellets; ++i) if (this.pActive[i]) { // i is pellet index
-
-            // translate pellet entity elements
-            for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                var b = this.target.getVertex3f((i*this.target.srcNumElements) + j); // b is a view in float32array
-                v3_addscaled_mod(b, this.vertOffset[i], timer.delta);
-            }
-
-            // current tranlation vector, world coordinates
-            var vd = v3_scale_new(this.vect[i], timer.delta); // vector delta
-            var so = [0, 0, 0]; // sphere origin
-            var v1 = v3_add_new(this.pLastPos[i], vd); // vector end
-           // v3_add_mod(v1, this.delta_position);
-
-
-            var colList = [] ; // array of [entIdx, cdIdx, t, srcType, trgtType, newloc]
-
-            for (var entIdx = 0; entIdx < scn.entities.length; ++entIdx) if (this.candidates[entIdx]) { // for each candidate entities
-
-                if (scn.entities[entIdx].CD_sph > 0) 
-                for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_sph; ++cdIdx) {
-                    nHitTest++;
-                    v3_sub_res(so, scn.entities[entIdx].CD_sph_p[cdIdx], this.pLastPos[i]);
-                    var t = VectSphHit(this.vectNorm[i], so, scn.entities[entIdx].CD_sph_rs[cdIdx]);                    
-                    if (t != false) colList.push( [entIdx, cdIdx, t, "vec", "sph"] );                         
-                } // end for each sph data of each entities with sph CD
-
-                if (scn.entities[entIdx].CD_iPlane > 0) 
-                for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_iPlane; ++cdIdx) {
-                    nHitTest++;
-                    var d0 = v3_dot(this.pLastPos[i], scn.entities[entIdx].CD_iPlane_n[cdIdx]) - scn.entities[entIdx].CD_iPlane_d[cdIdx];
-                    var d1 = v3_dot(v1, scn.entities[entIdx].CD_iPlane_n[cdIdx]) - scn.entities[entIdx].CD_iPlane_d[cdIdx];
-                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) {
-                        var t = -d0 / (d1 - d0);
-                        var newloc = v3_lerp_new( this.pLastPos[i], v1, t);
-                        colList.push( [entIdx, cdIdx, t, "vec", "iPlane", newloc] );
-                    }                     
-                } // end for each sph data of each entities with iPlane CD
-
-                if (scn.entities[entIdx].CD_fPlane > 0) 
-                for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_fPlane; ++cdIdx) {
-                    nHitTest++;
-                    var offsetV0 =v3_sub_new(this.pLastPos[i], scn.entities[entIdx].CD_fPlane_d[cdIdx]);
-                    var offsetV1 =v3_sub_new(v1, scn.entities[entIdx].CD_fPlane_d[cdIdx]);
-                    var d0 = v3_dot(offsetV0, scn.entities[entIdx].CD_fPlane_n[cdIdx]);
-                    var d1 = v3_dot(offsetV1, scn.entities[entIdx].CD_fPlane_n[cdIdx]);
-                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
-                        var t = -d0 / (d1 - d0);
-                        var newloc = v3_lerp_new(offsetV0, offsetV1, t);
-                        var xx1 = Math.abs(v3_dot(newloc, scn.entities[entIdx].CD_fPlane_w[cdIdx]) );
-                        var yy1 = Math.abs(v3_dot(newloc, scn.entities[entIdx].CD_fPlane_h[cdIdx]) );
-                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "fPlane", v3_add_new(newloc,scn.entities[entIdx].CD_fPlane_d[cdIdx] )] );
-                    }                     
-                } // end for each sph data of each entities with fPlane CD
-
-               /* if (scn.entities[entIdx].CD_cube > 0) 
-                for (var cdIdx = 0; cdIdx < scn.entities[entIdx].CD_cube; ++cdIdx) {
-                    nHitTest++;
-                    var offsetV0 =v3_sub_new(this.pLastPos[i], scn.entities[entIdx].CD_cube_p[cdIdx]);
-                    var offsetV1 =v3_sub_new(v1, scn.entities[entIdx].CD_cube_p[cdIdx]);
-
-                    var d0 = v3_dot(offsetV0, scn.entities[entIdx].CD_cube_x[cdIdx]);
-                    var d1 = v3_dot(offsetV1, scn.entities[entIdx].CD_cube_x[cdIdx]);
-                    // Test inside X/Y
-                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
-                        var t = -d0 / (d1 - d0);
-                        var newloc = v3_lerp_new(offsetV0, offsetV1, t);
-                        var xx1 = Math.abs(newloc[1]);
-                        var yy1 = Math.abs(newloc[2]);
-                        //Check if crossing point is inside the unity square of plane
-                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "CubeX", v3_add_new(newloc,scn.entities[entIdx].CD_cube_p[cdIdx] )] );
-                    }   
-
-
-                    var d0 = v3_dot(offsetV0, scn.entities[entIdx].CD_cube_y[cdIdx]);
-                    var d1 = v3_dot(offsetV1, scn.entities[entIdx].CD_cube_y[cdIdx]);
-                    // Test inside X/Y
-                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
-                        var t = -d0 / (d1 - d0);
-                        var newloc = v3_lerp_new(offsetV0, offsetV1, t);
-                        var xx1 = Math.abs(newloc[0]);
-                        var yy1 = Math.abs(newloc[2]);
-                        //Check if crossing point is inside the unity square of plane
-                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "CubeY", v3_add_new(newloc,scn.entities[entIdx].CD_cube_p[cdIdx] )] );
-                    }   
-
-
-
-                    var d0 = v3_dot(offsetV0, scn.entities[entIdx].CD_cube_z[cdIdx]);
-                    var d1 = v3_dot(offsetV1, scn.entities[entIdx].CD_cube_z[cdIdx]);
-                    // Test inside X/Y
-                    if ( ((d0 > 0) && (d1 < 0)) || ((d0 < 0) && (d1 > 0)) ) { // d0-d1 crosses the plane
-                        var t = -d0 / (d1 - d0);
-                        var newloc = v3_lerp_new(offsetV0, offsetV1, t);
-                        var xx1 = Math.abs(newloc[0]);
-                        var yy1 = Math.abs(newloc[1]);
-                        //Check if crossing point is inside the unity square of plane
-                        if ( (xx1 <= 1) && (yy1 <= 1) ) colList.push( [entIdx, cdIdx, t, "vec", "CubeZ", v3_add_new(newloc, scn.entities[entIdx].CD_cube_p[cdIdx] )] );
-                    }   
-    
-                } // end for each sph data of each entities with cube CD
-                */
-            }
-
-            if (colList.length > 0) {
-                var vLen = v3_length(vd);      
-                // remove out of range          
-                for (var cl = colList.length-1; cl >= 0; --cl) if (colList[cl][2] > vLen) colList.splice(cl, 1);
-                // if nec sort ascending per item 2 (t)
-                if (colList.length > 0) {
-                    if (colList.length > 1) colList.sort((a, b) => { return a[2] - b[2]; } );
-
-                    //deactive pellet, log, and do something...
-                    this.pActive[i] = false;
-                  //  log("Hit pellet: " +colList[0][3] + " ent[" + colList[0][0] + "] " + colList[0][4] + " CD[" + colList[0][1] +"]");
-                    var newloc = (colList[0][5]) ? colList[0][5] : v3_addscaled_new(this.pLastPos[i], this.vectNorm[i], colList[0][2]);
-                    if (scn.entities[colList[0][0]].id.indexOf("sph") > -1) {
-                        splode(newloc);
-                    } else {
-                        splos.addWireCross(newloc, 2, [1,1,1]);
-                    } 
-                }
-            }
-
-            // update pellet origin
-           //v3_addscaled_mod(this.pLastPos[i], this.vect[i], timer.delta);
-
-        } // end for each active pellet
-
-
         
-    }   // active
+    }
+
+    anim_Base_endPass_ttl.call(this); // call default
+ }
 
 
 
 
-} 
 
 
 
-
-// Status information
-
-function updateStatus() {
-    usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
-    status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + " pY:" + Math.floor(scn.camera.position[1]) + " pZ:" + Math.floor(scn.camera.position[2])+ " rX: " + Math.floor(inputs.rx * RadToDeg) + " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
-    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
-    "nAnims: " + animations.length + " nHitTests: " + nHitTest;
-}
 
 
 
