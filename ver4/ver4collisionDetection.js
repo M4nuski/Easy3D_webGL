@@ -98,8 +98,8 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
     var _tempCDRes_target_ei = 0;
 
 // for each candidate entity       
-    for (let i = 0; i < self.candidates.length; ++i) if (self.candidates[i] == true) {
-        _tempCDRes_target_ei = i;
+    for (let targetIndex = 0; targetIndex < self.candidates.length; ++targetIndex) if (self.candidates[targetIndex] == true) {
+        _tempCDRes_target_ei = targetIndex;
 
     // TODO special cases when deltaLength is 0.0
        
@@ -119,13 +119,13 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
         // collision detection - self.sph to other sph (static sph target)
         // TODO use path to path interpolation for both     
-        for (let j = 0; j < scn.entities[i].CD_sph; ++j) {
-            var marker = "s"+i+"s"+j;
+        for (let j = 0; j < scn.entities[targetIndex].CD_sph; ++j) {
+            var marker = "s"+targetIndex+"s"+j;
             if (marker != self.lastHitMarker) {
                 nHitTest++;
 
                 var hitRes = capsuleSphereIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                                    scn.entities[i].CD_sph_p[j], scn.entities[i].CD_sph_r[j]);
+                                                    scn.entities[targetIndex].CD_sph_p[j], scn.entities[targetIndex].CD_sph_r[j]);
 
                 if (hitRes != false) {
                     if (hitRes < 0.0) hitRes = 0.0;
@@ -135,7 +135,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                     if (t0 < _tempCDRes_t0) {
 
-                        v3_sub_res(hitNormal, firstHit, scn.entities[i].CD_sph_p[j]);
+                        v3_sub_res(hitNormal, firstHit, scn.entities[targetIndex].CD_sph_p[j]);
 
                         _tempCDRes_marker = ""+marker;
                         _tempCDRes_t0 = t0;
@@ -144,8 +144,8 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         _tempCDRes_target_desc = "Sph";
                         _tempCDRes_target_cdi = j;
 
-                        if ((self.target.animIndex != -1) && (scn.entities[i].animIndex != -1)) {
-                            animations[scn.entities[i].animIndex].pushCollisionTarget(marker, t0 / self.deltaLength, hitNormal, firstHit, "Sph", "Sph", i, sphIndex, j, self.pspd);
+                        if ((self.target.animIndex != -1) && (scn.entities[targetIndex].animIndex != -1)) {
+                            animations[scn.entities[targetIndex].animIndex].pushCollisionTarget(marker, t0 / self.deltaLength, hitNormal, firstHit, "Sph", "Sph", targetIndex, sphIndex, j, self.pspd);
                         }                            
                     }
                 }
@@ -155,14 +155,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
         // collision detection - self.sph to edge (static edge)
-        for (let j = 0; j < scn.entities[i].CD_edge; ++j) {
-            var marker = "s"+i+"e"+j;
+        for (let j = 0; j < scn.entities[targetIndex].CD_edge; ++j) {
+            var marker = "s"+targetIndex+"e"+j;
             if  (marker != self.lastHitMarker) {
                 nHitTest++;
 
 
                 var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                    scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j]);
+                    scn.entities[targetIndex].CD_edge_p[j], scn.entities[targetIndex].CD_edge_n[j], scn.entities[targetIndex].CD_edge_l[j]);
 
                 if (hitRes != false) {                       
 
@@ -170,7 +170,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {                                
-                        point_segment_point_res(posOffset, scn.entities[i].CD_edge_p[j], scn.entities[i].CD_edge_n[j], scn.entities[i].CD_edge_l[j], firstHit);
+                        point_segment_point_res(posOffset, scn.entities[targetIndex].CD_edge_p[j], scn.entities[targetIndex].CD_edge_n[j], scn.entities[targetIndex].CD_edge_l[j], firstHit);
                         v3_sub_res(hitNormal, firstHit, posOffset);   
                         
                         if (show_DEV_CD) dev_Hits.addWireSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
@@ -192,22 +192,22 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
         // collision detection - self.sph to plane (static)
-        for (let j = 0; j < scn.entities[i].CD_plane; ++j) {
-            var marker = "s"+i+"p"+j;
+        for (let j = 0; j < scn.entities[targetIndex].CD_plane; ++j) {
+            var marker = "s"+targetIndex+"p"+j;
             if  (marker != self.lastHitMarker) {
                 nHitTest++;
 
                 var hitRes = capsulePlaneIntersect_res(firstHit, sourceSph_r, sourceSph_p0, sourceSph_n,
-                    scn.entities[i].CD_plane_n[j], scn.entities[i].CD_plane_p[j],
-                    scn.entities[i].CD_plane_w[j], scn.entities[i].CD_plane_halfWidth[j],
-                    scn.entities[i].CD_plane_h[j], scn.entities[i].CD_plane_halfHeight[j]);
+                    scn.entities[targetIndex].CD_plane_n[j], scn.entities[targetIndex].CD_plane_p[j],
+                    scn.entities[targetIndex].CD_plane_w[j], scn.entities[targetIndex].CD_plane_halfWidth[j],
+                    scn.entities[targetIndex].CD_plane_h[j], scn.entities[targetIndex].CD_plane_halfHeight[j]);
                     
                     if ((hitRes != false) && (hitRes <= self.deltaLength)) {
 
-                        v3_sub_res(posDelta, sourceSph_p0, scn.entities[i].CD_plane_p[j]);// Delta of Origin point and Plane position 
+                        v3_sub_res(posDelta, sourceSph_p0, scn.entities[targetIndex].CD_plane_p[j]);// Delta of Origin point and Plane position 
                         var d0 = v3_dot(posDelta, hitNormal); 
                         
-                        v3_copy(hitNormal, scn.entities[i].CD_plane_n[j]);
+                        v3_copy(hitNormal, scn.entities[targetIndex].CD_plane_n[j]);
                         if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
 
                         var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
@@ -231,8 +231,8 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
         // collision detection - self.sph to box (static)
         DEV_inbox = true;
-        for (let j = 0; j < scn.entities[i].CD_box; ++j) {
-            var marker = "s"+i+"b"+j;
+        for (let j = 0; j < scn.entities[targetIndex].CD_box; ++j) {
+            var marker = "s"+targetIndex+"b"+j;
             if  (marker != self.lastHitMarker) {
                 nHitTest++;
 
@@ -242,20 +242,20 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                             sourceSph_p0, 
                                                 sourceSph_n,
                                                 self.deltaLength,
-                                                scn.entities[i].CD_box_p[j], 
-                                                scn.entities[i].CD_box_preCull_r[j]) != false) {
+                                                scn.entities[targetIndex].CD_box_p[j], 
+                                                scn.entities[targetIndex].CD_box_preCull_r[j]) != false) {
 
-                    v3_sub_res(posDelta, sourceSph_p0, scn.entities[i].CD_box_p[j]); // Delta of Origin point and Plane position 
+                    v3_sub_res(posDelta, sourceSph_p0, scn.entities[targetIndex].CD_box_p[j]); // Delta of Origin point and Plane position 
 
                     // cull on which side the sph is arriving from
-                    var pxdot = v3_dot(posDelta, scn.entities[i].CD_box_x[j]);
-                    var pydot = v3_dot(posDelta, scn.entities[i].CD_box_y[j]);
-                    var pzdot = v3_dot(posDelta, scn.entities[i].CD_box_z[j]);
+                    var pxdot = v3_dot(posDelta, scn.entities[targetIndex].CD_box_x[j]);
+                    var pydot = v3_dot(posDelta, scn.entities[targetIndex].CD_box_y[j]);
+                    var pzdot = v3_dot(posDelta, scn.entities[targetIndex].CD_box_z[j]);
 
                     // relative sph movement
-                    var dxdot = v3_dot(sourceSph_n, scn.entities[i].CD_box_x[j]);
-                    var dydot = v3_dot(sourceSph_n, scn.entities[i].CD_box_y[j]);
-                    var dzdot = v3_dot(sourceSph_n, scn.entities[i].CD_box_z[j]);
+                    var dxdot = v3_dot(sourceSph_n, scn.entities[targetIndex].CD_box_x[j]);
+                    var dydot = v3_dot(sourceSph_n, scn.entities[targetIndex].CD_box_y[j]);
+                    var dzdot = v3_dot(sourceSph_n, scn.entities[targetIndex].CD_box_z[j]);
 
                     var edgesToCheck = [false, false, false, false,  false, false, false, false,  false, false, false, false];
                     // top back, top right, top front, top left,
@@ -277,62 +277,62 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     var apydot = Math.abs(pydot);
                     var apzdot = Math.abs(pzdot);
 
-                    if ( (apxdot <= scn.entities[i].CD_box_halfWidth[j] + sourceSph_r) &&
-                    (apydot <= scn.entities[i].CD_box_halfHeight[j] + sourceSph_r) &&
-                    (apzdot <= scn.entities[i].CD_box_halfDepth[j] + sourceSph_r) ) {
+                    if ( (apxdot <= scn.entities[targetIndex].CD_box_halfWidth[j] + sourceSph_r) &&
+                    (apydot <= scn.entities[targetIndex].CD_box_halfHeight[j] + sourceSph_r) &&
+                    (apzdot <= scn.entities[targetIndex].CD_box_halfDepth[j] + sourceSph_r) ) {
                             // if (show_DEV_CD) log("inside box, level 1");
 
-                        if ( (apxdot <= scn.entities[i].CD_box_halfWidth[j]) &&
-                                (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
+                        if ( (apxdot <= scn.entities[targetIndex].CD_box_halfWidth[j]) &&
+                                (apydot <= scn.entities[targetIndex].CD_box_halfHeight[j]) ) {
                             if (show_DEV_CD) log("inside box Z, level 2");
-                            var error = scn.entities[i].CD_box_halfDepth[j] + sourceSph_r;
+                            var error = scn.entities[targetIndex].CD_box_halfDepth[j] + sourceSph_r;
                             error = error - apzdot;
 
-                            v3_scale_res(posOffset, scn.entities[i].CD_box_z[j], error);
+                            v3_scale_res(posOffset, scn.entities[targetIndex].CD_box_z[j], error);
                             v3_add_mod(self.target.position, posOffset);                            
                             self.target.resetMatrix();
 
                             v3_add_mod(sourceSph_p0, posOffset); 
                             v3_copy(firstHit, sourceSph_p0);
-                            v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
+                            v3_copy(hitNormal, scn.entities[targetIndex].CD_box_z[j]);
                             if (pzdot < 0.0) v3_negate_mod(hitNormal);
                             planeHit = true;
                             hitSuffix = "-Inside";
 
-                        } else if ( (apxdot <= scn.entities[i].CD_box_halfWidth[j]) &&
-                                    (apzdot <= scn.entities[i].CD_box_halfDepth[j]) ) {
+                        } else if ( (apxdot <= scn.entities[targetIndex].CD_box_halfWidth[j]) &&
+                                    (apzdot <= scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
 
                             if (show_DEV_CD) log("inside box Y, level 2");
 
-                            var error = scn.entities[i].CD_box_halfHeight[j] + sourceSph_r;
+                            var error = scn.entities[targetIndex].CD_box_halfHeight[j] + sourceSph_r;
                             error = error - apydot;
 
-                            v3_scale_res(posOffset, scn.entities[i].CD_box_y[j], error);
+                            v3_scale_res(posOffset, scn.entities[targetIndex].CD_box_y[j], error);
                             v3_add_mod(self.target.position, posOffset);                            
                             self.target.resetMatrix();
 
                             v3_add_mod(sourceSph_p0, posOffset); 
                             v3_copy(firstHit, sourceSph_p0);
-                            v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
+                            v3_copy(hitNormal, scn.entities[targetIndex].CD_box_y[j]);
                             if (pydot < 0.0) v3_negate_mod(hitNormal);
                             planeHit = true;
                             hitSuffix = "-Inside";
 
-                        } else if ( (apzdot <= scn.entities[i].CD_box_halfDepth[j]) &&
-                                    (apydot <= scn.entities[i].CD_box_halfHeight[j]) ) {
+                        } else if ( (apzdot <= scn.entities[targetIndex].CD_box_halfDepth[j]) &&
+                                    (apydot <= scn.entities[targetIndex].CD_box_halfHeight[j]) ) {
 
                             if (show_DEV_CD) log("inside box X, level 2");
                             
-                            var error = scn.entities[i].CD_box_halfWidth[j] + sourceSph_r;
+                            var error = scn.entities[targetIndex].CD_box_halfWidth[j] + sourceSph_r;
                             error = error - apxdot;
 
-                            v3_scale_res(posOffset, scn.entities[i].CD_box_x[j], error);
+                            v3_scale_res(posOffset, scn.entities[targetIndex].CD_box_x[j], error);
                             v3_add_mod(self.target.position, posOffset);                            
                             self.target.resetMatrix();
 
                             v3_add_mod(sourceSph_p0, posOffset); 
                             v3_copy(firstHit, sourceSph_p0);
-                            v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
+                            v3_copy(hitNormal, scn.entities[targetIndex].CD_box_x[j]);
                             if (pxdot < 0.0) v3_negate_mod(hitNormal);
                             planeHit = true;
                             hitSuffix = "-Inside";
@@ -340,15 +340,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     }
 
                     // check top face
-                    var OffsetDist = scn.entities[i].CD_box_halfHeight[j];
+                    var OffsetDist = scn.entities[targetIndex].CD_box_halfHeight[j];
                     
                     // check if over face, going down
                     if (!planeHit && (pydot > OffsetDist) && (dydot < 0.0) ) {
                         // offset plane position by height
-                        v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], OffsetDist);
+                        v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_y[j], OffsetDist);
 
                         // check plane intersect
-                        var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], sourceSph_p0, sourceSph_n);
+                        var hitRes = planeIntersect(planePosition, scn.entities[targetIndex].CD_box_y[j], sourceSph_p0, sourceSph_n);
 
                         // check if inside
                         if ( (hitRes) && (hitRes <= self.deltaLength / -dydot)) {                              
@@ -357,14 +357,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
                             v3_sub_res(posOffset, firstHit, planePosition);
 
-                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j], sourceSph_r);
+                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                                scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j], sourceSph_r);
 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
                                 if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
-                                v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
+                                v3_copy(hitNormal, scn.entities[targetIndex].CD_box_y[j]);
                                 closestHit = hitRes;                                       
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
@@ -380,12 +380,12 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     }
 
                     // check bottom face, under, going up
-                    if ( !planeHit && scn.entities[i].CD_box_bottom[j] && (pydot < -OffsetDist) && (dydot > 0.0) ) {
+                    if ( !planeHit && scn.entities[targetIndex].CD_box_bottom[j] && (pydot < -OffsetDist) && (dydot > 0.0) ) {
                         // offset plane position by height
-                        v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_y[j], -OffsetDist);
+                        v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_y[j], -OffsetDist);
 
                         // check plane intersect
-                        var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_y[j], sourceSph_p0, sourceSph_n);
+                        var hitRes = planeIntersect(planePosition, scn.entities[targetIndex].CD_box_y[j], sourceSph_p0, sourceSph_n);
 
                         // check if inside
                         if ( (hitRes) && (hitRes <= self.deltaLength / dydot)) {
@@ -393,14 +393,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
                             v3_sub_res(posOffset, firstHit, planePosition);
 
-                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j], sourceSph_r);
+                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                                scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j], sourceSph_r);
 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
                                 if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
-                                v3_copy(hitNormal, scn.entities[i].CD_box_y[j]);
+                                v3_copy(hitNormal, scn.entities[targetIndex].CD_box_y[j]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
@@ -420,15 +420,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
                     // check front face
-                    OffsetDist = scn.entities[i].CD_box_halfDepth[j];
+                    OffsetDist = scn.entities[targetIndex].CD_box_halfDepth[j];
                     
                     // check in front, going backward
                     if ( !planeHit && (pzdot > OffsetDist) && (dzdot < 0.0) ) {
                         // offset plane position by height and radius
-                        v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_z[j], OffsetDist);
+                        v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_z[j], OffsetDist);
 
                         // check plane intersect
-                        var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], sourceSph_p0, sourceSph_n);
+                        var hitRes = planeIntersect(planePosition, scn.entities[targetIndex].CD_box_z[j], sourceSph_p0, sourceSph_n);
 
                         // check if inside
                         if ( (hitRes) && (hitRes <= self.deltaLength / -dzdot)) {
@@ -436,14 +436,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
                             v3_sub_res(posOffset, firstHit, planePosition);
 
-                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
+                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                                scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j], sourceSph_r);
 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
                                 if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
-                                v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
+                                v3_copy(hitNormal, scn.entities[targetIndex].CD_box_z[j]);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
@@ -453,7 +453,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_FrontLeft] = true;
                                 // edge B                                    
                                 if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopFront] = true;
-                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomFront] = scn.entities[i].CD_box_bottom[j];
+                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomFront] = scn.entities[targetIndex].CD_box_bottom[j];
                             }  
 
                         }
@@ -462,10 +462,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     // check back face, behind, going forward 
                     if ( !planeHit && (pzdot < -OffsetDist) && (dzdot > 0.0) ) {
                         // offset plane position by height and radius
-                        v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_z[j], -OffsetDist);
+                        v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_z[j], -OffsetDist);
 
                         // check plane intersect
-                        var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_z[j], sourceSph_p0, sourceSph_n);
+                        var hitRes = planeIntersect(planePosition, scn.entities[targetIndex].CD_box_z[j], sourceSph_p0, sourceSph_n);
 
                         // check if inside
                         if ( (hitRes) && (hitRes <= self.deltaLength / dzdot)) {
@@ -473,15 +473,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
                             v3_sub_res(posOffset, firstHit, planePosition);
 
-                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_x[j], scn.entities[i].CD_box_halfWidth[j],
-                                scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
+                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                                scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j], sourceSph_r);
 
 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
                                 if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
-                                v3_copy(hitNormal, scn.entities[i].CD_box_z[j]);
+                                v3_copy(hitNormal, scn.entities[targetIndex].CD_box_z[j]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
@@ -492,7 +492,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
                                 // edge B                                    
                                 if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopBack] = true;
-                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomBack] = scn.entities[i].CD_box_bottom[j];
+                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomBack] = scn.entities[targetIndex].CD_box_bottom[j];
                             }  
 
                         }
@@ -502,15 +502,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
                     // check right face, right, going left
-                    OffsetDist = scn.entities[i].CD_box_halfWidth[j];
+                    OffsetDist = scn.entities[targetIndex].CD_box_halfWidth[j];
                     
                     // check right, going left
                     if ( !planeHit && (pxdot > OffsetDist) && (dxdot < 0.0) ) {
                         // offset plane position by height and radius
-                        v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_x[j], OffsetDist);
+                        v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_x[j], OffsetDist);
 
                         // check plane intersect
-                        var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], sourceSph_p0, sourceSph_n);
+                        var hitRes = planeIntersect(planePosition, scn.entities[targetIndex].CD_box_x[j], sourceSph_p0, sourceSph_n);
 
                         // check if inside
                         if ( (hitRes) && (hitRes <= self.deltaLength / -dxdot)) {
@@ -518,15 +518,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
                             v3_sub_res(posOffset, firstHit, planePosition);
 
-                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
-                            scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
+                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j],
+                            scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j], sourceSph_r);
 
 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
                                 if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
-                                v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
+                                v3_copy(hitNormal, scn.entities[targetIndex].CD_box_x[j]);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
@@ -536,7 +536,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackRight] = true;
                                 // edge B                                    
                                 if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopRight] = true;
-                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomRight] = scn.entities[i].CD_box_bottom[j];
+                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomRight] = scn.entities[targetIndex].CD_box_bottom[j];
                             }  
     
                         }
@@ -546,10 +546,10 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     // check left face, left, going right
                     if ( !planeHit && (pxdot < -OffsetDist) && (dxdot > 0.0) ) {
                         // offset plane position by height and radius
-                        v3_addscaled_res(planePosition, scn.entities[i].CD_box_p[j], scn.entities[i].CD_box_x[j], -OffsetDist);
+                        v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_x[j], -OffsetDist);
 
                         // check plane intersect
-                        var hitRes = planeIntersect(planePosition, scn.entities[i].CD_box_x[j], sourceSph_p0, sourceSph_n);
+                        var hitRes = planeIntersect(planePosition, scn.entities[targetIndex].CD_box_x[j], sourceSph_p0, sourceSph_n);
 
                         // check if inside
                         if ( (hitRes) && (hitRes <= self.deltaLength / dxdot)) {
@@ -557,15 +557,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                             v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes); 
                             v3_sub_res(posOffset, firstHit, planePosition);
 
-                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[i].CD_box_z[j], scn.entities[i].CD_box_halfDepth[j],
-                            scn.entities[i].CD_box_y[j], scn.entities[i].CD_box_halfHeight[j], sourceSph_r);
+                            var edgeRes = insidePlaneOrMargin(posOffset, scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j],
+                            scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j], sourceSph_r);
 
 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
                                 if (show_DEV_CD) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
-                                v3_copy(hitNormal, scn.entities[i].CD_box_x[j]);
+                                v3_copy(hitNormal, scn.entities[targetIndex].CD_box_x[j]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
@@ -576,7 +576,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
                                 // edge B                                    
                                 if (edgeRes[1] == "P") edgesToCheck[_CD_box_edge_TopLeft] = true;
-                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomLeft] = scn.entities[i].CD_box_bottom[j];
+                                if (edgeRes[1] == "N") edgesToCheck[_CD_box_edge_BottomLeft] = scn.entities[targetIndex].CD_box_bottom[j];
                             }  
 
                         }
@@ -588,58 +588,58 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         // Z
                         if (edgesToCheck[_CD_box_edge_TopRight]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
-                                    scn.entities[i].CD_box_z[j], 
-                                    scn.entities[i].CD_box_halfDepth[j] * 2); 
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
+                                    scn.entities[targetIndex].CD_box_z[j], 
+                                    scn.entities[targetIndex].CD_box_halfDepth[j] * 2); 
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight]);
-                                v3_copy(closestN, scn.entities[i].CD_box_z[j]);
-                                closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackRight]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("ToRi");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomRight]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
-                                    scn.entities[i].CD_box_z[j], 
-                                    scn.entities[i].CD_box_halfDepth[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
+                                    scn.entities[targetIndex].CD_box_z[j], 
+                                    scn.entities[targetIndex].CD_box_halfDepth[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
-                                v3_copy(closestN, scn.entities[i].CD_box_z[j]);
-                                closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("BoRi");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_TopLeft]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
-                                    scn.entities[i].CD_box_z[j], 
-                                    scn.entities[i].CD_box_halfDepth[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
+                                    scn.entities[targetIndex].CD_box_z[j], 
+                                    scn.entities[targetIndex].CD_box_halfDepth[j] * 2);
             
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_z[j]);
-                                closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("ToLe");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomLeft]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
-                                    scn.entities[i].CD_box_z[j], 
-                                    scn.entities[i].CD_box_halfDepth[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
+                                    scn.entities[targetIndex].CD_box_z[j], 
+                                    scn.entities[targetIndex].CD_box_halfDepth[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_z[j]);
-                                closestL = scn.entities[i].CD_box_halfDepth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("BoLe");
                             }
                         }
@@ -647,60 +647,60 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         // Y
                         if (edgesToCheck[_CD_box_edge_BackLeft]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
-                                    scn.entities[i].CD_box_y[j], 
-                                    scn.entities[i].CD_box_halfHeight[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
+                                    scn.entities[targetIndex].CD_box_y[j], 
+                                    scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_y[j]);
-                                closestL = scn.entities[i].CD_box_halfHeight[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("BaLe");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_BackRight]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
-                                    scn.entities[i].CD_box_y[j], 
-                                    scn.entities[i].CD_box_halfHeight[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
+                                    scn.entities[targetIndex].CD_box_y[j], 
+                                    scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
-                                v3_copy(closestN, scn.entities[i].CD_box_y[j]);
-                                closestL = scn.entities[i].CD_box_halfHeight[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("BaRi");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_FrontLeft]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
-                                    scn.entities[i].CD_box_y[j], 
-                                    scn.entities[i].CD_box_halfHeight[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
+                                    scn.entities[targetIndex].CD_box_y[j], 
+                                    scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_y[j]);
-                                closestL = scn.entities[i].CD_box_halfHeight[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("FrLe");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_FrontRight]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight],
-                                    scn.entities[i].CD_box_y[j], 
-                                    scn.entities[i].CD_box_halfHeight[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight],
+                                    scn.entities[targetIndex].CD_box_y[j], 
+                                    scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight]);
-                                v3_copy(closestN, scn.entities[i].CD_box_y[j]);
-                                closestL = scn.entities[i].CD_box_halfHeight[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("FrRi");
                             }
                         }
@@ -709,58 +709,58 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         // X
                         if (edgesToCheck[_CD_box_edge_TopBack]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
-                                    scn.entities[i].CD_box_x[j], 
-                                    scn.entities[i].CD_box_halfWidth[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
+                                    scn.entities[targetIndex].CD_box_x[j], 
+                                    scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_x[j]);
-                                closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("ToBa");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomBack]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
-                                    scn.entities[i].CD_box_x[j], 
-                                    scn.entities[i].CD_box_halfWidth[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
+                                    scn.entities[targetIndex].CD_box_x[j], 
+                                    scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_x[j]);
-                                closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("BoBa");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_TopFront]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft],
-                                    scn.entities[i].CD_box_x[j], 
-                                    scn.entities[i].CD_box_halfWidth[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft],
+                                    scn.entities[targetIndex].CD_box_x[j], 
+                                    scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_x[j]);
-                                closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("ToFr");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomFront]) {
                             var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
-                                scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
-                                    scn.entities[i].CD_box_x[j], 
-                                    scn.entities[i].CD_box_halfWidth[j] * 2);
+                                scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
+                                    scn.entities[targetIndex].CD_box_x[j], 
+                                    scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
                             if ((hitRes != false) && (hitRes < closestHit)) {
                                 edgeHit = true;
                                 closestHit = hitRes;
-                                v3_copy(closestP, scn.entities[i].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
-                                v3_copy(closestN, scn.entities[i].CD_box_x[j]);
-                                closestL = scn.entities[i].CD_box_halfWidth[j] * 2;
+                                v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
+                                v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("BoFr");
                             }
                         }
@@ -803,15 +803,15 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
         // TODO pre-cull whole CD stack
-        for (let j = 0; j < scn.entities[i].CD_triangle; ++j) {
-            var marker = "s"+i+"t"+j;
+        for (let j = 0; j < scn.entities[targetIndex].CD_triangle; ++j) {
+            var marker = "s"+targetIndex+"t"+j;
             if  (marker != self.lastHitMarker) {
                 nHitTest++;
 
                 var hitRes = triangle_capsule_intersect_res(firstHit, sourceSph_p0, sourceSph_n, sourceSph_r,
-                    scn.entities[i].CD_triangle_p1[j], scn.entities[i].CD_triangle_p3p1[j], scn.entities[i].CD_triangle_p2p1[j], 
-                    scn.entities[i].CD_triangle_p3p1lenSq[j], scn.entities[i].CD_triangle_p2p1lenSq[j],
-                    scn.entities[i].CD_triangle_p3p2p1dot[j], scn.entities[i].CD_triangle_n[j]);
+                    scn.entities[targetIndex].CD_triangle_p1[j], scn.entities[targetIndex].CD_triangle_p3p1[j], scn.entities[targetIndex].CD_triangle_p2p1[j], 
+                    scn.entities[targetIndex].CD_triangle_p3p1lenSq[j], scn.entities[targetIndex].CD_triangle_p2p1lenSq[j],
+                    scn.entities[targetIndex].CD_triangle_p3p2p1dot[j], scn.entities[targetIndex].CD_triangle_n[j]);
 
                 if ((hitRes != false) && (hitRes <= self.deltaLength) && (hitRes >= -sourceSph_r) ) {      
 
@@ -822,11 +822,11 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = ""+marker;
                         _tempCDRes_t0 = t0;
-                        v3_copy(_tempCDRes_n, scn.entities[i].CD_triangle_n[j]);
+                        v3_copy(_tempCDRes_n, scn.entities[targetIndex].CD_triangle_n[j]);
                         v3_copy(_tempCDRes_p0, firstHit);
                         _tempCDRes_target_desc = "Triangle";
                         _tempCDRes_target_cdi = j;
-                        //self.pushCollisionSource(marker, t0 / self.deltaLength, scn.entities[i].CD_triangle_n[j], firstHit, "Sph", "Triangle" + hitSuffix, i, sphIndex, j);
+                        //self.pushCollisionSource(marker, t0 / self.deltaLength, scn.entities[targetIndex].CD_triangle_n[j], firstHit, "Sph", "Triangle" + hitSuffix, i, sphIndex, j);
                     }
                 } // if hitres
 
@@ -897,7 +897,8 @@ function CheckForAnimationCollisions_PointSource(self, scn, animations){
     var posOffset  = [0.0, 0.0, 0.0];
     var posDelta_n = [0.0, 0.0, 0.0];
     
-    //var planePosition = [0.0, 0.0, 0.0];
+    var planePosition = [0.0, 0.0, 0.0];
+    var planeOffset = [0.0, 0.0, 0.0];
 
     var sourcePts_p0 = [0.0, 0.0, 0.0];
     var sourcePts_p1 = [0.0, 0.0, 0.0];
@@ -1007,7 +1008,7 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
                 var hitRes = vectorPlaneIntersect(posOffset, hitNormal, sourcePts_n);
                 
-                if ((hitRes != false) && (hitRes <= self.deltaLength)) {
+                if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
                     
                     var d0 = v3_dot(posOffset, hitNormal); 
                     v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
@@ -1032,6 +1033,157 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 } // plane intersect
             } // different marker
         } // point - plane
+
+
+        // collision detection - self.point to box (static)
+        for (let j = 0; j < scn.entities[targetIndex].CD_box; ++j) {
+            var marker = "p"+targetIndex+"b"+j;
+            if  (marker != self.lastHitMarker) {
+                nHitTest++;
+
+                v3_sub_res(posOffset, sourcePts_p0, scn.entities[targetIndex].CD_box_p[j]);// Delta of Origin point and Box position 
+
+                // start position
+                var pxdot = v3_dot(posOffset, scn.entities[targetIndex].CD_box_x[j]);
+                var pydot = v3_dot(posOffset, scn.entities[targetIndex].CD_box_y[j]);
+                var pzdot = v3_dot(posOffset, scn.entities[targetIndex].CD_box_z[j]);
+
+                // relative movement
+                var dxdot = v3_dot(sourcePts_n, scn.entities[targetIndex].CD_box_x[j]);
+                var dydot = v3_dot(sourcePts_n, scn.entities[targetIndex].CD_box_y[j]);
+                var dzdot = v3_dot(sourcePts_n, scn.entities[targetIndex].CD_box_z[j]);
+
+                var planeHit = false;
+                var hitRes;
+
+                var OffsetDist = scn.entities[targetIndex].CD_box_halfHeight[j];
+                // top
+                // check if over face, going down
+                if (!planeHit && (pydot >  OffsetDist) && (dydot < 0.0)) {
+                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_y[j],  OffsetDist);
+                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_y[j], sourcePts_n);
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
+                        console.log(hitRes);
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 1, _v3_blue);
+                        console.log(firstHit);
+                        v3_sub_res(planeOffset, firstHit, planePosition);
+                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                            scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
+
+                            v3_copy(hitNormal, scn.entities[targetIndex].CD_box_y[j]);
+                            planeHit = true;
+                        }
+                    }
+                } 
+                // bottom
+                // check if under face, going up
+                if (!planeHit && (pydot < -OffsetDist) && (dydot > 0.0)) {
+                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_y[j],  -OffsetDist);
+                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_y[j], sourcePts_n);
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 1, _v3_blue);
+                        v3_sub_res(planeOffset, firstHit, planePosition);
+                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                            scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
+
+                            v3_negate_res(hitNormal, scn.entities[targetIndex].CD_box_y[j]);   
+                            planeHit = true;
+                        }
+                    }
+                }
+
+
+                OffsetDist = scn.entities[targetIndex].CD_box_halfWidth[j];
+                // right
+                // check if to the right side, going left
+                if (!planeHit && (pxdot >  OffsetDist) && (dxdot < 0.0)) {
+                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_x[j], OffsetDist);
+                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_x[j], sourcePts_n);
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        v3_sub_res(planeOffset, firstHit, planePosition);
+                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                            scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
+
+                            v3_copy(hitNormal, scn.entities[targetIndex].CD_box_x[j]);
+                            planeHit = true;
+                        }
+                    }
+
+                } 
+                // left
+                // check if on the left side, going right
+                if (!planeHit && (pxdot < -OffsetDist) && (dxdot > 0.0)) {
+                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_x[j],  -OffsetDist);
+                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_x[j], sourcePts_n);
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        v3_sub_res(planeOffset, firstHit, planePosition);
+                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                            scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
+
+                            v3_negate_res(hitNormal, scn.entities[targetIndex].CD_box_x[j]);
+                            planeHit = true;
+                        }
+                    }
+                }
+
+
+                OffsetDist = scn.entities[targetIndex].CD_box_halfDepth[j];
+                // back
+                // check if behind, going forward
+                if (!planeHit && (pzdot >  OffsetDist) && (dzdot < 0.0)) {
+                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_z[j], OffsetDist);
+                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_z[j], sourcePts_n);
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        v3_sub_res(planeOffset, firstHit, planePosition);
+                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                            scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j]) ) {
+
+                            v3_copy(hitNormal, scn.entities[targetIndex].CD_box_z[j]);
+                            planeHit = true;
+                        }
+                    }
+                } 
+                // front
+                // check if in front, going backward
+                if (!planeHit && (pzdot < -OffsetDist) && (dzdot > 0.0)) {
+                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_z[j],  -OffsetDist);
+                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_z[j], sourcePts_n);
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        v3_sub_res(planeOffset, firstHit, planePosition);
+                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                            scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j]) ) {
+
+                            v3_negate_res(hitNormal, scn.entities[targetIndex].CD_box_z[j]);
+                            planeHit = true;
+                        }
+                    }
+                }
+
+
+                if (planeHit) {
+                    var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
+                    if ( t0 < _tempCDRes_t0 ) {
+                    //    if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                        _tempCDRes_marker = ""+marker;
+                        _tempCDRes_t0 = t0;
+                        v3_copy(_tempCDRes_n, hitNormal);
+                        v3_copy(_tempCDRes_p0, firstHit);
+                        _tempCDRes_target_desc = "Box";
+                        _tempCDRes_target_cdi = j;
+                    } // <t0 
+                }
+
+            } // different marker
+        } // point - plane
+
+
+
 
 
 
@@ -1146,9 +1298,9 @@ function vectorPlaneIntersect(vectPosMinusPlanePos, planeNormal, vectNormal) {
 }
 
 
-function insidePlane(SphPosMinusPlanePos, normalA, halfSizeA, normalB, halfSizeB) {
-    if (Math.abs(v3_dot(SphPosMinusPlanePos, normalA)) > halfSizeA) return false;
-    if (Math.abs(v3_dot(SphPosMinusPlanePos, normalB)) > halfSizeB) return false;   
+function insidePlane(PointPosMinusPlanePos, normalA, halfSizeA, normalB, halfSizeB) {
+    if (Math.abs(v3_dot(PointPosMinusPlanePos, normalA)) > halfSizeA) return false;
+    if (Math.abs(v3_dot(PointPosMinusPlanePos, normalB)) > halfSizeB) return false;   
     return true;
 }
 
@@ -1401,7 +1553,7 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
     // inside edge
     if ( (v1t >= 0.0) && (v1t <= 1.0) && (v2t >= 0.0) && (v2t <= 1.0) ) {
         if (v1t == 0.0) v1t =_v3_epsilon;
-        if (show_DEV_CD) log("along edge");
+        //if (show_DEV_CD) log("along edge");
         return v1t;
     }
     
@@ -1416,7 +1568,7 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
         v1t = endCap / capLength;;
         if (v1t > 1.0) return false;
         if (v1t == 0.0) v1t =_v3_epsilon;
-        if (show_DEV_CD) log("edge orig cap");
+        //if (show_DEV_CD) log("edge orig cap");
         return v1t;
 
     } else if (v2t >= 0.5) { // test as sphere cap at end of edge        
@@ -1430,7 +1582,7 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
         v1t = endCap / capLength;
         if (v1t > 1.0) return false;
         if (v1t == 0.0) v1t =_v3_epsilon;
-        if (show_DEV_CD) log("edge end cap");
+       // if (show_DEV_CD) log("edge end cap");
         return v1t;
     }
 
