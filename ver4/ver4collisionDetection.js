@@ -197,22 +197,22 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
             if  (marker != self.lastHitMarker) {
                 nHitTest++;
 
+                v3_copy(hitNormal, scn.entities[targetIndex].CD_plane_n[j]);
                 var hitRes = capsulePlaneIntersect_res(firstHit, sourceSph_r, sourceSph_p0, sourceSph_n,
-                    scn.entities[targetIndex].CD_plane_n[j], scn.entities[targetIndex].CD_plane_p[j],
+                    hitNormal, scn.entities[targetIndex].CD_plane_p[j],
                     scn.entities[targetIndex].CD_plane_w[j], scn.entities[targetIndex].CD_plane_halfWidth[j],
                     scn.entities[targetIndex].CD_plane_h[j], scn.entities[targetIndex].CD_plane_halfHeight[j]);
                     
                     if ((hitRes != false) && (hitRes <= self.deltaLength)) {
 
                         v3_sub_res(posDelta, sourceSph_p0, scn.entities[targetIndex].CD_plane_p[j]);// Delta of Origin point and Plane position 
-                        var d0 = v3_dot(posDelta, hitNormal); 
-                        
-                        v3_copy(hitNormal, scn.entities[targetIndex].CD_plane_n[j]);
+
+                        var d0 = v3_dot(posDelta, hitNormal);                         
                         if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
 
                         var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
-                            if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                            if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
                             _tempCDRes_marker = ""+marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
