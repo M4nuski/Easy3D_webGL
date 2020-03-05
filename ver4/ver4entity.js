@@ -588,35 +588,37 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.increaseSize(nElements - this.numElements);
     }
 
-    increaseSize(by) {
-        if (this.arraySize > (this.numElements + by)) {
+    increaseSize(by = 1) {
+        if (by < 0) throw "Cannot increase size by negative value";
+
+        if (this.arraySize >= (this.numElements + by)) {
             this.numElements += by;
         } else {
             if (this.numElements > 0) {     
                 
-                let end = (by >= 0) ? this.numElements*3 : (this.numElements - by)*3;
+                let end = this.numElements * 3;
 
-                this.arraySize += by + this.arrayIncrement;
+                this.arraySize += Math.ceil(by / this.arrayIncrement) * this.arrayIncrement;
                 this.numElements += by;
 
                 let oldV = this.vertexArray.subarray(0, end);
-                let oldN = this.colorArray.subarray(0, end);
-                let oldC = this.normalArray.subarray(0, end);
+                let oldC = this.colorArray.subarray(0, end);
+                let oldN = this.normalArray.subarray(0, end);
                 
-                this.vertexArray = new Float32Array(this.arraySize*3);
-                this.colorArray = new Float32Array(this.arraySize*3);
-                this.normalArray = new Float32Array(this.arraySize*3);
+                this.vertexArray = new Float32Array(this.arraySize * 3);
+                this.colorArray  = new Float32Array(this.arraySize * 3);
+                this.normalArray = new Float32Array(this.arraySize * 3);
                 
                 this.vertexArray.set(oldV, 0);
-                this.colorArray.set(oldN, 0);
-                this.normalArray.set(oldC, 0);
+                this.colorArray.set( oldC, 0);
+                this.normalArray.set(oldN, 0);
                 
             } else {
                 this.numElements = by; 
-                this.arraySize = by + this.arrayIncrement;
-                this.vertexArray = new Float32Array(this.arraySize*3);
-                this.colorArray = new Float32Array(this.arraySize*3);
-                this.normalArray = new Float32Array(this.arraySize*3);
+                this.arraySize = Math.ceil(by / this.arrayIncrement) * this.arrayIncrement;
+                this.vertexArray = new Float32Array(this.arraySize * 3);
+                this.colorArray  = new Float32Array(this.arraySize * 3);
+                this.normalArray = new Float32Array(this.arraySize * 3);
             }
         }
         this.dataSizeChanged = true;
@@ -631,6 +633,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.CD_sph = 0;
         this.CD_plane = 0;
         this.CD_box = 0;
+        this.CD_triangle = 0;
         this.collisionDetection = false;
 
         this.arrayIndex = 0;
@@ -661,21 +664,21 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     addV(vert) {
-        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        if (this.arrayIndex >= this.numElements) this.increaseSize();
         this.setVertex3f(this.arrayIndex, vert);
         this.setColor3f(this.arrayIndex, this.currentColor);
         this.arrayIndex++;
         if ((this.finiteSize != false) && (this.arrayIndex >= this.finiteSize)) this.arrayIndex = 0;
     }
     addVC(vert, col) {
-        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        if (this.arrayIndex >= this.numElements) this.increaseSize();
         this.setVertex3f(this.arrayIndex, vert);
         this.setColor3f(this.arrayIndex, col);
         this.arrayIndex++;
         if ((this.finiteSize != false) && (this.arrayIndex >= this.finiteSize)) this.arrayIndex = 0;
     }
     addVCN(vert, col, norm) {
-        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        if (this.arrayIndex >= this.numElements) this.increaseSize();
         this.setVertex3f(this.arrayIndex, vert);
         this.setColor3f(this.arrayIndex, col);
         this.setNormal3f(this.arrayIndex, norm);
@@ -683,7 +686,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         if ((this.finiteSize != false) && (this.arrayIndex > this.finiteSize)) this.arrayIndex = 0;
     }
     addVN(vert, norm) {
-        if (this.arrayIndex >= this.numElements) this.increaseSize(this.arrayIncrement);
+        if (this.arrayIndex >= this.numElements) this.increaseSize();
         this.setVertex3f(this.arrayIndex, vert);
         this.setColor3f(this.arrayIndex, this.currentColor);
         this.setNormal3f(this.arrayIndex, norm);
@@ -1098,23 +1101,6 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             v3_applym4_mod(z, m);
 
             this.pushCD_box(loc, x, y, z, size[0], size[1], size[2], true); 
-
-           /*this.pushCD_edge(brl, x, size[0]*2);
-           this.pushCD_edge(bfl, x, size[0]*2);
-           this.pushCD_edge(tfl, x, size[0]*2);
-           this.pushCD_edge(trl, x, size[0]*2); // side
-            
-            this.pushCD_edge(brl, y, size[1]*2);
-            this.pushCD_edge(brr, y, size[1]*2);
-            this.pushCD_edge(bfl, y, size[1]*2);
-            this.pushCD_edge(bfr, y, size[1]*2); // vertical
-
-            this.pushCD_edge(brl, z, size[2]*2);
-            this.pushCD_edge(brr, z, size[2]*2);
-            this.pushCD_edge(trl, z, size[2]*2);
-            this.pushCD_edge(trr, z, size[2]*2); // hor*/
-
-
         }
     }
 
@@ -1134,7 +1120,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         if (addCD) {
             var da = v3_sub_new(p2, p1);
             var db = v3_sub_new(p3, p1);
-            var n = v3_cross_new(da, db);
+            var n  = v3_cross_new(da, db);
             v3_normalize_mod(n);
             this.pushCD_triangle(n, p1, p2, p3);
         }
@@ -1153,7 +1139,7 @@ class E3D_entity_dynamicCopy extends E3D_entity_wireframe_canvas {
         this.drawMode = 4;//gl.TRIANGLES;
 
         this.srcVertex = new Float32Array(sourceEntity.vertexArray);
-        this.srcColor = new Float32Array(sourceEntity.colorArray);
+        this.srcColor  = new Float32Array(sourceEntity.colorArray);
         this.srcNormal = new Float32Array(sourceEntity.normalArray);
         this.srcNumElements = sourceEntity.numElements;
         this.dataContentChanged = true;
@@ -1161,9 +1147,9 @@ class E3D_entity_dynamicCopy extends E3D_entity_wireframe_canvas {
     }
 
     copySource(offset) { // offset in elements     
-        this.vertexArray.set(this.srcVertex, offset*3);
-        this.colorArray.set(this.srcColor, offset*3);
-        this.normalArray.set(this.srcNormal, offset*3);
+        this.vertexArray.set(this.srcVertex, offset * 3);
+        this.colorArray.set( this.srcColor,  offset * 3);
+        this.normalArray.set(this.srcNormal, offset * 3);
     }
 
 

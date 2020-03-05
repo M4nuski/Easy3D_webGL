@@ -8,7 +8,7 @@ var nHitTest = 0;
 var nHits = 0;
 
 var show_DEV_CD = false;
-var phyTracers;
+var phyTracers, dev_Hits;
 var gAccel = 0;
 var timer = { delta : 0, start : 0 }; // dummy timer 
 
@@ -61,7 +61,7 @@ const _zFar = 500.0;
 var winWidth = 10, winHeight = 10;
 var usepct_smth = 0; //usage pct smoothed value
 var l0v, l1v;// light vector entities 
-var testSph, splos, iplanes, fplanes, cubes, dev_CD; // entities
+var testSph, splos, planes, fplanes, cubes, dev_CD; // entities
 var cloned = false;
 var animations = [];
 var nHitTest = 0;
@@ -183,7 +183,7 @@ function initEngine() {
         scn.program.bindLocations(attribList01, uniformList01);
 
         log("Lighting Initialization", false);
-        scn.lights =  new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
+        scn.lights = new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
         scn.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
         scn.lights.setDirection0(v3_val_new(-0.2, -0.2, -1.0)); 
         scn.lights.light0_lockToCamera = true;
@@ -220,14 +220,12 @@ function initEngine() {
     l0v.position = v3_val_new(-5, 20, -5);
     l0v.visible = true;
     l0v.vis_culling = false;
-
     scn.addEntity(l0v);
     
     l1v = new E3D_entity_axis("light1vect", true, 10.0, true);
     l1v.position = v3_val_new(5, 20, 5);
     l1v.visible = true;
     l1v.vis_culling = false;
-
     scn.addEntity(l1v);
 
     timer.run();
@@ -247,22 +245,17 @@ function initEngine() {
     splos.vis_culling = false;
     scn.addEntity(splos);
 
-    iplanes = new E3D_entity_wireframe_canvas("Planes");
-    iplanes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true);
-    iplanes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true);
-    iplanes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true);
-    iplanes.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true);
-    iplanes.visible = true;
-    iplanes.vis_culling = false;
-    scn.addEntity(iplanes);
-
-    fplanes = new E3D_entity_wireframe_canvas("finitePlanes");
-    fplanes.position = [25, -10, 25];
-    fplanes.addPlane([-25, 10, 25], [0, 0, 0], 20, 20, -1, [1,0,0], true);
-    fplanes.addPlane([25, -10, 0], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], true);
-    fplanes.addPlane([0, 30, 0], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], true);
-    fplanes.visible = true;
-    scn.addEntity(fplanes);
+    planes = new E3D_entity_wireframe_canvas("Planes");
+    planes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true);
+    planes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true);
+    planes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true);
+    planes.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true);
+    planes.addPlane([0, 0, 50], [0, 0, 0], 20, 20, -1, [1,0,0], true);
+    planes.addPlane([50, -20, 25], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], true);
+    planes.addPlane([25, 20, 25], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], true);
+    planes.visible = true;
+    planes.vis_culling = false;
+    scn.addEntity(planes);
 
     cubes = new E3D_entity_wireframe_canvas("cubesTest");
     cubes.position = [0, 50, -50];
@@ -278,6 +271,11 @@ function initEngine() {
     dev_CD.visible = true;
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
+
+    dev_Hits = new E3D_entity_wireframe_canvas("PHY_hits");
+    dev_Hits.visible = true;
+    dev_Hits.vis_culling = false;
+    scn.addEntity(dev_Hits);
 
     phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces", 1024*32);
     phyTracers.visible = true;
@@ -321,6 +319,7 @@ function prepRender() {
 
 function timerTick() {  // Game Loop
     
+    // Inputs
     vTSinputRight.processInputs("ry_offset", "rx_offset");
 
     if (scn.camera.id == "cam1s") {
@@ -349,11 +348,13 @@ function timerTick() {  // Game Loop
 
     } 
 
+    // Stats
     updateStatus();
     nHitTest = 0;
 
+    // Events / Commands
     if (inputs.checkCommand("action0", true)) {
-     //   log("action0", true);
+     //   log("action0", true); throw a ball
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         newSph.position[1] = 5;
         newSph.rotation[0] = rndPM(PIx2);
@@ -365,7 +366,7 @@ function timerTick() {  // Game Loop
         animations[animations.length-1].group = "splodable";      
     }
     if (inputs.checkCommand("action1", true)) {
-       // log("action1", true);      
+       // log("action1", true); fire shotgun
         let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);  
         newPyra.moveTo([10, -10, 0]); // originate from bottom right corner of view
 
@@ -377,12 +378,13 @@ function timerTick() {  // Game Loop
         newPyra.visible = true;
         scn.addEntity(newPyra); 
     }
+
+    // Render
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
         scn.render();
         scn.postRender();
     }   
-
 }
 
 

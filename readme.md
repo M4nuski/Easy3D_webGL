@@ -26,7 +26,7 @@ Current work-in-progress and next steps
 * extract all "DEV" stuff to a debug class
 * Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
 * Regroup vertexArrays for mesh data
-* Improved Collision Detection with Interpolation (point, edge, sphere, plane, box, triangles)
+* Improved Collision Detection with Interpolation and Static test (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions
 * --Some kind of game:
 * Path interpolation for bots and animations.
