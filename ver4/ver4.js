@@ -247,7 +247,7 @@ function initEngine() {
     splos.vis_culling = false;
     scn.addEntity(splos);
 
-    iplanes = new E3D_entity_wireframe_canvas("infinitePlanes");
+    iplanes = new E3D_entity_wireframe_canvas("Planes");
     iplanes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true);
     iplanes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true);
     iplanes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true);
@@ -270,6 +270,7 @@ function initEngine() {
     cubes.addWireCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
     cubes.addWireCube([0, 0, 0], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
     cubes.addWireCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
+    cubes.addTriangle([0, 20, 80], [-30, 22, 150], [30, 18, 150], [1, 1, 1], true);
     cubes.visible = true;
     scn.addEntity(cubes);
 

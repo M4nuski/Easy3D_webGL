@@ -815,8 +815,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                 if ((hitRes != false) && (hitRes <= self.deltaLength) && (hitRes >= -sourceSph_r) ) {      
 
-                    var t0 = 0.0;
-                    t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
+                    var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {          
                         if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
@@ -1187,6 +1186,36 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
 
 
+        // Point - Triangle
+        for (let j = 0; j < scn.entities[targetIndex].CD_triangle; ++j) {
+            var marker = "p"+targetIndex+"t"+j;
+            if  (marker != self.lastHitMarker) {
+                nHitTest++;
+
+                var hitRes = triangle_vector_intersect_res(firstHit, sourcePts_p0, sourcePts_n, 
+                    scn.entities[targetIndex].CD_triangle_p1[j], scn.entities[targetIndex].CD_triangle_p3p1[j], scn.entities[targetIndex].CD_triangle_p2p1[j], 
+                    scn.entities[targetIndex].CD_triangle_p3p1lenSq[j], scn.entities[targetIndex].CD_triangle_p2p1lenSq[j],
+                    scn.entities[targetIndex].CD_triangle_p3p2p1dot[j], scn.entities[targetIndex].CD_triangle_n[j]);
+
+                if ((hitRes != false) && (hitRes <= sourcePts_l) && (hitRes >= 0.0) ) {      
+
+                    var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
+
+                    if ( t0 < _tempCDRes_t0 ) {          
+                       // if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                        _tempCDRes_marker = ""+marker;
+                        _tempCDRes_t0 = t0;
+                        v3_copy(_tempCDRes_n, scn.entities[targetIndex].CD_triangle_n[j]);
+                        v3_copy(_tempCDRes_p0, firstHit);
+                        _tempCDRes_target_desc = "Triangle";
+                        _tempCDRes_target_cdi = j;                 
+                    }
+                } // if hitres
+            } // different marker
+        } // foreach triangles
+
+
+
 
 
 
@@ -1360,7 +1389,7 @@ return (u >= 0) && (v >= 0) && (u + v < 1)
     var v = (dot00 * dot12 - dot01 * dot02) * invDenom
 
     if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
-        if (show_DEV_CD) phyTracers.addWireCross(firsthit, 4, [0, 1, 0]);
+    //    if (show_DEV_CD) phyTracers.addWireCross(firsthit, 4, [0, 1, 0]);
         if (t == 0) t = _v3_epsilon;
         return t;
     } else return false;
