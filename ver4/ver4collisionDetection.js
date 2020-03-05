@@ -1060,15 +1060,13 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 // top
                 // check if over face, going down
                 if (!planeHit && (pydot >  OffsetDist) && (dydot < 0.0)) {
-                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_y[j],  OffsetDist);
-                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_y[j], sourcePts_n);
+                    v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_y[j],  OffsetDist);
+                    v3_sub_res(posOffset, sourcePts_p0, planePosition);
+                    hitRes = vectorPlaneIntersect(posOffset, scn.entities[targetIndex].CD_box_y[j], sourcePts_n);
                     if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
-                        console.log(hitRes);
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 1, _v3_blue);
-                        console.log(firstHit);
-                        v3_sub_res(planeOffset, firstHit, planePosition);
-                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                        v3_sub_res(posOffset, firstHit, planePosition);
+                        if (insidePlane(posOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
                             scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
 
                             v3_copy(hitNormal, scn.entities[targetIndex].CD_box_y[j]);
@@ -1079,13 +1077,13 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 // bottom
                 // check if under face, going up
                 if (!planeHit && (pydot < -OffsetDist) && (dydot > 0.0)) {
-                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_y[j],  -OffsetDist);
-                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_y[j], sourcePts_n);
+                    v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_y[j], -OffsetDist);
+                    v3_sub_res(posOffset, sourcePts_p0, planePosition);
+                    hitRes = vectorPlaneIntersect(posOffset, scn.entities[targetIndex].CD_box_y[j], sourcePts_n);
                     if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                        if (show_DEV_CD) phyTracers.addWireCross(firstHit, 1, _v3_blue);
-                        v3_sub_res(planeOffset, firstHit, planePosition);
-                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
+                        v3_sub_res(posOffset, firstHit, planePosition);
+                        if (insidePlane(posOffset, scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j],
                             scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
 
                             v3_negate_res(hitNormal, scn.entities[targetIndex].CD_box_y[j]);   
@@ -1099,12 +1097,13 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 // right
                 // check if to the right side, going left
                 if (!planeHit && (pxdot >  OffsetDist) && (dxdot < 0.0)) {
-                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_x[j], OffsetDist);
-                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_x[j], sourcePts_n);
+                    v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_x[j],  OffsetDist);
+                    v3_sub_res(posOffset, sourcePts_p0, planePosition);
+                    hitRes = vectorPlaneIntersect(posOffset, scn.entities[targetIndex].CD_box_x[j], sourcePts_n);
                     if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                        v3_sub_res(planeOffset, firstHit, planePosition);
-                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                        v3_sub_res(posOffset, firstHit, planePosition);
+                        if (insidePlane(posOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
                             scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
 
                             v3_copy(hitNormal, scn.entities[targetIndex].CD_box_x[j]);
@@ -1116,12 +1115,13 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 // left
                 // check if on the left side, going right
                 if (!planeHit && (pxdot < -OffsetDist) && (dxdot > 0.0)) {
-                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_x[j],  -OffsetDist);
-                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_x[j], sourcePts_n);
+                    v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_x[j], -OffsetDist);
+                    v3_sub_res(posOffset, sourcePts_p0, planePosition);
+                    hitRes = vectorPlaneIntersect(posOffset, scn.entities[targetIndex].CD_box_x[j], sourcePts_n);
                     if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                        v3_sub_res(planeOffset, firstHit, planePosition);
-                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                        v3_sub_res(posOffset, firstHit, planePosition);
+                        if (insidePlane(posOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
                             scn.entities[targetIndex].CD_box_z[j], scn.entities[targetIndex].CD_box_halfDepth[j]) ) {
 
                             v3_negate_res(hitNormal, scn.entities[targetIndex].CD_box_x[j]);
@@ -1135,12 +1135,13 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 // back
                 // check if behind, going forward
                 if (!planeHit && (pzdot >  OffsetDist) && (dzdot < 0.0)) {
-                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_z[j], OffsetDist);
-                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_z[j], sourcePts_n);
+                    v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_z[j],  OffsetDist);
+                    v3_sub_res(posOffset, sourcePts_p0, planePosition);
+                    hitRes = vectorPlaneIntersect(posOffset, scn.entities[targetIndex].CD_box_z[j], sourcePts_n);
                     if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                        v3_sub_res(planeOffset, firstHit, planePosition);
-                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                        v3_sub_res(posOffset, firstHit, planePosition);
+                        if (insidePlane(posOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
                             scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j]) ) {
 
                             v3_copy(hitNormal, scn.entities[targetIndex].CD_box_z[j]);
@@ -1151,12 +1152,13 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 // front
                 // check if in front, going backward
                 if (!planeHit && (pzdot < -OffsetDist) && (dzdot > 0.0)) {
-                    v3_addscaled_res(planePosition, posOffset, scn.entities[targetIndex].CD_box_z[j],  -OffsetDist);
-                    hitRes = vectorPlaneIntersect(planePosition, scn.entities[targetIndex].CD_box_z[j], sourcePts_n);
+                    v3_addscaled_res(planePosition, scn.entities[targetIndex].CD_box_p[j], scn.entities[targetIndex].CD_box_z[j], -OffsetDist);
+                    v3_sub_res(posOffset, sourcePts_p0, planePosition);
+                    hitRes = vectorPlaneIntersect(posOffset, scn.entities[targetIndex].CD_box_z[j], sourcePts_n);
                     if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                        v3_sub_res(planeOffset, firstHit, planePosition);
-                        if (insidePlane(planeOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
+                        v3_sub_res(posOffset, firstHit, planePosition);
+                        if (insidePlane(posOffset, scn.entities[targetIndex].CD_box_y[j], scn.entities[targetIndex].CD_box_halfHeight[j],
                             scn.entities[targetIndex].CD_box_x[j], scn.entities[targetIndex].CD_box_halfWidth[j]) ) {
 
                             v3_negate_res(hitNormal, scn.entities[targetIndex].CD_box_z[j]);
@@ -1169,7 +1171,6 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                 if (planeHit) {
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
                     if ( t0 < _tempCDRes_t0 ) {
-                    //    if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                         _tempCDRes_marker = ""+marker;
                         _tempCDRes_t0 = t0;
                         v3_copy(_tempCDRes_n, hitNormal);
