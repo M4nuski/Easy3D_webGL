@@ -30,13 +30,17 @@ document.addEventListener("DOMContentLoaded", function () {
 log("DOMContentLoaded");
 
 log("Get DOM Elements");
-const can = document.getElementById("GLCanvas");
-const mainDiv = document.getElementById("mainDiv");
-
+const GLCanvas = document.getElementById("GLCanvas");
+const btn_restart = document.getElementById("btn_restart");
+const btn_help = document.getElementById("btn_help");
+const span_time = document.getElementById("span_time");
+const div_help = document.getElementById("helpDiv");
+var startTime = 0;
 
 log("Set DOM Events");
-document.body.addEventListener("resize", winResize); // To reset camera matrix
-
+window.addEventListener("resize", winResize); // To reset camera matrix
+btn_restart.addEventListener("click", restartGame); 
+btn_help.addEventListener("click", toggleHelp); 
 
 // Engine Config
 
@@ -46,7 +50,6 @@ const _zFar = 500.0;
 
 // Engine State and stats
 
-var l0v, l1v;// light vector entities 
 var maze, ball; // entities
 var animations = [];
 
@@ -59,19 +62,34 @@ var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var meshLoader = new E3D_loader();
 
-var inputs = new E3D_input(can, true, false, true, false);
+var inputs = new E3D_input(GLCanvas, true, false, true, false);
 
 log("Session Start", true);
 initEngine();
 
 function winResize() {
-    scn.camera.resize(gl.canvas.clientWidth, gl.canvas.clientHeight, _fieldOfView, _zNear, _zFar); 
+    gl.canvas.width  = gl.canvas.offsetWidth;
+    gl.canvas.height = gl.canvas.offsetHeight;
+    
+    log("Resize to " + gl.canvas.width + " x " + gl.canvas.height , true);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); // TODO keep track of viewport in camera
+    scn.camera.resize(gl.canvas.width, gl.canvas.height, _fieldOfView, _zNear, _zFar); 
+    scn.camera.updateMatrix();
+}
+
+function toggleHelp() {
+    div_help.style.display = (div_help.style.display != "table-row") ? "table-row" : "none";
+    winResize();
+}
+
+function restartGame() {
+   
 }
 
 function initEngine() {
 
     log("Context Initialization", false);
-    gl = can.getContext("webgl");
+    gl = GLCanvas.getContext("webgl");
 
     if (!gl) {
         log("Unable to initialize WebGL. Your browser or machine may not support it.", false);
@@ -81,7 +99,10 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene("mainScene", gl, gl.canvas.clientWidth, gl.canvas.clientHeight, [0.8, 0.8, 0.95, 1.0], 300);
+        gl.canvas.width  = gl.canvas.offsetWidth;
+        gl.canvas.height = gl.canvas.offsetHeight;
+
+        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.8, 0.8, 0.95, 1.0], 300);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -100,8 +121,9 @@ function initEngine() {
 
         log("Camera Initialization", false);
 
-        scn.camera = new E3D_camera_persp("TopCam", gl.canvas.clientWidth, gl.canvas.clientHeight, _fieldOfView, _zNear, _zFar);   
+        scn.camera = new E3D_camera_persp("TopCam", gl.canvas.width, gl.canvas.height, _fieldOfView, _zNear, _zFar);   
         scn.camera.moveTo(0, 400, 0, PIdiv2, 0, 0);      
+        winResize();
 
         log("Scene Initialization", false);
         scn.initialize();

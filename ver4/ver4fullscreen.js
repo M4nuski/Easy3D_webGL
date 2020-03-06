@@ -23,14 +23,14 @@ function log(text, silent = true) {
         // timer was not yet defined
         ts = "=";
     } 
-    console.log("E3D[" + ts + "] " + text);
+    //console.log("E3D[" + ts + "] " + text);
     if (!silent) {
         if (logElement == null) logElement = document.getElementById("logDiv");        
         if (logElement == null) {
             logElement.innerHTML += "[" + ts + "] " + text + "<br />";
             logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
         } else {
-            console.log("[" + ts + "] " + text);
+            console.log("E3D[" + ts + "] " + text);
         }
     }
 }
@@ -40,7 +40,6 @@ log("DOMContentLoaded");
 
 log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
-const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 const mainDiv = document.getElementById("mainDiv");
 

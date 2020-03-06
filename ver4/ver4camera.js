@@ -17,7 +17,7 @@ class E3D_camera {
         this.near = -1.0;
         this.far = 1.0;
 
-        this.fov = -1;
+        this.fov = 1;
 
         this._neg_position = v3_new();
 
@@ -101,11 +101,12 @@ class E3D_camera_persp extends E3D_camera {
         this.updateMatrix();
     }
 
-    resize(width, height, fov, near, far) {
+    resize(width, height, fov = this.fov, near = this.near, far = this.far) {
         this.fov = fov;
         this.near = near;
         this.far = far;
-        m4_persp_res(this.projectionMatrix, fov, width / height, near, far);
+        var ar = width / height;
+        m4_persp_res(this.projectionMatrix, fov, ar, near, far);
     }
 
     updateMatrix() {
