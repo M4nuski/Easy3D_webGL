@@ -154,8 +154,8 @@ class E3D_camera_model extends E3D_camera_persp {
             v3_negate_res(this._neg_position, this.position);
             m4_translate_mod(this.matrix, this._neg_position);
             
-            m4_rotation_res(this.inverseRotationMatrix, -this.rotation[0], _v3_x);
-            m4_rotate_mod(this.inverseRotationMatrix ,-this.rotation[1], _v3_y);
+            m4_rotationX_res(this.inverseRotationMatrix, -this.rotation[0]);
+            m4_rotateY_mod(this.inverseRotationMatrix , -this.rotation[1]);
         }
     }
 

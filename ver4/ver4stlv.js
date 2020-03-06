@@ -1,13 +1,28 @@
 // Easy3D_WebGL
 // STL viewer web app doubling as electron app using version 4
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
+
+var gAccel = 0;
+var timer = { delta : 0, start : Date.now() }; // dummy timer 
+
+var logElement = null;
+function log(text, silent = true) {
+    let ts = Date.now() - timer.start;
+    if (!silent) {
+        if (logElement == null) logElement = document.getElementById("logDiv");        
+        if (logElement != null) {
+            logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+            logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
+        } 
+    }
+    console.log("[" + ts + "] " + text);
+}
 
 document.addEventListener("DOMContentLoaded", function () {
 
     const can = document.getElementById("GLCanvas");
-    const logElement = document.getElementById("logDiv");
     const mainDiv = document.getElementById("mainDiv");
     const statDiv = document.getElementById("statDiv");
     const colSel = document.getElementById("colSel");
@@ -62,11 +77,12 @@ document.addEventListener("DOMContentLoaded", function () {
     var scn;  // E3D_scene
     var timer = new E3D_timing(false, 20, timerTick); // target about 50 fps
 
-    var inputs = new E3D_input(can, true, true, false, false, false, true);
+    var inputs = new E3D_input(can, true, true, true, false);
 
     inputs.onInput = onEngineInput;
 
     var resMngr = new ressourceManager(onRessource);
+    var meshLoader = new E3D_loader();
     var mdl; // model to show
     var mdl_colors; // original model colors
     var l0v; // pivot point axis origin
@@ -91,6 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
         log("Resize to " + winWidth + " x " + winHeight, false);
 
         scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+
     }
     
     function initEngine() {
@@ -105,7 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         log("Scene Creation", false);
         try {
-            scn = new E3D_scene("mainScene", gl, winWidth, winHeight, vec4.fromValues(0.85, 0.85, 0.85, 1.0), -1);
+            scn = new E3D_scene("mainScene", gl, winWidth, winHeight, [0.85, 0.85, 0.85, 1.0], -1);
     
             log("Shader Program Initialization", false);
             scn.program = new E3D_program("mainProgram", gl);
@@ -115,14 +132,15 @@ document.addEventListener("DOMContentLoaded", function () {
             log("Lighting Initialization", false);
             scn.lights =  new E3D_lighting(v3_val_new(0.25, 0.25, 0.25));
             scn.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
-            scn.lights.setDirection0(v3_val_new(0.0, 0.0, 1.0)); 
+            scn.lights.setDirection0(v3_val_new(0.0, 0.0, -1.0)); 
             scn.lights.light0_lockToCamera = true;
     
             scn.lights.setColor1(v3_val_new(0.9, 0.9, 0.9));
-            scn.lights.setDirection1(v3_val_new(0.5, 1.0, 0.5));
+            scn.lights.setDirection1(v3_val_new(-0.5, -1.0, -0.5));
             scn.lights.light1_lockToCamera = false;
 
             scn.camera = new E3D_camera_model("model camera", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
+            scn.camera.moveTo(0, 0, 0);            
     
             log("Camera Initialization", false);
             winResize();
@@ -146,7 +164,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 log("Loading model " + args[1], false);
                 var  data = fs.readFileSync(args[1]);    
                 if (data) {
-                    mdl = E3D_loader.loadModel_STL("toView", args[1], data.buffer, 0.0, "source", true);
+                  //  mdl = E3D_loader.loadModel_STL("toView", args[1], data.buffer, 0.0, "source", true);
+                    mdl = new E3D_entity(name, "", false);
+                    meshLoader.loadModel_STL(args[1],  data.buffer, "source");
+                    meshLoader.addModelData(mdl);
+                    mdl.visible = true;
                     onRessource("", "ELECTRON_LOAD");
                 }
             } else log("File not found", false);
@@ -164,19 +186,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
         scn.state = E3D_ACTIVE;
 
-        l0v = new E3D_entity_vector("pivot", false, 3.0, false);
+        l0v = new E3D_entity_axis("pivot", false, 3.0, false);
         //l0v.scale = v3_val_new(3, 3, 3);
         l0v.visible = true;
         l0v.vis_culling = false;    
         scn.addEntity(l0v);
 
-        let l1v = new E3D_entity_vector("origin", false, 3.0, false);
+        let l1v = new E3D_entity_axis("origin", false, 3.0, false);
         //l1v.scale = v3_val_new(10, 10, 10);
         l1v.visible = true;
         l1v.vis_culling = false;    
         scn.addEntity(l1v);
 
-        let buildbox = new E3D_entity_dynamic("building box");
+        let buildbox = new E3D_entity_wireframe_canvas("building box");
         buildbox.addWireCube([0,145/2,0], [0,0,0], [240,145,145], [0.75, 0.75, 0.75, 0.5], false, false, false);
         buildbox.visible = true;
         buildbox.vis_culling = false;
@@ -204,9 +226,11 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function prepRender() {
 
-        scn.camera.moveBy(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
+       // scn.camera.moveBy(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
+        scn.camera.moveBy(-inputs.px_delta_smth,    inputs.py_delta_smth, inputs.pz_delta_smth, 
+            inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
 
-        vec3.copy(l0v.position, scn.camera.position);
+        v3_copy(l0v.position, scn.camera.position);
         l0v.visible = inputs.checkCommand("panPivot", false);
         l0v.resetMatrix();
     }
@@ -279,7 +303,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }    
         if (msg == E3D_RES_LOAD) {
             log("Async ressource loaded: " + name, true);   
-            mdl = E3D_loader.loadModel_STL("toView", resMngr.getRessourcePath(name),  resMngr.getData(name), 0.0, "source", true);
+            mdl = new E3D_entity(name, "", false);
+            meshLoader.loadModel_STL(resMngr.getRessourcePath(name), resMngr.getData(name), "source");
+            meshLoader.addModelData(mdl);
         }
 
         if ((msg == "ELECTRON_LOAD") || (mdl)) {
@@ -297,8 +323,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
             let biggest = Math.max(bb.max[0] - bb.min[0],  bb.max[1] - bb.min[1] ) / 2;
             let backout = biggest / Math.tan(_fieldOfView/2); 
-         //   scn.camera.position = vec3_origin;
-            scn.camera.moveTo( 0,  (bb.max[1] - bb.min[1]) / 4, backout, 0, 0, 0); //  (bb.max[1] - bb.min[1]) / 2
+            scn.camera.position = v3_new();
+            scn.camera.zDist = -backout;
+            scn.camera.moveTo( 0,  (bb.max[1] - bb.min[1]) / 2, 0, 0, 0, 0); //  (bb.max[1] - bb.min[1]) / 2
         }
     }
     
@@ -322,23 +349,6 @@ document.addEventListener("DOMContentLoaded", function () {
         mdl.dataContentChanged = true;
     }
 
-
-    // Logging and status information    
-    function log(text, silent = true) {
-        let ts = 0;
-        try {
-            ts = Date.now() - timer.start;
-        } catch (e) {
-            // timer was not yet defined
-        } 
-    
-        console.log("E3D[" + ts + "] " + text);
-        if (!silent) {
-            logElement.innerHTML += "[" + ts + "] " + text + "<br />";
-            logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
-        }
-    
-    }
     
 
     

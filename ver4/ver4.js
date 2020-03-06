@@ -10,28 +10,20 @@ var nHits = 0;
 var show_DEV_CD = false;
 var phyTracers, dev_Hits;
 var gAccel = 0;
-var timer = { delta : 0, start : 0 }; // dummy timer 
+
+var timer = { delta : 0, start : Date.now() }; // dummy timer 
 
 var logElement = null;
-
 function log(text, silent = true) {
-    let ts = 0;
-    try {
-        ts = Date.now() - timer.start;
-    } catch (e) {
-        // timer was not yet defined
-        ts = "=";
-    } 
-    console.log("E3D[" + ts + "] " + text);
+    let ts = Date.now() - timer.start;
     if (!silent) {
         if (logElement == null) logElement = document.getElementById("logDiv");        
-        if (logElement == null) {
+        if (logElement != null) {
             logElement.innerHTML += "[" + ts + "] " + text + "<br />";
             logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
-        } else {
-            console.log("[" + ts + "] " + text);
-        }
+        } 
     }
+    console.log("[" + ts + "] " + text);
 }
 
 document.addEventListener("DOMContentLoaded", function () {
