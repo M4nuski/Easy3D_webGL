@@ -164,11 +164,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 log("Loading model " + args[1], false);
                 var  data = fs.readFileSync(args[1]);    
                 if (data) {
-                  //  mdl = E3D_loader.loadModel_STL("toView", args[1], data.buffer, 0.0, "source", true);
-                    mdl = new E3D_entity(name, "", false);
+                    mdl = new E3D_entity(name, "", true);
                     meshLoader.loadModel_STL(args[1],  data.buffer, "source");
                     meshLoader.addModelData(mdl);
-                    mdl.visible = true;
                     onRessource("", "ELECTRON_LOAD");
                 }
             } else log("File not found", false);
@@ -187,13 +185,11 @@ document.addEventListener("DOMContentLoaded", function () {
         scn.state = E3D_ACTIVE;
 
         l0v = new E3D_entity_axis("pivot", false, 3.0, false);
-        //l0v.scale = v3_val_new(3, 3, 3);
         l0v.visible = true;
         l0v.vis_culling = false;    
         scn.addEntity(l0v);
 
         let l1v = new E3D_entity_axis("origin", false, 3.0, false);
-        //l1v.scale = v3_val_new(10, 10, 10);
         l1v.visible = true;
         l1v.vis_culling = false;    
         scn.addEntity(l1v);
@@ -227,8 +223,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function prepRender() {
 
        // scn.camera.moveBy(-inputs.px_delta, inputs.py_delta, inputs.pz_delta, inputs.rx_smth, inputs.ry_smth, inputs.rz_smth);
-        scn.camera.moveBy(-inputs.px_delta_smth,    inputs.py_delta_smth, inputs.pz_delta_smth, 
-            inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
+        scn.camera.moveBy(-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth, 
+                           inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
 
         v3_copy(l0v.position, scn.camera.position);
         l0v.visible = inputs.checkCommand("panPivot", false);
@@ -303,7 +299,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }    
         if (msg == E3D_RES_LOAD) {
             log("Async ressource loaded: " + name, true);   
-            mdl = new E3D_entity(name, "", false);
+            mdl = new E3D_entity(name, "", true);
             meshLoader.loadModel_STL(resMngr.getRessourcePath(name), resMngr.getData(name), "source");
             meshLoader.addModelData(mdl);
         }
@@ -333,7 +329,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function changeColor() {
         if (OverRideColor.checked) {
             let cs = colSel.value.replace("#", "");
-            let ca = [0 ,0 ,0 ];
+            let ca = [0, 0, 0];
 
             ca[0] = parseInt(cs.substring(0,2), 16) / 255;
             ca[1] = parseInt(cs.substring(2,4), 16) / 255;
