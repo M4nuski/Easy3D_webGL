@@ -615,15 +615,15 @@ class E3D_input {
         var touchesIter = this.ongoingTouches.values();
 
         if (this.ongoingTouches.size == 1) {
-            var firstTouch = touchesIter.next();
+            var firstTouch = touchesIter.next().value;
 
             //process as mouse down with single touch code
             firstTouch.button = this.touchMap.get("touch_single");
             this.mouseDown(firstTouch);
 
         } else if (this.ongoingTouches.size == 2) {
-            var firstTouch = touchesIter.next();
-            var secondTouch = touchesIter.next();
+            var firstTouch = touchesIter.next().value;
+            var secondTouch = touchesIter.next().value;
 
             //reset single touch mouse down
             firstTouch.button = this.touchMap.get("touch_single");
@@ -685,8 +685,8 @@ class E3D_input {
         
         if (this.ongoingTouches.size == 2) {
             var touchesIter = this.ongoingTouches.values();
-            var firstTouch = touchesIter.next();
-            var secondTouch = touchesIter.next();
+            var firstTouch = touchesIter.next().value;
+            var secondTouch = touchesIter.next().value;
             secondTouch.button = this.touchMap.get("touch_double");
             this.mouseUp(secondTouch);
         }
@@ -716,14 +716,14 @@ class E3D_input {
         if (this.ongoingTouches.size == 1) {
             var firstTouch = this.ongoingTouches.get(event.changedTouches[0].identifier);
             if (firstTouch) {
-                firstTouch = this.touchMap.get("touch_single");
+                firstTouch.button = this.touchMap.get("touch_single");
                 this.mouseMove(firstTouch);
             }
 
         } else if (this.ongoingTouches.size == 2) {
             var touchesIter = this.ongoingTouches.values();
-            var firstTouch = touchesIter.next();
-            var secondTouch = touchesIter.next();
+            var firstTouch = touchesIter.next().value;
+            var secondTouch = touchesIter.next().value;
 
             var tdx = secondTouch.pageX - firstTouch.pageX;
             var tdy = secondTouch.pageY - firstTouch.pageY;

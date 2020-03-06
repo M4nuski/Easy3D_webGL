@@ -46,7 +46,7 @@ btn_help.addEventListener("click", toggleHelp);
 
 const _fieldOfView = 60 * DegToRad;
 const _zNear = 0.1;
-const _zFar = 500.0;
+const _zFar = 600.0;
 
 // Engine State and stats
 
@@ -79,7 +79,6 @@ function winResize() {
 
 function toggleHelp() {
     div_help.style.display = (div_help.style.display != "table-row") ? "table-row" : "none";
-    winResize();
 }
 
 function restartGame() {
@@ -102,7 +101,7 @@ function initEngine() {
         gl.canvas.width  = gl.canvas.offsetWidth;
         gl.canvas.height = gl.canvas.offsetHeight;
 
-        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.8, 0.8, 0.95, 1.0], 300);
+        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.6, 0.6, 1.0, 1.0], 300);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -136,16 +135,17 @@ function initEngine() {
         return; 
     }
      
-    resMngr.addRessource("../Models/M1.raw", "Maze", "Map");
-    resMngr.loadAll("Map");
+    resMngr.addRessource("../Models/M1.raw",  "Maze", "Map");
+    resMngr.addRessource("../Models/SPH.raw", "Ball", "Entity");
+    resMngr.loadAll("Start");
 
     timer.run();
     scn.state = E3D_ACTIVE;
 
-    ball = new E3D_entity_wireframe_canvas("wireSphereTest");
-    ball.addWireSphere([0, 200, 0], 16, [1, 1, 0], 32, true, 8);
-    ball.visible = true;
-    scn.addEntity(ball);
+   // ball = new E3D_entity_wireframe_canvas("wireSphereTest");
+    //ball.addWireSphere([0, 200, 0], 16, [1, 1, 0], 32, true, 8);
+    //ball.visible = true;
+    //scn.addEntity(ball);
 }
 
 
@@ -202,10 +202,12 @@ function onRessource(name, msg) {
         if (resMngr.getRessourceType(name) == "Entity") {
             if (name == "Ball") {
                 ball = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name));
-                ball.pushCD_sph(_v3_origin, 16);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.5], [12, 12, 12]);
+                ball.pushCD_sph(_v3_origin, 12);
+                meshLoader.smoothNormals(-0.5);
                 meshLoader.addModelData(ball);
                 ball.visible = true;
+                ball.position = v3_val_new(0, 50, 0);
                 scn.addEntity(ball);  
             }
         }
