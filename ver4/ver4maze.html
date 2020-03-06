@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Easy3D Engine webGL version 0.4 / Maze test game</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            color : limegreen;
+            background-color: black;
+            font-family: "Arial Black"; 
+            font-size: 1em; 
+            font-style: normal; 
+            font-variant: normal; 
+            font-weight: 400; 
+        }
+        #headerDiv {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            width: 100%;
+            height: 40px;            
+        }
+        #mainDiv {
+            position: absolute;
+            top : 40px;
+            left : 0px;
+            right : 0px;
+            bottom : 0px;
+        } 
+        #GLCanvas {
+            top : 0px;
+            left : 0px;
+            height : 100%;
+            width : 100%;
+        }
+
+        #instructionsDiv {
+            display: none;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+        }
+
+
+
+
+    </style>
+    <script type="text/javascript" src="ver4const.js"></script>
+    <script type="text/javascript" src="ver4timing.js"></script>
+    <script type="text/javascript" src="ver4entity.js"></script>
+    <script type="text/javascript" src="ver4collisionDetection.js"></script>
+    <script type="text/javascript" src="ver4animation.js"></script>
+    <script type="text/javascript" src="ver4lighting.js"></script>
+    <script type="text/javascript" src="ver4camera.js"></script>
+    <script type="text/javascript" src="ver4scene.js"></script>
+    <script type="text/javascript" src="ver4input.js"></script>
+    <script type="text/javascript" src="ver4ressource.js"></script>
+    <script type="text/javascript" src="ver4loader.js"></script>
+    <script type="text/javascript" src="ver4shader.js"></script>
+    <script type="text/javascript" src="ver4class.js"></script>
+    <script type="text/javascript" src="ver4maze.js"></script>
+</head>
+
+<body>
+    <div id="headerDiv">
+        Menu
+    </div>
+
+    <div id="mainDiv">
+            <canvas id="GLCanvas" width="640" height="480">Erreur - Canvas non supporté</canvas>
+    </div>
+
+    <div id="instructionsDiv">
+        Page de test pour game engine en Javascript / WebGL<br/>
+        Testé sur Windows dans Chrome et Firefox<br />
+        Android dans Chrome, iOS dans Safari (iphone5!)<br />
+        Détection de collision seulement entre les spheres (incluant les balles lancées) et les particules du shotgun
+        <br />
+        Mouvements : <br/>
+        Space - Déplacements en 3D sans restriction ni référence.<br />
+        Free Roam - Déplacements dans le monde en 3D mais avec contraintes et concepte de "haut" vs "bas"<br />
+        Model - Les controles déplacent le monde autour d'un point fixe<br />
+        <br />
+        Controles :
+        <br />
+        Desktop (sourie + clavier) - Controles typique de jeux (W A S D, C, Space, R (action0), F(acton1)).<br />
+        Click-Drag dans fenetre pour rotation, Molette (roulette(grament pour scroller)) pour zoomer ou déplacer avant/arrière.<br />
+        Molette-Click pour translations.<br />
+        <br />
+        Mobile - Touch-drag dans fenetre pour rotation, pinch zoom ou avant/arrière. pinch-drag pour translation.<br />
+        Double-tap active l'action0 (equivalent au click).
+        Clavier virtuel - tap pour simuler touches du clavier.
+        Controle virtuels PovTrackPad - Thumbstick de gauche comme joystick de console, double-tap action1 (shotgun)<br />
+        Trackpad de droit agit comme dans la fenetre. Double-tap action0(balle)<br />
+        Double thumbstick - semblable aux controls de jeux sur mobile ou dual stick de console.
+        <br />
+        <span id="processInfo"></span>
+    </div>
+
+
+</body>
+
+</html>

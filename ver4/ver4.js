@@ -108,7 +108,7 @@ function updateStatus() {
 
 
 function winResize() {
-    winWidth = gl.canvas.clientWidth
+    winWidth = gl.canvas.clientWidth;
     winHeight = gl.canvas.clientHeight;
     
     scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar); 

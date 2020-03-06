@@ -159,6 +159,36 @@ function v3_equals(a, b) {
     return (Math.abs(a[0] - b[0]) < _v3_epsilon) && (Math.abs(a[1] - b[1]) < _v3_epsilon) && (Math.abs(a[2] - b[2]) < _v3_epsilon);
 }
 
+// Clamp each components to min and max
+function v3_clamp_new(a, min, max) {
+    var res = v3_clone(a);
+    if (res[0] < min) res[0] = min;
+    if (res[0] > max) res[0] = max;
+    if (res[1] < min) res[1] = min;
+    if (res[1] > max) res[1] = max;
+    if (res[2] < min) res[2] = min;
+    if (res[2] > max) res[2] = max;
+    return res;
+}
+function v3_clamp_mod(a, min, max) {
+    if (a[0] < min) a[0] = min;
+    if (a[0] > max) a[0] = max;
+    if (a[1] < min) a[1] = min;
+    if (a[1] > max) a[1] = max;
+    if (a[2] < min) a[2] = min;
+    if (a[2] > max) a[2] = max;
+}
+function v3_clamp_res(res, a, min, max) {
+    v3_copy(res, a);
+    if (res[0] < min) res[0] = min;
+    if (res[0] > max) res[0] = max;
+    if (res[1] < min) res[1] = min;
+    if (res[1] > max) res[1] = max;
+    if (res[2] < min) res[2] = min;
+    if (res[2] > max) res[2] = max;
+}
+
+
 // Vector subtractions
 // = a + b
 function v3_sub_new(a, b) {
