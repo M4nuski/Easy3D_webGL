@@ -527,12 +527,12 @@ function collisionResult_asSource_slide(){
 
            // firstCol.n[1] = -firstCol.n[1];
            //  v3_addscaled_mod(this.pspd, firstCol.n, firstCol.t0); 
-            var dotY = v3_dot(firstCol.n, _v3_y);
-            deltaY = deltaY * dotY;
-            this.pspd[1] = this.pspd[1] + (deltaY / timer.delta);
+            //var dotY = v3_dot(firstCol.n, _v3_y);
+            //deltaY = deltaY * dotY;
+           // this.pspd[1] = this.pspd[1] + (deltaY / timer.delta);
 
             //add y delta to side slide motion 
-            v3_addscaled_mod(this.pspd, firstCol.n, deltaY / timer.delta);
+            v3_addscaled_mod(this.pspd, firstCol.n, this.deltaLength * firstCol.t0);
 
 
 
