@@ -501,6 +501,89 @@ function collisionResult_asSource_mark(){
     }
 }
 
+
+function collisionResult_asSource_slide(){
+    if (this.deltaLength > 0) {
+
+        nHits++;
+        var firstCol = this.closestCollision[0];
+        if (this.colNum > 1) {
+            var firstColt0 = this.closestCollision[0].t0;
+            for (var i = 1; i < this.colNum; ++i) if (this.closestCollision[i].t0 < firstColt0) {
+                firstColt0 = this.closestCollision[i].t0;
+                firstCol = this.closestCollision[i]; 
+            }
+        }
+
+        this.lastHitMarker = ""+firstCol.marker;        
+
+        if (firstCol.t0 < 0.0) {
+            firstCol.t0 = Math.sqrt(-firstCol.t0);
+            v3_normalize_mod(firstCol.n);
+
+            var deltaY = firstCol.p0[1] - this.last_position[1];
+
+            v3_copy(this.last_position, firstCol.p0); 
+
+           // firstCol.n[1] = -firstCol.n[1];
+           //  v3_addscaled_mod(this.pspd, firstCol.n, firstCol.t0); 
+            var dotY = v3_dot(firstCol.n, _v3_y);
+            deltaY = deltaY * dotY;
+            this.pspd[1] = this.pspd[1] + (deltaY / timer.delta);
+
+            //add y delta to side slide motion 
+            v3_addscaled_mod(this.pspd, firstCol.n, deltaY / timer.delta);
+
+
+
+            var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
+           // remainder = remainder - 0.;
+            if (remainder < 0.0) remainder = 0.0;
+          // remainder = 1.0;
+            v3_scale_res(this.delta, this.pspd, timer.delta * remainder);
+            this.deltaLength = v3_length(this.delta);
+            v3_add_res(this.target.position, this.last_position, this.delta);
+            this.target.resetMatrix();
+
+          /*  if (this.closestCollision.length > 1) {
+                this.closestCollision.splice(0, 1);
+                this.colNum--;
+                var firstColt0 = this.closestCollision[0].t0;
+                for (var i = 0; i < this.colNum; ++i) if (this.closestCollision[i].t0 < firstColt0) firstColt0 = this.closestCollision[i].t0;
+                if (firstColt0 < 0.0) collisionResult_asSource_slide.call(this);
+            }*/
+
+        } else {
+            firstCol.t0 = Math.sqrt(firstCol.t0);
+            v3_normalize_mod(firstCol.n);
+            
+            this.pspd[1] += this.frameG;
+            
+            if (v3_dot(firstCol.n, this.delta) < 0.0) { // face to face
+                
+                v3_reflect_mod(this.pspd, firstCol.n);
+                v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit
+                
+                var remainder = 1.0 - firstCol.t0; // remaining fraction
+                remainder = remainder - 0.2;
+                if (remainder < 0.0) remainder = 0.0;
+
+                var drag = 0.8;
+                v3_scale_mod(this.pspd, drag); // hit speed "drag"
+
+                v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
+                this.deltaLength = v3_length(this.delta);
+                v3_add_res(this.target.position, this.last_position, this.delta); // new position        
+            
+                this.target.resetMatrix();
+            } // face to face  
+            this.pspd[1] -= this.frameG;
+        } // t0 < 0
+    } // deltalength > 0
+}
+
+
+
 function collisionResult_asTarget_mark(){
     for (var i = 0; i < this.otherColNum; ++i) {
         v3_normalize_mod(this.collisionFromOther[i].n);

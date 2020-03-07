@@ -212,6 +212,44 @@ class E3D_input {
 // Methods 
 
 
+    reset() {
+        // Delta
+        this.px_delta = 0;
+        this.py_delta = 0;
+        this.pz_delta = 0;        
+        // Smoothed Delta
+        this.px_delta_smth = 0;
+        this.py_delta_smth = 0;
+        this.pz_delta_smth = 0;
+        // Sums
+        this.px = 0;
+        this.py = 0;
+        this.pz = 0;
+        // Smoothed sums
+        this.px_smth = 0;
+        this.py_smth = 0;
+        this.pz_smth = 0;
+
+        // Delta
+        this.rx_delta = 0;
+        this.ry_delta = 0;
+        this.rz_delta = 0;
+        // Smoothed Delta
+        this.rx_delta_smth = 0;
+        this.ry_delta_smth = 0;
+        this.rz_delta_smth = 0;
+        // Sums
+        this.rx = 0;
+        this.ry = 0;
+        this.rz = 0;
+        // Smoothed sums
+        this.rx_smth = 0;
+        this.ry_smth = 0;
+        this.rz_smth = 0;
+
+    }
+
+
     // Process keys and pointer inputs to get final output values
     processInputs(delta = 1.0) {
 
@@ -535,15 +573,16 @@ class E3D_input {
             this.inputTable.set(event.code, true);   
             this.inputDoneTable.set(event.code, false);
         }    
-
-        if (this.onInput) this.onInput(event); // direct callback keydown preview
+        if (event.type == undefined) event.type = "keyDown";
+        if (this.onInput) this.onInput( event ); // direct callback keydown preview
 
         //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
     }
     
     keyUp(event) {    
-        if (this.onInput) this.onInput(event); // callback from event for user input dependant request to browser (fullscreen, pointerlock)
+        if (event.type == undefined) event.type = "keyUp";
+        if (this.onInput) this.onInput( event ); // callback from event for user input dependant request to browser (fullscreen, pointerlock)
 
         this.inputTable.set(event.code, false);
         this.inputDoneTable.set(event.code, true);
@@ -557,14 +596,14 @@ class E3D_input {
         this.pinx = event.pageX; // store relative position
         this.piny = event.pageY;
 
-        this.keyDown( { code : event.button } );
+        this.keyDown( { code : event.button, type:"mouseDown" } );
 
         if (event.preventDefault) { event.preventDefault(); };
         return false;
     }
     
     mouseUp(event) {
-        this.keyUp( { code : event.button } );
+        this.keyUp( { code : event.button, type:"mouseUp" } );
 
         if (event.preventDefault) { event.preventDefault(); };
         return false;

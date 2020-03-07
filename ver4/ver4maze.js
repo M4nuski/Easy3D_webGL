@@ -1,14 +1,16 @@
 // Easy3D_WebGL
-// Main demo program for version 0.4
-// Emmanuel Charette 2017-2020
+// Maze demo game for version 0.4
+// Emmanuel Charette 2020
 
 "use strict"
 
+// Stats
 var nHitTest = 0;
 var nHits = 0;
-
 var show_DEV_CD = false;
 var phyTracers, dev_Hits, dev_CD;
+
+
 var gAccel = 0;
 
 var timer = { delta : 0, start : Date.now() }; // dummy timer 
@@ -48,7 +50,7 @@ const _fieldOfView = 60 * DegToRad;
 const _zNear = 0.1;
 const _zFar = 600.0;
 
-// Engine State and stats
+// Engine State
 
 var maze, ball; // entities
 var animations = [];
@@ -82,7 +84,15 @@ function toggleHelp() {
 }
 
 function restartGame() {
-   
+    ball.position = v3_val_new(20, 50, 64);
+    if (animations.length > 0) animations[0].pspd = v3_val_new(0, 0, 0);
+    ball.resetMatrix();
+    maze.rotation = v3_val_new(0, 0, 0);
+    maze.resetMatrix();
+    inputs.reset();
+    startTime = 0;
+    span_time.innerText = "Time: 00:00.00";
+    span_time.style.color = "lime";
 }
 
 function initEngine() {
@@ -101,7 +111,7 @@ function initEngine() {
         gl.canvas.width  = gl.canvas.offsetWidth;
         gl.canvas.height = gl.canvas.offsetHeight;
 
-        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.6, 0.6, 1.0, 1.0], 300);
+        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.6, 0.6, 1.0, 1.0], 200);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -121,13 +131,16 @@ function initEngine() {
         log("Camera Initialization", false);
 
         scn.camera = new E3D_camera_persp("TopCam", gl.canvas.width, gl.canvas.height, _fieldOfView, _zNear, _zFar);   
-        scn.camera.moveTo(0, 400, 0, PIdiv2, 0, 0);      
+        scn.camera.moveTo(0, 300, 0, PIdiv2, 0, 0);      
         winResize();
 
         log("Scene Initialization", false);
         scn.initialize();
 
         scn.preRenderFunction = prepRender; // callback to do some custom stuff
+
+        inputs.keyMap.set("action0", E3D_INP_LMB);
+        inputs.onInput = onKeyInput;
 
     } catch (e) {
         log(e, false);
@@ -141,25 +154,74 @@ function initEngine() {
 
     timer.run();
     scn.state = E3D_ACTIVE;
-
-   // ball = new E3D_entity_wireframe_canvas("wireSphereTest");
-    //ball.addWireSphere([0, 200, 0], 16, [1, 1, 0], 32, true, 8);
-    //ball.visible = true;
-    //scn.addEntity(ball);
 }
 
+
+const pushVect = v3_val_new(0, 10, 0);
+const deltaVect = v3_new();
+const speed = v3_new();
+
+var lastPos = v3_new();
+var rAngle = 0;
 
 function prepRender() {
     // move maze per inputs
-    maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-    v3_clamp_mod(maze.rotation, -0.3, 0.3);
-    maze.resetMatrix();
+    if (maze) {
+        maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
+        v3_clamp_mod(maze.rotation, -0.3, 0.3);
+        maze.resetMatrix();    
+    }    
+
+    // nudge ball 
+  /*  if (animations.length > 0) {
+
+        v3_scale_mod(speed, 0.9);
+     speed[1] =  animations[0].pspd[1];
+        v3_applym4_res(deltaVect, pushVect, maze.normalMatrix);
+        deltaVect[1] = 0.0;
+        v3_add_mod(speed, deltaVect);
+        v3_copy(animations[0].pspd, speed);
+      //  animations[0].pspd[1] = ball_gSpd;
+    }*/
+
+    if (ball) {
+    v3_copy(lastPos, ball.position);
 
     // Run Animations
     //cleanupDoneAnimations(animations, scn);
-    //collisionDetectionAnimator(animations, scn, 10);
-}
+    collisionDetectionAnimator(animations, scn, 10);
 
+
+    // create rotation effect
+    v3_sub_res(deltaVect, ball.position, lastPos);
+    deltaVect[1] = 0;
+    v3_cross_res(pushVect, deltaVect, _v3_y);
+   // v3_normalize_mod(pushVect);
+    //rAngle -=  v3_length(deltaVect) * 0.1;
+    m4_rotate_mod(ball.normalMatrix, v3_length(deltaVect) * 0.21, pushVect);
+
+    //override resetMatrix();
+    m4_copy(ball.modelMatrix, ball.normalMatrix);
+    ball.modelMatrix[12] =  ball.position[0];
+    ball.modelMatrix[13] =  ball.position[1];
+    ball.modelMatrix[14] =  ball.position[2];
+    }
+
+
+
+
+    if (startTime != 0) {
+        if (ball.position[1] < -50) {
+            startTime = 0;
+            span_time.style.color =  "red";
+        } else {
+            var deltaTime = new Date(Date.now() - startTime);
+            span_time.innerText = "Time: " + padStart("" + deltaTime.getMinutes(), "0", 2) + ":" 
+                                        + padStart("" + deltaTime.getSeconds(), "0", 2) + ":" 
+                                        + padStart(""+Math.floor(deltaTime.getMilliseconds() / 10), "0", 2);
+        }
+    }
+}
 function timerTick() {  // Game Loop
 
     inputs.processInputs(timer.delta);
@@ -174,6 +236,11 @@ function timerTick() {  // Game Loop
     }   
 }
 
+function onKeyInput(event) {
+    if (event.type == "mouseDown") {
+        if ((startTime == 0) && (ball.position[1] >= -90)) startTime = Date.now();
+    }
+}
 
 function onRessource(name, msg) {
     if (msg == E3D_RES_FAIL) {
@@ -195,6 +262,7 @@ function onRessource(name, msg) {
                 meshLoader.addStrokeData(maze);
                 meshLoader.addModelData(maze);
                 maze.visible = true;
+                maze.position = v3_val_new(-20, 0, 20);
                 scn.addEntity(maze);  
             }
         }
@@ -207,8 +275,11 @@ function onRessource(name, msg) {
                 meshLoader.smoothNormals(-0.5);
                 meshLoader.addModelData(ball);
                 ball.visible = true;
-                ball.position = v3_val_new(0, 50, 0);
+                ball.position = v3_val_new(20, 50, 64);
                 scn.addEntity(ball);  
+
+                animations.push(newBaseAnim(ball, _v3_null, _v3_null, 1.0, -1, true));
+                animations[0].sourceCollResolver = collisionResult_asSource_slide;
             }
         }
 

@@ -813,7 +813,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     scn.entities[targetIndex].CD_triangle_p3p1lenSq[j], scn.entities[targetIndex].CD_triangle_p2p1lenSq[j],
                     scn.entities[targetIndex].CD_triangle_p3p2p1dot[j], scn.entities[targetIndex].CD_triangle_n[j]);
 
-                if ((hitRes != false) && (hitRes <= self.deltaLength) && (hitRes >= -sourceSph_r) ) {      
+                if ((hitRes != false) && (hitRes <= self.deltaLength)/* && (hitRes >= -sourceSph_r)*/ ) {      
 
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 

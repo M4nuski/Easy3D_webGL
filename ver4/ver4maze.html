@@ -25,7 +25,8 @@
         }
         #headerDiv {
             height: fit-content;
-            display: table-row;        
+            display: table-row;   
+            text-align: center;     
         }
         #mainDiv {
             display: table-row;
@@ -51,11 +52,17 @@
         }
 
         .btnSpan {
-            color: limegreen;
+            color: lime;
         }
         .btnSpan:hover {
-            color: lime;
+            color: greenyellow;
             cursor:pointer;
+        }
+        .fl {
+            float: left;
+        }
+        .fr {
+            float:right;
         }
 
 
@@ -79,7 +86,7 @@
 
 <body>
     <div id="headerDiv">
-        Menu <span class="btnSpan" id="btn_restart">Restart</span> <span id="span_time"> Time: 0:00:00.0</span> <span class="btnSpan" id="btn_help"> Help</span>
+        <span class="btnSpan fl" id="btn_restart">Restart</span> <span id="span_time"> Time: 00:00.00</span> <span class="btnSpan fr" id="btn_help"> Help</span>
     </div>
 
     <div id="mainDiv">
