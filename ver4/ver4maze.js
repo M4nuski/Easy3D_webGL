@@ -53,7 +53,7 @@ const _zFar = 600.0;
 
 // Engine State
 
-var maze, ball; // entities
+var maze, ball, newMaze; // entities
 var animations = [];
 
 
@@ -94,7 +94,7 @@ function restartGame() {
     startTime = 0;
     span_time.innerText = "Time: 00:00.00";
     span_time.style.color = "lime";
-    genMaze(5, 2020);
+    genMaze(15, 2020);
 }
 
 function initEngine() {
@@ -113,7 +113,7 @@ function initEngine() {
         gl.canvas.width  = gl.canvas.offsetWidth;
         gl.canvas.height = gl.canvas.offsetHeight;
 
-        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.6, 0.6, 1.0, 1.0], 200);
+        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.3, 0.3, 1.0, 1.0], 200);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -335,12 +335,12 @@ function onKeyInput(event) {
     if (event.type == "mouseDown") {
         if ((startTime == 0) && (ball.position[1] >= -90)) startTime = Date.now();
     }
-    log(PRNG.nextInt(100));
+    //log(PRNG.nextInt(4));
 }
 
 // DFS maze generator
 
-var maze;
+var mazeObj;
 var mazeSize = 5;
 var TopWall = 0;
 var BottomWall = 1;
@@ -353,6 +353,7 @@ class MazeNode {
         this.walls = [true, true, true, true];
         // exception for edges, keep walled-off
 
+        this.traceDepth = -1;
         this.nodeTrace = [];
         this.x = x;
         this.y = y;
@@ -360,15 +361,20 @@ class MazeNode {
 
     hasUnvisitedNeighbours() {
         var res = false;
-        if (this.x > 0) res |= !maze[this.x-1][this.y].visited;
-        if (this.y > 0) res |= !maze[this.x][this.y-1].visited;
-        if (this.x < mazeSize-1) res |= !maze[this.x+1][this.y].visited;
-        if (this.y < mazeSize-1) res |= !maze[this.x][this.y+1].visited;
+        if (this.x > 0) res = res || !(mazeObj[this.x-1][this.y].visited);
+        if (this.y > 0) res = res || !(mazeObj[this.x][this.y-1].visited);
+        if (this.x < mazeSize-1) res = res || !(mazeObj[this.x+1][this.y].visited);
+        if (this.y < mazeSize-1) res = res || !(mazeObj[this.x][this.y+1].visited);
         return res;
     }
 
 }
 
+function clamp(val, min, max) {
+    if (val < min) val = min;
+    if (val > max) val = max;
+    return val;
+}
 
 function genMaze(size = 5, seed = 2020) {
     mazeSize = size;
@@ -376,40 +382,153 @@ function genMaze(size = 5, seed = 2020) {
     rng.nextInt(mazeSize); // ignore first one
 
     // prep maze 2D array
-    maze = new Array(mazeSize);
-    for (var i = 0; i < mazeSize; ++i) maze[i] = new Array(mazeSize);
+    mazeObj = new Array(mazeSize);
+    for (var i = 0; i < mazeSize; ++i) mazeObj[i] = new Array(mazeSize);
 
     // create maze nodes
-    for (var x = 0; x < mazeSize; ++x) for (var y = 0; y < mazeSize; ++y) maze[x][y] = new MazeNode(x, y);
+    for (var x = 0; x < mazeSize; ++x) for (var y = 0; y < mazeSize; ++y) mazeObj[x][y] = new MazeNode(x, y);
    
     // select starting point
     var CurrentPos = [rng.nextInt(mazeSize), 0];
     var posStack = [];
-    posStack.push(CurentPos);
-    maze[CurrentPos[0]][CurrentPos[1]].visited = true; // fisrt node is visited
-    maze[CurrentPos[0]][CurrentPos[1]].walls[TopWall] = false; // remove top wall of first node
+    posStack.push([CurrentPos[0], CurrentPos[1]]);
+    mazeObj[CurrentPos[0]][CurrentPos[1]].visited = true; // fisrt node is visited
+    //mazeObj[CurrentPos[0]][CurrentPos[1]].walls[TopWall] = false; // remove top wall of first node
+
+    mazeObj[CurrentPos[0]][CurrentPos[1]].traceDepth = 0;
 
     // run DFS algo, by loop, external stack
     var done = false;
     var stackIndex = 0;
-    while (done != false) {
-        // randomly select unvisited neighbour
+    while (done == false) {
 
-        // remove walls
+        // randomly select unvisited neighbour
+        var validNewPos = false;
+        var nx = 0;
+        var ny = 0;
+        while (!validNewPos) {
+            //random
+            nx = rng.nextInt(4); // 0 1 2 3
+            if (nx == 1) nx =  0;
+            if (nx == 2) nx = -1; // 25% chance
+            if (nx == 3) nx =  1; // 25% chance
+
+            ny = 0;
+            if (nx == 0) {
+                ny = rng.nextInt(2); // 0 1, 50% chance of nx == 0 or nx == 1
+               if (ny == 0) ny = -1; // 25% chance, other 25% is ny == 1
+            }
+
+            // new position
+            nx += CurrentPos[0];
+            ny += CurrentPos[1];
+
+            //clamp
+            nx = clamp(nx, 0, mazeSize - 1);
+            ny = clamp(ny, 0, mazeSize - 1);
+
+            //test
+            validNewPos = ( (nx != CurrentPos[0]) || (ny != CurrentPos[1])) && (mazeObj[nx][ny].visited == false);     
+        }
+
+        // select wall
+        var wall = 0;
+        var nextWall = 0;
+        if (nx < CurrentPos[0]) {
+            wall = LeftWall;
+            nextWall = RightWall;
+        }
+        if (nx > CurrentPos[0]) {
+            wall = RightWall;
+            nextWall = LeftWall;
+        }
+        if (ny < CurrentPos[1]) {
+            wall = TopWall;
+            nextWall = BottomWall;
+        }
+        if (ny > CurrentPos[1]) {
+            wall = BottomWall;
+            nextWall = TopWall;
+        }
+
+        // remove current cell wall
+        mazeObj[CurrentPos[0]][CurrentPos[1]].walls[wall] = false;
+
+        // update pos
+        CurrentPos = [nx, ny];
+
+        // remove new cell wall
+        mazeObj[CurrentPos[0]][CurrentPos[1]].walls[nextWall] = false;
 
         // set visited
+        mazeObj[CurrentPos[0]][CurrentPos[1]].visited = true;
+        mazeObj[CurrentPos[0]][CurrentPos[1]].traceDepth = stackIndex + 1;
 
         // update stack
+        stackIndex++;
+        posStack[stackIndex] = [CurrentPos[0], CurrentPos[1]];
 
-        // exit when back to starting position with no remaining unvisited nodes
-        done = (stackIndex == 0) && (maze[posStack[stackIndex][0]][posStack[stackIndex][1]].hasUnvisitedNeighbours() == false);
+        // if no unvisited neighbours unwind stack (until 0) and retest
+        var backTrack = mazeObj[CurrentPos[0]][CurrentPos[1]].hasUnvisitedNeighbours() == false;
+        while (backTrack) {
+            stackIndex--;
+            if (stackIndex >= 0) {
+                CurrentPos[0] = posStack[stackIndex][0];
+                CurrentPos[1] = posStack[stackIndex][1];
+            }
+            backTrack = (stackIndex > 0) && ( mazeObj[CurrentPos[0]][CurrentPos[1]].hasUnvisitedNeighbours() == false );
+        }
 
-        // if no unvisited neighbours unwind stack and retest
-
-
+        done = (stackIndex < 0) || ( (stackIndex == 0) && (mazeObj[CurrentPos[0]][CurrentPos[1]].hasUnvisitedNeighbours() == false) ); 
     }
 
     // generate maze mesh
+
+    newMaze = new E3D_entity_wireframe_canvas("newMazeBaseMesh");
+
+    var maxTraceDepth = 0;
+    var px1 = 0;
+    var py1 = 0;
+    var px2 = 0;
+    var py2 = 0;
+    for (var x = 0; x < mazeSize; ++x) for (var y = 0; y < mazeSize; ++y) if (maxTraceDepth < mazeObj[x][y].traceDepth) maxTraceDepth = mazeObj[x][y].traceDepth;
+    for (var x = 0; x < mazeSize; ++x) for (var y = 0; y < mazeSize; ++y) {
+        var scale = 16;
+        var mid = scale * mazeSize / 2;
+        px1 = ((scale *   x  ) / 1) - mid;
+        py1 = ((scale *   y  ) / 1) - mid;
+        px2 = ((scale * (x+1)) / 1) - mid;
+        py2 = ((scale * (y+1)) / 1) - mid;
+
+        px1 += 1;
+        py1 += 1;
+        px2 -= 1;
+        py2 -= 1;
+        var col = mazeObj[x][y].traceDepth / maxTraceDepth;
+        if (col < 0.5) {
+             col = v3_val_new(col*2, 0, 0);
+        } else {
+            col = v3_val_new(1, (col-0.5)*2, 0);
+        }
+        if (mazeObj[x][y].walls[TopWall]) {
+            newMaze.addLine([px1, 0, py1], [px2, 0, py1], false, col);
+        }
+        if (mazeObj[x][y].walls[BottomWall]) {
+            newMaze.addLine([px1, 0, py2], [px2, 0, py2], false, col);
+        }
+        if (mazeObj[x][y].walls[LeftWall]) {
+            newMaze.addLine([px1, 0, py1], [px1, 0, py2], false, col);
+        }
+        if (mazeObj[x][y].walls[RightWall]) {
+            newMaze.addLine([px2, 0, py1], [px2, 0, py2], false, col);
+        }
+    }
+
+    newMaze.position = v3_val_new(0, 0, 0);
+    newMaze.visible = true;
+    maze.visible = false;
+    ball.visible = false;
+    scn.addEntity(newMaze);
 
     // simplyfy maze mesh
 
