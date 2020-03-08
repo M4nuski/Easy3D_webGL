@@ -166,7 +166,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                 if (hitRes != false) {                       
 
-                    v3_addscaled_res(firstHit, sourceSph_p0, self.delta, hitRes);
+                    v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes);
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {                                

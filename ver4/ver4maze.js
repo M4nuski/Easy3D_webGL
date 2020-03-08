@@ -37,6 +37,7 @@ const btn_restart = document.getElementById("btn_restart");
 const btn_help = document.getElementById("btn_help");
 const span_time = document.getElementById("span_time");
 const div_help = document.getElementById("helpDiv");
+const span_status = document.getElementById("span_status");
 var startTime = 0;
 
 log("Set DOM Events");
@@ -153,7 +154,7 @@ function initEngine() {
     resMngr.loadAll("Start");
 
     timer.run();
-    scn.state = E3D_ACTIVE;
+    //scn.state = E3D_ACTIVE;
 }
 
 
@@ -163,53 +164,111 @@ const speed = v3_new();
 
 var lastPos = v3_new();
 var rAngle = 0;
+var rMat = m4_new();
+var qRot = quat.create();
+var newRot = quat.create();
+
+function fromQuat(out, q) {
+    var x = q[0],
+        y = q[1],
+        z = q[2],
+        w = q[3];
+    var x2 = x + x;
+    var y2 = y + y;
+    var z2 = z + z;
+  
+    var xx = x * x2;
+    var yx = y * x2;
+    var yy = y * y2;
+    var zx = z * x2;
+    var zy = z * y2;
+    var zz = z * z2;
+    var wx = w * x2;
+    var wy = w * y2;
+    var wz = w * z2;
+  
+    out[0] = 1 - yy - zz;
+    out[1] = yx + wz;
+    out[2] = zx - wy;
+    out[3] = 0;
+  
+    out[4] = yx - wz;
+    out[5] = 1 - xx - zz;
+    out[6] = zy + wx;
+    out[7] = 0;
+  
+    out[8] = zx + wy;
+    out[9] = zy - wx;
+    out[10] = 1 - xx - yy;
+    out[11] = 0;
+  
+    out[12] = 0;
+    out[13] = 0;
+    out[14] = 0;
+    out[15] = 1;
+  
+    return out;
+  }
+
+  function q4_normalize(out, a) {
+    var x = a[0];
+    var y = a[1];
+    var z = a[2];
+    var w = a[3];
+    var len = x * x + y * y + z * z + w * w;
+    if (len > 0) {
+      len = 1 / Math.sqrt(len);
+      out[0] = x * len;
+      out[1] = y * len;
+      out[2] = z * len;
+      out[3] = w * len;
+    }
+    return out;
+  }
 
 function prepRender() {
+
     // move maze per inputs
-    if (maze) {
-        maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-        v3_clamp_mod(maze.rotation, -0.3, 0.3);
-        maze.resetMatrix();    
-    }    
-
-    // nudge ball 
-  /*  if (animations.length > 0) {
-
-        v3_scale_mod(speed, 0.9);
-     speed[1] =  animations[0].pspd[1];
-        v3_applym4_res(deltaVect, pushVect, maze.normalMatrix);
-        deltaVect[1] = 0.0;
-        v3_add_mod(speed, deltaVect);
-        v3_copy(animations[0].pspd, speed);
-      //  animations[0].pspd[1] = ball_gSpd;
-    }*/
-
-    if (ball) {
-    v3_copy(lastPos, ball.position);
+    maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
+    v3_clamp_mod(maze.rotation, -0.3, 0.3);
+    maze.resetMatrix();    
 
     // Run Animations
     //cleanupDoneAnimations(animations, scn);
-    collisionDetectionAnimator(animations, scn, 10);
+    collisionDetectionAnimator(animations, scn, 8);
 
 
-    // create rotation effect
-    v3_sub_res(deltaVect, ball.position, lastPos);
-    deltaVect[1] = 0;
-    v3_cross_res(pushVect, deltaVect, _v3_y);
-   // v3_normalize_mod(pushVect);
-    //rAngle -=  v3_length(deltaVect) * 0.1;
-    m4_rotate_mod(ball.normalMatrix, v3_length(deltaVect) * 0.21, pushVect);
+    // create ball rotation effect
+    v3_sub_res(pushVect, ball.position, lastPos);
+    pushVect[1] = 0;
+   // pushVect[0] = -pushVect[0];
 
+    var xAngle = v3_length(pushVect) / -12;
+    v3_cross_mod(pushVect, _v3_y);
+    v3_normalize_mod(pushVect);
+
+    span_status.innerText = justify("dx", xAngle.toFixed(4), 12) + "\n" + 
+    justify("x", pushVect[0].toFixed(4), 12) + "\n" +
+    justify("y", pushVect[1].toFixed(4), 12) + "\n" +
+    justify("z", pushVect[2].toFixed(4), 12);
+
+    quat.setAxisAngle(newRot, pushVect, xAngle);
+    q4_normalize(newRot, newRot);
+    quat.multiply(qRot, newRot, qRot);
+    q4_normalize(qRot, qRot);
+    fromQuat(rMat, qRot);
     //override resetMatrix();
-    m4_copy(ball.modelMatrix, ball.normalMatrix);
+    m4_copy(ball.normalMatrix, rMat);
+    m4_copy(ball.modelMatrix, rMat);
     ball.modelMatrix[12] =  ball.position[0];
     ball.modelMatrix[13] =  ball.position[1];
     ball.modelMatrix[14] =  ball.position[2];
-    }
+
+    v3_copy(lastPos, ball.position);
 
 
 
-
+    // Timer display
     if (startTime != 0) {
         if (ball.position[1] < -50) {
             startTime = 0;
@@ -249,6 +308,7 @@ function onRessource(name, msg) {
     if (msg == E3D_RES_ALL) {
         log("All async ressources loaded for tag: " + name, true);       
         resMngr.flushAll();   
+        scn.state = E3D_ACTIVE;
     }
 
     if (msg == E3D_RES_LOAD) {
