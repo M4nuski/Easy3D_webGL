@@ -94,6 +94,7 @@ function restartGame() {
     startTime = 0;
     span_time.innerText = "Time: 00:00.00";
     span_time.style.color = "lime";
+    genMaze(5, 2020);
 }
 
 function initEngine() {
@@ -168,6 +169,7 @@ var rMat = m4_new();
 var qRot = quat.create();
 var newRot = quat.create();
 
+// quaternions
 function fromQuat(out, q) {
     var x = q[0],
         y = q[1],
@@ -226,6 +228,40 @@ function fromQuat(out, q) {
     return out;
   }
 
+  /**
+   * https://gist.github.com/blixt/f17b47c62508be59987b
+ * Creates a pseudo-random value generator. The seed must be an integer.
+ *
+ * Uses an optimized version of the Park-Miller PRNG.
+ * http://www.firstpr.com.au/dsp/rand31/
+ */
+function Random(seed) {
+    this._seed = seed % 2147483647;
+    if (this._seed <= 0) this._seed += 2147483646;
+  }
+  
+  /**
+   * Returns a pseudo-random value between 1 and 2^32 - 2.
+   */
+  Random.prototype.next = function () {
+    return this._seed = this._seed * 16807 % 2147483647;
+  };
+  
+  
+  /**
+   * Returns a pseudo-random floating point number in range [0, 1).
+   */
+  Random.prototype.nextFloat = function (opt_minOrMax, opt_max) {
+    // We know that result of next() will be 1 to 2147483646 (inclusive).
+    return (this.next() - 1) / 2147483646;
+  };
+
+  Random.prototype.nextInt = function(maxInt){
+        return Math.floor(maxInt * (this.next() - 1) / 2147483646);
+  }
+
+  var PRNG = new Random(2020);
+
 function prepRender() {
 
     // move maze per inputs
@@ -243,19 +279,19 @@ function prepRender() {
     pushVect[1] = 0;
    // pushVect[0] = -pushVect[0];
 
-    var xAngle = v3_length(pushVect) / -12;
+    var xAngle = v3_length(pushVect) / -24;
     v3_cross_mod(pushVect, _v3_y);
     v3_normalize_mod(pushVect);
 
-    span_status.innerText = justify("dx", xAngle.toFixed(4), 12) + "\n" + 
+   /* span_status.innerText = justify("dx", xAngle.toFixed(4), 12) + "\n" + 
     justify("x", pushVect[0].toFixed(4), 12) + "\n" +
     justify("y", pushVect[1].toFixed(4), 12) + "\n" +
     justify("z", pushVect[2].toFixed(4), 12);
-
+*/
     quat.setAxisAngle(newRot, pushVect, xAngle);
     q4_normalize(newRot, newRot);
     quat.multiply(qRot, newRot, qRot);
-    q4_normalize(qRot, qRot);
+  //  q4_normalize(qRot, qRot);
     fromQuat(rMat, qRot);
     //override resetMatrix();
     m4_copy(ball.normalMatrix, rMat);
@@ -299,7 +335,90 @@ function onKeyInput(event) {
     if (event.type == "mouseDown") {
         if ((startTime == 0) && (ball.position[1] >= -90)) startTime = Date.now();
     }
+    log(PRNG.nextInt(100));
 }
+
+// DFS maze generator
+
+var maze;
+var mazeSize = 5;
+var TopWall = 0;
+var BottomWall = 1;
+var LeftWall = 2;
+var RightWall = 3;
+
+class MazeNode {
+    constructor (x, y) {
+        this.visited = false;
+        this.walls = [true, true, true, true];
+        // exception for edges, keep walled-off
+
+        this.nodeTrace = [];
+        this.x = x;
+        this.y = y;
+    }
+
+    hasUnvisitedNeighbours() {
+        var res = false;
+        if (this.x > 0) res |= !maze[this.x-1][this.y].visited;
+        if (this.y > 0) res |= !maze[this.x][this.y-1].visited;
+        if (this.x < mazeSize-1) res |= !maze[this.x+1][this.y].visited;
+        if (this.y < mazeSize-1) res |= !maze[this.x][this.y+1].visited;
+        return res;
+    }
+
+}
+
+
+function genMaze(size = 5, seed = 2020) {
+    mazeSize = size;
+    var rng = new Random(seed);
+    rng.nextInt(mazeSize); // ignore first one
+
+    // prep maze 2D array
+    maze = new Array(mazeSize);
+    for (var i = 0; i < mazeSize; ++i) maze[i] = new Array(mazeSize);
+
+    // create maze nodes
+    for (var x = 0; x < mazeSize; ++x) for (var y = 0; y < mazeSize; ++y) maze[x][y] = new MazeNode(x, y);
+   
+    // select starting point
+    var CurrentPos = [rng.nextInt(mazeSize), 0];
+    var posStack = [];
+    posStack.push(CurentPos);
+    maze[CurrentPos[0]][CurrentPos[1]].visited = true; // fisrt node is visited
+    maze[CurrentPos[0]][CurrentPos[1]].walls[TopWall] = false; // remove top wall of first node
+
+    // run DFS algo, by loop, external stack
+    var done = false;
+    var stackIndex = 0;
+    while (done != false) {
+        // randomly select unvisited neighbour
+
+        // remove walls
+
+        // set visited
+
+        // update stack
+
+        // exit when back to starting position with no remaining unvisited nodes
+        done = (stackIndex == 0) && (maze[posStack[stackIndex][0]][posStack[stackIndex][1]].hasUnvisitedNeighbours() == false);
+
+        // if no unvisited neighbours unwind stack and retest
+
+
+    }
+
+    // generate maze mesh
+
+    // simplyfy maze mesh
+
+    // load maze mesh to entity with CD and edges
+
+    // set ball starting position
+
+    // set ball goal position
+} 
 
 function onRessource(name, msg) {
     if (msg == E3D_RES_FAIL) {
@@ -332,7 +451,7 @@ function onRessource(name, msg) {
                 ball = new E3D_entity(name, "", false);
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.5], [12, 12, 12]);
                 ball.pushCD_sph(_v3_origin, 12);
-                meshLoader.smoothNormals(-0.5);
+                meshLoader.smoothNormals(-0.9);
                 meshLoader.addModelData(ball);
                 ball.visible = true;
                 ball.position = v3_val_new(20, 50, 64);
