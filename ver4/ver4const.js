@@ -498,6 +498,28 @@ function v3_normalize_res(res, a) {
     }
 }
 
+// Generate normal from 3 points
+var __v3_normal_p21 = v3_new();
+var __v3_normal_p31 = v3_new();
+
+function v3_normal_new(p1, p2, p3) {        
+    var n = v3_new();
+
+    v3_sub_res(__v3_normal_p21, p2, p1);
+    v3_sub_res(__v3_normal_p31, p3, p1);
+    v3_cross_res(n, __v3_normal_p21, __v3_normal_p31);
+    v3_normalize_mod(n);
+
+    return n;
+}
+function v3_normal_res(res, p1, p2, p3) {        
+    v3_sub_res(__v3_normal_p21, p2, p1);
+    v3_sub_res(__v3_normal_p31, p3, p1);
+    v3_cross_res(res, __v3_normal_p21, __v3_normal_p31);
+    v3_normalize_mod(res);
+}
+
+
 // Vector length
 function v3_length(a) {
     return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);

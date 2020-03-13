@@ -98,11 +98,11 @@ class E3D_loader {
             v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5]);
             v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8]);     
 
-            
-            v3_sub_res(d21, v2, v1);
+            v3_normal_res(newNormal, v1, v2, v3);
+        /*    v3_sub_res(d21, v2, v1);
             v3_sub_res(d31, v3, v1);
             v3_cross_res(newNormal, d21, d31);
-            v3_normalize_mod(newNormal);
+            v3_normalize_mod(newNormal);*/
             entity.pushCD_triangle(newNormal, v1, v2, v3);
         }
         log(entity.CD_triangle + " CD triangles");
@@ -212,10 +212,11 @@ class E3D_loader {
             v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5] );
             v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8] );
 
-            v3_sub_mod(v2, v1);
-            v3_sub_mod(v3, v1);
-            v3_cross_res(newNormal, v2, v3);
-            v3_normalize_mod(newNormal);
+            //v3_sub_mod(v2, v1);
+           // v3_sub_mod(v3, v1);
+           // v3_cross_res(newNormal, v2, v3);
+           // v3_normalize_mod(newNormal);
+            v3_normal_res(newNormal, v1, v2, v3);
 
             this.normals.push(newNormal[0]); // flat shading
             this.normals.push(newNormal[1]); 
@@ -525,12 +526,61 @@ class E3D_loader {
     }
 
     
+// Mesh creation methods
+
+    pushVertex(p, n, c) {        
+        this.positions.push(p[0]);      this.positions.push(p[1]);      this.positions.push(p[2]);  
+        this.normals.push(n[0]);        this.normals.push(n[1]);        this.normals.push(n[2]);   
+        this.colors.push(c[0]);         this.colors.push(c[1]);         this.colors.push(c[2]);
+        this.numFloats += 3;
+    }
+
+    pushTriangle(p1, p2, p3, n1, n2, n3, c1, c2, c3) {
+        this.pushVertex(p1, n1, c1);
+        this.pushVertex(p2, n2, c2);
+        this.pushVertex(p3, n3, c3);
+    }
+    
+    pushTriangle3p1n(p1, p2, p3, n, c = _v3_white) {
+        this.pushTriangle(p1, p2, p3, n, n, n, c, c, c);
+    }
+
+    pushTriangle3p(p1, p2, p3, c = _v3_white) {
+        var n = v3_normal_new(p1, p2, p3);
+        this.pushTriangle(p1, p2, p3, n, n, n, c, c, c);
+    }
 
 
+    pushQuad(p1, p2, p3, p4, n1, n2, n3, n4, c1, c2, c3, c4) {
+        this.pushVertex(p1, n1, c1);
+        this.pushVertex(p2, n2, c2);
+        this.pushVertex(p3, n3, c3);
+
+        this.pushVertex(p3, n3, c3);
+        this.pushVertex(p4, n4, c4);
+        this.pushVertex(p1, n1, c1);
+    }
+
+    pushQuad4p1n(p1, p2, p3, p4, n, c = _v3_white) {
+        pushQuad(p1, p2, p3, p4, n, n, n, n, c, c, c, c);
+    }
+
+    pushQuad4p(p1, p2, p3, p4, c = _v3_white) {
+        var n = v3_normal_new(p1, p2, p3);
+        pushQuad(p1, p2, p3, p4, n, n, n, n, c, c, c, c);
+    }
+
+
+    // Add quad, vertical, facing viewer
+    pushWall(pleft, pright, height, color = _v3_white) {
+        var pleftTop = v3_val_new(pleft[0], pleft[1] + height, pleft[2]);
+        var prightTop = v3_val_new(pright[0], pright[1] + height, pright[2]);
+
+        pushQuad4p(prightTop, pleftTop, pleft, pright, color);
+     }
+  
 
 
 }
-
-
 
 

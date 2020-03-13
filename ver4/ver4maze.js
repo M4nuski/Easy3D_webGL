@@ -506,6 +506,7 @@ function genMaze(size = 5, seed = 2020) {
     }
     
     // generate maze mesh
+    /* //wireframe layout
     newMaze = new E3D_entity_wireframe_canvas("newMazeBaseMesh");
     var px1 = 0;
     var py1 = 0;
@@ -561,15 +562,40 @@ function genMaze(size = 5, seed = 2020) {
     ball.visible = false;
     scn.removeEntity("newMazeBaseMesh", true);
     scn.addEntity(newMaze);
+    */
+    // "diamond" corners mesh
+    newMaze = new E3D_entity("newMazeBaseMesh", "", false);
+    meshLoader.reset();
 
-    // simplyfy maze mesh
+
+
+
+    //meshLoader.pushWall();
+    //meshLoader.pushTriangle3p();
+
+
+
+
+
+
+    // simplify maze mesh
 
 
     // load maze mesh to entity with CD and edges
+    meshLoader.addModelData(newMaze);
+    meshLoader.addCDFromData(newMaze);
+    
+    // simplify CD
+    
+    // add new maze to scene
+    scn.removeEntity("newMazeBaseMesh", true);
+    scn.addEntity(newMaze);
 
     // set ball starting position
 
     // set ball goal position
+
+    // set view
 } 
 
 function onRessource(name, msg) {
