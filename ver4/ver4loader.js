@@ -83,7 +83,7 @@ class E3D_loader {
     }
 
 
-    addCDFromData(entity) {
+    addCDFromData(entity, addOrphanEdges = true) {
 
         let v1 = [0, 0, 0];
         let v2 = [0, 0, 0];
@@ -113,12 +113,15 @@ class E3D_loader {
         var centroid2 = v3_new();
 
         for (var i = 0; i < this.edges.length; ++i) { // for each edge
-
-            v3_avg3_res(centroid1, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index31]);
-            v3_avg3_res(centroid2, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index32]);
-            v3_sub_mod(centroid1, centroid2);
-            
-            if (v3_dot(centroid1, this.edges[i].normal2) < -0.001) entity.pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
+            if (addOrphanEdges && !this.edges[i].done) {
+                entity.pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
+            } else if (this.edges[i].done) {
+                v3_avg3_res(centroid1, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index31]);
+                v3_avg3_res(centroid2, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index32]);
+                v3_sub_mod(centroid1, centroid2);
+                
+                if (v3_dot(centroid1, this.edges[i].normal2) < -0.001) entity.pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
+            }
         }
 
         log(entity.CD_edge + " CD edges");
