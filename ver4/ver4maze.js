@@ -53,7 +53,8 @@ const _zFar = 600.0;
 
 // Engine State
 
-var maze, ball, newMaze; // entities
+var ball, newMaze; // entities
+var maze = new E3D_entity("Maze", "", false);
 var animations = [];
 
 
@@ -115,7 +116,7 @@ function initEngine() {
         gl.canvas.width  = gl.canvas.offsetWidth;
         gl.canvas.height = gl.canvas.offsetHeight;
 
-        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.3, 0.3, 1.0, 1.0], 200);
+        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.3, 0.3, 1.0, 1.0], 300);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -152,9 +153,11 @@ function initEngine() {
         return; 
     }
      
-    resMngr.addRessource("../Models/M1.raw",  "Maze", "Map");
+  //  resMngr.addRessource("../Models/M1.raw",  "Maze", "Map");
     resMngr.addRessource("../Models/SPH.raw", "Ball", "Entity");
     resMngr.loadAll("Start");
+
+   // genMaze(8, 2020 + seedIndex++);
 
     timer.run();
     //scn.state = E3D_ACTIVE;
@@ -268,7 +271,7 @@ function prepRender() {
 
     // move maze per inputs
     maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-    v3_clamp_mod(maze.rotation, -0.3, 0.3);
+    v3_clamp_mod(maze.rotation, -0.93, 0.93);
     maze.resetMatrix();    
 
     // Run Animations
@@ -285,6 +288,7 @@ function prepRender() {
     v3_cross_mod(pushVect, _v3_y);
     v3_normalize_mod(pushVect);
 
+    span_status.innerText = justify("% ", timer.usageSmoothed.toFixed(2), 8);
    /* span_status.innerText = justify("dx", xAngle.toFixed(4), 12) + "\n" + 
     justify("x", pushVect[0].toFixed(4), 12) + "\n" +
     justify("y", pushVect[1].toFixed(4), 12) + "\n" +
@@ -507,14 +511,14 @@ function genMaze(size = 5, seed = 2020) {
     
     // generate maze mesh
     //wireframe layout
-    var newMazeWF = new E3D_entity_wireframe_canvas("newMazeWireFrame");
+  /*  var newMazeWF = new E3D_entity_wireframe_canvas("newMazeWireFrame");
     var px1 = 0;
     var py1 = 0;
     var px2 = 0;
-    var py2 = 0;
+    var py2 = 0;*/
     var scale = 320 / mazeSize;
     var mid = scale * mazeSize / 2;
-
+/*
     newMazeWF.addWireSphere([((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid], 10, _v3_green, 16, false, 1);
     newMazeWF.addWireSphere([((startX + 0.5) * scale) - mid, 0, ((startY + 0.5) * scale) - mid], 10, _v3_black, 16, false, 1);
     // gen wall lines
@@ -563,9 +567,10 @@ function genMaze(size = 5, seed = 2020) {
     ball.visible = false;
     scn.removeEntity(newMazeWF.id, true);
     scn.addEntity(newMazeWF);
+    */
    //
     // "diamond" corners mesh
-    newMaze = new E3D_entity("newMazeBaseMesh", "", false);
+    //newMaze = new E3D_entity("newMazeBaseMesh", "", false);
     meshLoader.reset();
 
     var scale = 320 / mazeSize;
@@ -714,26 +719,47 @@ function genMaze(size = 5, seed = 2020) {
     // simplify maze mesh
 
 
+    
+    // add base
+    var pp =  320 / 2;
+    var pm = -320 / 2;
+    meshLoader.pushQuad4p([pp, 0, pm], [pm, 0, pm], [pm, 0, pp], [pp, 0, pp]);
+    
+    meshLoader.pushQuad4p([pp, 0, pp], [pm, 0, pp],  [pm, -baseHeight, pp], [pp, -baseHeight, pp]);
+    meshLoader.pushQuad4p([pm, 0, pm], [pp, 0, pm],  [pp, -baseHeight, pm], [pm, -baseHeight, pm]);
+    meshLoader.pushQuad4p([pm, 0, pp], [pm, 0, pm],  [pm, -baseHeight, pm], [pm, -baseHeight, pp]);
+    meshLoader.pushQuad4p([pp, 0, pm], [pp, 0, pp],  [pp, -baseHeight, pp], [pp, -baseHeight, pm]);
+    
     // load maze mesh to entity with CD and edges
-    meshLoader.addModelData(newMaze);
-   // meshLoader.addCDFromData(newMaze);
+    meshLoader.addCDFromData(maze, false);
+    meshLoader.addStrokeData(maze, false, 0.5);
+    meshLoader.addModelData(maze);
     
     // simplify CD
     
     // add new maze to scene
-    scn.removeEntity(newMaze.id, true);
-    scn.addEntity(newMaze);
+  //  scn.removeEntity(newMaze.id, true);
+  //  scn.addEntity(newMaze);
 
     // set ball starting position
-
+    v3_val_res(ball.position, ((startX + 0.5) * scale) - mid, 32, ((startY + 0.5) * scale) - mid);
+    ball.resetMatrix();
+    animations[0] = newBaseAnim(ball, _v3_null, _v3_null, 1.0, -1, true);
+    animations[0].sourceCollResolver = collisionResult_asSource_slide;
     // set ball goal position
 
     // set view
+    maze.resetMatrix();
+    maze.visible = true;
+    scn.removeEntity(maze.id, true);
+    scn.addEntity(maze);
 
-
-    newMaze.visible = true;
-    maze.visible = false;
-    ball.visible = false;
+   // newMaze.visible = true;
+   // maze.visible = false;
+   // scn.removeEntity(maze.id, true);
+   // maze = newMaze;
+   // animations[0].target = newMaze;
+   // ball.visible = false;
 } 
 
 var wallHeight = 32;
@@ -781,7 +807,7 @@ function onRessource(name, msg) {
     if (msg == E3D_RES_LOAD) {
         log("Async ressource loaded: " + name, true); 
 
-        if (resMngr.getRessourceType(name) == "Map") {
+       /* if (resMngr.getRessourceType(name) == "Map") {
             if (name == "Maze") {
                 maze = new E3D_entity(name, "", false);
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), _v3_white, [2, 2, 2]);
@@ -792,7 +818,7 @@ function onRessource(name, msg) {
                 maze.position = v3_val_new(-20, 0, 20);
                 scn.addEntity(maze);  
             }
-        }
+        }*/
 
         if (resMngr.getRessourceType(name) == "Entity") {
             if (name == "Ball") {
@@ -802,11 +828,12 @@ function onRessource(name, msg) {
                 meshLoader.smoothNormals(-0.9);
                 meshLoader.addModelData(ball);
                 ball.visible = true;
-                ball.position = v3_val_new(20, 50, 64);
+                //ball.position = v3_val_new(20, 50, 64);
                 scn.addEntity(ball);  
 
-                animations.push(newBaseAnim(ball, _v3_null, _v3_null, 1.0, -1, true));
-                animations[0].sourceCollResolver = collisionResult_asSource_slide;
+                genMaze(8, 2020 + seedIndex++);
+
+
             }
         }
 

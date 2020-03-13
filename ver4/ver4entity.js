@@ -294,7 +294,59 @@ class E3D_entity {
         }
     }
 
+    // TODO and clear from context (buffers)
+   /* clear() {
+        this.visible = false;
+        this.dataContentChanged = true; // GPU buffers will be updated  
+        this.dataSizeChanged = true; // GPU buffers will be reset and updated
 
+        // Properties
+        this.position = v3_new();
+        this.rotation = v3_new();
+
+        this.actualPosition = v3_new();
+
+        // fustrum culling
+        this.vis_culling = true; // Setting to false will force the entity to always be redrawn
+        this.cull_dist = 0; // maximum vertex distance from object center for culling
+        
+        // Computed matrix
+        this.modelMatrix = m4_new();
+        this.normalMatrix = m4_new();
+
+        // Data
+        this.numElements = 0; // Actual number of vertices to draw.
+        this.drawMode = 4;
+
+        this.vertexBuffer;
+        this.normalBuffer;
+        this.colorBuffer; // TODO replace by texture
+        //this.uvBuffer;
+        this.strokeIndexBuffer;
+
+        // float32Array of raw data, can be flushed for static entities 
+        this.vertexArray = null; 
+        this.normalArray = null;
+        this.colorArray = null;
+        this.strokeIndexArray = new Uint16Array(0);
+
+        this.drawStrokes = false;
+        this.numStrokeElements = 0;
+
+        // Animation
+        this.animIndex = -1;
+
+        this.collisionDetection = false;
+
+        this.CD_point = 0;
+        this.CD_edge = 0;
+        this.CD_sph = 0;
+        this.CD_plane = 0;
+        this.CD_box = 0;
+        this.CD_triangle = 0;
+    }
+
+*/
     moveTo(p){
         v3_copy(this.position, p);
     }
