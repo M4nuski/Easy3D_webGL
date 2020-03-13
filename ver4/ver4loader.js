@@ -562,12 +562,12 @@ class E3D_loader {
     }
 
     pushQuad4p1n(p1, p2, p3, p4, n, c = _v3_white) {
-        pushQuad(p1, p2, p3, p4, n, n, n, n, c, c, c, c);
+        this.pushQuad(p1, p2, p3, p4, n, n, n, n, c, c, c, c);
     }
 
     pushQuad4p(p1, p2, p3, p4, c = _v3_white) {
         var n = v3_normal_new(p1, p2, p3);
-        pushQuad(p1, p2, p3, p4, n, n, n, n, c, c, c, c);
+        this.pushQuad(p1, p2, p3, p4, n, n, n, n, c, c, c, c);
     }
 
 
@@ -576,7 +576,7 @@ class E3D_loader {
         var pleftTop = v3_val_new(pleft[0], pleft[1] + height, pleft[2]);
         var prightTop = v3_val_new(pright[0], pright[1] + height, pright[2]);
 
-        pushQuad4p(prightTop, pleftTop, pleft, pright, color);
+        this.pushQuad4p(prightTop, pleftTop, pleft, pright, color);
      }
   
 

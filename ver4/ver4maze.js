@@ -135,7 +135,7 @@ function initEngine() {
         log("Camera Initialization", false);
 
         scn.camera = new E3D_camera_persp("TopCam", gl.canvas.width, gl.canvas.height, _fieldOfView, _zNear, _zFar);   
-        scn.camera.moveTo(0, 300, 0, PIdiv2, 0, 0);      
+        scn.camera.moveTo(0, 350, 0, PIdiv2, 0, 0);      
         winResize();
 
         log("Scene Initialization", false);
@@ -506,8 +506,8 @@ function genMaze(size = 5, seed = 2020) {
     }
     
     // generate maze mesh
-    /* //wireframe layout
-    newMaze = new E3D_entity_wireframe_canvas("newMazeBaseMesh");
+    //wireframe layout
+    var newMazeWF = new E3D_entity_wireframe_canvas("newMazeWireFrame");
     var px1 = 0;
     var py1 = 0;
     var px2 = 0;
@@ -515,8 +515,8 @@ function genMaze(size = 5, seed = 2020) {
     var scale = 320 / mazeSize;
     var mid = scale * mazeSize / 2;
 
-    newMaze.addWireSphere([((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid], 10, _v3_green, 16, false, 1);
-    newMaze.addWireSphere([((startX + 0.5) * scale) - mid, 0, ((startY + 0.5) * scale) - mid], 10, _v3_black, 16, false, 1);
+    newMazeWF.addWireSphere([((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid], 10, _v3_green, 16, false, 1);
+    newMazeWF.addWireSphere([((startX + 0.5) * scale) - mid, 0, ((startY + 0.5) * scale) - mid], 10, _v3_black, 16, false, 1);
     // gen wall lines
     for (var x = 0; x < mazeSize; ++x) for (var y = 0; y < mazeSize; ++y) {
 
@@ -539,36 +539,75 @@ function genMaze(size = 5, seed = 2020) {
         }
         //col = _v3_black;
         if (mazeObj[x][y].walls[TopWall]) {
-            newMaze.addLine([px1, 0, py1], [px2, 0, py1], false, col);
-            if (y == 0) newMaze.addLine([px1, 0, py1-2], [px2, 0, py1-2], false, col);
+            newMazeWF.addLine([px1, 0, py1], [px2, 0, py1], false, col);
+            if (y == 0) newMazeWF.addLine([px1, 0, py1-2], [px2, 0, py1-2], false, col);
         }
         if (mazeObj[x][y].walls[BottomWall]) {
-            newMaze.addLine([px1, 0, py2], [px2, 0, py2], false, col);
-            if (y == mazeSize-1) newMaze.addLine([px1, 0, py2+2], [px2, 0, py2+2], false, col);
+            newMazeWF.addLine([px1, 0, py2], [px2, 0, py2], false, col);
+            if (y == mazeSize-1) newMazeWF.addLine([px1, 0, py2+2], [px2, 0, py2+2], false, col);
         }
         if (mazeObj[x][y].walls[LeftWall]) {
-            newMaze.addLine([px1, 0, py1], [px1, 0, py2], false, col);
-            if (x == 0) newMaze.addLine([px1-2, 0, py1], [px1-2, 0, py2], false, col);
+            newMazeWF.addLine([px1, 0, py1], [px1, 0, py2], false, col);
+            if (x == 0) newMazeWF.addLine([px1-2, 0, py1], [px1-2, 0, py2], false, col);
         }
         if (mazeObj[x][y].walls[RightWall]) {
-            newMaze.addLine([px2, 0, py1], [px2, 0, py2], false, col);
-            if (x == mazeSize-1) newMaze.addLine([px2+2, 0, py1], [px2+2, 0, py2], false, col);
+            newMazeWF.addLine([px2, 0, py1], [px2, 0, py2], false, col);
+            if (x == mazeSize-1) newMazeWF.addLine([px2+2, 0, py1], [px2+2, 0, py2], false, col);
         }
     }
 
     //newMaze.position = v3_val_new(0, 0, 0);
-    newMaze.visible = true;
+    newMazeWF.visible = true;
+    newMazeWF.position[1] = wallHeight;
     maze.visible = false;
     ball.visible = false;
-    scn.removeEntity("newMazeBaseMesh", true);
-    scn.addEntity(newMaze);
-    */
+    scn.removeEntity(newMazeWF.id, true);
+    scn.addEntity(newMazeWF);
+   //
     // "diamond" corners mesh
     newMaze = new E3D_entity("newMazeBaseMesh", "", false);
     meshLoader.reset();
 
+    var scale = 320 / mazeSize;
+    var mid = scale * mazeSize / 2;
+
+    // top walls
+
+    for (var y = 0; y < mazeSize; ++y) {
+
+        var py = (scale *   y) - mid;        
+        var startPos = 0;
+        while (startPos < mazeSize) { 
+
+            if (mazeObj[startPos][y].walls[TopWall]) {
+                var endPos = startPos+1;
+                var startCap = !mazeObj[startPos][y].walls[LeftWall];
+
+                // find next
+                while ((endPos < mazeSize) && mazeObj[endPos][y].walls[TopWall] && !mazeObj[endPos-1][y].walls[RightWall]) endPos++;
+              //  if (endPos == mazeSize) endPos = mazeSize - 1;
+               // endPos--;
+                var p1 = (scale * startPos) - mid;
+                var p2 = (scale * endPos) - mid;            
+                startPos = endPos-1;
+
+                var endCap = !mazeObj[startPos][y].walls[RightWall];
+
+                addMazeWall([p1, 0, py], [p2, 0, py], startCap, endCap);
+
+            }
+
+            startPos++;
+        }
+    }
+    
+    // left side
+    // bottom side
+    // right side
 
 
+    // inner horizontal walls
+    // inner vertical walls
 
     //meshLoader.pushWall();
     //meshLoader.pushTriangle3p();
@@ -583,12 +622,12 @@ function genMaze(size = 5, seed = 2020) {
 
     // load maze mesh to entity with CD and edges
     meshLoader.addModelData(newMaze);
-    meshLoader.addCDFromData(newMaze);
+   // meshLoader.addCDFromData(newMaze);
     
     // simplify CD
     
     // add new maze to scene
-    scn.removeEntity("newMazeBaseMesh", true);
+    scn.removeEntity(newMaze.id, true);
     scn.addEntity(newMaze);
 
     // set ball starting position
@@ -596,7 +635,43 @@ function genMaze(size = 5, seed = 2020) {
     // set ball goal position
 
     // set view
+
+
+    newMaze.visible = true;
+    maze.visible = false;
+    ball.visible = false;
 } 
+
+var wallHeight = 32;
+var wallHalfThickness = 4;
+
+function addMazeWall(leftP, rightP, leftClosed, rightClosed) {
+    var n = v3_sub_new(rightP, leftP);
+    v3_normalize_mod(n);
+
+    var leftProj = v3_addscaled_new(leftP, n, wallHalfThickness);
+    var rightProj = v3_addscaled_new(rightP, n, -wallHalfThickness);
+
+    v3_rotateY_mod(n, -PIdiv2);
+
+    v3_addscaled_mod(leftProj, n, wallHalfThickness);
+    v3_addscaled_mod(rightProj, n, wallHalfThickness);
+
+    meshLoader.pushWall(leftProj, rightProj, wallHeight); // face wall
+    if (leftClosed) meshLoader.pushWall(leftP, leftProj, wallHeight); // end walls
+    if (rightClosed) meshLoader.pushWall(rightProj, rightP, wallHeight);
+
+    // top
+    leftP[1] += wallHeight; 
+    leftProj[1] += wallHeight; 
+    rightP[1] += wallHeight; 
+    rightProj[1] += wallHeight; 
+    var midP = v3_avg2_new(leftP, rightP);
+
+    meshLoader.pushTriangle3p(leftP, leftProj, midP);
+    meshLoader.pushTriangle3p(leftProj, rightProj, midP);
+    meshLoader.pushTriangle3p(rightProj, rightP, midP);
+}
 
 function onRessource(name, msg) {
     if (msg == E3D_RES_FAIL) {
