@@ -571,49 +571,143 @@ function genMaze(size = 5, seed = 2020) {
     var scale = 320 / mazeSize;
     var mid = scale * mazeSize / 2;
 
-    // top walls
-
+    // inner horizontal walls
     for (var y = 0; y < mazeSize; ++y) {
+        var py = (scale * y) - mid;  
 
-        var py = (scale *   y) - mid;        
+        // top walls      
         var startPos = 0;
         while (startPos < mazeSize) { 
-
             if (mazeObj[startPos][y].walls[TopWall]) {
                 var endPos = startPos+1;
                 var startCap = !mazeObj[startPos][y].walls[LeftWall];
-
-                // find next
                 while ((endPos < mazeSize) && mazeObj[endPos][y].walls[TopWall] && !mazeObj[endPos-1][y].walls[RightWall]) endPos++;
-              //  if (endPos == mazeSize) endPos = mazeSize - 1;
-               // endPos--;
                 var p1 = (scale * startPos) - mid;
                 var p2 = (scale * endPos) - mid;            
                 startPos = endPos-1;
-
                 var endCap = !mazeObj[startPos][y].walls[RightWall];
-
                 addMazeWall([p1, 0, py], [p2, 0, py], startCap, endCap);
-
             }
+            startPos++;
+        }
 
+        // bottom walls
+        var startPos = 0;    
+        while (startPos < mazeSize) { 
+            if (mazeObj[startPos][y].walls[BottomWall]) {
+                var endPos = startPos+1;
+                var startCap = !mazeObj[startPos][y].walls[LeftWall];
+                while ((endPos < mazeSize) && mazeObj[endPos][y].walls[BottomWall] && !mazeObj[endPos-1][y].walls[RightWall]) endPos++;
+                var p1 = (scale * startPos) - mid;
+                var p2 = (scale * endPos) - mid;            
+                startPos = endPos-1;
+                var endCap = !mazeObj[startPos][y].walls[RightWall];
+                addMazeWall([p2, 0, py + scale], [p1, 0, py + scale], endCap, startCap);
+            }
+            startPos++;
+        }    
+    }
+
+    // bottom edge
+    var py = (scale * mazeSize) - mid;
+    var startPos = 0;
+    while (startPos < mazeSize) { 
+        if (mazeObj[startPos][mazeSize - 1].walls[BottomWall]) {
+            var endPos = startPos+1;
+            while ((endPos < mazeSize) && mazeObj[endPos][mazeSize - 1].walls[BottomWall]) endPos++;
+            var p1 = (scale * startPos) - mid;
+            var p2 = (scale * endPos) - mid;            
+            startPos = endPos-1;
+
+            addMazeWall([p1,-baseHeight, py], [p2, -baseHeight, py], true, true, baseHeight + wallHeight);
+        }
+        startPos++;
+    }
+    // top edge
+    var py = - mid;
+    var startPos = 0;
+    while (startPos < mazeSize) { 
+        if (mazeObj[startPos][0].walls[TopWall]) {
+            var endPos = startPos+1;
+            while ((endPos < mazeSize) && mazeObj[endPos][0].walls[TopWall]) endPos++;
+            var p1 = (scale * startPos) - mid;
+            var p2 = (scale * endPos) - mid;            
+            startPos = endPos-1;
+
+            addMazeWall([p2, -baseHeight, py], [p1, -baseHeight, py], true, true, baseHeight + wallHeight);
+        }
+        startPos++;
+    }
+
+
+    // inner vertical walls
+    for (var x = 0; x < mazeSize; ++x) {
+        var px = (scale * x) - mid;  
+
+        // left walls      
+        var startPos = 0;
+        while (startPos < mazeSize) { 
+            if (mazeObj[x][startPos].walls[LeftWall]) {
+                var endPos = startPos+1;
+                var startCap = !mazeObj[x][startPos].walls[TopWall];
+                while ((endPos < mazeSize) && mazeObj[x][endPos].walls[LeftWall] && !mazeObj[x][endPos-1].walls[BottomWall]) endPos++;
+                var p1 = (scale * startPos) - mid;
+                var p2 = (scale * endPos) - mid;            
+                startPos = endPos-1;
+                var endCap = !mazeObj[x][startPos].walls[BottomWall];
+                addMazeWall([px, 0, p2], [px, 0, p1], endCap, startCap);
+            }
+            startPos++;
+        }
+
+        // right walls
+        var startPos = 0;
+        while (startPos < mazeSize) { 
+            if (mazeObj[x][startPos].walls[RightWall]) {
+                var endPos = startPos+1;
+                var startCap = !mazeObj[x][startPos].walls[TopWall];
+                while ((endPos < mazeSize) && mazeObj[x][endPos].walls[RightWall] && !mazeObj[x][endPos-1].walls[BottomWall]) endPos++;
+                var p1 = (scale * startPos) - mid;
+                var p2 = (scale * endPos) - mid;            
+                startPos = endPos-1;
+                var endCap = !mazeObj[x][startPos].walls[BottomWall];
+                addMazeWall([px + scale, 0, p1], [px + scale, 0, p2], startCap, endCap);
+            }
             startPos++;
         }
     }
-    
-    // left side
-    // bottom side
-    // right side
 
 
-    // inner horizontal walls
-    // inner vertical walls
+    // right edge
+    var px = (scale * mazeSize) - mid;
+    var startPos = 0;
+    while (startPos < mazeSize) { 
+        if (mazeObj[mazeSize - 1][startPos].walls[RightWall]) {
+            var endPos = startPos+1;
+            while ((endPos < mazeSize) && mazeObj[mazeSize - 1][endPos].walls[RightWall]) endPos++;
+            var p1 = (scale * startPos) - mid;
+            var p2 = (scale * endPos) - mid;            
+            startPos = endPos-1;
 
-    //meshLoader.pushWall();
-    //meshLoader.pushTriangle3p();
+            addMazeWall([px, -baseHeight, p2], [px, -baseHeight, p1], true, true, baseHeight + wallHeight);
+        }
+        startPos++;
+    }
+    // left edge
+    var px = - mid;
+    var startPos = 0;
+    while (startPos < mazeSize) { 
+        if (mazeObj[0][startPos].walls[LeftWall]) {
+            var endPos = startPos+1;
+            while ((endPos < mazeSize) && mazeObj[0][endPos].walls[LeftWall]) endPos++;
+            var p1 = (scale * startPos) - mid;
+            var p2 = (scale * endPos) - mid;            
+            startPos = endPos-1;
 
-
-
+            addMazeWall([px, -baseHeight, p1], [px, -baseHeight, p2], true, true, baseHeight + wallHeight);
+        }
+        startPos++;
+    }
 
 
 
@@ -643,9 +737,10 @@ function genMaze(size = 5, seed = 2020) {
 } 
 
 var wallHeight = 32;
+var baseHeight = 8;
 var wallHalfThickness = 4;
 
-function addMazeWall(leftP, rightP, leftClosed, rightClosed) {
+function addMazeWall(leftP, rightP, leftClosed, rightClosed, height = wallHeight) {
     var n = v3_sub_new(rightP, leftP);
     v3_normalize_mod(n);
 
@@ -657,15 +752,15 @@ function addMazeWall(leftP, rightP, leftClosed, rightClosed) {
     v3_addscaled_mod(leftProj, n, wallHalfThickness);
     v3_addscaled_mod(rightProj, n, wallHalfThickness);
 
-    meshLoader.pushWall(leftProj, rightProj, wallHeight); // face wall
-    if (leftClosed) meshLoader.pushWall(leftP, leftProj, wallHeight); // end walls
-    if (rightClosed) meshLoader.pushWall(rightProj, rightP, wallHeight);
+    meshLoader.pushWall(leftProj, rightProj, height); // face wall
+    if (leftClosed) meshLoader.pushWall(leftP, leftProj, height); // end walls
+    if (rightClosed) meshLoader.pushWall(rightProj, rightP, height);
 
     // top
-    leftP[1] += wallHeight; 
-    leftProj[1] += wallHeight; 
-    rightP[1] += wallHeight; 
-    rightProj[1] += wallHeight; 
+    leftP[1] += height; 
+    leftProj[1] += height; 
+    rightP[1] += height; 
+    rightProj[1] += height; 
     var midP = v3_avg2_new(leftP, rightP);
 
     meshLoader.pushTriangle3p(leftP, leftProj, midP);
