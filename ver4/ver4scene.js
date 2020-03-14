@@ -99,6 +99,7 @@ class E3D_scene {
                         this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
                         this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
                         this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
+                        this.bindAndResetShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
                         this.entities[i].dataSizeChanged = false;
 
                     } else if (this.entities[i].dataContentChanged) { 
@@ -106,6 +107,7 @@ class E3D_scene {
                         this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
                         this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
                         this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
+                        this.bindAndUpdateShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
                         this.entities[i].dataContentChanged = false;
 
                     } else {
@@ -113,6 +115,7 @@ class E3D_scene {
                         this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
                         this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
                         this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
+                        this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
                     }
                                        
 
@@ -120,7 +123,9 @@ class E3D_scene {
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
+                    this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
                 }
+
                 // Entity Uniforms
                 this.context.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
                 this.context.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, this.entities[i].normalMatrix);
@@ -129,7 +134,7 @@ class E3D_scene {
                 if (this.entities[i].drawStrokes) {
                     this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
                     
-                    this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
+                //    this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
                     this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);  
                     
                     this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
@@ -176,6 +181,21 @@ class E3D_scene {
     }
 
 
+    bindShortIndexBuffer(buffer) {
+        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, buffer);
+    }
+    
+    bindAndUpdateShortIndexBuffer(buffer, data) {
+        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, buffer);
+        this.context.bufferSubData(this.context.ELEMENT_ARRAY_BUFFER, 0, data);
+    }
+
+    bindAndResetShortIndexBuffer(buffer, data) {
+        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, buffer);
+        this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, data, this.context.DYNAMIC_DRAW); 
+    }
+
+
     addEntity(ent) {
 
         // Initialize context data buffers        
@@ -205,6 +225,18 @@ class E3D_scene {
         this.entities.push(ent);
 
         return this.entities.length - 1; // return new index
+    }
+
+    updateEntity(ent) {
+        let idx = this.getEntityIndexFromId(ent.id);
+        if (idx > -1) {
+            ent.dataContentChanged = true;
+            ent.dataSizeChanged = true;        
+            ent.cull_dist = v3_length(E3D_scene.cull_calculate_max_pos(ent.vertexArray));
+            ent.resetMatrix();
+        }  else {
+            return this.addEntity(ent);
+        }
     }
 
     cloneEntity(id, newId) {

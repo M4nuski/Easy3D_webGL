@@ -42,6 +42,7 @@ const input_nb_size = document.getElementById("input_nb_size");
 const input_nb_seed = document.getElementById("input_nb_seed");
 
 const span_time = document.getElementById("span_time");
+const span_time_text = span_time.getAttribute("data-text") + ": ";
 const btn_help = document.getElementById("btn_help");
 
 const div_help = document.getElementById("helpDiv");
@@ -69,7 +70,7 @@ E3D_G = 250.0; // override gravity accel
 // Entities
 
 var ball; 
-var maze = new E3D_entity("Maze", "", false);
+var maze = new E3D_entity("Maze", "", true);
 var markers = new E3D_entity_wireframe_canvas("Markers", "", true);
 
 var animations = [];
@@ -187,11 +188,14 @@ function restartGame() {
     markers.rotation = v3_val_new(0, 0, 0);
     markers.resetMatrix();
 
+    v3_copy(lastPos, startPosition);
+    sumRotMat = m4_new();
+
     inputs.reset();
     scn.changeClearColor(runColor);
 
     startTime = 0;
-    span_time.innerText = "Time: 00:00.00";
+    span_time.innerText = span_time_text + "00:00.00";
     span_time.style.color = "gray";
 
     gameState = "start";
@@ -282,82 +286,9 @@ function initEngine() {
 
     markers.visible = true;
     scn.addEntity(markers);
+    //scn.addEntity(maze);
     timer.run();
 }
-
-
-
-/*
-// quaternions
-function fromQuat(out, q) {
-    var x = q[0],
-        y = q[1],
-        z = q[2],
-        w = q[3];
-    var x2 = x + x;
-    var y2 = y + y;
-    var z2 = z + z;
-  
-    var xx = x * x2;
-    var yx = y * x2;
-    var yy = y * y2;
-    var zx = z * x2;
-    var zy = z * y2;
-    var zz = z * z2;
-    var wx = w * x2;
-    var wy = w * y2;
-    var wz = w * z2;
-  
-    out[0] = 1 - yy - zz;
-    out[1] = yx + wz;
-    out[2] = zx - wy;
-    out[3] = 0;
-  
-    out[4] = yx - wz;
-    out[5] = 1 - xx - zz;
-    out[6] = zy + wx;
-    out[7] = 0;
-  
-    out[8] = zx + wy;
-    out[9] = zy - wx;
-    out[10] = 1 - xx - yy;
-    out[11] = 0;
-  
-    out[12] = 0;
-    out[13] = 0;
-    out[14] = 0;
-    out[15] = 1;
-  
-    return out;
-  }
-
-  function q4_normalize(out, a) {
-    var x = a[0];
-    var y = a[1];
-    var z = a[2];
-    var w = a[3];
-    var len = x * x + y * y + z * z + w * w;
-    if (len > 0) {
-      len = 1 / Math.sqrt(len);
-      out[0] = x * len;
-      out[1] = y * len;
-      out[2] = z * len;
-      out[3] = w * len;
-    }
-    return out;
-  }
-*/
-
-/*
-const pushVect = v3_val_new(0, 10, 0);
-const deltaVect = v3_new();
-const speed = v3_new();
-
-var rAngle = 0;
-var rMat = m4_new();
-var qRot = quat.create();
-var newRot = quat.create();
-*/
 
 // for ball rotation
 var lastPos = v3_new();
@@ -390,30 +321,7 @@ function prepRender() {
 
 
         // create ball rotation effect
-/* 
-//Quaternion version
-       v3_sub_res(pushVect, ball.position, lastPos);
-        pushVect[1] = 0;
-
-        var xAngle = v3_length(pushVect) / (ballDia * -2);
-        v3_cross_mod(pushVect, _v3_y);
-        v3_normalize_mod(pushVect);
-
-        quat.setAxisAngle(newRot, pushVect, xAngle);
-        q4_normalize(newRot, newRot);
-        quat.multiply(qRot, newRot, qRot);
-
-        fromQuat(rMat, qRot);
-
-        m4_copy(ball.normalMatrix, rMat);
-        m4_copy(ball.modelMatrix, rMat);
-        ball.modelMatrix[12] =  ball.position[0];
-        ball.modelMatrix[13] =  ball.position[1];
-        ball.modelMatrix[14] =  ball.position[2];
-
-        v3_copy(lastPos, ball.position);
-*/
-    // Matrix version
+        // Matrix version
         v3_sub_res(newRotVect, ball.position, lastPos);
         newRotVect[1] = 0;
 
@@ -451,13 +359,18 @@ function prepRender() {
             scn.changeClearColor(winColor);
         } else {
             var deltaTime = new Date(Date.now() - startTime);
-            span_time.innerText = "Time: " + padStart("" + deltaTime.getMinutes(), "0", 2) + ":" 
+            span_time.innerText = span_time_text + padStart("" + deltaTime.getMinutes(), "0", 2) + ":" 
                                         + padStart("" + deltaTime.getSeconds(), "0", 2) + ":" 
                                         + padStart(""+Math.floor(deltaTime.getMilliseconds() / 10), "0", 2);
+            if (deltaTime > 3600000) {
+                span_time.style.color = "red";
+                gameState = "loss";
+                scn.changeClearColor(lossColor);
+            }                             
         }
     }
 }
-function timerTick() {  // Game Loop
+function timerTick() {  // Engine Loop
 
     inputs.processInputs(timer.delta);
     inputs.smoothRotation(1);
@@ -527,7 +440,6 @@ function genMaze(size = 5, seed = 2020) {
     posStack.push([CurrentPos[0], CurrentPos[1]]);
 
     mazeObj[CurrentPos[0]][CurrentPos[1]].visited = true; // fisrt node is visited
-    //mazeObj[CurrentPos[0]][CurrentPos[1]].walls[TopWall] = false; // remove top wall of first node
     mazeObj[CurrentPos[0]][CurrentPos[1]].traceDepth = 0;
 
     // run DFS algo, by loop, external stack
@@ -624,9 +536,6 @@ function genMaze(size = 5, seed = 2020) {
         exitY = y;
     }
 
-    // exit at fartest point
-    //mazeObj[exitX][exitY];
-
     // side wall holes
     for (var i = 0; i < mazeSize/4; ++i) {
         mazeObj[0][rng.nextInt(mazeSize)].walls[LeftWall] = false;
@@ -635,71 +544,9 @@ function genMaze(size = 5, seed = 2020) {
         mazeObj[rng.nextInt(mazeSize)][mazeSize-1].walls[BottomWall] = false;
     }
     
-   // var newMaze;
     // generate maze mesh
-    //wireframe layout
-  /*  var newMazeWF = new E3D_entity_wireframe_canvas("newMazeWireFrame");
-    var px1 = 0;
-    var py1 = 0;
-    var px2 = 0;
-    var py2 = 0;
-    var scale = 320 / mazeSize;
-    var mid = scale * mazeSize / 2;
-*/
 
-/*
-    newMazeWF.addWireSphere([((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid], 10, _v3_green, 16, false, 1);
-    newMazeWF.addWireSphere([((startX + 0.5) * scale) - mid, 0, ((startY + 0.5) * scale) - mid], 10, _v3_black, 16, false, 1);
-    // gen wall lines
-    for (var x = 0; x < mazeSize; ++x) for (var y = 0; y < mazeSize; ++y) {
-
-        px1 = (scale *   x  ) - mid;
-        py1 = (scale *   y  ) - mid;
-        px2 = (scale * (x+1)) - mid;
-        py2 = (scale * (y+1)) - mid;
-
-        // offset walls
-        px1 += 1;
-        py1 += 1;
-        px2 -= 1;
-        py2 -= 1;
-
-        var col = mazeObj[x][y].traceDepth / maxTraceDepth;
-        if (col < 0.5) {
-            col = v3_val_new(col * 2, 0, 0);
-        } else {
-            col = v3_val_new(1, (col - 0.5) * 2, 0);
-        }
-        //col = _v3_black;
-        if (mazeObj[x][y].walls[TopWall]) {
-            newMazeWF.addLine([px1, 0, py1], [px2, 0, py1], false, col);
-            if (y == 0) newMazeWF.addLine([px1, 0, py1-2], [px2, 0, py1-2], false, col);
-        }
-        if (mazeObj[x][y].walls[BottomWall]) {
-            newMazeWF.addLine([px1, 0, py2], [px2, 0, py2], false, col);
-            if (y == mazeSize-1) newMazeWF.addLine([px1, 0, py2+2], [px2, 0, py2+2], false, col);
-        }
-        if (mazeObj[x][y].walls[LeftWall]) {
-            newMazeWF.addLine([px1, 0, py1], [px1, 0, py2], false, col);
-            if (x == 0) newMazeWF.addLine([px1-2, 0, py1], [px1-2, 0, py2], false, col);
-        }
-        if (mazeObj[x][y].walls[RightWall]) {
-            newMazeWF.addLine([px2, 0, py1], [px2, 0, py2], false, col);
-            if (x == mazeSize-1) newMazeWF.addLine([px2+2, 0, py1], [px2+2, 0, py2], false, col);
-        }
-    }
-
-    //newMaze.position = v3_val_new(0, 0, 0);
-    newMazeWF.visible = true;
-    newMazeWF.position[1] = wallHeight;
-    maze.visible = false;
-    ball.visible = false;
-    scn.removeEntity(newMazeWF.id, true);
-    scn.addEntity(newMazeWF);
-    */
-   //
     // "diamond" corners mesh
-    //newMaze = new E3D_entity("newMazeBaseMesh", "", false);
     meshLoader.reset();
 
     var scale = 320 / mazeSize;
@@ -708,9 +555,6 @@ function genMaze(size = 5, seed = 2020) {
     wallHeight = 250 / mazeSize;
     baseHeight = 50 / mazeSize;
     wallHalfThickness = 25 / mazeSize;
-   // var wallHeight = 32; 
-   // var baseHeight = 8;
-   // var wallHalfThickness = 4;
 
     // inner horizontal walls
     for (var y = 0; y < mazeSize; ++y) {
@@ -852,7 +696,7 @@ function genMaze(size = 5, seed = 2020) {
 
 
 
-    // simplify maze mesh
+    // TODO simplify maze mesh
 
 
     
@@ -872,31 +716,20 @@ function genMaze(size = 5, seed = 2020) {
     meshLoader.addStrokeData(maze, false, 0.1);
     meshLoader.addModelData(maze);
     
-    // simplify CD
+    // TODO simplify CD
     
-    // add new maze to scene
-  //  scn.removeEntity(newMaze.id, true);
-  //  scn.addEntity(newMaze);
 
-    // set ball starting position
+    // calculate ball starting position and goal position
 
     v3_val_res(startPosition, ((startX + 0.5) * scale) - mid, wallHeight / 2, ((startY + 0.5) * scale) - mid);
     v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, 36 / mazeSize, ((exitY + 0.5) * scale) - mid);
 
-    // set ball goal position
 
-    // set view    
-   // maze.resetMatrix();
+    // update scene with new maze
     maze.visible = true;
-    scn.removeEntity(maze.id, true);
-    scn.addEntity(maze);
-
-   // newMaze.visible = true;
-   // maze.visible = false;
-   // scn.removeEntity(maze.id, true);
-   // maze = newMaze;
-   // animations[0].target = newMaze;
-   // ball.visible = false;
+    scn.updateEntity(maze);
+    //scn.removeEntity(maze.id, true);
+    //scn.addEntity(maze);
 } 
 
 
