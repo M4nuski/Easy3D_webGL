@@ -133,7 +133,7 @@ function restartGame() {
         lastSize = mazeSize;
 
         inputs._rotSpeed = baseRotSpeed * 36 / (mazeSize * (mazeSize * 0.5) + 36);
-        E3D_G = 386.22 * 6 / mazeSize;
+        E3D_G = 386.22 * 36 / (mazeSize * (mazeSize * 0.5) + 36);
     }
 
     markers.clear();
@@ -344,7 +344,7 @@ function Random(seed) {
   /**
    * Returns a pseudo-random floating point number in range [0, 1).
    */
-  Random.prototype.nextFloat = function (opt_minOrMax, opt_max) {
+  Random.prototype.nextFloat = function () {
     // We know that result of next() will be 1 to 2147483646 (inclusive).
     return (this.next() - 1) / 2147483646;
   };
@@ -620,10 +620,10 @@ function genMaze(size = 5, seed = 2020) {
     var px1 = 0;
     var py1 = 0;
     var px2 = 0;
-    var py2 = 0;*/
+    var py2 = 0;
     var scale = 320 / mazeSize;
     var mid = scale * mazeSize / 2;
-
+*/
 
 /*
     newMazeWF.addWireSphere([((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid], 10, _v3_green, 16, false, 1);
@@ -859,7 +859,7 @@ function genMaze(size = 5, seed = 2020) {
     // set ball starting position
 
     v3_val_res(startPosition, ((startX + 0.5) * scale) - mid, wallHeight / 2, ((startY + 0.5) * scale) - mid);
-    v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, ballDia, ((exitY + 0.5) * scale) - mid);
+    v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, 36 / mazeSize, ((exitY + 0.5) * scale) - mid);
 
     // set ball goal position
 
