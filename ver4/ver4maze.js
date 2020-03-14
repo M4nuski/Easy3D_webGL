@@ -132,7 +132,7 @@ function restartGame() {
         ball.dataContentChanged = true;
         lastSize = mazeSize;
 
-        inputs._rotSpeed = baseRotSpeed * 36 / ((mazeSize * mazeSize) + 36);
+        inputs._rotSpeed = baseRotSpeed * 36 / ((mazeSize * 1) + 36);
         E3D_G = 386.22 * 6 / mazeSize;
     }
 
@@ -353,8 +353,9 @@ function Random(seed) {
         return Math.floor(maxInt * (this.next() - 1) / 2147483646);
   }
 
-  var PRNG = new Random(2020);
 
+
+var _limitAxis = v3_new();
 function prepRender() {
     // stats display
     span_status.innerText = justify("% ", timer.usageSmoothed.toFixed(2), 8);
@@ -397,15 +398,17 @@ function prepRender() {
 
         v3_copy(lastPos, ball.position);
 
+        v3_applym4_res(_limitAxis, _v3_y, maze.normalMatrix);
+
     }
     if (gameState == "run") {
          // Timer display and game logic
-        if (ball.position[1] < -50) {
+        if (v3_dot(_limitAxis, ball.position) < -ballDia) {
             startTime = 0;
             span_time.style.color = "red";
             gameState = "loss";
             scn.changeClearColor(lossColor);
-        } else if (v3_distance(ball.position, targetPosition) < (1.5*ballDia)) {
+        } else if (v3_distance(ball.position, targetPosition) <= ballDia) {
             span_time.style.color = "lime";
             gameState = "win";
             scn.changeClearColor(winColor);
@@ -678,7 +681,7 @@ function genMaze(size = 5, seed = 2020) {
     var scale = 320 / mazeSize;
     var mid = scale * mazeSize / 2;
 
-    wallHeight = 300 / mazeSize;
+    wallHeight = 250 / mazeSize;
     baseHeight = 50 / mazeSize;
     wallHalfThickness = 25 / mazeSize;
    // var wallHeight = 32; 
@@ -854,7 +857,7 @@ function genMaze(size = 5, seed = 2020) {
     // set ball starting position
 
     v3_val_res(startPosition, ((startX + 0.5) * scale) - mid, wallHeight / 2, ((startY + 0.5) * scale) - mid);
-    v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid);
+    v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, ballDia, ((exitY + 0.5) * scale) - mid);
 
     // set ball goal position
 
