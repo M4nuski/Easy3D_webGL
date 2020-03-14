@@ -91,10 +91,48 @@ const DegToRad = (Math.PI / 180.0);
 
 // Randoms
 function rndPM(val) { // random between plus or minus "val"
-    return (2*val*Math.random()) - val;
+    return ( 2.0 * val * Math.random() ) - val;
 }
 function rndInt(val) { // integer random between 0 and val-1
-    return Math.floor(Math.random() * val);
+    return Math.floor( Math.random() * val);
+}
+
+// Seeded RNG based on https://gist.github.com/blixt/f17b47c62508be59987b
+class Random {
+    constructor(seed) {
+        this._seed = seed % 2147483647;
+        if (this._seed <= 0) this._seed += 2147483646;
+    }
+    // Returns a pseudo-random value between 1 and 2^32 - 2.
+    next() {
+        return this._seed = this._seed * 16807 % 2147483647;
+    }
+    // Returns a pseudo-random floating point number in range [0.0, 1.0-epsilon].
+    nextFloat() {        
+        return (this.next() - 1) / 2147483646; // We know that result of next() will be 1 to 2147483646 (inclusive).
+    }
+    // Returns a pseudo-random integer in range [0, maxInt-1].
+    nextInt(maxInt) {
+        return Math.floor(maxInt * (this.next() - 1) / 2147483646);
+    }
+}
+  
+  
+  
+
+
+
+// Clamping
+function clamp(val, min, max) {
+    if (val < min) val = min;
+    if (val > max) val = max;
+    return val;
+}
+
+function clampPM(val, limit) {
+    if (val < -limit) val = -limit;
+    if (val >  limit) val =  limit;
+    return val;
 }
 
 // Strings
