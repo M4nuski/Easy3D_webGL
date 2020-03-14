@@ -39,6 +39,11 @@ class E3D_scene {
         this.state = E3D_READY;
     }
 
+    changeClearColor(color) {
+        this.clearColor = color;
+        this.context.clearColor(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]);
+    }
+
     preRender() {
         // timing, events, controls, camera, animations
 

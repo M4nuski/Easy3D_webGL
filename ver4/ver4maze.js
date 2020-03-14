@@ -10,7 +10,6 @@ var nHits = 0;
 var show_DEV_CD = false;
 var phyTracers, dev_Hits, dev_CD;
 
-
 var gAccel = 0;
 
 var timer = { delta : 0, start : Date.now() }; // dummy timer 
@@ -45,7 +44,6 @@ const btn_help = document.getElementById("btn_help");
 
 const div_help = document.getElementById("helpDiv");
 const span_status = document.getElementById("span_status");
-var startTime = 0;
 
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
@@ -56,14 +54,37 @@ btn_help.addEventListener("click", toggleHelp);
 // Engine Config
 
 const _fieldOfView = 60 * DegToRad;
-const _zNear = 0.1;
+const _zNear = 1;
 const _zFar = 600.0;
+const _fogStart = 400.0;
+const _camHeight = 400.0;
 
-// Engine State
+// Engine and Game State
 
-var ball, newMaze; // entities
+var ball; // entities
 var maze = new E3D_entity("Maze", "", false);
+var markers = new E3D_entity_wireframe_canvas("Markers", "", true);
+
 var animations = [];
+var startTime = 0;
+
+var lastSeed = 0;
+var lastSize = 5;
+var ballDia = 1;
+var startPosition = v3_new();
+var targetPosition = v3_new();
+
+var gameState = "start";
+
+const runColor  = [0.3, 0.3, 1.0, 1.0];
+const winColor  = [0.2, 0.7, 0.2, 1.0];
+const lossColor = [0.5, 0.2, 0.2, 1.0];
+/*
+start: time span gray, set to 0, position and rotation reset
+run: time span white, timer running, animations running
+win: time span green, timer stop, anim stop
+loss: time span red, timer stop, anim stop
+*/
 
 
 // Engine Components
@@ -75,6 +96,10 @@ var resMngr = new ressourceManager(onRessource);
 var meshLoader = new E3D_loader();
 
 var inputs = new E3D_input(GLCanvas, true, false, true, false);
+var baseRotSpeed = inputs._rotSpeed;
+
+
+// Startup
 
 log("Session Start", true);
 initEngine();
@@ -93,11 +118,30 @@ function toggleHelp() {
     div_help.style.display = (div_help.style.display != "table-row") ? "table-row" : "none";
 }
 
-
-var startPosition = v3_new();
-var targetPosition = v3_new();
-
 function restartGame() {
+    // resest ball size 
+    if (lastSize != mazeSize) {
+        var lastBallDia = 72 / lastSize;
+        ballDia = 72 / mazeSize;
+        for (var i = 0; i < ball.numElements; ++i) {
+            var v = ball.vertexArray.subarray(i*3, (i+1)*3);
+            v3_invscale_mod(v, lastBallDia);
+            v3_scale_mod(v, ballDia);
+        }
+        ball.CD_sph_r[0] = ballDia;
+        ball.dataContentChanged = true;
+        lastSize = mazeSize;
+
+        inputs._rotSpeed = baseRotSpeed * 36 / ((mazeSize * mazeSize) + 36);
+        E3D_G = 386.22 * 6 / mazeSize;
+    }
+
+    markers.clear();
+    markers.addCylinder(targetPosition, ballDia * 0.5, ballDia * 0.2, _v3_white, 16, 0, 1, false);
+    markers.addCylinder(targetPosition, ballDia * 1.0, ballDia * 0.4, _v3_red, 16, 0, 1, false);
+    markers.addCylinder(targetPosition, ballDia * 1.5, ballDia * 0.6, _v3_white, 16, 0, 1, false);
+    markers.addCylinder(targetPosition, ballDia * 2.0, ballDia * 0.8, _v3_red, 16, 0, 1, false);
+    markers.addCylinder(targetPosition, ballDia * 2.5, ballDia * 1.0, _v3_white, 16, 0, 1, false);
 
     // reset positions
     v3_copy(ball.position, startPosition);
@@ -108,11 +152,17 @@ function restartGame() {
     maze.rotation = v3_val_new(0, 0, 0);
     maze.resetMatrix();
 
+    markers.rotation = v3_val_new(0, 0, 0);
+    markers.resetMatrix();
+
     inputs.reset();
+    scn.changeClearColor(runColor);
 
     startTime = 0;
     span_time.innerText = "Time: 00:00.00";
-    span_time.style.color = "lime";
+    span_time.style.color = "gray";
+
+    gameState = "start";
 
 }
 
@@ -123,16 +173,20 @@ function newGame() {
         input_nb_size.value = size;
     }
 
+    // if seed == lastseed increase seed before generating
+    // otherwise generate from provided value
     var seed = Number(input_nb_seed.value);
     if (seed == NaN) {
         seed = (new Date()).getFullYear;
         input_nb_seed.value = seed;
     } else {
-        input_nb_seed.value = seed + 1;
+        if ((seed == lastSeed) && (mazeSize == size)) seed += 1;
+        input_nb_seed.value = seed;        
     }
 
     genMaze(size, seed);
     restartGame();
+    lastSeed = seed;
 }
 
 
@@ -152,7 +206,7 @@ function initEngine() {
         gl.canvas.width  = gl.canvas.offsetWidth;
         gl.canvas.height = gl.canvas.offsetHeight;
 
-        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, [0.3, 0.3, 1.0, 1.0], 300);
+        scn = new E3D_scene("mainScene", gl, gl.canvas.width, gl.canvas.height, runColor, _fogStart);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -172,7 +226,7 @@ function initEngine() {
         log("Camera Initialization", false);
 
         scn.camera = new E3D_camera_persp("TopCam", gl.canvas.width, gl.canvas.height, _fieldOfView, _zNear, _zFar);   
-        scn.camera.moveTo(0, 350, 0, PIdiv2, 0, 0);      
+        scn.camera.moveTo(0, _camHeight, 0, PIdiv2, 0, 0);      
         winResize();
 
         log("Scene Initialization", false);
@@ -189,14 +243,12 @@ function initEngine() {
         return; 
     }
      
-  //  resMngr.addRessource("../Models/M1.raw",  "Maze", "Map");
     resMngr.addRessource("../Models/SPH.raw", "Ball", "Entity");
     resMngr.loadAll("Start");
 
-   // genMaze(8, 2020 + seedIndex++);
-
+    markers.visible = true;
+    scn.addEntity(markers);
     timer.run();
-    //scn.state = E3D_ACTIVE;
 }
 
 
@@ -304,53 +356,59 @@ function Random(seed) {
   var PRNG = new Random(2020);
 
 function prepRender() {
-
-    // move maze per inputs
-    maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-    v3_clamp_mod(maze.rotation, -0.93, 0.93);
-    maze.resetMatrix();    
-
-    // Run Animations
-    //cleanupDoneAnimations(animations, scn);
-    collisionDetectionAnimator(animations, scn, 8);
-
-
-    // create ball rotation effect
-    v3_sub_res(pushVect, ball.position, lastPos);
-    pushVect[1] = 0;
-   // pushVect[0] = -pushVect[0];
-
-    var xAngle = v3_length(pushVect) / -24;
-    v3_cross_mod(pushVect, _v3_y);
-    v3_normalize_mod(pushVect);
-
+    // stats display
     span_status.innerText = justify("% ", timer.usageSmoothed.toFixed(2), 8);
-   /* span_status.innerText = justify("dx", xAngle.toFixed(4), 12) + "\n" + 
-    justify("x", pushVect[0].toFixed(4), 12) + "\n" +
-    justify("y", pushVect[1].toFixed(4), 12) + "\n" +
-    justify("z", pushVect[2].toFixed(4), 12);
-*/
-    quat.setAxisAngle(newRot, pushVect, xAngle);
-    q4_normalize(newRot, newRot);
-    quat.multiply(qRot, newRot, qRot);
-  //  q4_normalize(qRot, qRot);
-    fromQuat(rMat, qRot);
-    //override resetMatrix();
-    m4_copy(ball.normalMatrix, rMat);
-    m4_copy(ball.modelMatrix, rMat);
-    ball.modelMatrix[12] =  ball.position[0];
-    ball.modelMatrix[13] =  ball.position[1];
-    ball.modelMatrix[14] =  ball.position[2];
 
-    v3_copy(lastPos, ball.position);
+    if ((gameState == "run") || (gameState == "start")) {
+        // move maze per inputs
+        maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
+        v3_clamp_mod(maze.rotation, -0.3, 0.3);
+        maze.resetMatrix();
 
+        // update target marker
+        markers.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
+        v3_clamp_mod(markers.rotation, -0.3, 0.3);
+        markers.resetMatrix();
 
+        // Run Animations
+        //cleanupDoneAnimations(animations, scn);
+        collisionDetectionAnimator(animations, scn, 8);
 
-    // Timer display
-    if (startTime != 0) {
+        // create ball rotation effect
+        v3_sub_res(pushVect, ball.position, lastPos);
+        pushVect[1] = 0;
+    // pushVect[0] = -pushVect[0];
+
+        var xAngle = v3_length(pushVect) / (ballDia * -2);
+        v3_cross_mod(pushVect, _v3_y);
+        v3_normalize_mod(pushVect);
+
+        quat.setAxisAngle(newRot, pushVect, xAngle);
+        q4_normalize(newRot, newRot);
+        quat.multiply(qRot, newRot, qRot);
+    //  q4_normalize(qRot, qRot);
+        fromQuat(rMat, qRot);
+        //override resetMatrix();
+        m4_copy(ball.normalMatrix, rMat);
+        m4_copy(ball.modelMatrix, rMat);
+        ball.modelMatrix[12] =  ball.position[0];
+        ball.modelMatrix[13] =  ball.position[1];
+        ball.modelMatrix[14] =  ball.position[2];
+
+        v3_copy(lastPos, ball.position);
+
+    }
+    if (gameState == "run") {
+         // Timer display and game logic
         if (ball.position[1] < -50) {
             startTime = 0;
-            span_time.style.color =  "red";
+            span_time.style.color = "red";
+            gameState = "loss";
+            scn.changeClearColor(lossColor);
+        } else if (v3_distance(ball.position, targetPosition) < (1.5*ballDia)) {
+            span_time.style.color = "lime";
+            gameState = "win";
+            scn.changeClearColor(winColor);
         } else {
             var deltaTime = new Date(Date.now() - startTime);
             span_time.innerText = "Time: " + padStart("" + deltaTime.getMinutes(), "0", 2) + ":" 
@@ -375,9 +433,14 @@ function timerTick() {  // Game Loop
 
 function onKeyInput(event) {
     if (event.type == "mouseDown") {
-        if ((startTime == 0) && (ball.position[1] >= -90)) startTime = Date.now();
+     //   if ((startTime == 0) && (ball.position[1] >= -90)) startTime = Date.now();
+     //log(PRNG.nextInt(4));
+     if (gameState == "start") {
+         startTime = Date.now();
+         span_time.style.color = "white";
+         gameState = "run";
+        }
     }
-    //log(PRNG.nextInt(4));
 }
 
 // DFS maze generator
@@ -545,6 +608,7 @@ function genMaze(size = 5, seed = 2020) {
         mazeObj[rng.nextInt(mazeSize)][mazeSize-1].walls[BottomWall] = false;
     }
     
+   // var newMaze;
     // generate maze mesh
     //wireframe layout
   /*  var newMazeWF = new E3D_entity_wireframe_canvas("newMazeWireFrame");
@@ -613,6 +677,13 @@ function genMaze(size = 5, seed = 2020) {
 
     var scale = 320 / mazeSize;
     var mid = scale * mazeSize / 2;
+
+    wallHeight = 300 / mazeSize;
+    baseHeight = 50 / mazeSize;
+    wallHalfThickness = 25 / mazeSize;
+   // var wallHeight = 32; 
+   // var baseHeight = 8;
+   // var wallHalfThickness = 4;
 
     // inner horizontal walls
     for (var y = 0; y < mazeSize; ++y) {
@@ -771,7 +842,7 @@ function genMaze(size = 5, seed = 2020) {
     // load maze mesh to entity with CD and edges
     maze.clear();
     meshLoader.addCDFromData(maze, false);
-    meshLoader.addStrokeData(maze, false, 0.5);
+    meshLoader.addStrokeData(maze, false, 0.1);
     meshLoader.addModelData(maze);
     
     // simplify CD
@@ -783,7 +854,7 @@ function genMaze(size = 5, seed = 2020) {
     // set ball starting position
 
     v3_val_res(startPosition, ((startX + 0.5) * scale) - mid, wallHeight / 2, ((startY + 0.5) * scale) - mid);
-    v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, wallHeight / 2, ((exitY + 0.5) * scale) - mid);
+    v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid);
 
     // set ball goal position
 
@@ -861,9 +932,10 @@ function onRessource(name, msg) {
 
         if (resMngr.getRessourceType(name) == "Entity") {
             if (name == "Ball") {
-                ball = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.5], [12, 12, 12]);
-                ball.pushCD_sph(_v3_origin, 12);
+                ball = new E3D_entity(name, "", true);
+                ballDia = 72 / mazeSize;
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.5], [ballDia, ballDia, ballDia]);
+                ball.pushCD_sph(_v3_origin, ballDia);
                 meshLoader.smoothNormals(-0.9);
                 meshLoader.addModelData(ball);
                 ball.visible = true;
