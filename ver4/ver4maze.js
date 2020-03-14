@@ -18,7 +18,7 @@ var logElement = null;
 function log(text, silent = true) {
     let ts = Date.now() - timer.start;
     if (!silent) {
-        if (logElement == null) logElement = document.getElementById("logDiv");        
+        //if (logElement == null) logElement = document.getElementById("logDiv");        
         if (logElement != null) {
             logElement.innerHTML += "[" + ts + "] " + text + "<br />";
             logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
@@ -45,11 +45,15 @@ const btn_help = document.getElementById("btn_help");
 const div_help = document.getElementById("helpDiv");
 const span_status = document.getElementById("span_status");
 
+logElement = document.getElementById("logDiv");    
+
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
 btn_restart.addEventListener("click", restartGame); 
 btn_new.addEventListener("click", newGame); 
 btn_help.addEventListener("click", toggleHelp); 
+input_nb_size.addEventListener("keydown", inputsKeydown);
+input_nb_seed.addEventListener("keydown", inputsKeydown);
 
 // Engine Config
 
@@ -104,6 +108,7 @@ var baseRotSpeed = inputs._rotSpeed;
 log("Session Start", true);
 initEngine();
 
+
 function winResize() {
     gl.canvas.width  = gl.canvas.offsetWidth;
     gl.canvas.height = gl.canvas.offsetHeight;
@@ -116,6 +121,10 @@ function winResize() {
 
 function toggleHelp() {
     div_help.style.display = (div_help.style.display != "table-row") ? "table-row" : "none";
+}
+
+function inputsKeydown(event) {
+    if ( (event.code == "Enter") || (event.code == "NumpadEnter")) newGame();
 }
 
 function restartGame() {
@@ -133,7 +142,7 @@ function restartGame() {
         lastSize = mazeSize;
 
         inputs._rotSpeed = baseRotSpeed * 36 / (mazeSize * (mazeSize * 0.5) + 36);
-        E3D_G = 386.22 * 36 / (mazeSize * (mazeSize * 0.5) + 36);
+     //   E3D_G = 386.22 * 36 / (mazeSize * (mazeSize * 0.5) + 36);
     }
 
     markers.clear();
@@ -364,12 +373,12 @@ function prepRender() {
     if ((gameState == "run") || (gameState == "start")) {
         // move maze per inputs
         maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-        v3_clamp_mod(maze.rotation, -0.3, 0.3);
+        v3_clamp_mod(maze.rotation, -0.35, 0.35);
         maze.resetMatrix();
 
         // update target marker
         markers.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-        v3_clamp_mod(markers.rotation, -0.3, 0.3);
+        v3_clamp_mod(markers.rotation, -0.35, 0.35);
         markers.resetMatrix();
 
         // Run Animations

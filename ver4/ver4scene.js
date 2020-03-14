@@ -35,7 +35,7 @@ class E3D_scene {
         this.context.enable(this.context.DEPTH_TEST);
         this.context.depthFunc(this.context.LEQUAL);
         this.context.cullFace(this.context.BACK);
-        this.context.disable(this.context.CULL_FACE); // disabled for mesh generating algo testing
+        this.context.enable(this.context.CULL_FACE); 
         this.state = E3D_READY;
     }
 
