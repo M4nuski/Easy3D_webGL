@@ -1966,7 +1966,7 @@ function m4_ortho_res(res, width, height, znear, zfar){
 // Create new symmetrical perpective projetcion matrix
 function m4_persp_new(yfov, ar, znear, zfar){
     var res = new Array(16);
-
+    if (ar < 1.0) yfov = yfov / ar;
     var f = 1.0 / Math.tan(yfov / 2);
     var nf = 1 / (znear - zfar);
     res[0] = f / ar;
@@ -1989,6 +1989,7 @@ function m4_persp_new(yfov, ar, znear, zfar){
     return res;
 }
 function m4_persp_res(res, yfov, ar, znear, zfar){
+    if (ar < 1.0) yfov = yfov / ar;
     var f = 1.0 / Math.tan(yfov / 2);
     var nf = 1 / (znear - zfar);
     res[0] = f / ar;

@@ -132,7 +132,7 @@ function restartGame() {
         ball.dataContentChanged = true;
         lastSize = mazeSize;
 
-        inputs._rotSpeed = baseRotSpeed * 36 / ((mazeSize * 1) + 36);
+        inputs._rotSpeed = baseRotSpeed * 36 / (mazeSize * (mazeSize * 0.5) + 36);
         E3D_G = 386.22 * 6 / mazeSize;
     }
 
@@ -356,9 +356,10 @@ function Random(seed) {
 
 
 var _limitAxis = v3_new();
+var _target = v3_new();
 function prepRender() {
     // stats display
-    span_status.innerText = justify("% ", timer.usageSmoothed.toFixed(2), 8);
+    span_status.innerText = "Utilisation: " + padStart(""+timer.usageSmoothed.toFixed(2), " ", 8) + "%";
 
     if ((gameState == "run") || (gameState == "start")) {
         // move maze per inputs
@@ -399,6 +400,7 @@ function prepRender() {
         v3_copy(lastPos, ball.position);
 
         v3_applym4_res(_limitAxis, _v3_y, maze.normalMatrix);
+        v3_applym4_res(_target, targetPosition, maze.normalMatrix);
 
     }
     if (gameState == "run") {
@@ -408,7 +410,7 @@ function prepRender() {
             span_time.style.color = "red";
             gameState = "loss";
             scn.changeClearColor(lossColor);
-        } else if (v3_distance(ball.position, targetPosition) <= ballDia) {
+        } else if (v3_distance(ball.position, _target) <= ballDia) {
             span_time.style.color = "lime";
             gameState = "win";
             scn.changeClearColor(winColor);
