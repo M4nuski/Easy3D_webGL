@@ -295,7 +295,7 @@ class E3D_entity {
     }
 
     // TODO and clear from context (buffers)
-   /* clear() {
+    clear() {
         this.visible = false;
         this.dataContentChanged = true; // GPU buffers will be updated  
         this.dataSizeChanged = true; // GPU buffers will be reset and updated
@@ -318,11 +318,11 @@ class E3D_entity {
         this.numElements = 0; // Actual number of vertices to draw.
         this.drawMode = 4;
 
-        this.vertexBuffer;
+        /*this.vertexBuffer;
         this.normalBuffer;
         this.colorBuffer; // TODO replace by texture
         //this.uvBuffer;
-        this.strokeIndexBuffer;
+        this.strokeIndexBuffer;*/
 
         // float32Array of raw data, can be flushed for static entities 
         this.vertexArray = null; 
@@ -346,7 +346,7 @@ class E3D_entity {
         this.CD_triangle = 0;
     }
 
-*/
+
     moveTo(p){
         v3_copy(this.position, p);
     }

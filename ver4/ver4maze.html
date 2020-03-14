@@ -65,7 +65,25 @@
             float:right;
         }
 
+        span {
+            margin-left: 10px;
+            margin-right:  10px;
+        }
 
+        input {
+            color: lime;
+            background-color: #202020;
+            border: none;
+            text-align: center;
+            font-family: "Arial Black"; 
+            font-size: 1em; 
+            font-style: normal; 
+            font-variant: normal; 
+            font-weight: 400; 
+        }
+        input:hover {
+            color: greenyellow;
+        }
 
 
     </style>
@@ -89,7 +107,12 @@
 
 <body>
     <div id="headerDiv">
-        <span class="btnSpan fl" id="btn_restart"> Restart </span> <span id="span_time"> Time: 00:00.00</span><span class="fl"> Size: <input type="number" value="5" min="2" max="128" id="input_nb_size" /> Seed: <input type="number" value="2020" min="0" id="input_nb_seed" /></span> <span class="btnSpan fr" id="btn_help"> Help</span>
+        <span class="btnSpan fl" id="btn_restart">Restart</span>
+        <span class="btnSpan fl" id="btn_new">New</span>
+        <span class="fl">Size:<input type="number" value="5" min="2" max="32" id="input_nb_size" /></span>
+        <span class="fl">Seed:<input type="number" value="2019" min="2" max="2147483646" id="input_nb_seed" /></span>
+        <span id="span_time"> Time: 00:00.00</span>
+        <span class="btnSpan fr" id="btn_help">Help</span>
     </div>
 
     <div id="mainDiv">

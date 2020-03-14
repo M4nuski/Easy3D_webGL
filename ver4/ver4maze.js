@@ -33,9 +33,16 @@ log("DOMContentLoaded");
 
 log("Get DOM Elements");
 const GLCanvas = document.getElementById("GLCanvas");
+
 const btn_restart = document.getElementById("btn_restart");
-const btn_help = document.getElementById("btn_help");
+
+const btn_new = document.getElementById("btn_new");
+const input_nb_size = document.getElementById("input_nb_size");
+const input_nb_seed = document.getElementById("input_nb_seed");
+
 const span_time = document.getElementById("span_time");
+const btn_help = document.getElementById("btn_help");
+
 const div_help = document.getElementById("helpDiv");
 const span_status = document.getElementById("span_status");
 var startTime = 0;
@@ -43,6 +50,7 @@ var startTime = 0;
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
 btn_restart.addEventListener("click", restartGame); 
+btn_new.addEventListener("click", newGame); 
 btn_help.addEventListener("click", toggleHelp); 
 
 // Engine Config
@@ -86,19 +94,47 @@ function toggleHelp() {
 }
 
 
-var seedIndex = 0;
+var startPosition = v3_new();
+var targetPosition = v3_new();
+
 function restartGame() {
-    ball.position = v3_val_new(20, 50, 64);
-    if (animations.length > 0) animations[0].pspd = v3_val_new(0, 0, 0);
+
+    // reset positions
+    v3_copy(ball.position, startPosition);
     ball.resetMatrix();
+    animations[0] = newBaseAnim(ball, _v3_null, _v3_null, 1.0, -1, true);
+    animations[0].sourceCollResolver = collisionResult_asSource_slide;
+
     maze.rotation = v3_val_new(0, 0, 0);
     maze.resetMatrix();
+
     inputs.reset();
+
     startTime = 0;
     span_time.innerText = "Time: 00:00.00";
     span_time.style.color = "lime";
-    genMaze(8, 2020 + seedIndex++);
+
 }
+
+function newGame() {
+    var size = Number(input_nb_size.value);
+    if (size == NaN) {
+        size = 5;
+        input_nb_size.value = size;
+    }
+
+    var seed = Number(input_nb_seed.value);
+    if (seed == NaN) {
+        seed = (new Date()).getFullYear;
+        input_nb_seed.value = seed;
+    } else {
+        input_nb_seed.value = seed + 1;
+    }
+
+    genMaze(size, seed);
+    restartGame();
+}
+
 
 function initEngine() {
 
@@ -518,6 +554,8 @@ function genMaze(size = 5, seed = 2020) {
     var py2 = 0;*/
     var scale = 320 / mazeSize;
     var mid = scale * mazeSize / 2;
+
+
 /*
     newMazeWF.addWireSphere([((exitX + 0.5) * scale) - mid, 0, ((exitY + 0.5) * scale) - mid], 10, _v3_green, 16, false, 1);
     newMazeWF.addWireSphere([((startX + 0.5) * scale) - mid, 0, ((startY + 0.5) * scale) - mid], 10, _v3_black, 16, false, 1);
@@ -731,6 +769,7 @@ function genMaze(size = 5, seed = 2020) {
     meshLoader.pushQuad4p([pp, 0, pm], [pp, 0, pp],  [pp, -baseHeight, pp], [pp, -baseHeight, pm]);
     
     // load maze mesh to entity with CD and edges
+    maze.clear();
     meshLoader.addCDFromData(maze, false);
     meshLoader.addStrokeData(maze, false, 0.5);
     meshLoader.addModelData(maze);
@@ -742,14 +781,14 @@ function genMaze(size = 5, seed = 2020) {
   //  scn.addEntity(newMaze);
 
     // set ball starting position
-    v3_val_res(ball.position, ((startX + 0.5) * scale) - mid, 32, ((startY + 0.5) * scale) - mid);
-    ball.resetMatrix();
-    animations[0] = newBaseAnim(ball, _v3_null, _v3_null, 1.0, -1, true);
-    animations[0].sourceCollResolver = collisionResult_asSource_slide;
+
+    v3_val_res(startPosition, ((startX + 0.5) * scale) - mid, wallHeight / 2, ((startY + 0.5) * scale) - mid);
+    v3_val_res(targetPosition, ((exitX + 0.5) * scale) - mid, wallHeight / 2, ((exitY + 0.5) * scale) - mid);
+
     // set ball goal position
 
-    // set view
-    maze.resetMatrix();
+    // set view    
+   // maze.resetMatrix();
     maze.visible = true;
     scn.removeEntity(maze.id, true);
     scn.addEntity(maze);
@@ -831,7 +870,7 @@ function onRessource(name, msg) {
                 //ball.position = v3_val_new(20, 50, 64);
                 scn.addEntity(ball);  
 
-                genMaze(8, 2020 + seedIndex++);
+                newGame();
 
 
             }
