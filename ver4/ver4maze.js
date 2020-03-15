@@ -146,6 +146,8 @@ function winResize() {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); // TODO keep track of viewport in camera
     scn.camera.resize(gl.canvas.width, gl.canvas.height, _fieldOfView, _zNear, _zFar); 
     scn.camera.updateMatrix();
+
+    inputs.resize();
 }
 
 function toggleHelp() {
@@ -167,10 +169,8 @@ function restartGame() {
         _zFar = dist * 1.25;
         scn.fogLimit = dist;
 
-        scn.camera.resize(gl.canvas.width, gl.canvas.height, _fieldOfView, _zNear, _zFar);
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
         scn.camera.moveTo(0, dist, 0);
-
+        winResize();
 
         var fact = 8 / (mazeSize + 6);
         log(fact);

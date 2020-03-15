@@ -30,7 +30,6 @@ class E3D_input {
         // Callback
         this.onInput = null;
 
-        // Setup element's events
         if (supportMouse) {    
 
             element.addEventListener("contextmenu", (e) => { e.preventDefault(); } );
@@ -66,8 +65,11 @@ class E3D_input {
         this.mousePosDirection = 1; 
         this.mouseRotDirection = 1;
         
-        this._mouseSpeed = 0.05; // units per mouse position delta 
+        this._mouseSpeed = 50; // units per mouse position delta
         this._mouseWheelSpeed = 5.0; // units per wheel rotation delta
+
+        this.elemScaleX = 1.0 / element.offsetWidth; // screen pixels to element's relative size
+        this.elemScaleY = 1.0 / element.offsetHeight; 
         
         this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
@@ -559,6 +561,15 @@ class E3D_input {
         return res;
     }
 
+    
+    // Resize
+
+
+    resize() {
+        this.elemScaleX = 1.0 / this.element.offsetWidth;
+        this.elemScaleY = 1.0 / this.element.offsetHeight;
+    }
+
 
     // Keyboard Inputs
 
@@ -614,16 +625,16 @@ class E3D_input {
     }
     
     mouseMove(event) {
-        this.mx += (event.pageX - this.pinx) * this._mouseSpeed;
-        this.my += (event.pageY - this.piny) * this._mouseSpeed;
+        this.mx += (event.pageX - this.pinx) * this._mouseSpeed * this.elemScaleX;
+        this.my += (event.pageY - this.piny) * this._mouseSpeed * this.elemScaleY;
 
         this.pinx = event.pageX;
         this.piny = event.pageY;
     }
     
     mouseLockedMove(x, y) {
-        this.mx += x * this._mouseSpeed;
-        this.my += y * this._mouseSpeed;
+        this.mx += x * this._mouseSpeed * this.elemScaleX;
+        this.my += y * this._mouseSpeed * this.elemScaleY;
     }
     
     mouseWheel(event) {   
@@ -777,7 +788,7 @@ class E3D_input {
 
             if (Math.abs(this.touchDist - newTouchDist) > this._pinchHysteresis) {
                 //var delta = (this.touchDist - newTouchDist) * this._mouseSpeed;
-                this.mw += (this.touchDist - newTouchDist) * this._mouseSpeed;
+                this.mw += (this.touchDist - newTouchDist) * this._mouseSpeed * this.elemScaleX;
                 this.touchDist = newTouchDist;
                 //if (this.touchMap.get("pinch_axis") == E3D_INP_X) this.mx += delta;
                 //if (this.touchMap.get("pinch_axis") == E3D_INP_Y) this.my += delta;
