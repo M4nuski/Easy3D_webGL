@@ -444,27 +444,33 @@ class E3D_input {
             if (this.rx_smth > max) {
                 this.rx = max;
                 this.rx_smth = max;
+                this.rx_delta_smth = 0;
             } else if (this.rx_smth < min) {
                 this.rx = min;
                 this.rx_smth = min;
+                this.rx_delta_smth = 0;
             }
         }
         if (y) {
             if (this.ry_smth > max) {
                 this.ry = max;
                 this.ry_smth = max;
+                this.ry_delta_smth = 0;
             } else if (this.ry_smth < min) {
                 this.ry = min;
                 this.ry_smth = min;
+                this.ry_delta_smth = 0;
             }
         }
         if (z) {
             if (this.rz_smth > max) {
                 this.rz = max;
                 this.rz_smth = max;
+                this.rz_delta_smth = 0;
             } else if (this.rz_smth < min) {
                 this.rz = min;
                 this.rz_smth = min;
+                this.rz_delta_smth = 0;
             }
         }
     }

@@ -317,12 +317,10 @@ function prepRender() {
     if ((gameState == "run") || (gameState == "start")) {
         // move maze per inputs
         maze.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-        v3_clamp_mod(maze.rotation, -rotationClamp, rotationClamp);
         maze.resetMatrix();
 
         // update target marker
         markers.rotateBy([inputs.rx_delta_smth, 0, -inputs.ry_delta_smth]);
-        v3_clamp_mod(markers.rotation, -rotationClamp, rotationClamp);
         markers.resetMatrix();
 
         // Run Animations
@@ -386,7 +384,7 @@ function timerTick() {  // Engine Loop
 
     inputs.processInputs(timer.delta);
     inputs.smoothRotation(rotationSmoothing);
-    inputs.smoothPosition(rotationSmoothing);
+    inputs.clampRotationSmooth(-rotationClamp, rotationClamp);
 
     // Render
     if (scn.state == E3D_ACTIVE) {
