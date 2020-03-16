@@ -69,7 +69,7 @@ class E3D_loader {
         
         var strokeList = [];
         for (var i = 0; i < this.edges.length; ++i) if ( (addOrphanEdges && !this.edges[i].done) ||
-             (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit) ) {
+            (this.edges[i].done && (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit)) ) {
             strokeList.push(this.reverseIndices[this.edges[i].index1]);
             strokeList.push(this.reverseIndices[this.edges[i].index2]);
         }
@@ -88,8 +88,6 @@ class E3D_loader {
         let v1 = [0, 0, 0];
         let v2 = [0, 0, 0];
         let v3 = [0, 0, 0];
-        let d21 = [0, 0, 0];
-        let d31 = [0, 0, 0];
         let newNormal = [0, 0, 0];
 
         for (var i = 0; i < this.numFloats / 9; i++) { // for each face
@@ -99,10 +97,7 @@ class E3D_loader {
             v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8]);     
 
             v3_normal_res(newNormal, v1, v2, v3);
-        /*    v3_sub_res(d21, v2, v1);
-            v3_sub_res(d31, v3, v1);
-            v3_cross_res(newNormal, d21, d31);
-            v3_normalize_mod(newNormal);*/
+
             entity.pushCD_triangle(newNormal, v1, v2, v3);
         }
         log(entity.CD_triangle + " CD triangles");
@@ -212,10 +207,6 @@ class E3D_loader {
             v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5] );
             v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8] );
 
-            //v3_sub_mod(v2, v1);
-           // v3_sub_mod(v3, v1);
-           // v3_cross_res(newNormal, v2, v3);
-           // v3_normalize_mod(newNormal);
             v3_normal_res(newNormal, v1, v2, v3);
 
             this.normals.push(newNormal[0]); // flat shading
@@ -334,13 +325,6 @@ class E3D_loader {
                 v3_cross_res(normal, p2, p1);
                 v3_normalize_mod(normal);
             }
-
-            /*var v1 = new Vector3(p1.X - p0.X, p1.Y - p0.Y, p1.Z - p0.Z);
-            var v2 = new Vector3(p2.X - p0.X, p2.Y - p0.Y, p2.Z - p0.Z);
-            var res = Vector3.Cross(v1, v2);
-
-            res.Normalize();
-            return res;*/
 
             this.normals.push(normal[0]);this.normals.push(normal[1]);this.normals.push(normal[2]);
             this.normals.push(normal[0]);this.normals.push(normal[1]);this.normals.push(normal[2]);

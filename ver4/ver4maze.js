@@ -720,7 +720,7 @@ function genMaze(size = 5, seed = 2020) {
     // load maze mesh to entity with CD and edges
     maze.clear();
     meshLoader.addCDFromData(maze, false);
-    meshLoader.addStrokeData(maze, false, 0.1);
+    meshLoader.addStrokeData(maze, false, 0.01);
     meshLoader.addModelData(maze);
     
     // TODO simplify CD
