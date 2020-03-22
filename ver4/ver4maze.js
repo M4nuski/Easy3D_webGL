@@ -173,7 +173,7 @@ function restartGame() {
         winResize();
 
         var fact = 8 / (mazeSize + 6);
-        log(fact);
+        //log(fact);
         inputs._rotSpeed = baseRotSpeed * fact;
         rotationClamp = 0.4 * fact;
         rotationSmoothing = fact;
@@ -698,14 +698,9 @@ function genMaze(size = 5, seed = 2020) {
         }
         startPos++;
     }
-
-
-
-    // TODO simplify maze mesh
-
-
-    
+  
     // add base
+    
     var pp =  mid;
     var pm = -mid;
     meshLoader.pushQuad4p([pp, 0, pm], [pm, 0, pm], [pm, 0, pp], [pp, 0, pp]);
@@ -718,11 +713,8 @@ function genMaze(size = 5, seed = 2020) {
     // load maze mesh to entity with CD and edges
     maze.clear();
     meshLoader.addCDFromData(maze, false);
-    meshLoader.addStrokeData(maze, false, 0.01);
+    meshLoader.addStrokeData(maze, false, 0.8);
     meshLoader.addModelData(maze);
-    
-    // TODO simplify CD
-    
 
     // calculate ball starting position and goal position
 
@@ -757,14 +749,28 @@ function addMazeWall(leftP, rightP, leftClosed, rightClosed, height = wallHeight
     leftProj[1] += height; 
     rightP[1] += height; 
     rightProj[1] += height; 
-    var midP = v3_avg2_new(leftP, rightP);
 
-    meshLoader.pushTriangle3p(leftP, leftProj, midP);
-    meshLoader.pushTriangle3p(leftProj, rightProj, midP);
-    meshLoader.pushTriangle3p(rightProj, rightP, midP);
+   // var midP = v3_avg2_new(leftP, rightP);
+   // meshLoader.pushTriangle3p(leftP, leftProj, midP);
+   // meshLoader.pushTriangle3p(leftProj, rightProj, midP);
+   // meshLoader.pushTriangle3p(rightProj, rightP, midP);
+   /*
+   [105] 270 CD triangles
+   [118] unique Vert: 190
+   [158] edges: 465
+   [159] 131 CD edges
+   [160] 107 strokes
+   */
+    meshLoader.pushTriangle3p(leftP, leftProj, rightP);
+    meshLoader.pushTriangle3p(leftProj, rightProj, rightP);
+    /*
+    [52] 234 CD triangles
+    [66] unique Vert: 168
+    [119] edges: 405
+    [121] 131 CD edges
+    [121] 107 strokes
+    */
 }
-
-
 // Engine resource loading
 
 function onRessource(name, msg) {

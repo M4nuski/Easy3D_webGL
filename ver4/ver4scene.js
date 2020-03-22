@@ -36,6 +36,7 @@ class E3D_scene {
         this.context.depthFunc(this.context.LEQUAL);
         this.context.cullFace(this.context.BACK);
         this.context.enable(this.context.CULL_FACE); 
+
         this.state = E3D_READY;
     }
 
