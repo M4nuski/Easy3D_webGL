@@ -100,7 +100,7 @@ class E3D_scene {
                         this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
                         this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
                         this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
-                        this.bindAndResetShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
+                        if (this.entities[i].drawStrokes) this.bindAndResetShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
                         this.entities[i].dataSizeChanged = false;
 
                     } else if (this.entities[i].dataContentChanged) { 
@@ -108,7 +108,7 @@ class E3D_scene {
                         this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
                         this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
                         this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
-                        this.bindAndUpdateShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
+                        if (this.entities[i].drawStrokes) this.bindAndUpdateShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
                         this.entities[i].dataContentChanged = false;
 
                     } else {
@@ -116,7 +116,7 @@ class E3D_scene {
                         this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
                         this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
                         this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
-                        this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
+                        if (this.entities[i].drawStrokes) this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
                     }
                                        
 
@@ -124,7 +124,7 @@ class E3D_scene {
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
                     this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
-                    this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
+                    if (this.entities[i].drawStrokes) this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
                 }
 
                 // Entity Uniforms

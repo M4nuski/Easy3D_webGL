@@ -56,9 +56,23 @@ const _zFar = 1024.0;
 
 // Engine Content and state
 
-
 var animations = [];
-var testSph, targetEdge, targetEdge2, targetEdge3, testPlanes, DEV_markers, DEV_wand, DEV_axis, DEV_boxPlanes, DEV_boxBox, DEV_boxDiscrete; // entities
+var worldPlanes, mazeMesh;
+
+var capsule1, capsule2; // capsule-capsule intersection tests
+var edge_r = 10;
+var edge2_r = 10;  
+
+var sph_source, sph_target;
+var point_source;
+var edge_target;
+var plane_target, planeWithEdges_target;
+var box_target;
+var triangle_target, triangleWithEdges_target;
+
+var DEV_markers;  
+var DEV_boxPlanes, DEV_boxBox, DEV_boxDiscrete; // entities
+
 var DEV_anim_step = false;
 var moveTarget = "p";
 
@@ -121,7 +135,6 @@ function updateStatus() {
     dataElement.textContent = tc;
 }
 
-
 function initEngine() {
 
     log("Context Initialization", false);
@@ -173,50 +186,120 @@ function initEngine() {
     }
 
     // Input configuration // TODO in JSON config file
-    inputs.keyMap.set("action_toggle_CD", "Backquote"); // #
-
-    inputs.keyMap.set("action_switch_ctrl_player", "Digit1");
-    inputs.keyMap.set("action_switch_ctrl_sphere", "Digit2");
-    inputs.keyMap.set("action_switch_ctrl_vector", "Digit3");
-    inputs.keyMap.set("action_switch_ctrl_edge", "Digit4");
-    inputs.keyMap.set("action_switch_ctrl_wand", "Digit5");    
-    inputs.keyMap.set("action_toggle_fire", "Digit8");
-
-    inputs.keyMap.set("action_anim_clear", "Digit0");
-    inputs.keyMap.set("action_CD_clear", "Digit9");
-    inputs.keyMap.set("action_anim_replay", "KeyR");
-    inputs.keyMap.set("action_anim_step", "KeyT");
     inputs.keyMap.set("rx_dec", E3D_INP_DISABLED);
 
+    inputs.keyMap.set("action_toggle_CD", "Backquote"); // #
     inputs.keyMap.set("action_speed", "ShiftLeft");
 
-    // Scene entity creation // TODO in JSON scene file
-    testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
-    testSph.addWireSphere([0,0,0], 50, [1,0,0], 64, true, 8);
-    testSph.addWireSphere([0,0,-50], 50, [0,1,0], 48, true, 7);
-    testSph.addWireSphere([0,0,-100], 50, [0,1,0], 36, true, 6);
-    testSph.addWireSphere([0,0,-150], 50, [0,1,0], 25, true, 5);
-    testSph.addWireSphere([0,0,-200], 50, [0,1,0], 16, true, 4);
-    testSph.addWireSphere([0,0,-250], 50, [0,1,0], 16, true, 3);
-    testSph.addWireSphere([0,0,-300], 50, [0,1,0], 16, true, 2);
-    testSph.addWireSphere([0,0,-350], 50, [0,1,0], 16, true, 1);
-    testSph.visible = true;
-    scn.addEntity(testSph);
+    inputs.keyMap.set("action_switch_ctrl_player", "Digit1");
+    inputs.keyMap.set("action_switch_ctrl_capsule1", "Digit2");
+    inputs.keyMap.set("action_switch_ctrl_capsule2", "Digit3");
+    inputs.keyMap.set("action_switch_ctrl_sphereSource", "Digit4");
+    inputs.keyMap.set("action_switch_ctrl_pointSource", "Digit5");    
 
-    var sph = new E3D_entity_wireframe_canvas("sph");
+    inputs.keyMap.set("action_toggle_autofire", "Digit8");
+    inputs.keyMap.set("action_CD_clear", "Digit9");
+    inputs.keyMap.set("action_anim_clear", "Digit0");
+    inputs.keyMap.set("action_anim_replay", "KeyR");
+    inputs.keyMap.set("action_anim_step", "KeyT");
+
+    // Scene entity creation // TODO in JSON scene file
+
+    // entities
+    var sph = new E3D_entity_wireframe_canvas("sph"); // the ball to throw
     sph.addWireSphere([0,0,0], 16, [1,1,0], 32, true, 8);
     sph.visible = false;
     scn.addEntity(sph);
 
-    testPlanes = new E3D_entity_wireframe_canvas("planes");
-    testPlanes.addPlane([0, -50, 0], [PIdiv2, 0, 0], 2048, 2048, 64, [1,1,0], true);
-   // testPlanes.addPlane([150, -0, 0], [PIdiv2, 0.25, 0.5], 1024, 512, 64, [1,0,1], true);
-    //testPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);
-    //testPlanes.addWireCube([0, 100, 100], [0,0,0], [50, 50, 50], [1, 0.8, 0.8], true, false, true);
+    worldPlanes = new E3D_entity_wireframe_canvas("planes");
+    worldPlanes.addPlane([0, -50, 0], [PIdiv2, 0, 0], 2048, 2048, 64, [1,1,0], true);
+    worldPlanes.addPlane([150, -0, 0], [PIdiv2, 0.25, 0.5], 1024, 512, 64, [1,0,1], true);
+    worldPlanes.addPlane([-150, -0, 0], [PIdiv2, -0.25, -0.5], 512, 1024, 64, [0,1,1], true);  
+    worldPlanes.visible = true;
+    scn.addEntity(worldPlanes);
 
-    testPlanes.visible = true;
-    scn.addEntity(testPlanes);
+    // capsule CD test entities
+    capsule1 = new E3D_entity_wireframe_canvas("capsuleHitTarget1");
+    capsule1.position = [15, 0, -50];
+    capsule1.addCylinder([0, 0, 0], edge_r*2, 100, [1, 0, 0], 32, 4, 10, false);
+    capsule1.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
+    capsule1.visible = true;
+    capsule1.vis_culling = false;
+    scn.addEntity(capsule1);
 
+
+    capsule2 = new E3D_entity_wireframe_canvas("capsuleHitTarget2");
+    capsule2.position = [-15, 0, -50];
+    capsule2.addCylinder([0, 0, 0], edge2_r*2, 100, [0, 1, 0], 32, 4, 10, false);
+    capsule2.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
+    capsule2.visible = true;
+    capsule2.vis_culling = false;
+    scn.addEntity(capsule2);
+    
+    // generic CD test entities
+    sph_source = new E3D_entity_wireframe_canvas("capsuleWand");
+    sph_source.position = [10, 50, 10];
+    sph_source.rotation = [0, 0, Math.PI]; 
+    sph_source.addLine([0, 0, 0], [0, 25, 0], false, [1, 1, 1]);
+    sph_source.pushCD_edge([0, 0, 0], [0, 1, 0], 25);
+    sph_source.addCylinder([0, 0, 0], 8, 25, [0.6, 0.6, 0.6], 32, 4, 10, false);
+    sph_source.addWireSphere([0,  0, 0], 8, _v3_green, 32, true, 8);
+    sph_source.addWireSphere([0, 25, 0], 8, _v3_red,   32, true, 8);
+    sph_source.visible = true;
+    scn.addEntity(sph_source);
+
+    point_source = new E3D_entity_wireframe_canvas("edgeWand");
+    point_source.position = [-10, 50, 10];
+    point_source.rotation = [0, 0, Math.PI]; 
+    point_source.addWireCross([0,   0, 0], 5, _v3_green);
+    point_source.addWireCross([0, 25, 0], 5, _v3_red);
+    point_source.addLine([0, 0, 0], [0, 25, 0], false, _v3_white);
+    point_source.visible = true;
+    scn.addEntity(point_source);
+
+    sph_target = new E3D_entity_wireframe_canvas("wireSphereTarget");
+    sph_target.addWireSphere([0,0,0], 50, _v3_white, 64, true, 8);
+    sph_target.visible = true;
+    scn.addEntity(sph_target);
+
+    /* var , planeWithEdges_target;
+    var , triangleWithEdges_target; */
+    edge_target = new E3D_entity_wireframe_canvas("edgeTarget");
+    edge_target.position = [0, 0, 50];
+    edge_target.addCylinder([0, 0, 0], 0.25, 50, _v3_white, 6, 2, 5, false);
+    edge_target.pushCD_edge([0, 0, 0], [0, 1, 0], 50);
+    edge_target.visible = true;
+    edge_target.vis_culling = false;
+    scn.addEntity(edge_target);
+
+    plane_target = new E3D_entity_wireframe_canvas("planeTarget");
+    plane_target.position = [0, 0, 100];
+    plane_target.addPlane([ 0, 0, 0], [0, PIdiv2, 0], 28, 50, 2, _v3_white, true);
+    plane_target.visible = true;
+    plane_target.vis_culling = false;
+    scn.addEntity(plane_target);
+
+    box_target = new E3D_entity_wireframe_canvas("boxTarget");
+    box_target.position = [0, 0, 150];
+    box_target.addWireCube([0, 0, 0], [0, 0, 0], [30, 30, 30], _v3_white, true, false, true);
+    box_target.visible = true;
+    box_target.vis_culling = false;
+    scn.addEntity(box_target);
+
+    triangle_target = new E3D_entity_wireframe_canvas("triangleTarget");
+    triangle_target.position = [0, 0, 200];
+    triangle_target.addTriangle([0, 0, 0], [-30, 40, 75], [30, 20, 75], _v3_white, true);
+    triangle_target.visible = true;
+    triangle_target.vis_culling = false;
+    scn.addEntity(triangle_target);
+
+
+
+
+
+
+
+    // diferent types of boxes CD definitions for perf benchmarking
     DEV_boxPlanes = new E3D_entity_wireframe_canvas("DEV_boxPlanes");
     DEV_boxPlanes.position = [400, 50, 0];
     DEV_boxPlanes.addPlane([0, 0, -25], [0, 0, 0], 50, 50, 2, [1,0,0], true);
@@ -225,17 +308,14 @@ function initEngine() {
     DEV_boxPlanes.addPlane([0,  25, 0], [PIdiv2, 0, 0], 50, 50, 2, [1,0,0], true);
     DEV_boxPlanes.addPlane([-25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,0,0], true);
     DEV_boxPlanes.addPlane([ 25, 0, 0], [0, PIdiv2, 0], 50, 50, 2, [1,0,0], true);
-
     DEV_boxPlanes.visible = true;
     DEV_cube_6P_target = scn.addEntity(DEV_boxPlanes);
-
 
     DEV_boxBox = new E3D_entity_wireframe_canvas("DEV_boxBox");
     DEV_boxBox.position = [500, 50, 0];
     DEV_boxBox.addWireCube([0, 0, 0], [0, 0, 0], [50, 50, 50], [0, 1, 0], true, false, true);
     DEV_boxBox.visible = true;
     DEV_cube_BX_target = scn.addEntity(DEV_boxBox);
-
 
     DEV_boxDiscrete = new E3D_entity_wireframe_canvas("DEV_boxDiscrete");
     DEV_boxDiscrete.position = [600, 50, 0];
@@ -272,85 +352,39 @@ function initEngine() {
     DEV_cube_DS_target = scn.addEntity(DEV_boxDiscrete);
 
 
-    targetEdge = new E3D_entity_wireframe_canvas("edgeHitTest");
-    targetEdge.position = [25, 25, 25];
-    targetEdge.addCylinder([0, 0, 0], 20, 100, [1, 0, 0], 32, 4, 10, false);
-    targetEdge.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
-    targetEdge.visible = true;
-    targetEdge.vis_culling = false;
-    scn.addEntity(targetEdge);
 
 
-    targetEdge2 = new E3D_entity_wireframe_canvas("edge2HitTest");
-    targetEdge2.position = [0, 25, 25];
-    targetEdge2.addCylinder([0, 0, 0], 10, 150, [0, 1, 0], 32, 4, 10, false);
-    targetEdge2.pushCD_edge([0, 0, 0], [0, 1, 0], 150);
-    targetEdge2.visible = true;
-    targetEdge2.vis_culling = false;
-    scn.addEntity(targetEdge2);
-
-
-    DEV_wand = new E3D_entity_wireframe_canvas("wand");
-    DEV_wand.position = [0, 50, 100];
-    DEV_wand.addLine([0, 0, 0], [0, 25, 0], false, [1, 1, 1]);
-    DEV_wand.pushCD_edge([0, 0, 0], [0, 1, 0], 25);
-    DEV_wand.addCylinder([0, 0, 0], 8, 25, [0.6, 0.6, 0.6], 32, 4, 10, false);
-    DEV_wand.addWireSphere([0, 0, 0], 8, [0, 0 ,1], 32, true, 8);
-    DEV_wand.addWireSphere([0, 25, 0], 8, [0, 1 ,0], 32, true, 8);
-   // DEV_wand.addWireCube([0, 0, 0], [0, 0, 0], [32, 32, 32], [1, 1, 1], true, false, true);
-   // DEV_wand.addTriangle([0, 20, 80], [-30, 20, 150], [30, 20, 150], [1, 1, 1], true);
-    DEV_wand.visible = true;
-    scn.addEntity(DEV_wand);
-
-
-    targetEdge3 = new E3D_entity_wireframe_canvas("edge3HitTest");
-    targetEdge3.position = [0, 50, 125];
-    // capsuleEdge test
-    //targetEdge3.addCylinder([0, 0, 0], 1, 150, [0, 1, 0], 8, 2, 5, false);
-    //targetEdge3.pushCD_edge([0, 0, 0], [0, 1, 0], 150);
-    // capsuleSphere test
-    //targetEdge3.addWireSphere([0, 0, 0], 24, [0.25, 1.0 ,0.25], 32, true, 8);
-    // capsulePlane test
-    targetEdge3.addPlane([ 0, -10, 0], [0, PIdiv2, 0], 14, 28, 2, [0.25, 1.0, 0.25], true);
-    // capsuleTriangle test
-    //targetEdge3.addTriangle([0, 0, 0], [-30, 40, 150], [30, 20, 150], [1, 1, 1], true);
-    targetEdge3.visible = true;
-    targetEdge3.vis_culling = false;
-    scn.addEntity(targetEdge3);
-
-    
+    // DEV entities
     DEV_markers = new E3D_entity_wireframe_canvas("CD_hits_markers");
     DEV_markers.addWireSphere([0,0,0], 1, [1,1,1], 8, false);
     DEV_markers.visible = true;
     DEV_markers.vis_culling = false;
     scn.addEntity(DEV_markers);
 
-
     phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces", 1024*32);
     phyTracers.visible = true;
     phyTracers.vis_culling = false;
     scn.addEntity(phyTracers);
-
 
     dev_Hits = new E3D_entity_wireframe_canvas("PHY_hits");
     dev_Hits.visible = true;
     dev_Hits.vis_culling = false;
     scn.addEntity(dev_Hits);
 
-
     dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
     dev_CD.visible = false;
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
-
+    // external meshes
     //resMngr.addRessource("../Models/PYRA.raw", "Map", "Model");
     resMngr.addRessource("../Models/M1.raw", "Map", "Model");
     //resMngr.addRessource("../Models/BOX10.raw", "Map", "Model", false);
     resMngr.loadAll("models");
 
-    // Activate timer and set scene as active
 
+
+    // Activate timer and set scene as active
     timer.run();
     scn.state = E3D_ACTIVE;
 }
@@ -372,19 +406,19 @@ function onRessource(name, msg) {
 
         if (resMngr.getRessourceType(name) == "Model") {
 
-            DEV_axis = new E3D_entity(name, "", false);
+            mazeMesh = new E3D_entity(name, "", false);
 
             meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), _v3_gray, _v3_unit);
-            meshLoader.addCDFromData(DEV_axis);
-            meshLoader.addStrokeData(DEV_axis);
+            meshLoader.addCDFromData(mazeMesh);
+            meshLoader.addStrokeData(mazeMesh);
            // meshLoader.smoothNormals(-0.9);
-            meshLoader.addModelData(DEV_axis);
+            meshLoader.addModelData(mazeMesh);
             
-            DEV_axis.position[1] = 60;
-            DEV_axis.position[2] = 750;
-            DEV_axis.visible = true;
+            mazeMesh.position[1] = 60;
+            mazeMesh.position[2] = 750;
+            mazeMesh.visible = true;
 
-            scn.addEntity(DEV_axis); 
+            scn.addEntity(mazeMesh); 
         }  
     } // msg loaded
 }
@@ -398,237 +432,278 @@ function prepRender() {
         dev_CD.clear();
         if (DEV_anim_active || DEV_anim_step) dev_Hits.clear();
     }
+
     // Move per inputs
     switch (moveTarget) {
-        case 'e': // edge2        
+        case 'c2': // capsule2        
             m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
             m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
 
-            targetEdge2.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
-            targetEdge2.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
-            targetEdge2.resetMatrix();
+            capsule2.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            capsule2.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
+            capsule2.resetMatrix();
             break;
-        case 'v': // edge1      
+        case 'c1': // capsule1      
             m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
             m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
 
-            targetEdge.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
-            targetEdge.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
-            targetEdge.resetMatrix();
+            capsule1.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            capsule1.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
+            capsule1.resetMatrix();
             break;
-        case 'w': // wand      
+        case 'sphere':   
             m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
             m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
 
-            DEV_wand.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
-            DEV_wand.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
-            DEV_wand.resetMatrix();
+            sph_source.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            sph_source.rotateByParent([inputs.rx_delta_smth, inputs.rz_delta_smth, inputs.ry_delta_smth], _parentView);
+            sph_source.resetMatrix();
             break;
-        case 's': // sphere
+        case 'point': 
             m4_rotationY_res(_parentView.normalMatrix, -scn.camera.rotation[1]);
             m4_rotateX_mod(_parentView.normalMatrix, -scn.camera.rotation[0]);
 
-            testSph.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
-            testSph.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
-            testSph.resetMatrix();
+            point_source.moveByParent([-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth], _parentView);
+            point_source.rotateByParent([inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth], _parentView);
+            point_source.resetMatrix();
             break;
         default:
             scn.camera.moveBy(-inputs.px_delta_smth, inputs.py_delta_smth, inputs.pz_delta_smth, 
                                inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
       }
 
+    // move maze per sliders
+    if (mazeMesh.visible) {
+        mazeMesh.rotateTo([PIx2 * (range1.value -500) / 1000, PIx2 * (range2.value -500) / 1000, PIx2 * (range3.value -500) / 1000]);
+        mazeMesh.resetMatrix();
+    }
 
+    // clear DEV markers
     DEV_markers.clear();
 
-    var closestPt = point_vector_point( targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0], testSph.CD_sph_p[0]);
-    DEV_markers.addLine(closestPt, testSph.CD_sph_p[0], false, [1,1,0]);
 
-    closestPt = point_segment_point( targetEdge2.CD_edge_p[0],  targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0], testSph.CD_sph_p[0]);
-    DEV_markers.addLine(closestPt, testSph.CD_sph_p[0], false, [0,1,1]);
+// CD function tests
+    var closestPt = point_vector_point( capsule1.CD_edge_p[0],  capsule1.CD_edge_n[0], sph_target.CD_sph_p[0]);
+    DEV_markers.addLine(closestPt, sph_target.CD_sph_p[0], false, [1,1,0]);
 
-    var v1 = v3_scale_new(targetEdge.CD_edge_n[0],  targetEdge.CD_edge_l[0]);
-    var v2 = v3_scale_new(targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0]);
+    closestPt = point_segment_point( capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0], sph_target.CD_sph_p[0]);
+    DEV_markers.addLine(closestPt, sph_target.CD_sph_p[0], false, [0,1,1]);
 
-    closestPt = path_path_closest_t(targetEdge.CD_edge_p[0],  v1, targetEdge2.CD_edge_p[0], v2);
 
-    v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  v1, closestPt);
-    v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], v2, closestPt);
 
-    DEV_markers.addLine(v1, v2, false, [1,0,1]);
+// capsule-capsule CD dev
+ 
+    var edge_r_sum = edge_r + edge2_r;
+    var v1 = [0,0,0];
+    var v2 = [0,0,0];
+    var link = [0,0,0];
 
-    var edge_r = 10;
-    var edge2_r = 5;        
-    var edge_dist = v3_distance(v1, v2);
+    v3_scale_res(v1, capsule1.CD_edge_n[0], capsule1.CD_edge_l[0]);
+    v3_scale_res(v2, capsule2.CD_edge_n[0], capsule2.CD_edge_l[0]);
+    
+    closestPt = path_path_closest_t(capsule1.CD_edge_p[0], v1, capsule2.CD_edge_p[0], v2);
+    hitPoints.set("c_c cpa t",  closestPt);
+    v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt);
+    v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt);
+    DEV_markers.addLine(v1, v2, false, [1,0,1]);    
+    v3_sub_res(link, v2, v1);
+    var edge_dist = v3_length(link);
+    v3_invscale_mod(link, edge_dist);
+    hitPoints.set("c_c linkLength", edge_dist);
 
-    hitPoints.set("p_p eD", edge_dist);
-    hitPoints.set("p_p closest t",  closestPt);
+    //var v1 = v3_scale_new(capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] + edge_r);
+    //var v2 = v3_scale_new(capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] + edge2_r);
+    //var closestPt2 = path_path_closest_t(capsule1.CD_edge_p[0], v1, capsule2.CD_edge_p[0], v2);
+    var closestPt2 = closestPt;
 
-    if ((closestPt > 0.0) && (closestPt <= 1.0) && (edge_dist < (edge_r + edge2_r))) {
+    if ((closestPt >= 0.0) && (closestPt <= 1.0) && (edge_dist <= edge_r_sum)) {
 
-        var edge_pen = (edge_r + edge2_r) - edge_dist;
-        var start_dist = v3_distance(targetEdge2.CD_edge_p[0], targetEdge.CD_edge_p[0]);
-        var fact_dist = (-(edge_pen/1.5) + edge_dist - start_dist) / closestPt;  
-        var hit_dist = (edge_r + edge2_r - start_dist) / fact_dist;
+        v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt);
+        v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt);
+        DEV_markers.addWireSphere(v1, edge_r  * 2, [1, 0.5, 0.5], 32, false, 5);
+        DEV_markers.addWireSphere(v2, edge2_r * 2, [1, 0.5, 0.5], 32, false, 5);
 
-        hitPoints.set("p_p sD", start_dist);    
-        hitPoints.set("p_p fact",fact_dist);
-        hitPoints.set("p_p hit_dst", hit_dist); 
 
-        v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0],  (targetEdge.CD_edge_l[0] * hit_dist) );
-        v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], targetEdge2.CD_edge_n[0],  (targetEdge2.CD_edge_l[0] * hit_dist) );
+        var lcos = v3_dot(capsule1.CD_edge_n[0], link);
+        var lsin = Math.sqrt(1.0 - (lcos * lcos));// * Math.sign(lcos);
+        hitPoints.set("c_c link cos", lcos);
+        hitPoints.set("c_c link sin", lsin);
 
-        hitPoints.set("p_p endDist", v3_distance(v1, v2));
+        
+        var ccos = v3_dot(capsule1.CD_edge_n[0], capsule2.CD_edge_n[0]);
+        var csin = Math.sqrt(1.0 - (ccos * ccos));// * Math.sign(ccos);
+        hitPoints.set("c_c cap cos", ccos);
+        hitPoints.set("c_c cap sin", csin);
+        //var edge_pen = edge_r_sum - edge_dist; 
+        var edge_pen = Math.sqrt((edge_r_sum * edge_r_sum) - (edge_dist * edge_dist));
+        hitPoints.set("c_c edge_pen", edge_pen);
 
-        DEV_markers.addWireSphere(v1, edge_r*2, [1, 0.5, 0.5], 32, false, 5);
-        DEV_markers.addWireSphere(v2, edge2_r*2, [1, 0.5, 0.5], 32, false, 5);
+        /*if (ccos > 0.0) {
+            edge_pen = 0.5 * edge_pen / csin;
+            closestPt2 = closestPt - (edge_pen / ( ((capsule1.CD_edge_l[0] * edge_r) + (capsule2.CD_edge_l[0] + edge2_r)) / edge_r_sum));
+        } else {
+            var off = range1.value / 1000;
+            hitPoints.set("slide1 pos", off);
+            edge_pen = edge_pen * off;
+            closestPt2 = closestPt - (edge_pen / capsule1.CD_edge_l[0]);
+        }*/
 
+        edge_pen = edge_pen * edge_r / edge_r_sum;
+        //edge_pen = edge_pen / lsin;
+        if (ccos > 0.0) {
+            edge_pen = edge_pen / csin;
+        } else {
+            edge_pen = edge_pen / lsin;
+        }
+        closestPt2 = closestPt - (edge_pen / capsule1.CD_edge_l[0]);
+        
+
+        //hitPoints.set("p_p closest t2",  closestPt2);
+        //var hit_dist = closestPt;
+      //  var start_dist = v3_distance(capsule2.CD_edge_p[0], capsule1.CD_edge_p[0]);
+      //  var fact_dist = (-(edge_pen/1.5) + edge_dist - start_dist) / closestPt;  
+     //   var hit_dist = (edge_r + edge2_r - start_dist) / fact_dist;
+
+        //hitPoints.set("p_p sD", start_dist);    
+       // hitPoints.set("p_p fact",fact_dist);
+        //hitPoints.set("p_p hit_dst", hit_dist); 
+
+       // v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], (capsule1.CD_edge_l[0] - f1) * closestPt );
+       // v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], (capsule2.CD_edge_l[0] - f2) * closestPt );
+
+       // hitPoints.set("p_p endDist", v3_distance(v1, v2));
+
+       
+       
+       hitPoints.set("c_c cpa t'",  closestPt2);
+       v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt2);
+       v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt2);
+       DEV_markers.addWireSphere(v1, edge_r*2, [0.5, 1.0, 0.5], 32, false, 5);
+       DEV_markers.addWireSphere(v2, edge2_r*2, [0.5, 1.0, 0.5], 32, false, 5);   
     } 
 
-    var off = range2.value / 1000;
-    hitPoints.set("r2 pos t", off);
-    v3_addscaled_res(v1, targetEdge.CD_edge_p[0],  targetEdge.CD_edge_n[0],  targetEdge.CD_edge_l[0] * off);
-    v3_addscaled_res(v2, targetEdge2.CD_edge_p[0], targetEdge2.CD_edge_n[0], targetEdge2.CD_edge_l[0] * off);
-    DEV_markers.addWireSphere(v1, edge_r*2, [1, 1, 1], 32, false, 5);
-    DEV_markers.addWireSphere(v2, edge2_r*2, [1, 1, 1], 32, false, 5);
 
 
-  //  dev_CD.addPlane([0, 30, 0],  [PIx2 * range1.value / 1000, PIx2 * range2.value / 1000, PIx2 * range3.value / 1000], 256, 256, 8, [1,1,1], true);
-if (DEV_axis.visible) {
-    DEV_axis.rotateTo([PIx2 * (range1.value -500) / 1000, PIx2 * (range2.value -500) / 1000, PIx2 * (range3.value -500) / 1000]);
-    DEV_axis.resetMatrix();
-}
 /*
-      targetEdge.CD_edge_p[0]; // edge origin
-      targetEdge.CD_edge_n[0]; // edge normal
-      targetEdge.CD_edge_l[0]; // edge length
-      testSph.CD_sph_p[0]; // sphere origin
-      testSph.CD_sph_r[0]; // sphere radius
-      testSph.CD_sph_rs[0]; // sphere radius squared
-*/
+    // as big capsule
+    var sph_p0 = capsule1.CD_edge_p[0];
+    var sph_n = v3_clone(capsule1.CD_edge_n[0]);
+    var sph_l = capsule1.CD_edge_l[0];
+    var sph_p = v3_addscaled_new(sph_p0, sph_n, sph_l);
+    var sph_r = edge_r + edge2_r;
 
-    var so = [0,0,0];
+    var edge_p = capsule2.CD_edge_p[0];
+    var edge_n = capsule2.CD_edge_n[0];
+    var edge_l = capsule2.CD_edge_l[0];
 
-    v3_sub_res(so, testSph.CD_sph_p[0], targetEdge.CD_edge_p[0]);
-    var hit = VectSphHit(targetEdge.CD_edge_n[0], so, testSph.CD_sph_rs[0]);
+    var edgeHit = v3_new();
+    var hitRes = capsuleEdgeIntersect_res(edgeHit, sph_r, sph_p0, sph_n, sph_l, edge_p, edge_n, edge_l);
 
-    var _tca = hitPoints.get("v-s tca");
-    var _t0 = hitPoints.get("v-s t0");
-    var _t1 = hitPoints.get("v-s t1");
+    if (hitRes != false) {
+        var capsuleHit = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
+        //DEV_markers.addWireSphere(htiPos, sph_r * 2, _v3_black, 16, false, 8);
 
-    var p = v3_scale_new(targetEdge.CD_edge_n[0], _tca); 
-    v3_add_mod(p, targetEdge.CD_edge_p[0]);
-    if ((_tca >= 0.0) && _tca <= targetEdge.CD_edge_l[0]) DEV_markers.addWireSphere(p, 1, [1,0.5,0.5], 8, false);
-
-    p = v3_scale_new(targetEdge.CD_edge_n[0], _t0); 
-    v3_add_mod(p, targetEdge.CD_edge_p[0]);
-    if ((_t0 >= 0.0) && _t0 <= targetEdge.CD_edge_l[0])  DEV_markers.addWireSphere(p, 1, [0.5,1,0.5], 8, false);
-
-    p = v3_scale_new(targetEdge.CD_edge_n[0], _t1); 
-    v3_add_mod(p, targetEdge.CD_edge_p[0]);
-    if ((_t1 >= 0.0) &&_t1 <= targetEdge.CD_edge_l[0])  DEV_markers.addWireSphere(p, 1, [0.5,0.5,1], 8, false);
+        DEV_markers.addWireSphere(capsuleHit, edge_r * 2, _v3_yellow, 16, false, 8);
+        DEV_markers.addWireSphere(edgeHit, edge2_r * 2, _v3_yellow, 16, false, 8);
 
 
-    DEV_markers.addLine(testSph.position, [0,0,0], false, [1,0,0]);
+    }*/
 
-    var p = point_vector_point(targetEdge.CD_edge_p[0], targetEdge.CD_edge_n[0],  testSph.CD_sph_p[0]);
-
-    var cylAxis = [0, 1, 0];
-    var cylPos = v3_clone(targetEdge2.position);
-    var cylLen = 100;
-    var cylRad = 10;
-
-    var edgeAxis = v3_clone(targetEdge.CD_edge_n[0]);
-    var edgePos = v3_clone(targetEdge.CD_edge_p[0]);
-    var edgeLen = targetEdge.CD_edge_l[0];
-    
-    hitPoints.set("cyl_edg dot", v3_dot(cylAxis, edgeAxis)); // is vector parallel or perpendicular
-    
-    var cylEdgeOffset = v3_sub_new(edgePos, cylPos);
-    hitPoints.set("cyl_w0 dot", v3_dot(cylAxis, cylEdgeOffset)); // is base within cyl length
-    
-    v3_addscaled_res(so, cylEdgeOffset, edgeAxis, edgeLen);
-    hitPoints.set("w0_edg dot", v3_dot(cylAxis, so)); // is end within cyl length
-    
+    var off = range2.value / 1000;
+    hitPoints.set("slide2 pos", off);
+    v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * off);
+    v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * off);
+    DEV_markers.addWireSphere(v1, edge_r  * 2, _v3_white, 32, false, 5);
+    DEV_markers.addWireSphere(v2, edge2_r * 2, _v3_white, 32, false, 5);
 
 
-/*    // capsuleEdgeIntersect test 
-    var sph_p0 = DEV_wand.CD_sph_p[0];
-    var sph_p = DEV_wand.CD_sph_p[1];
+
+
+    // capsule edge intersect test 
+    var sph_p0 = sph_source.CD_sph_p[0];
+    var sph_p = sph_source.CD_sph_p[1];
     var sph_r = 4;
     var sph_n = v3_sub_new(sph_p, sph_p0);
     var sph_l = v3_length(sph_n);
     v3_invscale_mod(sph_n, sph_l);
 
-    var edge_p = targetEdge3.CD_edge_p[0];
-    var edge_n = targetEdge3.CD_edge_n[0];
-    var edge_l = targetEdge3.CD_edge_l[0];
+    var edge_p = edge_target.CD_edge_p[0];
+    var edge_n = edge_target.CD_edge_n[0];
+    var edge_l = edge_target.CD_edge_l[0];
 
-    var hitRes = capsuleEdgeIntersect(sph_r, sph_p0, sph_n, sph_l, edge_p, edge_n, edge_l);
+    var firstHit = v3_new();
+    var hitRes = capsuleEdgeIntersect_res(firstHit, sph_r, sph_p0, sph_n, sph_l, edge_p, edge_n, edge_l);
 
     if (hitRes != false) {
-        var firstHit = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
-        DEV_markers.addWireSphere(firstHit, sph_r * 2, _v3_red, 16, false, 8);
+        var htiPos = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
+        DEV_markers.addWireSphere(htiPos, sph_r * 2, _v3_blue, 16, false, 8);
+        DEV_markers.addLine(firstHit, htiPos, false, _v3_white);
     }
-*/
 
-/*    // capsuleSphereIntersect test
-    var cap_p0 = DEV_wand.CD_sph_p[0];
-    var cap_p  = DEV_wand.CD_sph_p[1];
+
+    // capsule sphere intersect test
+    var cap_p0 = sph_source.CD_sph_p[0];
+    var cap_p  = sph_source.CD_sph_p[1];
     var cap_r = 4;
     var cap_n = v3_sub_new(cap_p, cap_p0);
     var cap_l = v3_length(cap_n);
     v3_invscale_mod(cap_n, cap_l);
 
-    var sph_p0 = targetEdge3.CD_sph_p[0];
-    var sph_r  = targetEdge3.CD_sph_r[0];
+    var sph_p0 = sph_target.CD_sph_p[0];
+    var sph_r  = sph_target.CD_sph_r[0];
 
     var hitRes = capsuleSphereIntersect(cap_r, cap_p0, cap_n, cap_l, sph_p0, sph_r);
 
     if (hitRes != false) {
         var firstHit = v3_addscaled_new(cap_p0, cap_n, hitRes);
-        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
+        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_blue, 16, false, 8);
+        DEV_markers.addLine(firstHit, sph_p0, false, _v3_white);
     }
-*/
+
 
     // capsule plane intersect test
-    var cap_p0 = DEV_wand.CD_sph_p[0];
-    var cap_p  = DEV_wand.CD_sph_p[1];
-    var cap_r = 4;
+    var cap_p0 = sph_source.CD_sph_p[0];
+    var cap_p  = sph_source.CD_sph_p[1];
+    var cap_r  = sph_source.CD_sph_r[0];
     var cap_n = v3_sub_new(cap_p, cap_p0);
     var cap_l = v3_length(cap_n);
     v3_invscale_mod(cap_n, cap_l);
 
     var firstHit = v3_new();
     var hitRes = capsulePlaneIntersect_res(firstHit, cap_r, cap_p0, cap_n, 
-        targetEdge3.CD_plane_n[0], targetEdge3.CD_plane_p[0], 
-        targetEdge3.CD_plane_w[0], targetEdge3.CD_plane_halfWidth[0],
-        targetEdge3.CD_plane_h[0], targetEdge3.CD_plane_halfHeight[0]);
+        plane_target.CD_plane_n[0], plane_target.CD_plane_p[0], 
+        plane_target.CD_plane_w[0], plane_target.CD_plane_halfWidth[0],
+        plane_target.CD_plane_h[0], plane_target.CD_plane_halfHeight[0]);
 
     if ((hitRes != false) && (hitRes <= cap_l)) {
-        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
+        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_blue, 16, false, 8);
+        var dp = v3_sub_new(cap_p0, plane_target.CD_plane_p[0])
+        if (v3_dot(dp, plane_target.CD_plane_n[0]) >= 0.0) { 
+            DEV_markers.addLineByPosNormLen(firstHit, plane_target.CD_plane_n[0], -cap_r, false, _v3_white);
+        } else {
+            DEV_markers.addLineByPosNormLen(firstHit, plane_target.CD_plane_n[0],  cap_r, false, _v3_white);
+        }
     }
 
-/*
+
     // capsule triangle intersect test
-    var cap_p0 = DEV_wand.CD_sph_p[0];
-    var cap_p  = DEV_wand.CD_sph_p[1];
-    var cap_r = 4;
+    var cap_p0 = sph_source.CD_sph_p[0];
+    var cap_p  = sph_source.CD_sph_p[1];
+    var cap_r  = sph_source.CD_sph_r[0];
     var cap_n = v3_sub_new(cap_p, cap_p0);
     var cap_l = v3_length(cap_n);
     v3_invscale_mod(cap_n, cap_l);
 
     var firstHit = v3_new();
     var hitRes = triangle_capsule_intersect_res(firstHit, cap_p0, cap_n, cap_r,
-        targetEdge3.CD_triangle_p1[0], targetEdge3.CD_triangle_p3p1[0], targetEdge3.CD_triangle_p2p1[0],
-        targetEdge3.CD_triangle_p3p1lenSq[0], targetEdge3.CD_triangle_p2p1lenSq[0], targetEdge3.CD_triangle_p3p2p1dot[0],
-        targetEdge3.CD_triangle_n[0]);
+        triangle_target.CD_triangle_p1[0], triangle_target.CD_triangle_p3p1[0], triangle_target.CD_triangle_p2p1[0],
+        triangle_target.CD_triangle_p3p1lenSq[0], triangle_target.CD_triangle_p2p1lenSq[0], triangle_target.CD_triangle_p3p2p1dot[0],
+        triangle_target.CD_triangle_n[0]);
 
     if ((hitRes != false) && (hitRes <= cap_l)) {
-        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_red, 16, false, 8);
+        DEV_markers.addWireSphere(firstHit, cap_r * 2, _v3_blue, 16, false, 8);
+        DEV_markers.addLineByPosNormLen(firstHit, triangle_target.CD_triangle_n[0], -cap_r, false, _v3_white);
     }
-
-*/
-
 
 
 
@@ -707,12 +782,12 @@ if (DEV_axis.visible) {
             }
 
         }
-        DEV_axis.visible = false;
+        mazeMesh.visible = false;
 
         dev_CD.visible = true;
         phyTracers.visible = true;
     } else {
-        DEV_axis.visible = true;
+        mazeMesh.visible = true;
 
         dev_CD.visible = false;
         phyTracers.visible = false;
@@ -744,7 +819,7 @@ function timerTick() {  // Game Loop
         animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
              [rndPM(1), rndPM(1), rndPM(1) + ((inputs.checkCommand("action_speed", false)) ? -600 : -300)], _v3_null, 1.0, 30, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
-
+        animations[animations.length-1].sourceCollResolver = collisionResult_asSource_slide;
         DEV_lastAnimData = { pos: v3_clone(newSph.position), spd: v3_clone(animations[animations.length-1].pspd) }
 
     }
@@ -767,13 +842,13 @@ function timerTick() {  // Game Loop
     }
 
     if (inputs.checkCommand("action_toggle_CD", true)) show_DEV_CD = !show_DEV_CD;
-    if (inputs.checkCommand("action_switch_ctrl_player", true)) { moveTarget = "p";  inputs.mousePosDirection = 1; }
-    if (inputs.checkCommand("action_switch_ctrl_sphere", true)) { moveTarget = "s";  inputs.mousePosDirection = -1; }
-    if (inputs.checkCommand("action_switch_ctrl_vector", true)) { moveTarget = "v";  inputs.mousePosDirection = -1; }
-    if (inputs.checkCommand("action_switch_ctrl_edge", true)) { moveTarget = "e";  inputs.mousePosDirection = -1; }
-    if (inputs.checkCommand("action_switch_ctrl_wand", true)) { moveTarget = "w";  inputs.mousePosDirection = -1; }
+    if (inputs.checkCommand("action_switch_ctrl_player", true)) { moveTarget = "player";  inputs.mousePosDirection = 1; }
+    if (inputs.checkCommand("action_switch_ctrl_capsule1", true)) { moveTarget = "c1";  inputs.mousePosDirection = -1; }
+    if (inputs.checkCommand("action_switch_ctrl_capsule2", true)) { moveTarget = "c2";  inputs.mousePosDirection = -1; }
+    if (inputs.checkCommand("action_switch_ctrl_sphereSource", true)) { moveTarget = "sphere";  inputs.mousePosDirection = -1; }
+    if (inputs.checkCommand("action_switch_ctrl_pointSource", true)) { moveTarget = "point";  inputs.mousePosDirection = -1; }
 
-    if (inputs.checkCommand("action_toggle_fire", true)) { DEV_firing = !DEV_firing; if (DEV_firing) DEV_lastFire = timer.lastTick; }
+    if (inputs.checkCommand("action_toggle_autofire", true)) { DEV_firing = !DEV_firing; if (DEV_firing) DEV_lastFire = timer.lastTick; }
 
     if (inputs.checkCommand("action_CD_clear", true)) { phyTracers.clear(); }
 

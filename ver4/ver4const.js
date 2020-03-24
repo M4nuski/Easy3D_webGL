@@ -716,6 +716,43 @@ function v3_avg3_res(res, a, b, c) {
     res[2] = (a[2] + b[2] + c[2]) / 3.0;
 }
 
+function v3_addv3noise_new(a, range) {
+    return [
+        a[0] + rndPM(range[0]),
+        a[1] + rndPM(range[1]),
+        a[2] + rndPM(range[2])
+    ];
+}
+function v3_addv3noise_mod(a, range) {
+    a[0] += rndPM(range[0]);
+    a[1] += rndPM(range[1]);
+    a[2] += rndPM(range[2]);
+}
+function v3_addv3noise_res(res, a, range) {
+    res[0] = a[0] + rndPM(range[0]);
+    res[1] = a[1] + rndPM(range[1]);
+    res[2] = a[2] + rndPM(range[2]);
+}
+
+function v3_addnoise_new(a, range) {
+    return [
+        a[0] + rndPM(range),
+        a[1] + rndPM(range),
+        a[2] + rndPM(range)
+    ];
+}
+function v3_addnoise_mod(a, range) {
+    a[0] += rndPM(range);
+    a[1] += rndPM(range);
+    a[2] += rndPM(range);
+}
+function v3_addnoise_res(res, a, range) {
+    res[0] = a[0] + rndPM(range);
+    res[1] = a[1] + rndPM(range);
+    res[2] = a[2] + rndPM(range);
+}
+
+
 
 // v3 Arrays
 

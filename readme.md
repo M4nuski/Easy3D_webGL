@@ -19,12 +19,14 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 
 Current work-in-progress and next steps
 ----------
-* proper maze mini-game
 * --ver5:
-* flatten engine to reducre nested calls and hierarchy walking
+* flatten engine to reduce nested calls and hierarchy walking
 * extract all "DEV" stuff to a debug class
 * Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
-* Regroup vertexArrays for mesh data
+* Regroup vertexArrays for mesh data (interleaved array in scene)
+* interleaved array in entity
+* interleaved array in loader
+* CD object, single for simple and array of for complex
 * Improved Collision Detection with Interpolation and Static test (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions
 * --Some kind of game:

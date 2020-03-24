@@ -21,8 +21,6 @@ class E3D_entity {
         this.position = v3_new();
         this.rotation = v3_new();
 
-        this.actualPosition = v3_new();
-
         // fustrum culling
         this.vis_culling = true; // Setting to false will force the entity to always be redrawn
         this.cull_dist = 0; // maximum vertex distance from object center for culling
@@ -83,15 +81,19 @@ class E3D_entity {
         this.animIndex = -1;
 
         this.collisionDetection = false;
+        // TODO isDynamic
+        // TODO isVisibiltyCullable
+        // TODO isVisible
+        // TODO isAnimated
         // TODO isCollisionSource
         // TODO isCollisionTarget
-        // TODO isCollisionCullable ??  pre-cull expensive collision with sph first 
-        // TODO isAnimated
-        // TODO isVisible
-        // TODO isVisibiltyCullable
+        // TODO isCollisionFragmented // CD object is a list of multiple CD object with sph pre-cull
         // TODO isTransparent // z-sort before render, dont write to depth buffer
      
-        // TODO new CD shapes 
+
+        // TODO CD shapes as object
+
+        // TODO new CD shapes:
         /*
             CD_point
                 Source
@@ -104,6 +106,10 @@ class E3D_entity {
             CD_sphere
                 Source and Target
                 Interpolate as capsule
+
+            CD_capsule ???
+                Source and Target
+                Interpolate as plane with radius ???
                 
             CD_triangle
                 Source and Target
@@ -294,7 +300,7 @@ class E3D_entity {
         }
     }
 
-    // TODO and clear from context (buffers)
+    // TODO add clear from context (buffers)
     clear() {
         this.visible = false;
         this.dataContentChanged = true; // GPU buffers will be updated  
@@ -303,8 +309,6 @@ class E3D_entity {
         // Properties
         this.position = v3_new();
         this.rotation = v3_new();
-
-        this.actualPosition = v3_new();
 
         // fustrum culling
         this.vis_culling = true; // Setting to false will force the entity to always be redrawn
@@ -377,27 +381,19 @@ class E3D_entity {
         v3_add_mod(this.rotation, offset);
     }
 
-    resetMatrix(perfActual = false){
+    resetMatrix(){
         // Recreate matrices from rotation and position
-        // Evaluate rotation as Pitch Yaw Roll
+        // TODO Evaluate rotation as Pitch Yaw Roll vs quaternion
 
         m4_rotationZ_res(this.normalMatrix, this.rotation[2]);
         m4_rotateX_mod(this.normalMatrix, this.rotation[0]);
         m4_rotateY_mod(this.normalMatrix, this.rotation[1]);
-
         m4_copy(this.modelMatrix, this.normalMatrix);
-        if (perfActual) {
-            v3_lerp_mod(this.actualPosition, this.position, 0.75);
-            this.modelMatrix[12] =  this.actualPosition[0];
-            this.modelMatrix[13] =  this.actualPosition[1];
-            this.modelMatrix[14] =  this.actualPosition[2];
-        } else {
-            this.modelMatrix[12] =  this.position[0];
-            this.modelMatrix[13] =  this.position[1];
-            this.modelMatrix[14] =  this.position[2];
-        }
-        if (this.collisionDetection) { // TODO extract to own method, keep track of last positions
-        //    ( i * 2 + this.oldPos ) or ( i * 2 + this.pos ) or ref switching
+        this.modelMatrix[12] =  this.position[0];
+        this.modelMatrix[13] =  this.position[1];
+        this.modelMatrix[14] =  this.position[2];
+
+        if (this.collisionDetection) { // TODO extract to own method, keep track of last positions with ref swapping
             for (var i = 0; i < this.CD_point; ++i) {
                 v3_applym4_res(this.CD_point_p[i], this.CD_point_p0[i], this.modelMatrix);
             }

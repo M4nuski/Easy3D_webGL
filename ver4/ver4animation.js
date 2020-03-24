@@ -299,12 +299,6 @@ function newBaseAnim(entity, pos_speed, rot_speed, gravity = 0, ttl = -1, CD = f
     return anim;
 }    
 
-function addNoise(v3val, v3range) { // TODO extract to ver4const
-    v3val[0] += rndPM(v3range[0]);
-    v3val[1] += rndPM(v3range[1]);
-    v3val[2] += rndPM(v3range[2]);
-    return v3val;
-}
 
 function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, gravity = 0, ttl = -1, CD = false, endState = E3D_DONE) {
 
@@ -334,7 +328,61 @@ function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, grav
 
 
 function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = 0, ttl = -1, CD = false, endState = E3D_DONE) {
+    var SrepassFunct = (CD) ? collisionResult_asSource_mark : null;
+    //var TrepassFunct = (CD) ? collisionResult_asTarget_mark : null;
+    var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
 
+    var anim = new E3D_animation("", entity, anim_Part_firstPass, SrepassFunct, null, endFunct, 0);
+
+    v3_copy(anim.pspd, pos_speed);
+    v3_copy(anim.rspd, rot_speed);
+
+    anim.endState = endState;
+    anim.ttl = ttl;
+    anim.gravity = gravity;
+    anim.pCD = CD;
+
+    anim.pNum = nbPart;
+    anim.pActive = Array(nbPart);
+    anim.pLastPos = Array(nbPart);
+    anim.pPos = Array(nbPart);
+    anim.pSpd = Array(nbPart);
+    anim.pSpdLength = Array(nbPart);
+
+    // clone elements to make the number of particules
+    anim.target.setSize(anim.target.srcNumElements * anim.pNum);
+
+    // gen starting positions
+    for (let i = 0; i < anim.pNum; ++i) {
+        //new pellet
+        anim.target.copySource(anim.target.srcNumElements * i);
+        anim.pActive[i] = true;
+        anim.pLastPos[i] = ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new());
+    }
+    
+    // gen particules direction
+    for (let i = 0; i < anim.pNum; ++i) {
+        anim.pSpd[i] = ((partDirFunc != null) ? partPosFunc(anim.pPos[i], i, nbPart) : v3_new());
+        anim.pSpdLength[i] = v3_length(anim.pSpd[i]);        
+        anim.pPos[i] = v3_clone(anim.pLastPos[i]);
+
+        //offset pelets vertex by new origin
+        for (var j = 0; j < anim.target.srcNumElements; ++j ) {
+            var idx = ( i * anim.target.srcNumElements) + j;
+            var b = anim.target.getVertex3f(idx);
+            v3_add_mod(b, anim.pPos[i])
+        }
+
+        if (CD) anim.target.pushCD_point(anim.pPos[i]);
+    }
+
+    anim.target.collisionDetection = CD;
+    anim.state = E3D_PLAY;
+    anim.target.visible = true;
+    anim.target.resetMatrix();
+    anim.last_position = v3_clone(anim.target.position);
+
+    return anim;
 }    
 
 

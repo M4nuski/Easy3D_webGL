@@ -81,7 +81,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
     let sourceSph_p = self.target.CD_sph_p[sphIndex];
     let sourceSph_r = self.target.CD_sph_r[sphIndex];
     v3_sub_res(sourceSph_p0, sourceSph_p, self.delta);
-    v3_invscale_res(sourceSph_n, self.delta, self.deltaLength); // TODO preserve actual last positions, or effective delta, (rot)    
+    v3_invscale_res(sourceSph_n, self.delta, self.deltaLength);  
     //if (show_DEV_CD && (dev_Hits != undefined)) {
     //    dev_Hits.addWireSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
      //   dev_Hits.addWireSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
@@ -161,16 +161,17 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                 nHitTest++;
 
 
-                var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                     scn.entities[targetIndex].CD_edge_p[j], scn.entities[targetIndex].CD_edge_n[j], scn.entities[targetIndex].CD_edge_l[j]);
 
-                if (hitRes != false) {                       
+                if (hitRes != false) {
 
                     v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes);
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 
-                    if ( t0 < _tempCDRes_t0 ) {                                
-                        point_segment_point_res(posOffset, scn.entities[targetIndex].CD_edge_p[j], scn.entities[targetIndex].CD_edge_n[j], scn.entities[targetIndex].CD_edge_l[j], firstHit);
+                    if ( t0 < _tempCDRes_t0 ) {        
+
+                        //point_segment_point_res(posOffset, scn.entities[targetIndex].CD_edge_p[j], scn.entities[targetIndex].CD_edge_n[j], scn.entities[targetIndex].CD_edge_l[j], firstHit);
                         v3_sub_res(hitNormal, firstHit, posOffset);   
                         
                         if (show_DEV_CD) dev_Hits.addWireSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
@@ -269,6 +270,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     var hitSuffix = "";
 
                     var closestP = [0.0, 0.0, 0.0];
+                    var closestT = [0.0, 0.0, 0.0];
                     var closestN = [0.0, 0.0, 0.0];
                     var closestL = 0.0;
                     // firstHit = closestP + closestN * (closestL * closestHit)
@@ -587,7 +589,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                     if (/*true)*/  edgesToTest && !planeHit ) {
                         // Z
                         if (edgesToCheck[_CD_box_edge_TopRight]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
                                     scn.entities[targetIndex].CD_box_z[j], 
                                     scn.entities[targetIndex].CD_box_halfDepth[j] * 2); 
@@ -596,12 +598,13 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackRight]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("ToRi");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomRight]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
                                     scn.entities[targetIndex].CD_box_z[j], 
                                     scn.entities[targetIndex].CD_box_halfDepth[j] * 2);
@@ -610,12 +613,13 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("BoRi");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_TopLeft]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
                                     scn.entities[targetIndex].CD_box_z[j], 
                                     scn.entities[targetIndex].CD_box_halfDepth[j] * 2);
@@ -625,12 +629,13 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("ToLe");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomLeft]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
                                     scn.entities[targetIndex].CD_box_z[j], 
                                     scn.entities[targetIndex].CD_box_halfDepth[j] * 2);
@@ -639,6 +644,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_z[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfDepth[j] * 2;
                                 if (show_DEV_CD) log("BoLe");
                             }
@@ -646,7 +652,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                         // Y
                         if (edgesToCheck[_CD_box_edge_BackLeft]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
                                     scn.entities[targetIndex].CD_box_y[j], 
                                     scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
@@ -655,13 +661,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("BaLe");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_BackRight]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight],
                                     scn.entities[targetIndex].CD_box_y[j], 
                                     scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
@@ -670,13 +677,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackRight]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("BaRi");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_FrontLeft]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
                                     scn.entities[targetIndex].CD_box_y[j], 
                                     scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
@@ -685,13 +693,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("FrLe");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_FrontRight]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight],
                                     scn.entities[targetIndex].CD_box_y[j], 
                                     scn.entities[targetIndex].CD_box_halfHeight[j] * 2);
@@ -700,6 +709,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontRight]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_y[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfHeight[j] * 2;
                                 if (show_DEV_CD) log("FrRi");
                             }
@@ -708,7 +718,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                         // X
                         if (edgesToCheck[_CD_box_edge_TopBack]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft],
                                     scn.entities[targetIndex].CD_box_x[j], 
                                     scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
@@ -717,12 +727,13 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopBackLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("ToBa");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomBack]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
                                     scn.entities[targetIndex].CD_box_x[j], 
                                     scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
@@ -731,13 +742,14 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("BoBa");
                             }
                         }
 
                         if (edgesToCheck[_CD_box_edge_TopFront]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft],
                                     scn.entities[targetIndex].CD_box_x[j], 
                                     scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
@@ -746,12 +758,13 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_TopFrontLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("ToFr");
                             }
                         }
                         if (edgesToCheck[_CD_box_edge_BottomFront]) {
-                            var hitRes = capsuleEdgeIntersect(sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
+                            var hitRes = capsuleEdgeIntersect_res(posOffset, sourceSph_r, sourceSph_p0, sourceSph_n, self.deltaLength,
                                 scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft],
                                     scn.entities[targetIndex].CD_box_x[j], 
                                     scn.entities[targetIndex].CD_box_halfWidth[j] * 2);
@@ -760,15 +773,16 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                                 closestHit = hitRes;
                                 v3_copy(closestP, scn.entities[targetIndex].CD_box_edge_p[j][_CD_box_corner_BottomFrontLeft]);
                                 v3_copy(closestN, scn.entities[targetIndex].CD_box_x[j]);
+                                v3_copy(closestT, posOffset);
                                 closestL = scn.entities[targetIndex].CD_box_halfWidth[j] * 2;
                                 if (show_DEV_CD) log("BoFr");
                             }
                         }
 
                         if (edgeHit) { // calc firstHit and hitNormal
-                            v3_addscaled_res(firstHit, sourceSph_p0, self.delta, closestHit);
-                            point_segment_point_res(posOffset, closestP, closestN, closestL, firstHit);
-                            v3_sub_res(hitNormal, firstHit, posOffset);
+                         //   v3_addscaled_res(firstHit, sourceSph_p0, self.delta, closestHit);
+                         //   point_segment_point_res(posOffset, closestP, closestN, closestL, firstHit);
+                            v3_sub_res(hitNormal, firstHit, closestT);
                             //if (show_DEV_CD) log("box edge hit");
                             hitSuffix = "-Edge";
                         }   
@@ -802,7 +816,6 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
 
 
-        // TODO pre-cull whole CD stack
         for (let j = 0; j < scn.entities[targetIndex].CD_triangle; ++j) {
             var marker = "s"+targetIndex+"t"+j;
             if  (marker != self.lastHitMarker) {
@@ -943,7 +956,7 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
                     var targetSphOrigin = v3_sub_new(scn.entities[targetIndex].CD_sph_p[j], scn.entities[targetIndex].position);
                     v3_sub_mod(targetSphOrigin, animations[scn.entities[targetIndex].animIndex].last_position);
 
-                    v3_sub_res(posDelta_n, scn.entities[targetIndex].CD_sph_p[j], targetSphOrigin); // TODO optimize out in anim/entity
+                    v3_sub_res(posDelta_n, scn.entities[targetIndex].CD_sph_p[j], targetSphOrigin); 
                     var targetSph_deltaLength = v3_length(posDelta_n);
                     v3_invscale_mod(posDelta_n, targetSph_deltaLength);
 
@@ -1618,6 +1631,76 @@ function capsuleEdgeIntersect(capRadius, capOrigin, capNormal, capLength, edgeOr
 
     //hitPoints.set("edge step", 4);
 
+    return false;
+}
+
+
+function capsuleEdgeIntersect_res(firstHit, capRadius, capOrigin, capNormal, capLength, edgeOrigin, edgeNormal, edgeLength) {
+    //hitPoints.set("edge step", 0);
+
+    var distsq;    
+    var capRadiusSq = capRadius * capRadius;
+    var vcos = v3_dot(capNormal, edgeNormal); // adjust for "slope"
+    var vsin = Math.sqrt(1.0 - (vcos * vcos));
+    
+    var capRadiusMargin = capRadius / vsin;
+    
+    v3_scale_res(_capsuleEdgeIntersect_edgeVector, edgeNormal, edgeLength);
+    v3_scale_res(_capsuleEdgeIntersect_capsuleVector, capNormal, capLength);
+
+    // closest points between paths, v1t is t along delta, v2t is t along edge (0.0 - 1.0), -1 is behind
+    var [v1t, v2t] = vector_vector_t(capOrigin, _capsuleEdgeIntersect_capsuleVector, edgeOrigin, _capsuleEdgeIntersect_edgeVector);
+
+    // check if closest points are within both vectors
+    var potentialHit = ( (v1t >= 0.0) && (v1t <= ((capLength + capRadiusMargin) / capLength)) && (v2t >= (-capRadiusMargin / edgeLength)) && (v2t <= (capRadiusMargin + edgeLength) / edgeLength) );
+
+    if (!potentialHit) return false;
+
+    v3_addscaled_res(_capsuleEdgeIntersect_p1, capOrigin, _capsuleEdgeIntersect_capsuleVector, v1t);
+    v3_addscaled_res(_capsuleEdgeIntersect_p2, edgeOrigin, _capsuleEdgeIntersect_edgeVector, v2t);
+
+    distsq = v3_distancesquared(_capsuleEdgeIntersect_p1, _capsuleEdgeIntersect_p2);
+    potentialHit = distsq <= capRadiusSq;
+
+    if (!potentialHit) return false;
+
+    var penetration = Math.sqrt(capRadiusSq - distsq);
+    penetration = penetration / vsin;// as path length
+    v1t = v1t - (penetration / capLength); // as path t
+   
+    // update firstHit after slope offset
+    v3_addscaled_res(_capsuleEdgeIntersect_p1, capOrigin, _capsuleEdgeIntersect_capsuleVector, v1t);
+    v3_sub_res(_capsuleEdgeIntersect_originDelta, _capsuleEdgeIntersect_p1, edgeOrigin);    
+    v2t = v3_dot(_capsuleEdgeIntersect_originDelta, edgeNormal) / edgeLength;
+    
+    // inside edge
+    if ( (v1t >= 0.0) && (v1t <= 1.0) && (v2t >= 0.0) && (v2t <= 1.0) ) {
+        if (v1t == 0.0) v1t =_v3_epsilon;
+        v3_addscaled_res(firstHit, edgeOrigin, _capsuleEdgeIntersect_edgeVector, v2t);
+        return v1t;
+    }
+
+    if (v2t <= 0.5) { // test as sphere cap at edge origin
+        v3_sub_res(_capsuleEdgeIntersect_originDelta, edgeOrigin, capOrigin);
+        var endCap = vector_sph_min_t(capNormal, _capsuleEdgeIntersect_originDelta, capRadiusSq);
+        if (endCap == false) return false;
+        v1t = endCap / capLength;;
+        if (v1t > 1.0) return false;
+        if (v1t == 0.0) v1t =_v3_epsilon;
+        v3_copy(firstHit, edgeOrigin);
+        return v1t;
+
+    } else if (v2t >= 0.5) { // test as sphere cap at end of edge        
+        v3_sub_res(_capsuleEdgeIntersect_originDelta, edgeOrigin, capOrigin);
+        v3_add_mod(_capsuleEdgeIntersect_originDelta, _capsuleEdgeIntersect_edgeVector);
+        var endCap = vector_sph_min_t(capNormal, _capsuleEdgeIntersect_originDelta, capRadiusSq);
+        if (endCap == false) return false;
+        v1t = endCap / capLength;
+        if (v1t > 1.0) return false;
+        if (v1t == 0.0) v1t =_v3_epsilon;
+        v3_add_res(firstHit, edgeOrigin, _capsuleEdgeIntersect_edgeVector);
+        return v1t;
+    }
     return false;
 }
 
