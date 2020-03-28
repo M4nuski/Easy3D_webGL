@@ -266,8 +266,6 @@ function initEngine() {
     sph_target.visible = true;
     scn.addEntity(sph_target);
 
-    /* var , planeWithEdges_target;
-    var , triangleWithEdges_target; */
     edge_target = new E3D_entity_wireframe_canvas("edgeTarget");
     edge_target.position = [0, 0, 50];
     edge_target.addCylinder([0, 0, 0], 0.25, 50, _v3_white, 6, 2, 5, false);
@@ -279,9 +277,21 @@ function initEngine() {
     plane_target = new E3D_entity_wireframe_canvas("planeTarget");
     plane_target.position = [0, 0, 100];
     plane_target.addPlane([ 0, 0, 0], [0, PIdiv2, 0], 28, 50, 2, _v3_white, true);
+    plane_target.CD_edge = 0;
     plane_target.visible = true;
     plane_target.vis_culling = false;
     scn.addEntity(plane_target);
+
+    planeWithEdges_target = new E3D_entity_wireframe_canvas("planeWithEdgesTarget");
+    planeWithEdges_target.position = [0, 100, 100];
+    planeWithEdges_target.addPlane([ 0, 0, 0], [0, PIdiv2, 0], 28, 50, 2, _v3_gray, true);
+    planeWithEdges_target.addLine([ 0,  25,  14], [ 0, -25,  14], false, _v3_white);
+    planeWithEdges_target.addLine([ 0,  25, -14], [ 0, -25, -14], false, _v3_white);
+    planeWithEdges_target.addLine([ 0,  25,  14], [ 0,  25, -14], false, _v3_white);
+    planeWithEdges_target.addLine([ 0, -25,  14], [ 0, -25, -14], false, _v3_white);
+    planeWithEdges_target.visible = true;
+    planeWithEdges_target.vis_culling = false;
+    scn.addEntity(planeWithEdges_target);
 
     box_target = new E3D_entity_wireframe_canvas("boxTarget");
     box_target.position = [0, 0, 150];
@@ -297,9 +307,18 @@ function initEngine() {
     triangle_target.vis_culling = false;
     scn.addEntity(triangle_target);
 
-
-
-
+    triangleWithEdges_target = new E3D_entity_wireframe_canvas("triangleWithEdgesTarget");
+    triangleWithEdges_target.position = [0, 100, 200];
+    triangleWithEdges_target.addTriangle([0, 0, 0], [-30, 40, 75], [30, 20, 75], _v3_gray, true);
+    triangleWithEdges_target.addLine([0, 0, 0], [-30, 40, 75], false, _v3_white);
+    triangleWithEdges_target.addLine( [-30, 40, 75], [30, 20, 75], false, _v3_white);
+    triangleWithEdges_target.addLine([30, 20, 75], [0, 0, 0], false, _v3_white);
+    triangleWithEdges_target.pushCD_edge2p([0, 0, 0], [-30, 40, 75]);
+    triangleWithEdges_target.pushCD_edge2p([-30, 40, 75], [30, 20, 75]);
+    triangleWithEdges_target.pushCD_edge2p([30, 20, 75], [0, 0, 0]);
+    triangleWithEdges_target.visible = true;
+    triangleWithEdges_target.vis_culling = false;
+    scn.addEntity(triangleWithEdges_target);
 
 
 
@@ -502,106 +521,42 @@ capsule2.addCylinder([0, 0, 0], edge2_r*2, edge2_l, _v3_green, 32, 4, 10, false)
 capsule2.pushCD_edge([0, 0, 0], [0, 1, 0], edge2_l);
 capsule2.resetMatrix();
 
-    var closestPt = point_vector_point( capsule1.CD_edge_p[0],  capsule1.CD_edge_n[0], sph_target.CD_sph_p[0]);
-    DEV_markers.addLine(closestPt, sph_target.CD_sph_p[0], false, [1,1,0]);
-
-    closestPt = point_segment_point( capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0], sph_target.CD_sph_p[0]);
-    DEV_markers.addLine(closestPt, sph_target.CD_sph_p[0], false, [0,1,1]);
-
-
-
-// capsule-capsule CD dev
- 
+// capsule-capsule CD dev 
     var edge_r_sum = edge1_r + edge2_r;
+
     var v1 = [0,0,0];
     var v2 = [0,0,0];
-    var link = [0,0,0];
 
     v3_scale_res(v1, capsule1.CD_edge_n[0], capsule1.CD_edge_l[0]);
     v3_scale_res(v2, capsule2.CD_edge_n[0], capsule2.CD_edge_l[0]);
     
-    closestPt = path_path_closest_t(capsule1.CD_edge_p[0], v1, capsule2.CD_edge_p[0], v2);
+    var closestPt = path_path_closest_t(capsule1.CD_edge_p[0], v1, capsule2.CD_edge_p[0], v2);
     hitPoints.set("c_c cpa t",  closestPt);
+
     v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt);
     v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt);
-    DEV_markers.addLine(v1, v2, false, [1,0,1]);    
-    v3_sub_res(link, v2, v1);
-    var edge_dist = v3_length(link);
-    v3_invscale_mod(link, edge_dist);
-    hitPoints.set("c_c linkLength", edge_dist);
+    DEV_markers.addLine(v1, v2, false, [1,0,1]);   
 
-    //var v1 = v3_scale_new(capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] + edge1_r);
-    //var v2 = v3_scale_new(capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] + edge2_r);
-    //var closestPt2 = path_path_closest_t(capsule1.CD_edge_p[0], v1, capsule2.CD_edge_p[0], v2);
-    var closestPt2 = closestPt;
+    var edge_dist = v3_distance(v1, v2);
+    hitPoints.set("c_c edge_dist", edge_dist);
+
 
     if ((closestPt >= 0.0) && (closestPt <= 1.0) && (edge_dist <= edge_r_sum)) {
 
+        // sph hit at closest approach
         v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt);
         v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt);
         DEV_markers.addWireSphere(v1, edge1_r  * 2, [1, 0.5, 0.5], 32, false, 5);
         DEV_markers.addWireSphere(v2, edge2_r * 2, [1, 0.5, 0.5], 32, false, 5);
 
-
-        var l1cos = v3_dot(capsule1.CD_edge_n[0], link);
-        var l1sin = Math.sqrt(1.0 - (l1cos * l1cos));// * Math.sign(lcos);
-        hitPoints.set("c_c link1 cos", l1cos);
-        hitPoints.set("c_c link1 sin", l1sin);
-
-        var l2cos = v3_dot(capsule2.CD_edge_n[0], link);
-        var l2sin = Math.sqrt(1.0 - (l2cos * l2cos));// * Math.sign(lcos);
-        hitPoints.set("c_c link2 cos", l2cos);
-        hitPoints.set("c_c link2 sin", l2sin);
-
-        
-        var ccos = v3_dot(capsule1.CD_edge_n[0], capsule2.CD_edge_n[0]);
-        var csin = Math.sqrt(1.0 - (ccos * ccos));// * Math.sign(ccos);
-        hitPoints.set("c_c cap cos", ccos);
-        hitPoints.set("c_c cap sin", csin);
-        //var edge_pen = edge_r_sum - edge_dist; 
         var edge_pen = Math.sqrt((edge_r_sum * edge_r_sum) - (edge_dist * edge_dist));
         hitPoints.set("c_c edge_pen", edge_pen);
 
-        /*if (ccos > 0.0) {
-            edge_pen = 0.5 * edge_pen / csin;
-            closestPt2 = closestPt - (edge_pen / ( ((capsule1.CD_edge_l[0] * edge1_r) + (capsule2.CD_edge_l[0] + edge2_r)) / edge_r_sum));
-        } else {
-            var off = range1.value / 1000;
-            hitPoints.set("slide1 pos", off);
-            edge_pen = edge_pen * off;
-            closestPt2 = closestPt - (edge_pen / capsule1.CD_edge_l[0]);
-        }*/
-        var edge_l_sum = edge1_l + edge2_l;
-        edge_pen = edge_pen * (Math.sqrt((edge_r_sum * edge_r_sum) - (edge2_r * edge2_r)) / edge_r_sum) * (edge2_l / edge_l_sum); ; 
-        //(Math.sqrt((edge_l_sum * edge_l_sum) - (edge1_l * edge1_l)) / edge_l_sum); 
-        // * (edge2_l / (edge1_l + edge2_l));
-        //edge_pen = edge_pen / lsin;
-        if (ccos > 0.0) {
-            edge_pen = edge_pen / -l1cos;
-        } else {
-            edge_pen = edge_pen / l1sin;
-        }
-        closestPt2 = closestPt - (edge_pen / capsule1.CD_edge_l[0]);
-        
+        // weird approximation that works ok
+        var start_dist = v3_distance(capsule2.CD_edge_p[0], capsule1.CD_edge_p[0]) * 1.4142;
+        var closestPt2 = closestPt * (edge_r_sum - start_dist) / (edge_dist - edge_pen - start_dist); 
 
-        //hitPoints.set("p_p closest t2",  closestPt2);
-        //var hit_dist = closestPt;
-      //  var start_dist = v3_distance(capsule2.CD_edge_p[0], capsule1.CD_edge_p[0]);
-      //  var fact_dist = (-(edge_pen/1.5) + edge_dist - start_dist) / closestPt;  
-     //   var hit_dist = (edge1_r + edge2_r - start_dist) / fact_dist;
-
-        //hitPoints.set("p_p sD", start_dist);    
-       // hitPoints.set("p_p fact",fact_dist);
-        //hitPoints.set("p_p hit_dst", hit_dist); 
-
-       // v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], (capsule1.CD_edge_l[0] - f1) * closestPt );
-       // v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], (capsule2.CD_edge_l[0] - f2) * closestPt );
-
-       // hitPoints.set("p_p endDist", v3_distance(v1, v2));
-
-       
-       
-       hitPoints.set("c_c cpa t'",  closestPt2);
+       // compensated sph hit
        v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt2);
        v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt2);
        DEV_markers.addWireSphere(v1, edge1_r*2, [0.5, 1.0, 0.5], 32, false, 5);
@@ -609,32 +564,7 @@ capsule2.resetMatrix();
     } 
 
 
-
-/*
-    // as big capsule
-    var sph_p0 = capsule1.CD_edge_p[0];
-    var sph_n = v3_clone(capsule1.CD_edge_n[0]);
-    var sph_l = capsule1.CD_edge_l[0];
-    var sph_p = v3_addscaled_new(sph_p0, sph_n, sph_l);
-    var sph_r = edge1_r + edge2_r;
-
-    var edge_p = capsule2.CD_edge_p[0];
-    var edge_n = capsule2.CD_edge_n[0];
-    var edge_l = capsule2.CD_edge_l[0];
-
-    var edgeHit = v3_new();
-    var hitRes = capsuleEdgeIntersect_res(edgeHit, sph_r, sph_p0, sph_n, sph_l, edge_p, edge_n, edge_l);
-
-    if (hitRes != false) {
-        var capsuleHit = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
-        //DEV_markers.addWireSphere(htiPos, sph_r * 2, _v3_black, 16, false, 8);
-
-        DEV_markers.addWireSphere(capsuleHit, edge1_r * 2, _v3_yellow, 16, false, 8);
-        DEV_markers.addWireSphere(edgeHit, edge2_r * 2, _v3_yellow, 16, false, 8);
-
-
-    }*/
-
+    // Position marker along t
     var off = range5.value / 1000;
     hitPoints.set("slide5 pos", off);
     v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * off);
@@ -644,25 +574,24 @@ capsule2.resetMatrix();
 
 
 
-
     // capsule edge intersect test 
-    var sph_p0 = sph_source.CD_sph_p[0];
-    var sph_p = sph_source.CD_sph_p[1];
-    var sph_r = 4;
-    var sph_n = v3_sub_new(sph_p, sph_p0);
-    var sph_l = v3_length(sph_n);
-    v3_invscale_mod(sph_n, sph_l);
+    var cap_p0 = sph_source.CD_sph_p[0];
+    var cap_p  = sph_source.CD_sph_p[1];
+    var cap_r  = sph_source.CD_sph_r[0];
+    var cap_n = v3_sub_new(cap_p, cap_p0);
+    var cap_l = v3_length(cap_n);
+    v3_invscale_mod(cap_n, cap_l);
 
     var edge_p = edge_target.CD_edge_p[0];
     var edge_n = edge_target.CD_edge_n[0];
     var edge_l = edge_target.CD_edge_l[0];
 
     var firstHit = v3_new();
-    var hitRes = capsuleEdgeIntersect_res(firstHit, sph_r, sph_p0, sph_n, sph_l, edge_p, edge_n, edge_l);
+    var hitRes = capsuleEdgeIntersect_res(firstHit, cap_r, cap_p0, cap_n, cap_l, edge_p, edge_n, edge_l);
 
     if (hitRes != false) {
-        var htiPos = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
-        DEV_markers.addWireSphere(htiPos, sph_r * 2, _v3_blue, 16, false, 8);
+        var htiPos = v3_addscaled_new(cap_p0, cap_n, hitRes * cap_l);
+        DEV_markers.addWireSphere(htiPos, cap_r * 2, _v3_blue, 16, false, 8);
         DEV_markers.addLine(firstHit, htiPos, false, _v3_white);
     }
 
@@ -670,7 +599,7 @@ capsule2.resetMatrix();
     // capsule sphere intersect test
     var cap_p0 = sph_source.CD_sph_p[0];
     var cap_p  = sph_source.CD_sph_p[1];
-    var cap_r = 4;
+    var cap_r  = sph_source.CD_sph_r[0];
     var cap_n = v3_sub_new(cap_p, cap_p0);
     var cap_l = v3_length(cap_n);
     v3_invscale_mod(cap_n, cap_l);
@@ -733,6 +662,43 @@ capsule2.resetMatrix();
 
 
 
+    // capsule triangleWithEdges intersect test
+    var cap_p0 = sph_source.CD_sph_p[0];
+    var cap_p  = sph_source.CD_sph_p[1];
+    var cap_r  = sph_source.CD_sph_r[0];
+    var cap_n = v3_sub_new(cap_p, cap_p0);
+    var cap_l = v3_length(cap_n);
+    v3_invscale_mod(cap_n, cap_l);
+
+    var firstHit = v3_new();
+    var hitRest = triangle_capsule_intersect_res(firstHit, cap_p0, cap_n, cap_r,
+        triangleWithEdges_target.CD_triangle_p1[0], triangleWithEdges_target.CD_triangle_p3p1[0], triangleWithEdges_target.CD_triangle_p2p1[0],
+        triangleWithEdges_target.CD_triangle_p3p1lenSq[0], triangleWithEdges_target.CD_triangle_p2p1lenSq[0], triangleWithEdges_target.CD_triangle_p3p2p1dot[0],
+        triangleWithEdges_target.CD_triangle_n[0]);
+
+    if ((hitRest != false) && (hitRest <= cap_l)) {
+        DEV_markers.addWireSphere(firstHit, cap_r * 2, [0, 0, 0.5], 16, false, 8);
+        DEV_markers.addLineByPosNormLen(firstHit, triangleWithEdges_target.CD_triangle_n[0], -cap_r, false, _v3_gray);
+        hitPoints.set("c_te t hitRes", hitRest / cap_l);
+    }
+
+    for (var i = 0; i < 3; ++i) {
+        var edge_p = triangleWithEdges_target.CD_edge_p[i];
+        var edge_n = triangleWithEdges_target.CD_edge_n[i];
+        var edge_l = triangleWithEdges_target.CD_edge_l[i];
+
+        var firstHit = v3_new();
+        var hitRes = capsuleEdgeIntersect_res(firstHit, cap_r, cap_p0, cap_n, cap_l, edge_p, edge_n, edge_l);
+
+        if (hitRes != false) {
+            var htiPos = v3_addscaled_new(cap_p0, cap_n, hitRes * cap_l);
+            DEV_markers.addWireSphere(htiPos, cap_r * 2, _v3_blue, 16, false, 8);
+            DEV_markers.addLine(firstHit, htiPos, false, _v3_white);
+            hitPoints.set("c_te e hitRes", hitRes);
+
+            hitPoints.set("c_te te sign", Math.sign(hitRes - hitRest));
+        }
+    }
 
 
 

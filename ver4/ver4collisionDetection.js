@@ -166,7 +166,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                 if (hitRes != false) {
 
-                    v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes);
+                    v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes * self.deltaLength);
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {        
@@ -212,7 +212,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
                         if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
 
                         var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
-                        if ( t0 < _tempCDRes_t0 ) {
+                        if ( t0 <= _tempCDRes_t0 ) {
                             if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
                             _tempCDRes_marker = ""+marker;
                             _tempCDRes_t0 = t0;
@@ -830,7 +830,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                     var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);
 
-                    if ( t0 < _tempCDRes_t0 ) {          
+                    if ( t0 <= _tempCDRes_t0 ) {          
                         if (show_DEV_CD) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = ""+marker;
                         _tempCDRes_t0 = t0;

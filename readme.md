@@ -26,8 +26,10 @@ Current work-in-progress and next steps
 * Regroup vertexArrays for mesh data (interleaved array in scene)
 * interleaved array in entity
 * interleaved array in loader
+* Sprites (always facing viewer, shader with minimal inputs)
+* Text render in 3D scene (in world, world-to-viewport)
 * CD object, single for simple and array of for complex
-* Improved Collision Detection with Interpolation and Static test (point, edge, sphere, plane, box, triangles)
+* Improved Collision Detection with dual Interpolation and Static test (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions
 * --Some kind of game:
 * Path interpolation for bots and animations.
@@ -36,8 +38,6 @@ Current work-in-progress and next steps
 * Sounds
 * Better lights shaders (array of different types of ligts) (spot, point etc)
 * NetCode
-* Sprites (always facing viewer, shader with minimal inputs)
-* Text render in 3D scene
 * STL, OBJ, MS3D to JSON or other ready-to-use format for mesh data and entities
 * Improved Entity loading (ideally external tool should prepare model data for better load perf)
 * --ver6:
