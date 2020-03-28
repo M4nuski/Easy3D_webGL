@@ -41,6 +41,8 @@ const dataElement = document.getElementById("dataDiv");
 const range1 = document.getElementById("myRange1");
 const range2 = document.getElementById("myRange2");
 const range3 = document.getElementById("myRange3");
+const range4 = document.getElementById("myRange4");
+const range5 = document.getElementById("myRange5");
 
 log("Set DOM Events");
 window.addEventListener("resize", winResize); // To reset camera matrix
@@ -60,8 +62,10 @@ var animations = [];
 var worldPlanes, mazeMesh;
 
 var capsule1, capsule2; // capsule-capsule intersection tests
-var edge_r = 10;
-var edge2_r = 10;  
+var edge1_r = 20;
+var edge2_r = 10;
+var edge1_l = 150;
+var edge2_l = 100;
 
 var sph_source, sph_target;
 var point_source;
@@ -170,7 +174,7 @@ function initEngine() {
         scn.camera = new E3D_camera_persp("cam1persp", can.offsetWidth, can.offsetHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
        // scn.camera.moveTo(-32, 64, 160, 20 * DegToRad, 10 * DegToRad, 0);
-       scn.camera.moveTo(50, -40, 200, -0 * DegToRad, -0 * DegToRad, 0);
+       scn.camera.moveTo(0, 60, -20, -0 * DegToRad, -0 * DegToRad, 0);
         winResize();
 
         log("Scene Initialization", false);
@@ -220,18 +224,18 @@ function initEngine() {
 
     // capsule CD test entities
     capsule1 = new E3D_entity_wireframe_canvas("capsuleHitTarget1");
-    capsule1.position = [15, 0, -50];
-    capsule1.addCylinder([0, 0, 0], edge_r*2, 100, [1, 0, 0], 32, 4, 10, false);
-    capsule1.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
+    capsule1.position = [15, 0, -250];
+    capsule1.addCylinder([0, 0, 0], edge1_r*2, edge1_l, [1, 0, 0], 32, 4, 10, false);
+    capsule1.pushCD_edge([0, 0, 0], [0, 1, 0], edge1_l);
     capsule1.visible = true;
     capsule1.vis_culling = false;
     scn.addEntity(capsule1);
 
 
     capsule2 = new E3D_entity_wireframe_canvas("capsuleHitTarget2");
-    capsule2.position = [-15, 0, -50];
-    capsule2.addCylinder([0, 0, 0], edge2_r*2, 100, [0, 1, 0], 32, 4, 10, false);
-    capsule2.pushCD_edge([0, 0, 0], [0, 1, 0], 100);
+    capsule2.position = [-15, 0, -250];
+    capsule2.addCylinder([0, 0, 0], edge2_r*2, edge2_l, [0, 1, 0], 32, 4, 10, false);
+    capsule2.pushCD_edge([0, 0, 0], [0, 1, 0], edge2_l);
     capsule2.visible = true;
     capsule2.vis_culling = false;
     scn.addEntity(capsule2);
@@ -483,6 +487,21 @@ function prepRender() {
 
 
 // CD function tests
+edge1_r = range1.value / 10;
+edge1_l = range2.value / 2;
+edge2_r = range3.value / 10;
+edge2_l = range4.value / 2;
+
+capsule1.clear();
+capsule1.addCylinder([0, 0, 0], edge1_r*2, edge1_l, _v3_red, 32, 4, 10, false);
+capsule1.pushCD_edge([0, 0, 0], [0, 1, 0], edge1_l);
+capsule1.resetMatrix();
+
+capsule2.clear();
+capsule2.addCylinder([0, 0, 0], edge2_r*2, edge2_l, _v3_green, 32, 4, 10, false);
+capsule2.pushCD_edge([0, 0, 0], [0, 1, 0], edge2_l);
+capsule2.resetMatrix();
+
     var closestPt = point_vector_point( capsule1.CD_edge_p[0],  capsule1.CD_edge_n[0], sph_target.CD_sph_p[0]);
     DEV_markers.addLine(closestPt, sph_target.CD_sph_p[0], false, [1,1,0]);
 
@@ -493,7 +512,7 @@ function prepRender() {
 
 // capsule-capsule CD dev
  
-    var edge_r_sum = edge_r + edge2_r;
+    var edge_r_sum = edge1_r + edge2_r;
     var v1 = [0,0,0];
     var v2 = [0,0,0];
     var link = [0,0,0];
@@ -511,7 +530,7 @@ function prepRender() {
     v3_invscale_mod(link, edge_dist);
     hitPoints.set("c_c linkLength", edge_dist);
 
-    //var v1 = v3_scale_new(capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] + edge_r);
+    //var v1 = v3_scale_new(capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] + edge1_r);
     //var v2 = v3_scale_new(capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] + edge2_r);
     //var closestPt2 = path_path_closest_t(capsule1.CD_edge_p[0], v1, capsule2.CD_edge_p[0], v2);
     var closestPt2 = closestPt;
@@ -520,14 +539,19 @@ function prepRender() {
 
         v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt);
         v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt);
-        DEV_markers.addWireSphere(v1, edge_r  * 2, [1, 0.5, 0.5], 32, false, 5);
+        DEV_markers.addWireSphere(v1, edge1_r  * 2, [1, 0.5, 0.5], 32, false, 5);
         DEV_markers.addWireSphere(v2, edge2_r * 2, [1, 0.5, 0.5], 32, false, 5);
 
 
-        var lcos = v3_dot(capsule1.CD_edge_n[0], link);
-        var lsin = Math.sqrt(1.0 - (lcos * lcos));// * Math.sign(lcos);
-        hitPoints.set("c_c link cos", lcos);
-        hitPoints.set("c_c link sin", lsin);
+        var l1cos = v3_dot(capsule1.CD_edge_n[0], link);
+        var l1sin = Math.sqrt(1.0 - (l1cos * l1cos));// * Math.sign(lcos);
+        hitPoints.set("c_c link1 cos", l1cos);
+        hitPoints.set("c_c link1 sin", l1sin);
+
+        var l2cos = v3_dot(capsule2.CD_edge_n[0], link);
+        var l2sin = Math.sqrt(1.0 - (l2cos * l2cos));// * Math.sign(lcos);
+        hitPoints.set("c_c link2 cos", l2cos);
+        hitPoints.set("c_c link2 sin", l2sin);
 
         
         var ccos = v3_dot(capsule1.CD_edge_n[0], capsule2.CD_edge_n[0]);
@@ -540,20 +564,22 @@ function prepRender() {
 
         /*if (ccos > 0.0) {
             edge_pen = 0.5 * edge_pen / csin;
-            closestPt2 = closestPt - (edge_pen / ( ((capsule1.CD_edge_l[0] * edge_r) + (capsule2.CD_edge_l[0] + edge2_r)) / edge_r_sum));
+            closestPt2 = closestPt - (edge_pen / ( ((capsule1.CD_edge_l[0] * edge1_r) + (capsule2.CD_edge_l[0] + edge2_r)) / edge_r_sum));
         } else {
             var off = range1.value / 1000;
             hitPoints.set("slide1 pos", off);
             edge_pen = edge_pen * off;
             closestPt2 = closestPt - (edge_pen / capsule1.CD_edge_l[0]);
         }*/
-
-        edge_pen = edge_pen * edge_r / edge_r_sum;
+        var edge_l_sum = edge1_l + edge2_l;
+        edge_pen = edge_pen * (Math.sqrt((edge_r_sum * edge_r_sum) - (edge2_r * edge2_r)) / edge_r_sum) * (edge2_l / edge_l_sum); ; 
+        //(Math.sqrt((edge_l_sum * edge_l_sum) - (edge1_l * edge1_l)) / edge_l_sum); 
+        // * (edge2_l / (edge1_l + edge2_l));
         //edge_pen = edge_pen / lsin;
         if (ccos > 0.0) {
-            edge_pen = edge_pen / csin;
+            edge_pen = edge_pen / -l1cos;
         } else {
-            edge_pen = edge_pen / lsin;
+            edge_pen = edge_pen / l1sin;
         }
         closestPt2 = closestPt - (edge_pen / capsule1.CD_edge_l[0]);
         
@@ -562,7 +588,7 @@ function prepRender() {
         //var hit_dist = closestPt;
       //  var start_dist = v3_distance(capsule2.CD_edge_p[0], capsule1.CD_edge_p[0]);
       //  var fact_dist = (-(edge_pen/1.5) + edge_dist - start_dist) / closestPt;  
-     //   var hit_dist = (edge_r + edge2_r - start_dist) / fact_dist;
+     //   var hit_dist = (edge1_r + edge2_r - start_dist) / fact_dist;
 
         //hitPoints.set("p_p sD", start_dist);    
        // hitPoints.set("p_p fact",fact_dist);
@@ -578,7 +604,7 @@ function prepRender() {
        hitPoints.set("c_c cpa t'",  closestPt2);
        v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * closestPt2);
        v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * closestPt2);
-       DEV_markers.addWireSphere(v1, edge_r*2, [0.5, 1.0, 0.5], 32, false, 5);
+       DEV_markers.addWireSphere(v1, edge1_r*2, [0.5, 1.0, 0.5], 32, false, 5);
        DEV_markers.addWireSphere(v2, edge2_r*2, [0.5, 1.0, 0.5], 32, false, 5);   
     } 
 
@@ -590,7 +616,7 @@ function prepRender() {
     var sph_n = v3_clone(capsule1.CD_edge_n[0]);
     var sph_l = capsule1.CD_edge_l[0];
     var sph_p = v3_addscaled_new(sph_p0, sph_n, sph_l);
-    var sph_r = edge_r + edge2_r;
+    var sph_r = edge1_r + edge2_r;
 
     var edge_p = capsule2.CD_edge_p[0];
     var edge_n = capsule2.CD_edge_n[0];
@@ -603,17 +629,17 @@ function prepRender() {
         var capsuleHit = v3_addscaled_new(sph_p0, sph_n, hitRes * sph_l);
         //DEV_markers.addWireSphere(htiPos, sph_r * 2, _v3_black, 16, false, 8);
 
-        DEV_markers.addWireSphere(capsuleHit, edge_r * 2, _v3_yellow, 16, false, 8);
+        DEV_markers.addWireSphere(capsuleHit, edge1_r * 2, _v3_yellow, 16, false, 8);
         DEV_markers.addWireSphere(edgeHit, edge2_r * 2, _v3_yellow, 16, false, 8);
 
 
     }*/
 
-    var off = range2.value / 1000;
-    hitPoints.set("slide2 pos", off);
+    var off = range5.value / 1000;
+    hitPoints.set("slide5 pos", off);
     v3_addscaled_res(v1, capsule1.CD_edge_p[0], capsule1.CD_edge_n[0], capsule1.CD_edge_l[0] * off);
     v3_addscaled_res(v2, capsule2.CD_edge_p[0], capsule2.CD_edge_n[0], capsule2.CD_edge_l[0] * off);
-    DEV_markers.addWireSphere(v1, edge_r  * 2, _v3_white, 32, false, 5);
+    DEV_markers.addWireSphere(v1, edge1_r  * 2, _v3_white, 32, false, 5);
     DEV_markers.addWireSphere(v2, edge2_r * 2, _v3_white, 32, false, 5);
 
 
