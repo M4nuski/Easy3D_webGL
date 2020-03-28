@@ -185,6 +185,7 @@ const _v3_black     = [ 0.0,  0.0,  0.0];
 const _v3_red       = [ 1.0,  0.0,  0.0];
 const _v3_green     = [ 0.0,  1.0,  0.0];
 const _v3_blue      = [ 0.0,  0.0,  1.0];
+const _v3_lightblue = [ 0.5,  0.5,  1.0];
 const _v3_cyan      = [ 0.0,  1.0,  1.0];
 const _v3_magenta   = [ 1.0,  0.0,  1.0];
 const _v3_yellow    = [ 1.0,  1.0,  0.0];

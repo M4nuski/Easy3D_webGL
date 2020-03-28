@@ -255,9 +255,10 @@ function initEngine() {
     point_source = new E3D_entity_wireframe_canvas("edgeWand");
     point_source.position = [-10, 50, 10];
     point_source.rotation = [0, 0, Math.PI]; 
-    point_source.addWireCross([0,   0, 0], 5, _v3_green);
+    point_source.addWireCross([0,  0, 0], 5, _v3_green);
     point_source.addWireCross([0, 25, 0], 5, _v3_red);
     point_source.addLine([0, 0, 0], [0, 25, 0], false, _v3_white);
+    point_source.pushCD_edge2p([0, 0, 0], [0, 25, 0]);
     point_source.visible = true;
     scn.addEntity(point_source);
 
@@ -301,21 +302,31 @@ function initEngine() {
     scn.addEntity(box_target);
 
     triangle_target = new E3D_entity_wireframe_canvas("triangleTarget");
+    var p1 = [0, 0, 0];
+    var p2 = [-30, 40, 75];
+    var p3 = [30, 20, 75];
+    var pa = v3_avg3_new(p1, p2, p3);
     triangle_target.position = [0, 0, 200];
-    triangle_target.addTriangle([0, 0, 0], [-30, 40, 75], [30, 20, 75], _v3_white, true);
+    triangle_target.addTriangle(p1, p2, p3, _v3_white, true);
+    triangle_target.addLine(p1, pa, false, _v3_white);
+    triangle_target.addLine(p2, pa, false, _v3_white);
+    triangle_target.addLine(p3, pa, false, _v3_white);    
     triangle_target.visible = true;
     triangle_target.vis_culling = false;
     scn.addEntity(triangle_target);
 
     triangleWithEdges_target = new E3D_entity_wireframe_canvas("triangleWithEdgesTarget");
     triangleWithEdges_target.position = [0, 100, 200];
-    triangleWithEdges_target.addTriangle([0, 0, 0], [-30, 40, 75], [30, 20, 75], _v3_gray, true);
-    triangleWithEdges_target.addLine([0, 0, 0], [-30, 40, 75], false, _v3_white);
-    triangleWithEdges_target.addLine( [-30, 40, 75], [30, 20, 75], false, _v3_white);
-    triangleWithEdges_target.addLine([30, 20, 75], [0, 0, 0], false, _v3_white);
-    triangleWithEdges_target.pushCD_edge2p([0, 0, 0], [-30, 40, 75]);
-    triangleWithEdges_target.pushCD_edge2p([-30, 40, 75], [30, 20, 75]);
-    triangleWithEdges_target.pushCD_edge2p([30, 20, 75], [0, 0, 0]);
+    triangleWithEdges_target.addTriangle(p1, p2, p3, _v3_gray, true);
+    triangleWithEdges_target.addLine(p1, p2, false, _v3_white);
+    triangleWithEdges_target.addLine(p2, p3, false, _v3_white);
+    triangleWithEdges_target.addLine(p3, p1, false, _v3_white);
+    triangleWithEdges_target.addLine(p1, pa, false, _v3_gray);
+    triangleWithEdges_target.addLine(p2, pa, false, _v3_gray);
+    triangleWithEdges_target.addLine(p3, pa, false, _v3_gray);    
+    triangleWithEdges_target.pushCD_edge2p(p1, p2);
+    triangleWithEdges_target.pushCD_edge2p(p2, p3);
+    triangleWithEdges_target.pushCD_edge2p(p3, p1);
     triangleWithEdges_target.visible = true;
     triangleWithEdges_target.vis_culling = false;
     scn.addEntity(triangleWithEdges_target);
@@ -495,6 +506,8 @@ function prepRender() {
                                inputs.rx_delta_smth, inputs.ry_delta_smth, inputs.rz_delta_smth);
       }
 
+
+
     // move maze per sliders
     if (mazeMesh.visible) {
         mazeMesh.rotateTo([PIx2 * (range1.value -500) / 1000, PIx2 * (range2.value -500) / 1000, PIx2 * (range3.value -500) / 1000]);
@@ -506,6 +519,8 @@ function prepRender() {
 
 
 // CD function tests
+
+// capsule-capsule setup
 edge1_r = range1.value / 10;
 edge1_l = range2.value / 2;
 edge2_r = range3.value / 10;
@@ -573,15 +588,16 @@ capsule2.resetMatrix();
     DEV_markers.addWireSphere(v2, edge2_r * 2, _v3_white, 32, false, 5);
 
 
-
-    // capsule edge intersect test 
+    // capsule intersect setup
     var cap_p0 = sph_source.CD_sph_p[0];
     var cap_p  = sph_source.CD_sph_p[1];
     var cap_r  = sph_source.CD_sph_r[0];
     var cap_n = v3_sub_new(cap_p, cap_p0);
     var cap_l = v3_length(cap_n);
-    v3_invscale_mod(cap_n, cap_l);
+    v3_invscale_mod(cap_n, cap_l);    
 
+
+    // capsule edge intersect test 
     var edge_p = edge_target.CD_edge_p[0];
     var edge_n = edge_target.CD_edge_n[0];
     var edge_l = edge_target.CD_edge_l[0];
@@ -597,13 +613,6 @@ capsule2.resetMatrix();
 
 
     // capsule sphere intersect test
-    var cap_p0 = sph_source.CD_sph_p[0];
-    var cap_p  = sph_source.CD_sph_p[1];
-    var cap_r  = sph_source.CD_sph_r[0];
-    var cap_n = v3_sub_new(cap_p, cap_p0);
-    var cap_l = v3_length(cap_n);
-    v3_invscale_mod(cap_n, cap_l);
-
     var sph_p0 = sph_target.CD_sph_p[0];
     var sph_r  = sph_target.CD_sph_r[0];
 
@@ -617,13 +626,6 @@ capsule2.resetMatrix();
 
 
     // capsule plane intersect test
-    var cap_p0 = sph_source.CD_sph_p[0];
-    var cap_p  = sph_source.CD_sph_p[1];
-    var cap_r  = sph_source.CD_sph_r[0];
-    var cap_n = v3_sub_new(cap_p, cap_p0);
-    var cap_l = v3_length(cap_n);
-    v3_invscale_mod(cap_n, cap_l);
-
     var firstHit = v3_new();
     var hitRes = capsulePlaneIntersect_res(firstHit, cap_r, cap_p0, cap_n, 
         plane_target.CD_plane_n[0], plane_target.CD_plane_p[0], 
@@ -642,13 +644,6 @@ capsule2.resetMatrix();
 
 
     // capsule triangle intersect test
-    var cap_p0 = sph_source.CD_sph_p[0];
-    var cap_p  = sph_source.CD_sph_p[1];
-    var cap_r  = sph_source.CD_sph_r[0];
-    var cap_n = v3_sub_new(cap_p, cap_p0);
-    var cap_l = v3_length(cap_n);
-    v3_invscale_mod(cap_n, cap_l);
-
     var firstHit = v3_new();
     var hitRes = triangle_capsule_intersect_res(firstHit, cap_p0, cap_n, cap_r,
         triangle_target.CD_triangle_p1[0], triangle_target.CD_triangle_p3p1[0], triangle_target.CD_triangle_p2p1[0],
@@ -663,13 +658,6 @@ capsule2.resetMatrix();
 
 
     // capsule triangleWithEdges intersect test
-    var cap_p0 = sph_source.CD_sph_p[0];
-    var cap_p  = sph_source.CD_sph_p[1];
-    var cap_r  = sph_source.CD_sph_r[0];
-    var cap_n = v3_sub_new(cap_p, cap_p0);
-    var cap_l = v3_length(cap_n);
-    v3_invscale_mod(cap_n, cap_l);
-
     var firstHit = v3_new();
     var hitRest = triangle_capsule_intersect_res(firstHit, cap_p0, cap_n, cap_r,
         triangleWithEdges_target.CD_triangle_p1[0], triangleWithEdges_target.CD_triangle_p3p1[0], triangleWithEdges_target.CD_triangle_p2p1[0],
@@ -700,6 +688,56 @@ capsule2.resetMatrix();
         }
     }
 
+
+
+    // vector intersect setup
+    var vect_p0 = point_source.CD_edge_p[0];
+    var vect_p  = v3_addscaled_new(vect_p0, point_source.CD_edge_n[0], point_source.CD_edge_l[0])
+    var vect_v  = v3_sub_new(vect_p, vect_p0);
+    var vect_l  = v3_length(vect_v);
+    var vect_n  = v3_invscale_new(vect_v, vect_l); 
+
+    var posOffset = v3_new();
+    var firstHit = v3_new();
+
+
+    // vector-sphere intersect
+    var sph_p0 = sph_target.CD_sph_p[0];
+    var sph_r  = sph_target.CD_sph_r[0];
+    var sph_r2 = sph_r * sph_r;
+
+    v3_sub_res(posOffset, sph_p0, vect_p0);
+
+    var hitRes = vector_sph_min_t(vect_n, posOffset, sph_r2);  
+    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= vect_l)) {
+        v3_addscaled_res(firstHit, vect_p0, vect_n, hitRes); 
+        DEV_markers.addWireCross(firstHit, 5, _v3_lightblue);
+    }
+
+    // vector-plane intersect
+    v3_sub_res(posOffset, vect_p0, plane_target.CD_plane_p[0]);
+    var hitRes = vectorPlaneIntersect(posOffset, plane_target.CD_plane_n[0], vect_n);       
+
+    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= vect_l)) {
+
+        v3_addscaled_res(firstHit, vect_p0, vect_n, hitRes);
+        v3_sub_res(posOffset, firstHit, plane_target.CD_plane_p[0]);
+
+        if (insidePlane(posOffset, plane_target.CD_plane_h[0], plane_target.CD_plane_halfHeight[0],
+            plane_target.CD_plane_w[0],  plane_target.CD_plane_halfWidth[0]) ) {
+                DEV_markers.addWireCross(firstHit, 5, _v3_lightblue);
+        }
+    }
+
+    // vector-triangle intersect
+    var hitRes = triangle_vector_intersect_res(firstHit, vect_p0, vect_n, 
+        triangle_target.CD_triangle_p1[0], triangle_target.CD_triangle_p3p1[0], triangle_target.CD_triangle_p2p1[0], 
+        triangle_target.CD_triangle_p3p1lenSq[0], triangle_target.CD_triangle_p2p1lenSq[0],
+        triangle_target.CD_triangle_p3p2p1dot[0], triangle_target.CD_triangle_n[0]);
+
+    if ((hitRes != false) && (hitRes <= vect_l) && (hitRes >= 0.0) ) {      
+        DEV_markers.addWireCross(firstHit, 5, _v3_lightblue); 
+    }
 
 
     if (DEV_anim_active) {

@@ -984,10 +984,10 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
                 } else { // static
                     v3_sub_res(posOffset, scn.entities[targetIndex].CD_sph_p[j], sourcePts_p0);
-                    var hitRes = vector_sph_min_t(sourcePts_v, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
-                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= 1.0)) {
+                    var hitRes = vector_sph_min_t(sourcePts_n, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
 
-                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_v, hitRes);
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
                         
                         var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);  
                         if ( t0 < _tempCDRes_t0) {    
@@ -1253,9 +1253,11 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
 
 
-
-
-
+// TODO refactor names to clarify result type
+// _tn 0.0-1.0 along n
+// _tv 0.0-1.0 along v
+// _ln 0.0-len along n
+//    pos / _res
 
 
 // Intersection of vector and sphere, as vector advance into static sphere, arrow like
