@@ -17,7 +17,6 @@ const E3D_DONE = 4;
  * Animation class
  * 
  * @param {String} id Animation identifier
- * @param {E3D_scene} sceneContext Rendering Scene
  * @param {E3D_timer} timerclass Timer object
  * @param {function} animFirstPass Delegate function for calculating single or ideal animation results
  * @param {function} animNPass Delegate function to recalculate animation result based on collision detections

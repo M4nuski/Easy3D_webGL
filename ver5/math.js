@@ -71,8 +71,8 @@ const _v3_magenta   = [ 1.0,  0.0,  1.0];
 const _v3_yellow    = [ 1.0,  1.0,  0.0];
 const _v3_orange    = [ 1.0,  0.5,  0.0];
 const _v3_gray      = [ 0.50,  0.50,  0.50];
-const _v3_lightGray = [ 0.75,  0.75,  0.75];
-const _v3_darkGray  = [ 0.25,  0.25,  0.25];
+const _v3_lightgray = [ 0.75,  0.75,  0.75];
+const _v3_darkgray  = [ 0.25,  0.25,  0.25];
 
 
 // Randoms

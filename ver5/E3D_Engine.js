@@ -1,3 +1,10 @@
+// Easy3D_WebGL v0.5
+// Script loader for the full engine stack
+// Global function "E3D_userInit" will be called at the end to give control back to the main game script
+// Emmanuel Charette 2020
+
+E3D_DEBUG_VERBOSE = false;
+
 var E3D_scriptList = [
     "ver5/math.js",
     "ver5/utility.js",
@@ -24,7 +31,7 @@ var E3D_currentScript = "";
 
 function E3D_scriptLoaded() {
     E3D_numScriptLoaded++;
-    // if(E3D_DEBUG_VERBOSE) console.log(E3D_currentScript + " Loaded");
+    if (E3D_DEBUG_VERBOSE) console.log(E3D_currentScript + " Loaded");
     if (E3D_numScriptLoaded >= E3D_scriptList.length) {
         console.log("All Scripts Loaded");
         if (E3D_userInit) E3D_userInit();

@@ -70,17 +70,34 @@ class E3D_camera {
         return this.matrix;
     }
 
-    adjustToCamera(vect) {
+    adjustToCamera_new(vect) {
         var res = v3_rotateX_new(vect, -this.rotation[0]); 
         v3_rotateY_mod(res, -this.rotation[1]); 
         return res;
     }  
+    adjustToCamera_res(res, vect) {
+        v3_rotateX_res(res, vect, -this.rotation[0]); 
+        v3_rotateY_mod(res, -this.rotation[1]); 
+    }   
+    adjustToCamera_mod(vect) {
+        v3_rotateX_mod(vect, -this.rotation[0]); 
+        v3_rotateY_mod(vect, -this.rotation[1]); 
+    }  
 
-    negateCamera(vect) {
+    negateCamera_new(vect) {
         var res = v3_rotateY_new(vect, this.rotation[1]); 
         v3_rotateX_mod(res, this.rotation[0]); 
         return res;
     }  
+    negateCamera_res(res, vect) {
+        v3_rotateY_res(res, vect, this.rotation[1]); 
+        v3_rotateX_mod(res, this.rotation[0]);
+    } 
+    negateCamera_mod(vect) {
+        v3_rotateY_mod(vect, this.rotation[1]); 
+        v3_rotateX_mod(vect, this.rotation[0]);
+    }  
+
 
 }
 
@@ -167,16 +184,32 @@ class E3D_camera_model extends E3D_camera_persp {
 
     }
 
-    adjustToCamera(vect) {
+    adjustToCamera_new(vect) {
         return v3_applym4_new(vect, this.inverseRotationMatrix);
     }  
+    adjustToCamera_res(res, vect) {
+        v3_applym4_res(res, vect, this.inverseRotationMatrix);
+    }  
+    adjustToCamera_mod(vect) {
+        v3_applym4_mod(vect, this.inverseRotationMatrix);
+    }  
 
-    negateCamera(vect) {
+    negateCamera_new(vect) {
         let res = v3_rotateX_new(vect, this.rotation[0]); 
         v3_rotateY_mod(res, this.rotation[1]); 
         res[2] += this.zDist;
         return res;
     }  
+    negateCamera_res(res, vect) {
+        v3_rotateX_res(res, vect, this.rotation[0]); 
+        v3_rotateY_mod(res, this.rotation[1]); 
+        res[2] += this.zDist;
+    } 
+    negateCamera_mod(vect) {
+        v3_rotateX_mod(vect, this.rotation[0]); 
+        v3_rotateY_mod(vect, this.rotation[1]); 
+        res[2] += this.zDist;
+    } 
 
 
 }
@@ -239,13 +272,26 @@ class E3D_camera_space extends E3D_camera_persp {
         this.rotation[2] = 0;
     }
 
-    adjustToCamera(vect) {
+    adjustToCamera_new(vect) {
         return v3_applym4_new(vect, this.inverseRotationMatrix);
     }  
+    adjustToCamera_res(res, vect) {
+        v3_applym4_res(res, vect, this.inverseRotationMatrix);
+    }  
+    adjustToCamera_mod(vect) {
+        v3_applym4_mod(vect, this.inverseRotationMatrix);
+    }  
 
-    negateCamera(vect) {
+
+    negateCamera_new(vect) {
         return v3_applym4_new(vect, this.rotationMatrix);
     }  
+    negateCamera_res(res, vect) {
+        v3_applym4_res(res, vect, this.rotationMatrix);
+    }  
+    negateCamera_mod(vect) {
+        v3_applym4_mod(vect, this.rotationMatrix);
+    } 
 
 }
 

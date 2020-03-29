@@ -17,7 +17,7 @@ var E3D_G = 386.22;
 var TIMER = new E3D_timing(false, 100, E3D_onTick_callback); 
 var CANVAS = null;
 var CONTEXT = null;
-var SCENE = new E3D_scene("scene0");
+var SCENE = new E3D_scene_default("scene0");
 var ENTITIES = [];
 var ANIMS = []; // list of ENTITIES that need to be animated
 var CAMERA = new E3D_camera("camera0");
@@ -71,21 +71,8 @@ function E3D_InitScene(element) {
         try {
 
             log("Shader Program", false);
-            SCENE.program = new E3D_program("program0");
-            SCENE.program.compile(vertShader01, fragShader01);
-            SCENE.program.bindLocations(attribList01, uniformList01);
+            SCENE.program = new E3D_program("program_default_lights", programData_default);
 
-            log("Lighting", false);
-            SCENE.lights = new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
-            SCENE.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
-            SCENE.lights.setDirection0(v3_val_new(-0.2, -0.2, -1.0)); 
-            SCENE.lights.light0_lockToCamera = true;
-
-            SCENE.lights.setColor1(v3_val_new(1.0, 1.0, 0.85));
-            SCENE.lights.setDirection1(v3_val_new(1.0, -1.0, 0.8));
-            SCENE.lights.light1_lockToCamera = false;
-
-            SCENE.fogLimit = E3D_FAR / 2;
             SCENE.initialize();
             SCENE.state = E3D_ACTIVE;
         } catch (e) {
@@ -225,4 +212,137 @@ function log(text, silent = true) {
         } 
     }
     console.log("[" + ts + "] " + text);
+}
+
+
+// Entities management
+
+
+function E3D_addEntity(ent) {
+    if (E3D_getEntityIndexFromId(ent.id) != -1) { 
+        log("Duplicate entity ID: " + ent.id);
+        return -1;
+    }
+    // Initialize context data buffers        
+    ent.vertexBuffer = CONTEXT.createBuffer();
+    ent.colorBuffer = CONTEXT.createBuffer();
+    ent.normalBuffer = CONTEXT.createBuffer();
+    ent.strokeIndexBuffer = CONTEXT.createBuffer();
+
+    var usage = (ent.isDynamic) ? CONTEXT.DYNAMIC_DRAW : CONTEXT.STATIC_DRAW;
+
+    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.vertexBuffer);
+    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.vertexArray, usage);        
+
+    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.colorBuffer);
+    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.colorArray, usage);            
+
+    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
+    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, usage);
+
+    CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
+    CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
+    
+    ent.cull_dist = v3_length(E3D_calculate_max_pos(ent.vertexArray));
+
+    ent.updateMatrix();
+
+    ENTITIES.push(ent);
+
+    return ENTITIES.length - 1; // return new entity's index in the list
+}
+
+function E3D_getEntityIndexFromId(id) {  // TODO replace by Map
+    for (let i = 0; i < ENTITIES.length; ++i) {
+        if (ENTITIES[i].id == id) return i;
+    }
+    return -1;
+}
+
+function E3D_updateEntity(ent) {
+    let idx = E3D_getEntityIndexFromId(ent.id);
+    if (idx > -1) {
+        ent.dataContentChanged = true;
+        ent.dataSizeChanged = true;        
+        ent.cull_dist = v3_length(E3D_calculate_max_pos(ent.vertexArray));
+        ent.updateMatrix();
+    } else {
+        return E3D_addEntity(ent);
+    }
+}
+
+function E3D_removeEntity(id, deleteBuffers = true) {
+    let idx = this.E3D_getEntityIndexFromId(id);
+    if (idx > -1) {
+        if (deleteBuffers) {
+            CONTEXT.deleteBuffer(ENTITIES[idx].vertexBuffer);
+            CONTEXT.deleteBuffer(ENTITIES[idx].colorBuffer);
+            CONTEXT.deleteBuffer(ENTITIES[idx].normalBuffer);
+            CONTEXT.deleteBuffer(ENTITIES[idx].strokeIndexBuffer);
+        }
+        ENTITIES.splice(idx, 1);        
+    }
+}
+
+function E3D_cloneEntity(id, newId) {
+    let idx = E3D_getEntityIndexFromId(id);
+    if ((idx > -1) && (id != newId)) {
+
+        var ent = new E3D_entity(newId, ENTITIES[idx].filename, ENTITIES[idx].isDynamic);
+
+        ent.cloneData(ENTITIES[idx]);   
+
+        if (ent.isDynamic) {
+            ent.vertexBuffer = CONTEXT.createBuffer();
+            ent.colorBuffer = CONTEXT.createBuffer();
+            ent.normalBuffer = CONTEXT.createBuffer();
+            ent.strokeIndexBuffer = CONTEXT.createBuffer();
+            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.vertexBuffer);
+            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.vertexArray, CONTEXT.DYNAMIC_DRAW);
+            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.colorBuffer);
+            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.colorArray, CONTEXT.DYNAMIC_DRAW);
+            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
+            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, CONTEXT.DYNAMIC_DRAW);
+            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.strokeIndexBuffer);
+            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.strokeIndexArray, CONTEXT.DYNAMIC_DRAW);
+            ent.dataSizeChanged = true;
+        }
+
+        ENTITIES.push(ent);   
+        return ent; // return reference to new entity
+    } else {
+        log("Invalid entity ID (not found or duplicate): " + id);
+    }
+}
+
+function E3D_calculate_max_pos(vertArray) {
+    let result = v3_new();
+    let pos = v3_new();
+    let r_dist2 = 0;
+    for (let i = 0; i < vertArray.length; i += 3) {
+        v3_val_res(pos, vertArray[i], vertArray[i+1], vertArray[i+2]);
+        var currentDist = v3_lengthsquared(pos);
+        if (currentDist > r_dist2) {
+            v3_copy(result, pos);
+            r_dist2 = currentDist;
+        }
+    }
+    return result;
+}
+
+var _E3D_check_entity_visible_pos = v3_new();
+function E3D_check_entity_visible(idx) {
+    if (ENTITIES[idx].isVisibiltyCullable) {
+        v3_sub_res(_E3D_check_entity_visible_pos, ENTITIES[idx].position, CAMERA.position);
+        CAMERA.negateCamera_mod(_E3D_check_entity_visible_pos);
+        var dist = -_E3D_check_entity_visible_pos[2]; // only check for Z
+        return ( ((dist - ENTITIES[idx].cull_dist) < E3D_FAR) && 
+        ((dist + ENTITIES[idx].cull_dist) > E3D_NEAR) );
+    }
+    return true;
+}
+
+function E3D_createAnimList() {
+
+
 }
