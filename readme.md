@@ -3,14 +3,15 @@ Easy3D - webGL
 Yet another JS 3D/game engine test
 
 Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
-
-* /ver4: current version 0.4 WIP
-*  ver4.html: Works with mouse/keyboard in destktop browser, touch controls for mobile.
-*  ver4cellshader.html: toon shading render test and demo
-*  ver4fullscreen.html: pointer lock, full screen tests
-*  ver4stl.html: binary STL loader/viewer app 
-*  ver4physic.html: CD and physics test app
-*  ver4maze.html: Ball in Maze game, game loop and logic, random maze generation.
+* /ver5: current WIP
+* ver5.html basic test page
+* /ver4: 
+* ver4.html: Works with mouse/keyboard in destktop browser, touch controls for mobile.
+* ver4cellshader.html: toon shading render test and demo
+* ver4fullscreen.html: pointer lock, full screen tests
+* ver4stl.html: binary STL loader/viewer app 
+* ver4physic.html: CD and physics test app
+* ver4maze.html: Ball in Maze game, game loop and logic, random maze generation.
 * 
 * /Electron: content specific for Electron app
 * /Images: icons / sprites / images ressources
@@ -24,6 +25,9 @@ Current work-in-progress and next steps
 * --ver5:
 * flatten engine to reduce nested calls and hierarchy walking
 * extract all "DEV" stuff to a debug class
+* regroup pointerlock and camera
+* regroup slickhover and input
+* regroup fullScreen and camera
 * Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
 * Regroup vertexArrays for mesh data (interleaved array in scene)
 * interleaved array in entity

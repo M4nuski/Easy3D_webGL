@@ -17,11 +17,11 @@ var programA, programB, programC;
 var PosBuffer;
 var st, et;
 
-let modelMat = m4_new();
-let viewMat = m4_new();
-let projectionMat = m4_new();
-let mvpMat = m4_new();
-let mvMat = m4_new();
+let modelMat = mat4.create();
+let viewMat = mat4.create();
+let projectionMat = mat4.create();
+let mvpMat = mat4.create();
+let mvMat = mat4.create();
 mat4.perspective(projectionMat, 45, 320 / 240, 1, 1000);
 
 var vertexArray;

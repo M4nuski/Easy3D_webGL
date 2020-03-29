@@ -37,7 +37,6 @@ log("DOMContentLoaded");
 
 log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
-const logElement = document.getElementById("logDiv");
 const status = document.getElementById("statusDiv");
 
 log("Set DOM Events");
@@ -57,7 +56,7 @@ var usepct_smth=0;
 // Engine Components
 
 var gl; //
-timer = new E3D_timing(false, 50, timerTick);
+timer = new E3D_timing(false, 20, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var inputs = new E3D_input(can, true, true, true, true, true, true);
@@ -76,7 +75,8 @@ function winResize() {
     inputs.clampPitch = true;
     inputs.allowPan = true;
 
-    scn.camera.moveTo(0, 7.5, 15, 0, 0, 0);
+    scn.camera.moveTo(0, 0, -15, 0, 0, 0);
+    scn.camera.moveBy(0, 0, 30, 0, 0, 0);
 }
 
 function initEngine() {

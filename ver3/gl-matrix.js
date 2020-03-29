@@ -1464,7 +1464,6 @@ function normalize(out, a) {
   var z = a[2];
   var len = x * x + y * y + z * z;
   if (len > 0) {
-    //TODO: evaluate use of glm_invsqrt here?
     len = 1 / Math.sqrt(len);
     out[0] = a[0] * len;
     out[1] = a[1] * len;
@@ -2382,7 +2381,6 @@ function lerp(out, a, b, t) {
 function random(out, vectorScale) {
   vectorScale = vectorScale || 1.0;
 
-  //TODO: This is a pretty awful way of doing this. Find something better.
   out[0] = glMatrix.RANDOM();
   out[1] = glMatrix.RANDOM();
   out[2] = glMatrix.RANDOM();
@@ -5890,7 +5888,6 @@ function invert(out, a) {
   var dot = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
   var invDot = dot ? 1.0 / dot : 0;
 
-  // TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
 
   out[0] = -a0 * invDot;
   out[1] = -a1 * invDot;
@@ -6629,7 +6626,6 @@ function normalize(out, a) {
       y = a[1];
   var len = x * x + y * y;
   if (len > 0) {
-    //TODO: evaluate use of glm_invsqrt here?
     len = 1 / Math.sqrt(len);
     out[0] = a[0] * len;
     out[1] = a[1] * len;

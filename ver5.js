@@ -1,38 +1,29 @@
 // Easy3D_WebGL
-// Main demo program for full screen and pointer lock
-// Emmanuel Charette 2017-2020
+// Main demo program for version 0.5
+// Emmanuel Charette 2020
 
 "use strict"
-
 
 var nHitTest = 0;
 var nHits = 0;
 
 var show_DEV_CD = false;
-var phyTracers;
+var phyTracers, dev_Hits;
 var gAccel = 0;
-var timer = { delta : 0, start : 0 }; // dummy timer 
+
+var timer = { delta : 0, start : Date.now() }; // dummy timer 
 
 var logElement = null;
-
 function log(text, silent = true) {
-    let ts = 0;
-    try {
-        ts = Date.now() - timer.start;
-    } catch (e) {
-        // timer was not yet defined
-        ts = "=";
-    } 
-    //console.log("E3D[" + ts + "] " + text);
+    let ts = Date.now() - timer.start;
     if (!silent) {
         if (logElement == null) logElement = document.getElementById("logDiv");        
-        if (logElement == null) {
+        if (logElement != null) {
             logElement.innerHTML += "[" + ts + "] " + text + "<br />";
             logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
-        } else {
-            console.log("E3D[" + ts + "] " + text);
-        }
+        } 
     }
+    console.log("[" + ts + "] " + text);
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -40,64 +31,16 @@ log("DOMContentLoaded");
 
 log("Get DOM Elements");
 const can = document.getElementById("GLCanvas");
-const status = document.getElementById("statusDiv");
 const mainDiv = document.getElementById("mainDiv");
+const logElement = document.getElementById("logDiv");
+
+const status = document.getElementById("statusDiv");
 
 log("Set DOM Events");
-window.addEventListener("resize", winResize); // To reset camera matrix
-
+can.addEventListener("resize", winResize); // To reset camera matrix
 document.forms["moveTypeForm"].addEventListener("change", camChange); // To update camera matrix
 document.forms["moveTypeForm"].invertY.addEventListener("keydown", (e) => {e.preventDefault(); });
 document.forms["displayForm"].CDP.addEventListener("keydown", (e) => {e.preventDefault(); });
-/*
-// Try to figure out which of desktop or mobile control scheme should be used
-document.body.addEventListener("mousemove", callBackMouse);
-document.body.addEventListener("touchStart", callBackTouch);
-document.body.removeEventListener
-
-function callBackMouse() {
-    console.log("Probably Desktop");
-    document.body.removeEventListener("mousemove", callBackMouse);
-    document.body.addEventListener("touchStart", callBackTouch);
-}
-
-function callBackTouch() {
-    console.log("Probably Mobile");
-    document.body.removeEventListener("mousemove", callBackTouch);
-    document.body.addEventListener("touchStart", callBackMouse);
-}
-*/
-document.getElementById("screenSizeDiv").addEventListener("click", () => { fullscreenToggle(mainDiv); hover2CollapseAll(); } );
-document.getElementById("pointerLockImg").addEventListener("click", () => { pLockToggle(can); hover2CollapseAll(); } );
-pLockCallback = function(event) {
-    log(event, true);
-
-    // remap controls
-    if (event == "lock") {
-        inputs.pointerMap.set("rx_btn", E3D_INP_ALWAYS);
-        inputs.pointerMap.set("ry_btn", E3D_INP_ALWAYS);
-        inputs.keyMap.set("action0", E3D_INP_LMB);
-
-    } else if ((event == "unlock") || (event == "error")) {
-        inputs.pointerMap.set("rx_btn", E3D_INP_LMB);
-        inputs.pointerMap.set("ry_btn", E3D_INP_LMB);
-        inputs.keyMap.set("action0", E3D_INP_DOUBLE_PREFIX_CODE + E3D_INP_LMB);
-    }
-}
-fullscreenChangeCallback = function fullscreenChange(active, elem) {
-    if (active) {
-        document.getElementById("screenSizeImgFS").style.display = "none";
-        document.getElementById("screenSizeImgWS").style.display = "inline-block";
-    } else {
-
-        document.getElementById("screenSizeImgFS").style.display = "inline-block";
-        document.getElementById("screenSizeImgWS").style.display = "none";
-        if (pLockRequested) {
-            pLockRequest(mainDiv); // Restore pointerLock 
-            hover2CollapseAll();
-        }
-    }
-}
 
 // Engine Config
 
@@ -110,7 +53,7 @@ const _zFar = 500.0;
 var winWidth = 10, winHeight = 10;
 var usepct_smth = 0; //usage pct smoothed value
 var l0v, l1v;// light vector entities 
-var testSph, splos, planes, cubes, dev_CD, targetVector; // entities
+var testSph, splos, planes, fplanes, cubes, dev_CD; // entities
 var cloned = false;
 var animations = [];
 var nHitTest = 0;
@@ -118,28 +61,41 @@ var nHitTest = 0;
 // Engine Components
 
 var gl; // webGL canvas rendering context
-timer = new E3D_timing(false, 50, timerTick);
+timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
 var resMngr = new ressourceManager(onRessource);
 var meshLoader = new E3D_loader();
 
-var inputs = new E3D_input(can, true, true, false, true);// don't support touch in main element, touch handling is done in virtual TS and TP
-inputs.onInput = onEngineInput;
+var inputs = new E3D_input(mainDiv, true, true, true, true, true, true);
 
+// virtual KB
+var vKBinputs = new E3D_input_virtual_kb(document.getElementById("inputTable"), inputs, true);
+// virtual trackpad + thumbstick
+var vTPinput = new E3D_input_virtual_trackpad(document.getElementById("track0") , inputs);
+var vTSinput = new E3D_input_virtual_thumbstick(document.getElementById("thumb0"), inputs, "action1");
+vTSinput.Xspeed = inputs._rotSpeed;
+vTSinput.Yspeed = inputs._posSpeed; //pz
 // virtual dual sticks
-var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "", "action0");
+var vTSinputLeft = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Left"), inputs, "action1");
 vTSinputLeft.Xspeed = inputs._rotSpeed;
 vTSinputLeft.Yspeed = inputs._posSpeed; //pz
-var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "", "action1");
+var vTSinputRight = new E3D_input_virtual_thumbstick(document.getElementById("thumb1Right"), inputs, "action0");
 vTSinputRight.Xspeed = inputs._rotSpeed;
 vTSinputRight.Yspeed = inputs._rotSpeed;
 
-log("Session Start", false);
+try {
+if (process) {
+    var info = document.getElementById("processInfo");
+    if (info) {
+        info.innerHTML = "We are using node " + process.versions.node +
+        ", Chrome " + process.versions.chrome + 
+        ", and Electron " + process.versions.electron; 
+    }
+}
+} catch (ex) { console.log("Running in browser (not Electron)"); }
 
+log("Session Start", true);
 initEngine();
-
-log("Engine Initialized", false);
-
 
 // Status information
 
@@ -152,40 +108,27 @@ function updateStatus() {
 
 
 function winResize() {
-    gl.canvas.width  = gl.canvas.offsetWidth;
-    gl.canvas.height = gl.canvas.offsetHeight;
-
-    winWidth = gl.canvas.offsetWidth;
-    winHeight = gl.canvas.offsetHeight;
-
-    gl.viewport(0, 0, winWidth, winHeight);
-
-    log("Resize to " + winWidth + " x " + winHeight, false);
-   
-    let vmode = document.forms["moveTypeForm"].moveType.value; 
-
-    if (vmode == "model") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    } 
-    else if (vmode == "free") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    } 
-    else if (vmode == "space") {
-        scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar);
-    }
-    else {
-        scn.camera.resize(winWidth, winHeight) 
-    }
-
-
-    vTSinputLeft.onResize();
-    vTSinputRight.onResize();
+    winWidth = gl.canvas.clientWidth;
+    winHeight = gl.canvas.clientHeight;
+    
+    scn.camera.resize(winWidth, winHeight, _fieldOfView, _zNear, _zFar); 
 }
 
 
 function camChange() {
 
     let vmode = document.forms["moveTypeForm"].moveType.value; 
+
+    inputs.keyMap.set("ry_dec", "KeyQ");
+    inputs.keyMap.set("ry_inc", "KeyE");
+
+    inputs.keyMap.set("rz_dec", "KeyZ");    
+    inputs.keyMap.set("rz_inc", "KeyX");
+
+    inputs.keyMap.set("rx_dec", "null");
+    inputs.keyMap.set("rx_inc", "null");
+
+    inputs.keyMap.set("action0", "KeyR");
 
     if (vmode == "model") {
         scn.camera = new E3D_camera_model("cam1m", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
@@ -198,11 +141,18 @@ function camChange() {
     else if (vmode == "space") {
         scn.camera = new E3D_camera_space("cam1s", winWidth, winHeight, _fieldOfView, _zNear, _zFar);
         scn.lights.light0_lockToCamera = true;
+
+        inputs.keyMap.set("ry_dec", "KeyZ");
+        inputs.keyMap.set("ry_inc", "KeyX");
+
+        inputs.keyMap.set("rz_dec", "KeyQ");
+        inputs.keyMap.set("rz_inc", "KeyE");
     }
     else {
         scn.camera = new E3D_camera("cam1o", winWidth, winHeight);
     }
 }
+
 
 function initEngine() {
 
@@ -217,7 +167,7 @@ function initEngine() {
 
     log("Scene Creation", false);
     try {
-        scn = new E3D_scene("mainScene", gl, winWidth, winHeight, [0.0, 0.0, 0.25, 1.0], 400);
+        scn = new E3D_scene("mainScene", gl, winWidth, winHeight, [0.0, 0.0, 0.15, 1.0], 300);
 
         log("Shader Program Initialization", false);
         scn.program = new E3D_program("mainProgram", gl);
@@ -225,7 +175,7 @@ function initEngine() {
         scn.program.bindLocations(attribList01, uniformList01);
 
         log("Lighting Initialization", false);
-        scn.lights =  new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
+        scn.lights = new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
         scn.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
         scn.lights.setDirection0(v3_val_new(-0.2, -0.2, -1.0)); 
         scn.lights.light0_lockToCamera = true;
@@ -248,22 +198,6 @@ function initEngine() {
 
         return; 
     }
-    
-        inputs.keyMap.set("rx_dec", "null");
-        inputs.keyMap.set("rx_inc", "null");
-        inputs.keyMap.set("ry_dec", "null");
-        inputs.keyMap.set("ry_inc", "null");
-        inputs.keyMap.set("rz_dec", "KeyQ");
-        inputs.keyMap.set("rz_inc", "KeyE");
-        inputs.pointerMap.set("px_btn", E3D_INP_DISABLED);
-        inputs.pointerMap.set("py_btn", E3D_INP_DISABLED);
-        inputs.pointerMap.set("pz_btn", E3D_INP_DISABLED);
-        inputs.pointerMap.set("rz_btn", E3D_INP_DISABLED);
-
-        inputs.keyMap.set("togglePointerlock", "ControlRight");
-        inputs.keyMap.set("toggleFullscreen", "F11");
-
-        pLockCallback("unlock"); // preset controls mapping
      
     resMngr.addRessource("../Models/ST.raw", "ST", "Model");
     resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
@@ -271,20 +205,24 @@ function initEngine() {
     resMngr.addRessource("../Models/SPH.raw", "sph", "Model");
     resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
+
+
     
     l0v = new E3D_entity_axis("light0vect", true, 10.0, true);
     l0v.position = v3_val_new(-5, 20, -5);
     l0v.visible = true;
     l0v.vis_culling = false;
-
     scn.addEntity(l0v);
     
     l1v = new E3D_entity_axis("light1vect", true, 10.0, true);
     l1v.position = v3_val_new(5, 20, 5);
     l1v.visible = true;
     l1v.vis_culling = false;
-
     scn.addEntity(l1v);
+
+    timer.run();
+    E3D_G = 32;
+    scn.state = E3D_ACTIVE;
 
     testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
     testSph.addWireSphere([30,0,0], 20, [1,0,0], 24, true);
@@ -295,28 +233,21 @@ function initEngine() {
 
     splos = new E3D_entity_wireframe_canvas("splosions");
     splos.visible = true;
-    splos.arrayIncrement = 2048; 
+    splos.arrayIncrement = 4096; 
     splos.vis_culling = false;
     scn.addEntity(splos);
 
-    planes = new E3D_entity_wireframe_canvas("infinitePlanes");
-    planes.addPlane([   0,   0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true);
-    planes.addPlane([   0, 300,    0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true);
-    planes.addPlane([ 225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true);
-    planes.addPlane([-150,  80,  150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true);
-    planes.addPlane([ 0,   0, 50], [0, 0, 0], 20, 20, -1, [1,0,0], true);
+    planes = new E3D_entity_wireframe_canvas("Planes");
+    planes.addPlane([0, 0, -100], [0, 0, 0], 50, 50, 4, [1,1,0], true);
+    planes.addPlane([0, 300, 0], [PIdiv2, 0, 0], 450, 450, 20, [0,1,0], true);
+    planes.addPlane([225, 300, -225], [0, PIdiv2, 0], 250, 250, 11, [0,1,1], true);
+    planes.addPlane([-150, 80, 150], [0, -PIdiv2/2, -PIdiv2/2], 300, 300, 15, [1,1,1], true);
+    planes.addPlane([0, 0, 50], [0, 0, 0], 20, 20, -1, [1,0,0], true);
     planes.addPlane([50, -20, 25], [0, PIdiv2, 0], 10, 40, -1, [0,1,0], true);
-    planes.addPlane([25,  20, 25], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], true);
+    planes.addPlane([25, 20, 25], [PIdiv2/2, PIdiv2, PIdiv2/2], 30, 30, 2, [0.5,0.5,0.5], true);
     planes.visible = true;
+    planes.vis_culling = false;
     scn.addEntity(planes);
-
-    targetVector = new E3D_entity_wireframe_canvas("vectorHitTest");
-    targetVector.position = [25, 25, 25];
-    targetVector.addLine([0, 0, 0], [0, 100, 0], false, [1,1,1]);
-    targetVector.pushCD_edge([0, 0, 0], [0, 100, 0]);
-    targetVector.visible = true;
-    scn.addEntity(targetVector);
-
 
     cubes = new E3D_entity_wireframe_canvas("cubesTest");
     cubes.position = [0, 50, -50];
@@ -324,18 +255,25 @@ function initEngine() {
     cubes.addWireCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
     cubes.addWireCube([0, 0, 0], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
     cubes.addWireCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
+    cubes.addTriangle([0, 20, 80], [-30, 22, 150], [30, 18, 150], [1, 1, 1], true);
     cubes.visible = true;
     scn.addEntity(cubes);
 
     dev_CD = new E3D_entity_wireframe_canvas("DEV/CD_Display");
-
     dev_CD.visible = true;
     dev_CD.vis_culling = false;
     scn.addEntity(dev_CD);
 
-    E3D_G = 32;
-    timer.run();
-    scn.state = E3D_ACTIVE;
+    dev_Hits = new E3D_entity_wireframe_canvas("PHY_hits");
+    dev_Hits.visible = true;
+    dev_Hits.vis_culling = false;
+    scn.addEntity(dev_Hits);
+
+    phyTracers = new E3D_entity_wireframe_canvas("PHY_Traces", 1024*32);
+    phyTracers.visible = true;
+    phyTracers.vis_culling = false;
+    scn.addEntity(phyTracers);
+
 }
 
 
@@ -352,69 +290,75 @@ function prepRender() {
         l1v.updateVector(scn.lights.light1_adjusted);
     }
 
-    // Animations
+    // Run Animations
     cleanupDoneAnimations(animations, scn);
     collisionDetectionAnimator(animations, scn, 10);
 
-    // DEV CD display
+    // Display CD informations
     if (document.forms["displayForm"].CDP.checked) {
-        dev_CD.numElements = 0;
+        show_DEV_CD = true;
+        dev_CD.clear();
         for (let i = 0; i < scn.entities.length; ++i) {
             if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
         }
         dev_CD.visible = true;
     } else {
         dev_CD.visible = false;
+        show_DEV_CD = false;
     }
 
 }
-
-
-function onEngineInput() { // preprocess inputs out of game loop
-
-    if (inputs.checkCommand("togglePointerlock", true)) {
-        pLockToggle(can);
-        hover2CollapseAll();
-    }
-
-    if (inputs.checkCommand("toggleFullscreen", true)) {
-        let pla = pLockActive();
-        fullscreenToggle(mainDiv);
-        if (pla) {
-            pLockRequest(can);
-            hover2CollapseAll();
-        }
-    }
-
-}
-
 
 function timerTick() {  // Game Loop
     
+    // Inputs
     vTSinputRight.processInputs("ry_offset", "rx_offset");
-    vTSinputLeft.processInputs("rz_offset", "pz_offset");
+
+    if (scn.camera.id == "cam1s") {
+        vTSinput.processInputs("rz_offset", "pz_offset");
+        vTSinputLeft.processInputs("rz_offset", "pz_offset");
+    } else {
+        vTSinput.processInputs("px_offset", "pz_offset");
+        vTSinputLeft.processInputs("px_offset", "pz_offset");
+
+    }
 
     inputs.processInputs(timer.delta);
-
     inputs.smoothRotation(6);
     inputs.smoothPosition(6);
+    if (scn.camera.id == "cam1f") {
+     //   inputs.clampRotationSmooth(-PIdiv2, PIdiv2, true, false, false);
+        if (scn.camera.rotation[0] < -PIdiv2)  {
+            scn.camera.rotation[0] = -PIdiv2;
+            if (inputs.rx_delta_smth < 0) inputs.rx_delta_smth = 0;
+        }
 
+        if (scn.camera.rotation[0] >  PIdiv2) {
+            scn.camera.rotation[0] =  PIdiv2;
+            if (inputs.rx_delta_smth > 0) inputs.rx_delta_smth = 0;
+        }
+
+    } 
+
+    // Stats
     updateStatus();
     nHitTest = 0;
 
+    // Events / Commands
     if (inputs.checkCommand("action0", true)) {
+     //   log("action0", true); throw a ball
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         newSph.position[1] = 5;
         newSph.rotation[0] = rndPM(PIx2);
         newSph.rotation[1] = rndPM(PIx2);
-
         animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
              [rndPM(1), rndPM(1), rndPM(1) -100], _v3_null, 1.0, 10, true));
-
         animations[animations.length-1].target.animIndex = animations.length-1;
-        animations[animations.length-1].group = "splodable";     
+
+        animations[animations.length-1].group = "splodable";      
     }
     if (inputs.checkCommand("action1", true)) {
+       // log("action1", true); fire shotgun
         let newPyra = new E3D_entity_dynamicCopy("shotgun " + timer.lastTick, scn.entities[scn.getEntityIndexFromId("pyra")]);  
         newPyra.moveTo([10, -10, 0]); // originate from bottom right corner of view
 
@@ -423,16 +367,16 @@ function timerTick() {  // Game Loop
             shotgunPartPos, shotgunPartDir, 0.2, 2.0, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
         animations[animations.length-1].animLastPass = collisionResult_lastPass_splode;
-
         newPyra.visible = true;
         scn.addEntity(newPyra); 
     }
+
+    // Render
     if (scn.state == E3D_ACTIVE) {
         scn.preRender();
         scn.render();
         scn.postRender();
     }   
-
 }
 
 
@@ -449,7 +393,6 @@ function onRessource(name, msg) {
         log("Async ressource loaded: " + name, true); 
 
         if (resMngr.getRessourceType(name) == "Model") {
-            
             if (name == "ST") {
                 let nm = new E3D_entity(name, "", false);
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name));
@@ -467,22 +410,21 @@ function onRessource(name, msg) {
 
             } else if (name == "CM") {
                 let nm = new E3D_entity(name+"_top", "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep", v3_val_new(5, 1, 5));
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep", v3_val_new(3.0, 1.0, 3.0));
                 meshLoader.addModelData(nm);
 
-                nm.position[1] = -120;
+                nm.position[1] = -80;
                 nm.visible = true;
                 scn.addEntity(nm);  
 
                 nm = scn.cloneEntity("CM_top", "CM_bottom");
-                nm.position[1] = 120;
-
+                nm.position[1] = 80;
                 nm.visible = true;
                 nm.resetMatrix();
 
             } else if (name == "sph") {
                 let nm = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0, 1.0, 0.5]);
+                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0,1.0,0.5]);
                 meshLoader.smoothNormals(0.0);
                 meshLoader.addModelData(nm);
 
@@ -494,13 +436,11 @@ function onRessource(name, msg) {
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0,0.8,0.0]);
                 meshLoader.removeNormals();
                 meshLoader.addModelData(nm);
-
-                scn.addEntity(nm);   
+                scn.addEntity(nm);
             } else {
                 let nm = new E3D_entity(name, "", false);
                 meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep");
                 meshLoader.addModelData(nm);
-                
                 scn.addEntity(nm);  
                 nm.visible = true;
                 nm.pushCD_sph(_v3_origin, 7.0);
@@ -513,20 +453,18 @@ function onRessource(name, msg) {
 }
 
 
+// Creates copies of the StormTrooper entity
 function cloneWar() {
     for (let j = 1; j < 36; ++j) {
         var newGuy = scn.cloneEntity("ST", "ST" + j);
         newGuy.rotation[1] = j * 10 * DegToRad;
         newGuy.position[2] = -120;
-        v3_rotateY_mod(newGuy.position, _v3_origin, j * 10 * DegToRad );
+        v3_rotateY_mod(newGuy.position, j * 10 * DegToRad );
         newGuy.resetMatrix();
         newGuy.visible = true;
     }
     cloned = true;
 }
-
-
-// animator functions
 
 // Returns the starting positions of the shotgun's pellet particules
 function shotgunPartPos(n, nbPart) {
@@ -556,7 +494,6 @@ function collisionResult_lastPass_splode() {
             var dvect = Array(nvect);
             var vect = Array(nvect);
             var location = v3_new();
-            splos.increaseSize(6 * 18 * 20);
             for (i = 0; i < nvect; ++i) {
                 vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
                 dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
@@ -590,6 +527,11 @@ function collisionResult_lastPass_splode() {
 
     anim_Base_endPass_ttl.call(this); // call default
  }
+
+
+
+
+
 
 
 
