@@ -26,6 +26,8 @@ class E3D_timing {
         this.fps = 60;
         this.fpsSmoothed = 60;
 
+        this.g = E3D_G;
+
         this.smoothFactor = 2.5;
 
         if (run) {
@@ -56,7 +58,7 @@ class E3D_timing {
         this.delta = (ts - this.lastTick) / 1000;
         this.lastTick = ts;
 
-        gAccel = this.delta * E3D_G;
+        this.g = this.delta * E3D_G;
 
         if (this.onTick) {             
             this.onTick(); 

@@ -1,5 +1,6 @@
 // Easy3D_WebGL
-// Common engine constants and some helper methods
+// Math heleprs
+// 3D vectors and 4x4 matrix methods
 // Modified version of gl-matrix.js by Brandon Jones and Colin MacKenzie IV version 2.4.0 (see notice below)
 // Uses faster vanilla array, most methods have 3 version suffixes:
 //      _new returns a new object: add(a, b) -> return new (a + b)

@@ -6,27 +6,26 @@
 "use strict"
 
 class E3D_program {
-    constructor(id, context) {
+    constructor(id)  {
         this.id = id;
-        this.context = context;
-
+        
         this.shaderProgram = null;
         this.shaderAttributes = {};
         this.shaderUniforms = {};
     }
 
     compile(vertexSource, fragmentSource) {
-        const vs = E3D_program.loadShader(this.context, this.context.VERTEX_SHADER, vertexSource);
-        const fs = E3D_program.loadShader(this.context, this.context.FRAGMENT_SHADER, fragmentSource);
+        const vs = E3D_program.loadShader(CONTEXT, CONTEXT.VERTEX_SHADER, vertexSource);
+        const fs = E3D_program.loadShader(CONTEXT, CONTEXT.FRAGMENT_SHADER, fragmentSource);
 
         if ((vs != null) && (fs != null)) {
-            this.shaderProgram = this.context.createProgram();
-            this.context.attachShader(this.shaderProgram, vs);
-            this.context.attachShader(this.shaderProgram, fs);
-            this.context.linkProgram(this.shaderProgram);
+            this.shaderProgram = CONTEXT.createProgram();
+            CONTEXT.attachShader(this.shaderProgram, vs);
+            CONTEXT.attachShader(this.shaderProgram, fs);
+            CONTEXT.linkProgram(this.shaderProgram);
 
-            if (!this.context.getProgramParameter(this.shaderProgram, this.context.LINK_STATUS)) {
-                console.log('Unable to initialize the shader program: ' + this.context.getProgramInfoLog(this.shaderProgram));
+            if (!CONTEXT.getProgramParameter(this.shaderProgram, CONTEXT.LINK_STATUS)) {
+                console.log('Unable to initialize the shader program: ' + CONTEXT.getProgramInfoLog(this.shaderProgram));
                 this.shaderProgram = null;
             }
         } else {
@@ -37,11 +36,11 @@ class E3D_program {
 
     bindLocations(attribList, uniformList) {
         for (let i = 0; i < attribList.length; ++i) {
-            this.shaderAttributes[attribList[i]] = this.context.getAttribLocation(this.shaderProgram, attribList[i]);
+            this.shaderAttributes[attribList[i]] = CONTEXT.getAttribLocation(this.shaderProgram, attribList[i]);
         }
 
         for (let i = 0; i < uniformList.length; ++i) {
-            this.shaderUniforms[uniformList[i]] = this.context.getUniformLocation(this.shaderProgram, uniformList[i]);
+            this.shaderUniforms[uniformList[i]] = CONTEXT.getUniformLocation(this.shaderProgram, uniformList[i]);
         }
     }
 

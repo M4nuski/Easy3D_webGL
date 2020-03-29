@@ -12,9 +12,6 @@ const E3D_PAUSE = 2; // pause
 const E3D_RESTART = 3; // reset and play
 const E3D_DONE = 4;
 
-// Physics Constants
-var E3D_G = 386.22;
-
 
 /**
  * Animation class
@@ -282,7 +279,7 @@ function newTransformAnim(entity, pos_speed, rot_speed, ttl = -1, CD = false, en
     anim.gravity = false;
     anim.state = E3D_PLAY;
     anim.target.visible = true;
-    anim.target.resetMatrix();
+    anim.target.updateMatrix();
     anim.last_position = v3_clone(anim.target.position);
 
     return anim;
@@ -303,7 +300,7 @@ function newBaseAnim(entity, pos_speed, rot_speed, gravity = 0, ttl = -1, CD = f
     anim.gravity = gravity;
     anim.state = E3D_PLAY;
     anim.target.visible = true;
-    anim.target.resetMatrix();
+    anim.target.updateMatrix();
     anim.last_position = v3_clone(anim.target.position);
 
     return anim;
@@ -330,7 +327,7 @@ function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, grav
     anim.gravity = gravity;
     anim.state = E3D_PLAY;
     anim.target.visible = true;
-    anim.target.resetMatrix();
+    anim.target.updateMatrix();
     anim.last_position = v3_clone(anim.target.position);
 
     return anim;
@@ -389,7 +386,7 @@ function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, par
     anim.target.collisionDetection = CD;
     anim.state = E3D_PLAY;
     anim.target.visible = true;
-    anim.target.resetMatrix();
+    anim.target.updateMatrix();
     anim.last_position = v3_clone(anim.target.position);
 
     return anim;
@@ -454,7 +451,7 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
     anim.target.collisionDetection = CD;
     anim.state = E3D_PLAY;
     anim.target.visible = true;
-    anim.target.resetMatrix();
+    anim.target.updateMatrix();
     anim.last_position = v3_clone(anim.target.position);
 
     return anim;
@@ -512,7 +509,7 @@ function collisionResult_asSource_bounce(){
             this.deltaLength = v3_length(this.delta);
             v3_add_res(this.target.position, this.last_position, this.delta); // new position        
         
-            this.target.resetMatrix();
+            this.target.updateMatrix();
         }  //else v3_copy(this.target.position, firstCol.p0);
       
         this.pspd[1] -= this.frameG;
@@ -541,7 +538,7 @@ function collisionResult_asTarget_bounce(){
     if (this.deltaLength < _v3_epsilon) this.deltaLength = _v3_epsilon;
     v3_add_res(this.target.position, this.last_position, this.delta); 
 
-    this.target.resetMatrix();
+    this.target.updateMatrix();
 }
 
 
@@ -590,7 +587,7 @@ function collisionResult_asSource_slide(){
             v3_scale_res(this.delta, this.pspd, timer.delta * remainder);
             this.deltaLength = v3_length(this.delta);
             v3_add_res(this.target.position, this.last_position, this.delta);
-            this.target.resetMatrix();
+            this.target.updateMatrix();
             this.pspd[1] -= this.frameG;
 
         } else { // along path
@@ -624,7 +621,7 @@ function collisionResult_asSource_slide(){
                 this.deltaLength = v3_length(this.delta);
                 v3_add_res(this.target.position, this.last_position, this.delta); // new position        
             
-                this.target.resetMatrix();
+                this.target.updateMatrix();
             } // face to face  
             this.pspd[1] -= this.frameG;
         } // t0 < 0
@@ -655,13 +652,13 @@ function anim_Base_firstPass(){
         v3_copy(this.last_position, this.target.position);
         v3_scale_res(this.delta, this.pspd, timer.delta);  
 
-        this.frameG = gAccel * this.gravity;
+        this.frameG = TIMER.g * this.gravity;
         this.pspd[1] -= this.frameG;
 
         v3_add_mod(this.target.position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
-        this.target.resetMatrix();
+        this.target.updateMatrix();
         this.lastHitMarker = ""; 
     }
 }
@@ -677,7 +674,7 @@ function anim_Transform_firstPass() {
 
         v3_addscaled_mod(this.target.rotation, this.rspd, timer.delta);
 
-        this.target.resetMatrix();
+        this.target.updateMatrix();
         this.lastHitMarker = ""; 
     }
 }
@@ -689,7 +686,7 @@ function anim_Part_firstPass() {
         v3_copy(this.last_position, this.target.position);
         v3_scale_res(this.delta, this.pspd, timer.delta);  
 
-        this.frameG = gAccel * this.gravity;
+        this.frameG = TIMER.g * this.gravity;
         this.pspd[1] -= this.frameG;
 
         v3_add_mod(this.target.position, this.delta);
@@ -741,7 +738,7 @@ function anim_Part_firstPass() {
 
         this.target.cull_dist = v3_length(max);
         this.target.dataContentChanged = true;
-        this.target.resetMatrix();
+        this.target.updateMatrix();
         this.lastHitMarker = ""; 
     }
 }

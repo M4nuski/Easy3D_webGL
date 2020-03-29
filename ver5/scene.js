@@ -12,21 +12,15 @@ const E3D_ACTIVE = 2;
 
 
 class E3D_scene {
-    constructor(id, context, width, height, vBackColor = [0.0, 0.0, 0.1, 1.0], fogLimit = -1) {
+    constructor(id, vBackColor = [0.0, 0.0, 0.1, 1.0], fogLimit = -1) {
         this.id = id;
-        this.context = context; // GL rendering context
         this.state = E3D_CREATED;
 
-        this.camera = new E3D_camera(id+"defaultCtorCamera", width, height);
-
-        this.entities = [];
-
+        this.program = null;    
         this.lights = new E3D_lighting();
         this.clearColor = vBackColor;
         this.fogLimit = fogLimit;
         this.fogFactor = 1.0;
-
-        this.program = null; // shader program class
 
         this.preRenderFunction = null; 
         this.renderFunction = null; 
@@ -37,36 +31,34 @@ class E3D_scene {
 
     initialize() {
         // config GL context        
-        this.context.clearColor(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]);
-        this.context.clearDepth(1.0);
-        this.context.enable(this.context.DEPTH_TEST);
-        this.context.depthFunc(this.context.LEQUAL);
-        this.context.cullFace(this.context.BACK);
-        this.context.enable(this.context.CULL_FACE); 
+        CONTEXT.clearColor(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]);
+        CONTEXT.clearDepth(1.0);
+        CONTEXT.enable(CONTEXT.DEPTH_TEST);
+        CONTEXT.depthFunc(CONTEXT.LEQUAL);
+        CONTEXT.cullFace(CONTEXT.BACK);
+        CONTEXT.enable(CONTEXT.CULL_FACE); 
 
         this.state = E3D_READY;
     }
 
     changeClearColor(color) {
         this.clearColor = color;
-        this.context.clearColor(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]);
+        CONTEXT.clearColor(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]);
     }
 
     preRender() {
-        // timing, events, controls, camera, animations
-
+        // for this shader
         if (this.lights.light0_lockToCamera) {
-            this.lights.light0_adjusted = this.camera.adjustToCamera(this.lights.light0_direction);
+            this.lights.light0_adjusted = CAMERA.adjustToCamera(this.lights.light0_direction);
         }
         if (this.lights.light1_lockToCamera) {
-            this.lights.light1_adjusted = this.camera.adjustToCamera(this.lights.light1_direction);
+            this.lights.light1_adjusted = CAMERA.adjustToCamera(this.lights.light1_direction);
+        }
+        if (this.fogLimit > 0.0) {
+            this.fogFactor = 1.0 / ((E3D_FAR - E3D_NEAR) - this.fogLimit);
         }
 
-
-        if (this.fogLimit > 0.0) {
-            this.fogFactor = 1.0 / ((this.camera.far - this.camera.near) - this.fogLimit);
-        };
-
+        CAMERA.updateMatrix();
         if (this.preRenderFunction) {
             this.preRenderFunction(this);
         }
@@ -75,83 +67,83 @@ class E3D_scene {
     render() {
         // entities, sprites, hud
 
-        this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
+        CONTEXT.clear(CONTEXT.COLOR_BUFFER_BIT | CONTEXT.DEPTH_BUFFER_BIT);
 
-        this.context.useProgram(this.program.shaderProgram);
+        CONTEXT.useProgram(this.program.shaderProgram);
 
-        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getProjectionViewMatrix());     
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, CAMERA.getProjectionViewMatrix());     
 
-        this.context.uniform3fv(this.program.shaderUniforms["uLightA_Color"], this.lights.ambiant_color);
+        CONTEXT.uniform3fv(this.program.shaderUniforms["uLightA_Color"], this.lights.ambiant_color);
 
-        this.context.uniform3fv(this.program.shaderUniforms["uLight0_Color"], this.lights.light0_color);
-        this.context.uniform3fv(this.program.shaderUniforms["uLight0_Direction"], this.lights.light0_adjusted);
+        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight0_Color"], this.lights.light0_color);
+        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight0_Direction"], this.lights.light0_adjusted);
 
-        this.context.uniform3fv(this.program.shaderUniforms["uLight1_Color"], this.lights.light1_color);
-        this.context.uniform3fv(this.program.shaderUniforms["uLight1_Direction"], this.lights.light1_adjusted);
+        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight1_Color"], this.lights.light1_color);
+        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight1_Direction"], this.lights.light1_adjusted);
 
-        this.context.uniform4fv(this.program.shaderUniforms["uFogColor"], this.clearColor);
-        this.context.uniform1f(this.program.shaderUniforms["uFogLimit"], this.fogLimit);
-        this.context.uniform1f(this.program.shaderUniforms["uFogFactor"], this.fogFactor);
+        CONTEXT.uniform4fv(this.program.shaderUniforms["uFogColor"], this.clearColor);
+        CONTEXT.uniform1f(this.program.shaderUniforms["uFogLimit"], this.fogLimit);
+        CONTEXT.uniform1f(this.program.shaderUniforms["uFogFactor"], this.fogFactor);
 
-        this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
+        CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
 
         this.drawnElemenets = 0;
 
-        for (let i = 0; i < this.entities.length; ++i) {
-            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i)) ) {
+        for (let i = 0; i < ENTITIES.length; ++i) {
+            if ((ENTITIES[i].visible) && (ENTITIES[i].numElements > 0) && (this.cull_check_visible(i)) ) {
 
                 // Entity Attributes
-                if (this.entities[i].dynamic) {
-                    if (this.entities[i].dataSizeChanged) { 
+                if (ENTITIES[i].dynamic) {
+                    if (ENTITIES[i].dataSizeChanged) { 
                         // reset buffer
-                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
-                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
-                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
-                        if (this.entities[i].drawStrokes) this.bindAndResetShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
-                        this.entities[i].dataSizeChanged = false;
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
+                        if (ENTITIES[i].drawStrokes) this.bindAndResetShortIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
+                        ENTITIES[i].dataSizeChanged = false;
 
-                    } else if (this.entities[i].dataContentChanged) { 
+                    } else if (ENTITIES[i].dataContentChanged) { 
                         // update buffer
-                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer, this.entities[i].vertexArray);
-                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer, this.entities[i].normalArray);    
-                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer, this.entities[i].colorArray);  
-                        if (this.entities[i].drawStrokes) this.bindAndUpdateShortIndexBuffer(this.entities[i].strokeIndexBuffer, this.entities[i].strokeIndexArray);
-                        this.entities[i].dataContentChanged = false;
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
+                        if (ENTITIES[i].drawStrokes) this.bindAndUpdateShortIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
+                        ENTITIES[i].dataContentChanged = false;
 
                     } else {
                         // bind buffer
-                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
-                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
-                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
-                        if (this.entities[i].drawStrokes) this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
+                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer);  
+                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer);    
+                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer);
+                        if (ENTITIES[i].drawStrokes) this.bindShortIndexBuffer(ENTITIES[i].strokeIndexBuffer);
                     }
                                        
 
                  } else { // static, bind only
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
-                    if (this.entities[i].drawStrokes) this.bindShortIndexBuffer(this.entities[i].strokeIndexBuffer);
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer);  
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer);    
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer);
+                    if (ENTITIES[i].drawStrokes) this.bindShortIndexBuffer(ENTITIES[i].strokeIndexBuffer);
                 }
 
                 // Entity Uniforms
-                this.context.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
-                this.context.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, this.entities[i].normalMatrix);
+                CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, ENTITIES[i].modelMatrix);
+                CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, ENTITIES[i].normalMatrix);
 
                 // Draw strokes
-                if (this.entities[i].drawStrokes) {
-                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
+                if (ENTITIES[i].drawStrokes) {
+                    CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
                     
-                //    this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
-                    this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);  
+                //    CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ENTITIES[i].strokeIndexBuffer);
+                    CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
                     
-                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
-                    this.drawnElemenets += this.entities[i].numStrokeElements;
+                    CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
+                    this.drawnElemenets += ENTITIES[i].numStrokeElements;
                 }
                 
                 // Draw triangles
-                this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
-                this.drawnElemenets += this.entities[i].numElements;
+                CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
+                this.drawnElemenets += ENTITIES[i].numElements;
             }
         }
 
@@ -169,70 +161,70 @@ class E3D_scene {
 
 
     bind3FloatBuffer(location, buffer) {
-        this.context.bindBuffer(this.context.ARRAY_BUFFER, buffer);
-        this.context.vertexAttribPointer(location, 3, this.context.FLOAT, false, 0, 0);
-        this.context.enableVertexAttribArray(location);
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
+        CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
+        CONTEXT.enableVertexAttribArray(location);
     }
     
     bindAndUpdate3FloatBuffer(location, buffer, data) {
-        this.context.bindBuffer(this.context.ARRAY_BUFFER, buffer);
-        this.context.bufferSubData(this.context.ARRAY_BUFFER, 0, data);
-        this.context.vertexAttribPointer(location, 3, this.context.FLOAT, false, 0, 0);
-        this.context.enableVertexAttribArray(location);
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
+        CONTEXT.bufferSubData(CONTEXT.ARRAY_BUFFER, 0, data);
+        CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
+        CONTEXT.enableVertexAttribArray(location);
     }
 
     bindAndReset3FloatBuffer(location, buffer, data) {
-        this.context.bindBuffer(this.context.ARRAY_BUFFER, buffer);
-        this.context.bufferData(this.context.ARRAY_BUFFER, data, this.context.DYNAMIC_DRAW); 
-        this.context.vertexAttribPointer(location, 3, this.context.FLOAT, false, 0, 0);
-        this.context.enableVertexAttribArray(location);
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
+        CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, data, CONTEXT.DYNAMIC_DRAW); 
+        CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
+        CONTEXT.enableVertexAttribArray(location);
     }
 
 
     bindShortIndexBuffer(buffer) {
-        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, buffer);
+        CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, buffer);
     }
     
     bindAndUpdateShortIndexBuffer(buffer, data) {
-        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, buffer);
-        this.context.bufferSubData(this.context.ELEMENT_ARRAY_BUFFER, 0, data);
+        CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, buffer);
+        CONTEXT.bufferSubData(CONTEXT.ELEMENT_ARRAY_BUFFER, 0, data);
     }
 
     bindAndResetShortIndexBuffer(buffer, data) {
-        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, buffer);
-        this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, data, this.context.DYNAMIC_DRAW); 
+        CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, buffer);
+        CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, data, CONTEXT.DYNAMIC_DRAW); 
     }
 
 
     addEntity(ent) {
 
         // Initialize context data buffers        
-        ent.vertexBuffer = this.context.createBuffer();
-        ent.colorBuffer = this.context.createBuffer();
-        ent.normalBuffer = this.context.createBuffer();
-        ent.strokeIndexBuffer = this.context.createBuffer();
+        ent.vertexBuffer = CONTEXT.createBuffer();
+        ent.colorBuffer = CONTEXT.createBuffer();
+        ent.normalBuffer = CONTEXT.createBuffer();
+        ent.strokeIndexBuffer = CONTEXT.createBuffer();
 
-        var usage = (ent.dynamic) ? this.context.DYNAMIC_DRAW : this.context.STATIC_DRAW;
+        var usage = (ent.dynamic) ? CONTEXT.DYNAMIC_DRAW : CONTEXT.STATIC_DRAW;
 
-        this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
-        this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, usage);        
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.vertexBuffer);
+        CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.vertexArray, usage);        
     
-        this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
-        this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, usage);            
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.colorBuffer);
+        CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.colorArray, usage);            
     
-        this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
-        this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, usage);
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
+        CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, usage);
 
-        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
-        this.context.bufferData(this.context.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
+        CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
+        CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
        
         ent.cull_dist = v3_length(E3D_scene.cull_calculate_max_pos(ent.vertexArray));
 
-        ent.resetMatrix();
+        ent.updateMatrix();
 
-        this.entities.push(ent);
+        ENTITIES.push(ent);
 
-        return this.entities.length - 1; // return new index
+        return ENTITIES.length - 1; // return new index
     }
 
     updateEntity(ent) {
@@ -241,7 +233,7 @@ class E3D_scene {
             ent.dataContentChanged = true;
             ent.dataSizeChanged = true;        
             ent.cull_dist = v3_length(E3D_scene.cull_calculate_max_pos(ent.vertexArray));
-            ent.resetMatrix();
+            ent.updateMatrix();
         }  else {
             return this.addEntity(ent);
         }
@@ -251,34 +243,34 @@ class E3D_scene {
         let idx = this.getEntityIndexFromId(id);
         if (idx > -1) {
 
-            var ent = new E3D_entity(newId, this.entities[idx].filename, this.entities[idx].dynamic);
+            var ent = new E3D_entity(newId, ENTITIES[idx].filename, ENTITIES[idx].dynamic);
 
-            ent.cloneData(this.entities[idx]);   
+            ent.cloneData(ENTITIES[idx]);   
 
             if (ent.dynamic) {
-                ent.vertexBuffer = this.context.createBuffer();
-                ent.colorBuffer = this.context.createBuffer();
-                ent.normalBuffer = this.context.createBuffer();
-                ent.strokeIndexBuffer = this.context.createBuffer();
-                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.vertexBuffer);
-                this.context.bufferData(this.context.ARRAY_BUFFER, ent.vertexArray, this.context.DYNAMIC_DRAW);
-                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.colorBuffer);
-                this.context.bufferData(this.context.ARRAY_BUFFER, ent.colorArray, this.context.DYNAMIC_DRAW);
-                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.normalBuffer);
-                this.context.bufferData(this.context.ARRAY_BUFFER, ent.normalArray, this.context.DYNAMIC_DRAW);
-                this.context.bindBuffer(this.context.ARRAY_BUFFER, ent.strokeIndexBuffer);
-                this.context.bufferData(this.context.ARRAY_BUFFER, ent.strokeIndexArray, this.context.DYNAMIC_DRAW);
+                ent.vertexBuffer = CONTEXT.createBuffer();
+                ent.colorBuffer = CONTEXT.createBuffer();
+                ent.normalBuffer = CONTEXT.createBuffer();
+                ent.strokeIndexBuffer = CONTEXT.createBuffer();
+                CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.vertexBuffer);
+                CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.vertexArray, CONTEXT.DYNAMIC_DRAW);
+                CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.colorBuffer);
+                CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.colorArray, CONTEXT.DYNAMIC_DRAW);
+                CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
+                CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, CONTEXT.DYNAMIC_DRAW);
+                CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.strokeIndexBuffer);
+                CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.strokeIndexArray, CONTEXT.DYNAMIC_DRAW);
                 ent.dataSizeChanged = true;
             }
 
-            this.entities.push(ent);   
+            ENTITIES.push(ent);   
             return ent; // return reference to new entity
         }        
     }
 
     getEntityIndexFromId(id) {
-        for (let i = 0; i < this.entities.length; ++i) {
-            if (this.entities[i].id == id) return i;
+        for (let i = 0; i < ENTITIES.length; ++i) {
+            if (ENTITIES[i].id == id) return i;
         }
         return -1;
     }
@@ -287,12 +279,12 @@ class E3D_scene {
         let idx = this.getEntityIndexFromId(id);
         if (idx > -1) {
             if (deleteBuffers) {
-                this.context.deleteBuffer(this.entities[idx].vertexBuffer);
-                this.context.deleteBuffer(this.entities[idx].colorBuffer);
-                this.context.deleteBuffer(this.entities[idx].normalBuffer);
-                this.context.deleteBuffer(this.entities[idx].strokeIndexBuffer);
+                CONTEXT.deleteBuffer(ENTITIES[idx].vertexBuffer);
+                CONTEXT.deleteBuffer(ENTITIES[idx].colorBuffer);
+                CONTEXT.deleteBuffer(ENTITIES[idx].normalBuffer);
+                CONTEXT.deleteBuffer(ENTITIES[idx].strokeIndexBuffer);
             }
-            this.entities.splice(idx, 1);
+            ENTITIES.splice(idx, 1);
         }    
     }
 
@@ -310,12 +302,12 @@ class E3D_scene {
     }
 
     cull_check_visible(idx) {
-        if (this.entities[idx].vis_culling) {
-            var pos = v3_sub_new(this.entities[idx].position, this.camera.position);
-            pos = this.camera.negateCamera(pos);
+        if (ENTITIES[idx].vis_culling) {
+            var pos = v3_sub_new(ENTITIES[idx].position, CAMERA.position);
+            pos = CAMERA.negateCamera(pos);
             var dist = -pos[2]; // only check for Z
-            return ( ((dist - this.entities[idx].cull_dist) < this.camera.far) && 
-            ((dist + this.entities[idx].cull_dist) > this.camera.near) );
+            return ( ((dist - ENTITIES[idx].cull_dist) < E3D_FAR) && 
+            ((dist + ENTITIES[idx].cull_dist) > E3D_NEAR) );
         }
         return true;
     }
@@ -336,83 +328,83 @@ class E3D_scene_cell_shader extends E3D_scene {
 
     render() {
 
-        this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);
+        CONTEXT.clear(CONTEXT.COLOR_BUFFER_BIT | CONTEXT.DEPTH_BUFFER_BIT);
         this.drawnElemenets = 0;
 
         // Line strokes 
-        this.context.useProgram(this.strokeProgram.shaderProgram);
+        CONTEXT.useProgram(this.strokeProgram.shaderProgram);
 
-        this.context.cullFace(this.context.FRONT);
-        this.context.depthFunc(this.context.LEQUAL);
+        CONTEXT.cullFace(CONTEXT.FRONT);
+        CONTEXT.depthFunc(CONTEXT.LEQUAL);
 
-        this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uProjectionMatrix"], false, this.camera.getProjectionViewMatrix());     
-        this.context.uniform4fv(this.strokeProgram.shaderUniforms["uFarColor"], this.farColor );  
-        this.context.uniform4fv(this.strokeProgram.shaderUniforms["uStrokeColor"], this.strokeColor );  
-        this.context.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], this.strokeDepth );  
-        this.context.uniform1f(this.strokeProgram.shaderUniforms["uFar"], this.camera.far);  
+        CONTEXT.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uProjectionMatrix"], false, CAMERA.getProjectionViewMatrix());     
+        CONTEXT.uniform4fv(this.strokeProgram.shaderUniforms["uFarColor"], this.farColor );  
+        CONTEXT.uniform4fv(this.strokeProgram.shaderUniforms["uStrokeColor"], this.strokeColor );  
+        CONTEXT.uniform1f(this.strokeProgram.shaderUniforms["uStrokeDepth"], this.strokeDepth );  
+        CONTEXT.uniform1f(this.strokeProgram.shaderUniforms["uFar"], CAMERA.far);  
         
-        for (let i = 0; i < this.entities.length; ++i)
-            if ((this.entities[i].visible) && (this.entities[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
+        for (let i = 0; i < ENTITIES.length; ++i)
+            if ((ENTITIES[i].visible) && (ENTITIES[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
 
             // Entity Attributes
-            if (this.entities[i].dynamic) {
-                this.bindAndUpdate3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexPosition"], this.vertexBuffer, this.entities[i].vertexArray);
-                this.bindAndUpdate3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexNormal"], this.normalBuffer, this.entities[i].normalArray);  
+            if (ENTITIES[i].dynamic) {
+                this.bindAndUpdate3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexPosition"], this.vertexBuffer, ENTITIES[i].vertexArray);
+                this.bindAndUpdate3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexNormal"], this.normalBuffer, ENTITIES[i].normalArray);  
 
             } else {
-                this.bind3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer); 
-                this.bind3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);   
+                this.bind3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer); 
+                this.bind3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer);   
                 
             }
             // Entity Uniforms
-            this.context.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
+            CONTEXT.uniformMatrix4fv(this.strokeProgram.shaderUniforms["uModelMatrix"], false, ENTITIES[i].modelMatrix);
             
             // Draw Outline extensions
-            this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
-            this.drawnElemenets += this.entities[i].numElements;
+            CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
+            this.drawnElemenets += ENTITIES[i].numElements;
 
         }
 
-        this.context.cullFace(this.context.BACK);
-        this.context.depthFunc(this.context.LESS);
+        CONTEXT.cullFace(CONTEXT.BACK);
+        CONTEXT.depthFunc(CONTEXT.LESS);
 
-        this.context.useProgram(this.program.shaderProgram);
+        CONTEXT.useProgram(this.program.shaderProgram);
         
-        this.context.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, this.camera.getProjectionViewMatrix());     
-        this.context.uniform3fv(this.program.shaderUniforms["uLight"], this.lights.light0_adjusted);
-        this.context.uniform1i(this.program.shaderUniforms["strokePass"], 0);
-        this.context.uniform4fv(this.program.shaderUniforms["uStrokeColor"], this.strokeColor);  
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, CAMERA.getProjectionViewMatrix());     
+        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight"], this.lights.light0_adjusted);
+        CONTEXT.uniform1i(this.program.shaderUniforms["strokePass"], 0);
+        CONTEXT.uniform4fv(this.program.shaderUniforms["uStrokeColor"], this.strokeColor);  
         
-        for (let i = 0; i < this.entities.length; ++i)
-            if ((this.entities[i].visible) && (this.entities[i].numElements > 0) && (this.cull_check_visible(i) ) ) {
+        for (let i = 0; i < ENTITIES.length; ++i)
+            if ((ENTITIES[i].visible) && (ENTITIES[i].numElements > 0) && (this.cull_check_visible(i) ) ) {
 
                 // Entity Attributes
-                if (this.entities[i].dynamic) {
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.vertexBuffer, this.entities[i].vertexArray);
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.normalBuffer, this.entities[i].normalArray);    
-                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.colorBuffer, this.entities[i].colorArray);  
+                if (ENTITIES[i].dynamic) {
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.vertexBuffer, ENTITIES[i].vertexArray);
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.normalBuffer, ENTITIES[i].normalArray);    
+                    this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.colorBuffer, ENTITIES[i].colorArray);  
                 } else {
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.entities[i].vertexBuffer);  
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.entities[i].normalBuffer);    
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.entities[i].colorBuffer);
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer);  
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer);    
+                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer);
                 }
                 // Entity Uniforms
-                this.context.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, this.entities[i].modelMatrix);
-                this.context.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, this.entities[i].normalMatrix);
+                CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, ENTITIES[i].modelMatrix);
+                CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, ENTITIES[i].normalMatrix);
                 
                 // Draw
-                this.context.drawArrays(this.entities[i].drawMode, 0, this.entities[i].numElements);
-                this.drawnElemenets += this.entities[i].numElements;
+                CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
+                this.drawnElemenets += ENTITIES[i].numElements;
                             
                 // Draw strokes
-                if (this.entities[i].drawStrokes) {
-                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
+                if (ENTITIES[i].drawStrokes) {
+                    CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
                     
-                    this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, this.entities[i].strokeIndexBuffer);
-                    this.context.drawElements(this.context.LINES, this.entities[i].numStrokeElements, this.context.UNSIGNED_SHORT, 0);  
+                    CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ENTITIES[i].strokeIndexBuffer);
+                    CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
                     
-                    this.context.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
-                    this.drawnElemenets += this.entities[i].numStrokeElements;
+                    CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
+                    this.drawnElemenets += ENTITIES[i].numStrokeElements;
                 }
         }
 

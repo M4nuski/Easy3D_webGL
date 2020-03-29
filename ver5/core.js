@@ -1,125 +1,146 @@
 // Easy3D_WebGL
-// Main class container for dev
+// Core container for state and engine
 // Emmanuel Charette 2017-2019
 
 "use strict"
 
-/*
-        // collision detection - self.sph to plane (static)
-        if ((self.target.CD_sph > 0) && (scn.entities[i].CD_plane > 0)) {  
 
-            for (let j = 0; j < scn.entities[i].CD_plane; ++j) {
-                var marker = i+"p"+j;
-                if  (marker != self.lastHitMarker) {
-                    nHitTest++;
+// Config
+var E3D_FOV = 45 * DegToRad;
+var E3D_NEAR = 0.1;
+var E3D_FAR = 500.0;
+var E3D_WIDTH = 640;
+var E3D_HEIGHT = 480;
+var E3D_G = 386.22;
 
-                    v3_copy(hitNormal, scn.entities[i].CD_plane_n[j]);
-                    v3_copy(planePosition, scn.entities[i].CD_plane_p[j]);
-                    v3_sub_res(vectOffset, vectOrig, planePosition);
+// Global default 
+var TIMER = new E3D_timing(false, 100, E3D_onTick); 
+var CANVAS = null;
+var CONTEXT = null;
+var SCENE = new E3D_scene("scene0");
+var CAMERA = new E3D_camera_persp("camera0");
+var ENTITIES = [];
+var INPUTS = null;
 
 
-                    var d = v3_dot(vectOffset, hitNormal);
-                    // if d >= 0 on side of normal, else on opposite side of normal
-                    if (d < 0.0) v3_negate_mod(hitNormal);
 
-                  //  if (d >= 0.0) {
-                        v3_addscaled_mod(planePosition, hitNormal,  self.target.CD_sph_r[0]);
-                  //  } else {
-                   //     v3_addscaled_mod(planePosition, hitNormal, -self.target.CD_sph_r[0]);           
-                    //}
+// Startup
+function E3D_Init(element) {
 
-                    var hitRes = planeIntersect(planePosition, hitNormal, vectOrig, pathVect);
-                    
-                    if ((hitRes) && (hitRes <= self.deltaLength) ) {
-                        var t0 = hitRes / self.deltaLength;
+    if (element == undefined) {
+        log("No target element provided", false);
 
-                        // test if inside rectangle
-                        v3_addscaled_res(firstHit, vectOrig, pathVect, hitRes - 0.05);     
-                        v3_sub_mod(firstHit, scn.entities[i].CD_plane_p[j]);
+        element = document.getElementById("E3D_mainDiv");
+        if (element == undefined) {
+            log("No target element found", false);
+            element = document.createElement("div");
+            element.id = "E3D_mainDiv";
+            element.style.position = "absolute";
+            element.style.width = "100%";
+            element.style.height = "100%";
+            element.style.left = "0px";
+            element.style.top = "0px";
+            document.body.appendChild(element);
+        }
+    }
 
-                        var validHit = true;
+    if (element.tagName == "CANVAS") {
+        CANVAS = element;
+    } else {
+        CANVAS = document.createElement("canvas");
+        CANVAS.id = "E3D_canvas";
+        element.appendChild(CANVAS);
+        CANVAS.style.position = "absolute";
+        CANVAS.style.width = element.style.width;
+        CANVAS.style.height = element.style.height;
+      //  CANVAS.style.left = "0px";
+      //  CANVAS.style.top = "0px";
+    }
 
-                        // check if inside
-                        if (Math.abs(v3_dot(firstHit, scn.entities[i].CD_plane_w[j])) > scn.entities[i].CD_plane_halfWidth[j]) validHit = false;
-                        if (validHit) {
-                            if (Math.abs(v3_dot(firstHit, scn.entities[i].CD_plane_h[j])) > scn.entities[i].CD_plane_halfHeight[j]) validHit = false; 
-                        }
+    CANVAS.width = CANVAS.offsetWidth;
+    CANVAS.height = CANVAS.offsetHeight;
 
-                        if (((!self.collisionDetected) && validHit) || (validHit && (self.collisionDetected) && (t0 < self.closestCollision[1]))) {
+    log("Context Initialization", false);
+    CONTEXT = CANVAS.getContext("webgl");
 
-                            v3_add_mod(firstHit, scn.entities[i].CD_plane_p[j]);
+    if (!CONTEXT) {
+        log("Unable to initialize WebGL. Your browser or machine may not support it.", false);
+        TIMER.pause();
+        return;
+    }
 
-                            if (show_DEV_CD) {
-                                if (v3_distancesquared(firstHit, vectOrig) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * self.target.CD_sph_r[0], [1,0,0], 8, false, 3);
-                            }
-                            
-                            self.collisionDetected = true;
-                            if (t0 < 0.0) t0 = 0;
-                            self.closestCollision = [marker, t0, v3_clone(hitNormal), v3_clone(firstHit), "Sph-plane"];
-                        }
-                    }
-                }
-            }
-        } // sph - plane
-*/
+    log("Scene Initialization", false);
+    try {
+        log("Shader Program", false);
+        SCENE.program = new E3D_program("program0");
+        SCENE.program.compile(vertShader01, fragShader01);
+        SCENE.program.bindLocations(attribList01, uniformList01);
 
-/*
-prelim stats without edges
-CUBE_6P_nt            295.0000
-CUBE_6P_nh             96.0000
-CUBE_6P_tt             23.0100
-CUBE_6P_att             0.0780
-CUBE_6P_ath             0.2395
-CUBE_BX_nt            280.0000
-CUBE_BX_nh             93.0000
-CUBE_BX_tt              1.5150
-CUBE_BX_att             0.0054
-CUBE_BX_ath             0.0163
-*/
-/* before refactored function
-UBE_6P_nt            1146.0000
-CUBE_6P_nh            126.0000
-CUBE_6P_tt             50.0650
-CUBE_6P_att             0.0437
-CUBE_6P_ath             0.3969
-*/
-/* with 3 types but box still buggy
-CUBE_6P_nt            976.0000
-CUBE_6P_nh            104.0000
-CUBE_6P_tt             59.0650
-CUBE_6P_ht              8.4900
-CUBE_6P_att             0.0605
-CUBE_6P_ath             0.0816
-CUBE_BX_nt           1682.0000
-CUBE_BX_nh            162.0000
-CUBE_BX_tt             28.6500
-CUBE_BX_ht              3.1650
-CUBE_BX_att             0.0170
-CUBE_BX_ath             0.0195
-CUBE_DS_nt            960.0000
-CUBE_DS_nh            114.0000
-CUBE_DS_tt             33.9050
-CUBE_DS_ht              6.6450
-CUBE_DS_att             0.0202
-CUBE_DS_ath             0.0426
-*/
-/* 3 types fixed
-CUBE_6P_nt           6864.0000
-CUBE_6P_nh           1041.0000
-CUBE_6P_tt            123.7250
-CUBE_6P_ht             26.9800
-CUBE_6P_att             0.0180
-CUBE_6P_ath             0.0259
-CUBE_BX_nt           7805.0000
-CUBE_BX_nh           1043.0000
-CUBE_BX_tt             52.3700
-CUBE_BX_ht             14.3550
-CUBE_BX_att             0.0067
-CUBE_BX_ath             0.0138
-CUBE_DS_nt           6829.0000
-CUBE_DS_nh           1042.0000
-CUBE_DS_tt             79.7650
-CUBE_DS_ht             17.1350
-CUBE_DS_att             0.0102
-CUBE_DS_ath             0.0164
-*/
+        log("Lighting", false);
+        SCENE.lights = new E3D_lighting(v3_val_new(0.0, 0.0, 0.15));
+        SCENE.lights.setColor0(v3_val_new(1.0, 1.0, 1.0));
+        SCENE.lights.setDirection0(v3_val_new(-0.2, -0.2, -1.0)); 
+        SCENE.lights.light0_lockToCamera = true;
+
+        SCENE.lights.setColor1(v3_val_new(1.0, 1.0, 0.85));
+        SCENE.lights.setDirection1(v3_val_new(1.0, -1.0, 0.8));
+        SCENE.lights.light1_lockToCamera = false;
+
+        log("Camera", false);
+        window.addEventListener("resize", E3D_onResize); // To reset camera matrix
+        E3D_onResize();
+
+        log("Scene Initialization", false);
+        SCENE.initialize();
+    } catch (e) {
+        log(e, false);
+        return; 
+    }
+
+    INPUTS = new E3D_input(element, true, true, true, true);
+
+    TIMER.run();
+    SCENE.state = E3D_ACTIVE;
+}
+
+// Default resize function
+function E3D_onResize() {
+    E3D_WIDTH = CANVAS.offsetWidth;
+    E3D_HEIGHT = CANVAS.offsetHeight;
+    //if (CONTEXT) CONTEXT.viewport(0, 0, E3D_WIDTH, E3D_HEIGHT);
+    CAMERA.resize();
+    log("Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
+}
+
+// Default timer tick event handler
+function E3D_onTick() {
+
+    // Inputs
+    INPUTS.processInputs();
+    INPUTS.smoothRotation(6);
+    INPUTS.smoothPosition(6);
+
+    CAMERA.moveBy(-INPUTS.px_delta_smth, INPUTS.py_delta_smth, INPUTS.pz_delta_smth, 
+                   INPUTS.rx_delta_smth, INPUTS.ry_delta_smth, INPUTS.rz_delta_smth);
+
+    // Render
+    if (SCENE.state == E3D_ACTIVE) {
+        SCENE.preRender();
+        SCENE.render();
+        SCENE.postRender();
+    }   
+}
+
+// Default Logger
+var logElement = null;
+function log(text, silent = true) {
+    let ts = Date.now() - TIMER.start;
+    if (!silent) {
+        if (logElement == null) logElement = document.getElementById("E3D_logDiv");        
+        if (logElement != null) {
+            logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+            logElement.scrollTop = logElement.scrollHeight - logElement.offsetHeight;
+        } 
+    }
+    console.log("[" + ts + "] " + text);
+}

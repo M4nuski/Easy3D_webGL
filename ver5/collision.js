@@ -36,6 +36,13 @@ var nHits = 0;
 var nbCDpasses = 0; 
 var hitPoints = new Map();
 
+var nHitTest = 0;
+var nHits = 0;
+
+var show_DEV_CD = false;
+var phyTracers, dev_Hits;
+var gAccel = 0;
+
 class CDresult {
     constructor() {
         this.marker = "";
@@ -318,7 +325,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             v3_scale_res(posOffset, scn.entities[targetIndex].CD_box_z[j], error);
                             v3_add_mod(self.target.position, posOffset);                            
-                            self.target.resetMatrix();
+                            self.target.updateMatrix();
 
                             v3_add_mod(sourceSph_p0, posOffset); 
                             v3_copy(firstHit, sourceSph_p0);
@@ -337,7 +344,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             v3_scale_res(posOffset, scn.entities[targetIndex].CD_box_y[j], error);
                             v3_add_mod(self.target.position, posOffset);                            
-                            self.target.resetMatrix();
+                            self.target.updateMatrix();
 
                             v3_add_mod(sourceSph_p0, posOffset); 
                             v3_copy(firstHit, sourceSph_p0);
@@ -356,7 +363,7 @@ for (var sphIndex = 0; sphIndex < self.target.CD_sph; ++sphIndex) {
 
                             v3_scale_res(posOffset, scn.entities[targetIndex].CD_box_x[j], error);
                             v3_add_mod(self.target.position, posOffset);                            
-                            self.target.resetMatrix();
+                            self.target.updateMatrix();
 
                             v3_add_mod(sourceSph_p0, posOffset); 
                             v3_copy(firstHit, sourceSph_p0);

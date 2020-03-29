@@ -198,7 +198,7 @@ class E3D_entity {
             this.CD_triangle_p2p1lenSq = [];
             this.CD_triangle_p3p2p1dot = [];
 
-        this.resetMatrix();
+        this.updateMatrix();
     } 
 
     cloneData(entity) {
@@ -381,7 +381,7 @@ class E3D_entity {
         v3_add_mod(this.rotation, offset);
     }
 
-    resetMatrix(){
+    updateMatrix(){
         // Recreate matrices from rotation and position
         // TODO Evaluate rotation as Pitch Yaw Roll vs quaternion
 
@@ -1063,7 +1063,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.addVC(this.currentPos, color);
     }
 
-    addWireCube(loc, rot, size, color, addBoxCD, centerCross = false, sideCross = false) {
+    addWireCube(loc, rot, size, color, addBoxCD = false, centerCross = false, sideCross = false) {
         size[0] = Math.abs(size[0]) / 2;
         size[1] = Math.abs(size[1]) / 2;
         size[2] = Math.abs(size[2]) / 2;

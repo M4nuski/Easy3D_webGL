@@ -8,33 +8,28 @@
 // Base class for scene view matrix generation (orthogonal projection)
 class E3D_camera {
 
-    constructor(id, width, height) {        
+    constructor(id) {        
         this.id = id;
+
         this.rotation = v3_new();
         this.position = v3_new();
         this.matrix = m4_new(); // viewProjection
         this.projectionMatrix = m4_new();
 
-        this.near = -1.0;
-        this.far = 1.0;
-
-        this.fov = 1;
-
         this._neg_position = v3_new();
 
-        this.resize(width, height);
+        this.resize();
         this.updateMatrix();
     }
 
     // recalculate projection (base) matrix
-    resize(width, height) {
-
-        let dd2 = (width > height) ? width / 2 : height / 2;
+    resize() {
+        let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2 : E3D_HEIGHT / 2;
+        E3D_NEAR = -dd2;
+        E3D_FAR = dd2;
  
-        m4_ortho_res(this.projectionMatrix, width, height, -dd2, dd2);  
+        m4_ortho_res(this.projectionMatrix, E3D_WIDTH, E3D_HEIGHT, E3D_NEAR, E3D_FAR);  
 
-        this.near = -dd2;
-        this.far = dd2;
     }
 
     // calculate viewProjection matrix per position and rotation
@@ -91,28 +86,21 @@ class E3D_camera {
 
 //  Basic free moving perspective camera view
 class E3D_camera_persp extends E3D_camera { 
-    constructor(id, width, height, fov, near, far) {
-        super(id, width, height);
+    constructor(id) {
+        super(id);
 
-        this.fov = fov;
-        this.near = near;
-        this.far = far;
-
-        this.resize(width, height, fov, near, far);
+        this.resize();
         this.updateMatrix();
     }
 
-    resize(width, height, fov = this.fov, near = this.near, far = this.far) {
-        this.fov = fov;
-        this.near = near;
-        this.far = far;
-        var ar = width / height;
-        m4_persp_res(this.projectionMatrix, fov, ar, near, far);
+    resize() {
+        var ar = E3D_WIDTH / E3D_HEIGHT;
+        m4_persp_res(this.projectionMatrix, E3D_FOV, ar, E3D_NEAR, E3D_FAR);
     }
 
     updateMatrix() {
-        m4_rotateX_res(this.matrix, this.projectionMatrix, this.rotation[0] );
-        m4_rotateY_mod(this.matrix, this.rotation[1] );
+        m4_rotateX_res(this.matrix, this.projectionMatrix, this.rotation[0]);
+        m4_rotateY_mod(this.matrix, this.rotation[1]);
 
         v3_negate_res(this._neg_position, this.position);
         m4_translate_mod(this.matrix, this._neg_position);
@@ -137,8 +125,8 @@ class E3D_camera_persp extends E3D_camera {
 
 // Model view camera, perspective matrix rotating aroung a pivot point
 class E3D_camera_model extends E3D_camera_persp { 
-    constructor(id, width, height, fov, near, far) {
-        super(id, width, height, fov, near, far);
+    constructor(id) {
+        super(id);
         this.nvx = v3_new();
         this.nvy = v3_new();
         this.zDist = 0; // position is now pivot point for rotation
@@ -195,8 +183,8 @@ class E3D_camera_model extends E3D_camera_persp {
 
 // Perspective matrix with incremental movements in 3D space
 class E3D_camera_space extends E3D_camera_persp { 
-    constructor(id, width, height, fov, near, far) {
-        super(id, width, height, fov, near, far);
+    constructor(id) {
+        super(id);
 
         // local references
         this.nvx = v3_new();

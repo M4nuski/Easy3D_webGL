@@ -271,7 +271,7 @@ class E3D_input {
 
 
     // Process keys and pointer inputs to get final output values
-    processInputs(delta = 1.0) {
+    processInputs() {
 
         this.px_delta = this.px_offset; 
         this.py_delta = this.py_offset; 
@@ -368,13 +368,13 @@ class E3D_input {
         }
 
 
-        this.px_delta *= delta;
-        this.py_delta *= delta;
-        this.pz_delta *= delta;
+        this.px_delta *= TIMER.delta;
+        this.py_delta *= TIMER.delta;
+        this.pz_delta *= TIMER.delta;
 
-        this.rx_delta *= delta;
-        this.ry_delta *= delta;
-        this.rz_delta *= delta;
+        this.rx_delta *= TIMER.delta;
+        this.ry_delta *= TIMER.delta;
+        this.rz_delta *= TIMER.delta;
         
         this.px += this.px_delta;
         this.py += this.py_delta; 
@@ -412,7 +412,7 @@ class E3D_input {
             this.rz_smth -= PIx2; 
         }
 
-        this.lastDelta = delta;
+        this.lastDelta = TIMER.delta;
 
         this.mx = 0;
         this.my = 0;

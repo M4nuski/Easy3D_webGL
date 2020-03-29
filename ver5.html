@@ -3,161 +3,32 @@
 <head>
     <title>Easy3D Engine webGL version 0.5</title>
     <meta charset="UTF-8">
+ 
     <style>
-        #mainDiv {
-            position: absolute;
-            top : 5px;
-            left : 5px;
-            width : 1280px;
-            height : 720px;
-        } 
-
-        #controlDiv {
-            position: absolute;
-            top: 460px;
-            left : 10px;
-            width : 790px;            
-        }
-
-        #statusDiv {
-            position: absolute;
-            top:0px;
-            left:850px;
-            width:350px;
-            height: 60px;      
-        }
-
-        #selectionDiv {
-            position: absolute;
-            top : 70px;
-            left : 850px;
-            width : 350px;
+        #E3D_mainDiv {
+            width : 320px;
             height : 200px;
-        }    
-
-        #instructionsDiv {
-            position: absolute;
-            top: 280px;
-            left: 850px;
-            width: 600px;
         }
-
-        #logDiv {
-            position: absolute;
-            top: 5px;
-            left: 1210px;
-            width: 310px;
-            height : 275px;
-            overflow-x: wrap;
-            overflow-y: scroll;
-        }
-    
-
-
-        td {
-            width : 110px;
-            height : 60px;
-            text-align: center;
-            background-color: lightgray;
-        }
-        #track0 {
-            position: absolute;
-            right: 0px;
-        }
-
-        #thumb1Right {
-            position: absolute;
-            right: 0px;
-        }
-
-
-
     </style>
-    <script type="text/javascript" src="ver5/debug.js"></script>
-    <script type="text/javascript" src="ver5/input.js"></script>
     <script type="text/javascript" src="ver5/math.js"></script>
-    <script type="text/javascript" src="ver5/utility.js"></script>
+    <script type="text/javascript" src="ver5/input.js"></script>
+
     <script type="text/javascript" src="ver5/timing.js"></script>
-    <script type="text/javascript" src="ver5/resource.js"></script>
-    <script type="text/javascript" src="ver5/mesh.js"></script>
+
     <script type="text/javascript" src="ver5/shader.js"></script>
-    <script type="text/javascript" src="ver5/camera.js"></script>
     <script type="text/javascript" src="ver5/lighting.js"></script>
-    <script type="text/javascript" src="ver5/entity.js"></script>
+    <script type="text/javascript" src="ver5/camera.js"></script>
     <script type="text/javascript" src="ver5/scene.js"></script>
-    <script type="text/javascript" src="ver5/animation.js"></script>
-    <script type="text/javascript" src="ver5/collision.js"></script>
+    <script type="text/javascript" src="ver5/entity.js"></script>
+
     <script type="text/javascript" src="ver5/core.js"></script>
-    <script type="text/javascript" src="ver5.js"></script>
+
+    <script type="text/javascript" src="ver5default.js"></script>
 </head>
 
 <body>
-    <div id="mainDiv">
-            <canvas id="GLCanvas" width="800" height="450">Erreur - Canvas non supporté</canvas>
-    </div>
 
-    <div id="statusDiv">Status</div>
-    <div id="logDiv"></div>
 
-    <div id="controlDiv">LMB(touch) rotate, MouseWheel(pinch) zoom/pan, [R] throws a ball, [F] fire shotgun<br />
-        vKeyboard (click/touch)<br />
-        <table id="inputTable">
-            <tr>
-                <td vKey="KeyQ">R-Gauche<br />(Q)</td><td vKey="KeyW">Avant<br />(W)</td><td vKey="KeyE">R-Droit<br />(E)</td><td>&nbsp;</td><td vKey="KeyR">Action 0<br />(R)</td><td>&nbsp;</td><td vKey="Space">Haut<br />(Spacebar)</td> 
-            </tr>
-            <tr>
-                <td vKey="KeyA">Gauche<br />(A)  </td><td vKey="KeyS">Arriere<br />(S)</td><td vKey="KeyD">Droit<br />(D)</td><td>&nbsp;</td><td vKey="KeyF">Action 1<br />(F)</td><td>&nbsp;</td><td vKey="KeyC">Bas<br />(C)</td>  
-            </tr>
-        </table><br />
-        vPovTrackpad<br />  
-        <img src="../Images/tp.svg" width= "200" height="200" id="thumb0"/> <img src="../Images/mp.svg" width= "300" height="200"id="track0" /><br />  
-
-        vThumbSticks<br />
-        <img src="../Images/tp.svg" width= "200" height="200" id="thumb1Left" /> <img src="../Images/tp.svg" width= "200" height="200" id="thumb1Right"/><br />  
-    </div>
-
-    <div id="instructionsDiv">
-        Page de test pour game engine en Javascript / WebGL<br/>
-        Testé sur Windows dans Chrome et Firefox<br />
-        Android dans Chrome, iOS dans Safari (iphone5!)<br />
-        Détection de collision seulement entre les spheres (incluant les balles lancées) et les particules du shotgun
-        <br />
-        Mouvements : <br/>
-        Space - Déplacements en 3D sans restriction ni référence.<br />
-        Free Roam - Déplacements dans le monde en 3D mais avec contraintes et concepte de "haut" vs "bas"<br />
-        Model - Les controles déplacent le monde autour d'un point fixe<br />
-        <br />
-        Controles :
-        <br />
-        Desktop (sourie + clavier) - Controles typique de jeux (W A S D, C, Space, R (action0), F(acton1)).<br />
-        Click-Drag dans fenetre pour rotation, Molette (roulette(grament pour scroller)) pour zoomer ou déplacer avant/arrière.<br />
-        Molette-Click pour translations.<br />
-        <br />
-        Mobile - Touch-drag dans fenetre pour rotation, pinch zoom ou avant/arrière. pinch-drag pour translation.<br />
-        Double-tap active l'action0 (equivalent au click).
-        Clavier virtuel - tap pour simuler touches du clavier.
-        Controle virtuels PovTrackPad - Thumbstick de gauche comme joystick de console, double-tap action1 (shotgun)<br />
-        Trackpad de droit agit comme dans la fenetre. Double-tap action0(balle)<br />
-        Double thumbstick - semblable aux controls de jeux sur mobile ou dual stick de console.
-        <br />
-        <span id="processInfo"></span>
-    </div>
-
-    <div id="selectionDiv">
-        <form id="displayForm">
-            <input type="checkbox" value= "CDP" name="CDP">Display Hit-Test and Culling Zones</input><br />
-        </form>
-        Movement/Physic Type:<br />
-        <form id="moveTypeForm">
-            <input type="checkbox" value= "invertY" name="invertY">Invert Y</input><br />
-            <input type="radio" value= "space"  name="moveType">Space</input><br />
-            <input type="radio" value= "free"  name="moveType" checked = "true">Free Roam</input><br />
-            <input type="radio" value= "model" name="moveType">Model</input><br />
-            <input type="radio" value= "walk"  name="moveType">Walking</input>(Not Implemented)<br />
-            <input type="radio" value= "drive"  name="moveType">Driving</input>(Not Implemented)<br />
-            <input type="radio" value= "plane"  name="moveType">Fly</input>(Not Implemented)<br />
-        </form>
-    </div>
 </body>
 
 </html>
