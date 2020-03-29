@@ -14,5 +14,10 @@ function E3D_userInit() {
     entity.addWireCube([0, 0, -100], _v3_null, 48, _v3_white);
     entity.visible = true;
     SCENE.addEntity(entity);
+
+    var fsbtn = document.getElementById("btn_fs");
+    if (fsbtn) fsbtn.addEventListener("click", x => fullscreenEnable(CANVAS));
+    var plbtn = document.getElementById("btn_pl");
+    if (plbtn) plbtn.addEventListener("click", x => pLockRequest(CANVAS));
 }
 

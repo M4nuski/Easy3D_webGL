@@ -8,7 +8,6 @@ var E3D_scriptList = [
     "ver5/input.js",    
     
     "ver5/shader.js",
-    "ver5/lighting.js",
     "ver5/camera.js",
     "ver5/entity.js",
     "ver5/scene.js",

@@ -11,13 +11,20 @@
                 top : 10%;
                 left : 10%;
             }
+            .fakeButton {
+                cursor: pointer;
+                background-color: bisque;                
+            }
+            .fakeButton:hover {
+                background-color: cadetblue;
+            }
         </style>
-        <script type="text/javascript" src="ver5/scripts.js"></script>
+        <script type="text/javascript" src="ver5/E3D_Engine.js"></script>
         <script type="text/javascript" src="ver5default.js" defer="true"></script>
     </head>
 
     <body>
-        <div>Page Test Easy3D ver 5</div>
+        <div>Page Test Easy3D ver 5 <span id="btn_fs" class="fakeButton">Enable FullScreen</span> <span id="btn_pl" class="fakeButton">Enable PointerLock</span></div>
         <div id="E3D_mainDiv"></div>
     </body>
 

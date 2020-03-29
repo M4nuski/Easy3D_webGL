@@ -272,7 +272,7 @@ function _fullscreenChange() {
     if (fullscreenChangeCallback) fullscreenChangeCallback(fullscreenActive(), fullscreenlastelement);  
 }
 
-function fullscreenToggle (elem){
+function fullscreenToggle(elem) {
     fullscreenlastelement = elem;    
     elem.requestFullscreen = elem.webkitRequestFullScreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
 
@@ -283,14 +283,14 @@ function fullscreenToggle (elem){
     }
 }
 
-function fullscreenEnable (elem){
+function fullscreenEnable(elem) {
     fullscreenlastelement = elem;
     elem.requestFullscreen = elem.webkitRequestFullScreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
 
     if (!fullscreenActive())  elem.requestFullscreen();
 }
 
-function fullscreenDisable () {
+function fullscreenDisable() {
     fullscreenlastelement = undefined;
     document.exitFullscreen();
 }
