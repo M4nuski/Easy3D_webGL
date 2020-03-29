@@ -1064,6 +1064,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     addWireCube(loc, rot, size, color, addBoxCD = false, centerCross = false, sideCross = false) {
+        if (!Array.isArray(size)) size = [size, size, size];
         size[0] = Math.abs(size[0]) / 2;
         size[1] = Math.abs(size[1]) / 2;
         size[2] = Math.abs(size[2]) / 2;
