@@ -17,7 +17,7 @@ function E3D_userInit() {
     entity.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray);
     // Cube in the middle, on top of ground
     entity.addWireCube([0, 24, 0], _v3_null, 48, _v3_white);
-    // Set it visible
+
     entity.isVisible = true;
 
     E3D_addEntity(entity);
@@ -26,9 +26,11 @@ function E3D_userInit() {
     CAMERA.moveTo(0, 24, 100);
 
     // If the buttons exists register the events
-    var fsbtn = document.getElementById("btn_fs");
-    if (fsbtn) fsbtn.addEventListener("click", x => fullscreenEnable(CANVAS));
-    var plbtn = document.getElementById("btn_pl");
-    if (plbtn) plbtn.addEventListener("click", x => pLockRequest(CANVAS));
+    var btn = document.getElementById("btn_fs");
+    if (btn) btn.addEventListener("click", x => fullscreenEnable(CANVAS) );
+    var btn = document.getElementById("btn_pl");
+    if (btn) btn.addEventListener("click", x => pLockRequest(CANVAS) );
+    var btn = document.getElementById("btn_fspl");
+    if (btn) btn.addEventListener("click", x => { fullscreenEnable(CANVAS); pLockRequest(CANVAS); } );
 }
 
