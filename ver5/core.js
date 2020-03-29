@@ -102,11 +102,16 @@ function E3D_Init(element) {
 
 // Default resize function
 function E3D_onResize() {
-    E3D_WIDTH = CANVAS.offsetWidth;
+    // get new size
+    E3D_WIDTH = CANVAS.offsetWidth; 
     E3D_HEIGHT = CANVAS.offsetHeight;
-    //if (CONTEXT) CONTEXT.viewport(0, 0, E3D_WIDTH, E3D_HEIGHT);
+    // adjust canvas resolution to fit new size, remove or override to lower render viewport resolution
+    CANVAS.width = E3D_WIDTH;
+    CANVAS.height = E3D_HEIGHT;
+    // reset viewport and camera
+    if (CONTEXT) CONTEXT.viewport(0, 0, E3D_WIDTH, E3D_HEIGHT);
     CAMERA.resize();
-    log("Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
+    //log("Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
 }
 
 // Default timer tick event handler
