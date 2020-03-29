@@ -14,7 +14,7 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 * ver4maze.html: Ball in Maze game, game loop and logic, random maze generation.
 * 
 * /Electron: content specific for Electron app
-* /Images: icons / sprites / images ressources
+* /Images: icons / sprites / images resources
 * /Models: Meshs
 * /Tests: performance test for JS, gl-matrix and WebGL
 * /ver0: WebGL tutorial transcript and tests, controls abstraction and demo

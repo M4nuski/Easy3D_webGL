@@ -63,7 +63,7 @@ var nHitTest = 0;
 var gl; // webGL canvas rendering context
 timer = new E3D_timing(false, 25, timerTick);
 var scn;  // E3D_scene
-var resMngr = new ressourceManager(onRessource);
+var resMngr = new resourceManager(onresource);
 var meshLoader = new E3D_loader();
 
 var inputs = new E3D_input(mainDiv, true, true, true, true, true, true);
@@ -199,11 +199,11 @@ function initEngine() {
         return; 
     }
      
-    resMngr.addRessource("../Models/ST.raw", "ST", "Model");
-    resMngr.addRessource("../Models/AXIS.raw", "Map", "Model");
-    resMngr.addRessource("../Models/CM.raw", "CM", "Model");
-    resMngr.addRessource("../Models/SPH.raw", "sph", "Model");
-    resMngr.addRessource("../Models/PYRA.raw", "pyra", "Model");
+    resMngr.addresource("../Models/ST.raw", "ST", "Model");
+    resMngr.addresource("../Models/AXIS.raw", "Map", "Model");
+    resMngr.addresource("../Models/CM.raw", "CM", "Model");
+    resMngr.addresource("../Models/SPH.raw", "sph", "Model");
+    resMngr.addresource("../Models/PYRA.raw", "pyra", "Model");
     resMngr.loadAll("models");
 
 
@@ -380,22 +380,22 @@ function timerTick() {  // Game Loop
 }
 
 
-function onRessource(name, msg) {
+function onresource(name, msg) {
     if (msg == E3D_RES_FAIL) {
-        log("Failed to load ressource: " + name, false);        
+        log("Failed to load resource: " + name, false);        
     }
     if (msg == E3D_RES_ALL) {
-        log("All async ressources loaded for tag: " + name, true);       
+        log("All async resources loaded for tag: " + name, true);       
         resMngr.flushAll();   
     }
 
     if (msg == E3D_RES_LOAD) {
-        log("Async ressource loaded: " + name, true); 
+        log("Async resource loaded: " + name, true); 
 
-        if (resMngr.getRessourceType(name) == "Model") {
+        if (resMngr.getresourceType(name) == "Model") {
             if (name == "ST") {
                 let nm = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name));
+                meshLoader.loadModel_RAW(resMngr.getresourcePath(name), resMngr.getData(name));
                 meshLoader.smoothNormals(0.0);
                 meshLoader.addModelData(nm);
 
@@ -410,7 +410,7 @@ function onRessource(name, msg) {
 
             } else if (name == "CM") {
                 let nm = new E3D_entity(name+"_top", "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep", v3_val_new(3.0, 1.0, 3.0));
+                meshLoader.loadModel_RAW(resMngr.getresourcePath(name), resMngr.getData(name), "sweep", v3_val_new(3.0, 1.0, 3.0));
                 meshLoader.addModelData(nm);
 
                 nm.position[1] = -80;
@@ -424,7 +424,7 @@ function onRessource(name, msg) {
 
             } else if (name == "sph") {
                 let nm = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0,1.0,0.5]);
+                meshLoader.loadModel_RAW(resMngr.getresourcePath(name), resMngr.getData(name), [1.0,1.0,0.5]);
                 meshLoader.smoothNormals(0.0);
                 meshLoader.addModelData(nm);
 
@@ -433,13 +433,13 @@ function onRessource(name, msg) {
 
             } else if (name == "pyra") {
                 let nm = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), [1.0,0.8,0.0]);
+                meshLoader.loadModel_RAW(resMngr.getresourcePath(name), resMngr.getData(name), [1.0,0.8,0.0]);
                 meshLoader.removeNormals();
                 meshLoader.addModelData(nm);
                 scn.addEntity(nm);
             } else {
                 let nm = new E3D_entity(name, "", false);
-                meshLoader.loadModel_RAW(resMngr.getRessourcePath(name), resMngr.getData(name), "sweep");
+                meshLoader.loadModel_RAW(resMngr.getresourcePath(name), resMngr.getData(name), "sweep");
                 meshLoader.addModelData(nm);
                 scn.addEntity(nm);  
                 nm.visible = true;
