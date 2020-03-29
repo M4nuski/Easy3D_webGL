@@ -24,11 +24,7 @@ const E3D_INP_W = 2; // mouse wheel / touch pinch
 
 // Bind events to an element to capture and manage inputs
 class E3D_input {
-    constructor (element, supportMouse, supportKeyboard, supportTouch, supportPointerLock) {
-
-        this.element = element;
-
-        this.lastDelta = 1;
+    constructor () {
 
         // Touch properties
         this.touchDist = 0; // distance between 2 touches
@@ -45,37 +41,6 @@ class E3D_input {
         this.inputDoneTable = new Map(); // keys that got released but trigger again without keydown (keyboard auto-repeat)
         this.inputDoneTable.set(E3D_INP_ALWAYS, false);
 
-        // Callback
-        this.onInput = null;
-
-        if (supportMouse) {    
-
-            element.addEventListener("contextmenu", (e) => { e.preventDefault(); } );
-
-            element.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
-            element.addEventListener("mouseup", (e) => { this.mouseUp(e) } );
-            element.addEventListener("mousemove", (e) => { this.mouseMove(e) } );
-            element.addEventListener("mouseleave", (e) => { this.mouseLeave(e) } );
-            element.addEventListener("wheel", (e) => { this.mouseWheel(e) } );
-            element.addEventListener("dblclick", (e) => { this.mouseDblClick(e) } );
-        }
-
-        if (supportKeyboard) {
-            document.addEventListener("keydown", (e) => { this.keyDown(e) } );
-            document.addEventListener("keyup", (e) => { this.keyUp(e) } );
-        }
-
-        if  ((supportPointerLock) && (pLockSupported)) { 
-            pLockMoveEvent = (x, y) => { this.mouseLockedMove(x, y) } ; 
-        }
-
-        if (supportTouch) {
-            element.addEventListener("touchstart", (e) => { this.touchStart(e) } );
-            element.addEventListener("touchend", (e) => { this.touchEnd(e) } );
-            element.addEventListener("touchcancel", (e) => { this.touchEnd(e) } );
-            element.addEventListener("touchmove", (e) => { this.touchMove(e) } );
-        }
-
         // Config        
         this._posSpeed = 50; // units per sec for position outputs
         this._rotSpeed = 90 * DegToRad; // rad per sec for rotation outputs
@@ -86,8 +51,8 @@ class E3D_input {
         this._mouseSpeed = 50; // units per mouse position delta
         this._mouseWheelSpeed = 5.0; // units per wheel rotation delta
 
-        this.elemScaleX = 1.0 / element.offsetWidth; // screen pixels to element's relative size
-        this.elemScaleY = 1.0 / element.offsetHeight; 
+        this.elemScaleX = 1.0; // screen pixels to element's relative size
+        this.elemScaleY = 1.0; 
         
         this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
@@ -174,7 +139,6 @@ class E3D_input {
         //this.keyMap.set("exitLock", "Escape");
 
 
-
         // Raw pointer data
         this.pinx = 0;
         this.piny = 0; 
@@ -190,49 +154,12 @@ class E3D_input {
         this.ry_offset = 0;
         this.rz_offset = 0;
 
-// Outputs
-    // Positions
-        // Delta
-        this.px_delta = 0;
-        this.py_delta = 0;
-        this.pz_delta = 0;        
-        // Smoothed Delta
-        this.px_delta_smth = 0;
-        this.py_delta_smth = 0;
-        this.pz_delta_smth = 0;
-        // Sums
-        this.px = 0;
-        this.py = 0;
-        this.pz = 0;
-        // Smoothed sums
-        this.px_smth = 0;
-        this.py_smth = 0;
-        this.pz_smth = 0;
-
-    // Rotations
-        // Delta
-        this.rx_delta = 0;
-        this.ry_delta = 0;
-        this.rz_delta = 0;
-        // Smoothed Delta
-        this.rx_delta_smth = 0;
-        this.ry_delta_smth = 0;
-        this.rz_delta_smth = 0;
-        // Sums
-        this.rx = 0;
-        this.ry = 0;
-        this.rz = 0;
-        // Smoothed sums
-        this.rx_smth = 0;
-        this.ry_smth = 0;
-        this.rz_smth = 0;
+        this.reset();
     }
-
 
 // Methods 
-
-
     reset() {
+        // Positions
         // Delta
         this.px_delta = 0;
         this.py_delta = 0;
@@ -250,6 +177,7 @@ class E3D_input {
         this.py_smth = 0;
         this.pz_smth = 0;
 
+        // Rotations
         // Delta
         this.rx_delta = 0;
         this.ry_delta = 0;
@@ -269,6 +197,40 @@ class E3D_input {
 
     }
 
+    supportMouse() {    
+        CANVAS.addEventListener("contextmenu", (e) => { e.preventDefault(); } );
+
+        CANVAS.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
+        CANVAS.addEventListener("mouseup", (e) => { this.mouseUp(e) } );
+        CANVAS.addEventListener("mousemove", (e) => { this.mouseMove(e) } );
+        CANVAS.addEventListener("mouseleave", (e) => { this.mouseLeave(e) } );
+
+        CANVAS.addEventListener("wheel", (e) => { this.mouseWheel(e) } );
+
+        CANVAS.addEventListener("dblclick", (e) => { this.mouseDblClick(e) } );
+
+        this.elemScaleX = 1.0 / CANVAS.offsetWidth; 
+        this.elemScaleY = 1.0 / CANVAS.offsetHeight; 
+    }
+    
+    supportKeyboard() {
+        document.addEventListener("keydown", (e) => { this.keyDown(e) } );
+        document.addEventListener("keyup", (e) => { this.keyUp(e) } );
+    }
+
+    supportTouch() {
+        CANVAS.addEventListener("touchstart", (e) => { this.touchStart(e) } );
+        CANVAS.addEventListener("touchend", (e) => { this.touchEnd(e) } );
+        CANVAS.addEventListener("touchcancel", (e) => { this.touchEnd(e) } );
+        CANVAS.addEventListener("touchmove", (e) => { this.touchMove(e) } );
+
+        this.elemScaleX = 1.0 / CANVAS.offsetWidth; 
+        this.elemScaleY = 1.0 / CANVAS.offsetHeight; 
+    }
+
+    supportPointerLock() {
+        if (pLockSupported) CB_pointerlockMove = (x, y) => { this.mouseLockedMove(x, y) }; 
+    }
 
     // Process keys and pointer inputs to get final output values
     processInputs() {
@@ -412,8 +374,6 @@ class E3D_input {
             this.rz_smth -= PIx2; 
         }
 
-        this.lastDelta = TIMER.delta;
-
         this.mx = 0;
         this.my = 0;
         this.mw = 0;
@@ -524,7 +484,7 @@ class E3D_input {
     }
 
     smoothRotation(smoothFactor, x = true, y = true, z = true) {
-        let f = this.lastDelta * smoothFactor;
+        let f = TIMER.delta * smoothFactor;
 
         if (f < 1.0) {
             if (x) {
@@ -551,7 +511,7 @@ class E3D_input {
     }
 
     smoothPosition(smoothFactor, x = true, y = true, z = true) {
-        let f = this.lastDelta * smoothFactor;
+        let f = TIMER.delta * smoothFactor;
 
         if (f < 1.0) {
             if (x) {
@@ -590,8 +550,8 @@ class E3D_input {
 
 
     resize() {
-        this.elemScaleX = 1.0 / this.element.offsetWidth;
-        this.elemScaleY = 1.0 / this.element.offsetHeight;
+        this.elemScaleX = 1.0 / CANVAS.offsetWidth;
+        this.elemScaleY = 1.0 / CANVAS.offsetHeight;
     }
 
 
@@ -609,7 +569,7 @@ class E3D_input {
             this.inputDoneTable.set(event.code, false);
         }    
         if (event.type == undefined) event.type = "keyDown";
-        if (this.onInput) this.onInput( event ); // direct callback keydown preview
+        if (CB_input) CB_input( event );
 
         //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
@@ -617,7 +577,7 @@ class E3D_input {
     
     keyUp(event) {    
         if (event.type == undefined) event.type = "keyUp";
-        if (this.onInput) this.onInput( event ); // callback from event for user input dependant request to browser (fullscreen, pointerlock)
+        if (CB_input) CB_input( event );
 
         this.inputTable.set(event.code, false);
         this.inputDoneTable.set(event.code, true);
@@ -1096,8 +1056,6 @@ function getTotalPageOffset(element) {
 
 
 var pLockSupported = 'pointerLockElement' in document ||  'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
-var pLockMoveEvent; // callback for captured pointer movements
-var pLockCallback; // callback for lock/unlock/error
 var pLockRequested = false;
 var pLockElement; // element that captured the pointer
 const _pLockJitterLimit = 300; // max delta per event to avoid warp-around when browser place the cursor back into the center after exiting the client area
@@ -1108,7 +1066,7 @@ function pLockRequest(element) {
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock; 
         pLockRequested = true;
         element.requestPointerLock(); 
-        if (pLockCallback) pLockCallback("request");
+        if (CB_pointerlockEvent) CB_pointerlockEvent("request");
     } 
 }
 
@@ -1126,7 +1084,7 @@ function pLockExit() {
 
 function pLockToggle(element) {
   // pLockElement = element;
-    if (pLockCallback) pLockCallback("toggle (was active: " + pLockActive() + ", was pre requested: " + pLockRequested + ")");
+    if (CB_pointerlockEvent) CB_pointerlockEvent("toggle (was active: " + pLockActive() + ", was pre requested: " + pLockRequested + ")");
     pLockRequested = !pLockActive();
     if (pLockActive()) pLockExit();
     if (pLockRequested) {
@@ -1136,43 +1094,44 @@ function pLockToggle(element) {
     }
 }
 
-document.addEventListener('pointerlockchange', pLockChangeCallback, false);
-document.addEventListener('mozpointerlockchange', pLockChangeCallback, false);
-document.addEventListener('webkitpointerlockchange', pLockChangeCallback, false);
+if (pLockSupported) {
+    document.addEventListener('pointerlockchange', pLockChangeCallback, false);
+    document.addEventListener('mozpointerlockchange', pLockChangeCallback, false);
+    document.addEventListener('webkitpointerlockchange', pLockChangeCallback, false);
 
-document.addEventListener('pointerlockerror', pLockErrorCallback, false);
-document.addEventListener('mozpointerlockerror', pLockErrorCallback, false);
-document.addEventListener('webkitpointerlockerror', pLockErrorCallback, false);
-
+    document.addEventListener('pointerlockerror', pLockErrorCallback, false);
+    document.addEventListener('mozpointerlockerror', pLockErrorCallback, false);
+    document.addEventListener('webkitpointerlockerror', pLockErrorCallback, false);
+}
 function pLockChangeCallback() {
     if (pLockActive()) {
         // Lock successful, add event
         pLockElement.addEventListener("mousemove", pLockInternalCallback, false);
-        if (pLockCallback) pLockCallback("lock");
+        if (CB_pointerlockEvent) CB_pointerlockEvent("lock");
     } else {
 
         // Lock failed, reset event
         pLockElement.removeEventListener("mousemove", pLockInternalCallback, false);
         pLockElement = undefined;
         // pLockExit();
-        if (pLockCallback) pLockCallback("unlock");
+        if (CB_pointerlockEvent) CB_pointerlockEvent("unlock");
     }
 }
 
 function pLockErrorCallback() {
     pLockElement.removeEventListener("mousemove", pLockInternalCallback, false);
     pLockElement = undefined;
-    if (pLockCallback) pLockCallback("error");
+    if (CB_pointerlockEvent) CB_pointerlockEvent("error");
     //pLockExit();
 }
 
 function pLockInternalCallback(event) {
     var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-    if (pLockMoveEvent) {
+    if (CB_pointerlockMove) {
         if ((movementX < _pLockJitterLimit) && (movementX > -_pLockJitterLimit) && 
             (movementY < _pLockJitterLimit) && (movementY > -_pLockJitterLimit)) {
-            pLockMoveEvent(movementX, movementY);
+            CB_pointerlockMove(movementX, movementY);
         }
     }
 }

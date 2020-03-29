@@ -10,8 +10,8 @@ class E3D_entity {
     constructor(id, filename, dynamic = false) {
 
         this.id = id; // to find object in list
-        this.visible = false;
-        this.dynamic = dynamic; // Static (non-dynamic) entities have their data pushed to the GPU memory only once when added to scene.
+        this.isVisible = false;
+        this.isDynamic = dynamic; // Static (non-dynamic) entities have their data pushed to the GPU memory only once when added to scene.
                                 // Dynamic entities can have their data modified on the fly (with performance cost).
 
         this.dataContentChanged = false; // GPU buffers will be updated  
@@ -22,7 +22,7 @@ class E3D_entity {
         this.rotation = v3_new();
 
         // fustrum culling
-        this.vis_culling = true; // Setting to false will force the entity to always be redrawn
+        this.isVisibiltyCullable = true; // Setting to false will force the entity to always be redrawn
         this.cull_dist = 0; // maximum vertex distance from object center for culling
         
         // Computed matrix
@@ -78,20 +78,26 @@ class E3D_entity {
 
 
         // Animation
-        this.animIndex = -1;
+        // TODO isAnimated
+        this.isAnimated = false;
+        this.animation = null;
+
+        //Collisions
+        // TODO isCollisionSource
+        this.isCollisionSource = false;
+        // TODO isCollisionTarget
+        this.isCollisionTarget = false;
+        // TODO CD shapes as object
+        this.collision = null;
+
+
 
         this.collisionDetection = false;
-        // TODO isDynamic
-        // TODO isVisibiltyCullable
-        // TODO isVisible
-        // TODO isAnimated
-        // TODO isCollisionSource
-        // TODO isCollisionTarget
+
         // TODO isCollisionFragmented // CD object is a list of multiple CD object with sph pre-cull
         // TODO isTransparent // z-sort before render, dont write to depth buffer
      
 
-        // TODO CD shapes as object
 
         // TODO new CD shapes:
         /*
@@ -204,13 +210,13 @@ class E3D_entity {
     cloneData(entity) {
         this.numElements = entity.numElements;
         this.drawMode = entity.drawMode;
-        this.vis_culling = entity.vis_culling;
+        this.isVisibiltyCullable = entity.isVisibiltyCullable;
         this.collisionDetection = entity.collisionDetection;
 
         this.numStrokeElements = entity.numStrokeElements;
         this.drawStrokes = entity.drawStrokes;
 
-        if (entity.dynamic) {
+        if (entity.isDynamic) {
             this.vertexArray = new Float32Array(entity.vertexArray); 
             this.normalArray = new Float32Array(entity.normalArray);
             this.colorArray = new Float32Array(entity.colorArray);
@@ -311,7 +317,7 @@ class E3D_entity {
         this.rotation = v3_new();
 
         // fustrum culling
-        this.vis_culling = true; // Setting to false will force the entity to always be redrawn
+        this.isVisibiltyCullable = true; // Setting to false will force the entity to always be redrawn
         this.cull_dist = 0; // maximum vertex distance from object center for culling
         
         // Computed matrix
@@ -579,7 +585,7 @@ class E3D_entity_axis extends E3D_entity {
         this.normalize = normalize;
         this.drawMode = 1; // gl.LINES;
 
-        this.vis_culling = false;
+        this.isVisibiltyCullable = false;
 
         this.vertexArray = new Float32Array([0, 0, 0, 1, 0, 0,
                                              0, 0, 0, 0, 1, 0,

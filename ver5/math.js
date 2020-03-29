@@ -52,6 +52,10 @@ const _v3_nz =     [ 0,  0, -1];
 const _v3_unit =   [ 1,  1,  1];
 const _v3_nunit =  [-1, -1, -1];
 
+const _v3_90x    = [ PIdiv2, 0, 0];
+const _v3_90y    = [ 0, PIdiv2, 0];
+const _v3_90z    = [ 0, 0, PIdiv2];
+
 const _v3_epsilon = 0.00001;
 
 const _m4_identity = m4_new(); 

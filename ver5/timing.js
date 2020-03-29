@@ -4,7 +4,6 @@
 
 "use strict"
 
-// TODO merge with core
 
 class E3D_timing {
 

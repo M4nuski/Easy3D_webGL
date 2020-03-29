@@ -22,10 +22,6 @@ class E3D_scene {
         this.fogLimit = fogLimit;
         this.fogFactor = 1.0;
 
-        this.preRenderFunction = null; 
-        this.renderFunction = null; 
-        this.postRenderFunction = null;
-
         this.drawnElemenets = 0; // some stats
     }
 
@@ -56,17 +52,10 @@ class E3D_scene {
         }
         if (this.fogLimit > 0.0) {
             this.fogFactor = 1.0 / ((E3D_FAR - E3D_NEAR) - this.fogLimit);
-        }
-
-        CAMERA.updateMatrix();
-        if (this.preRenderFunction) {
-            this.preRenderFunction(this);
-        }
+        }        
     }
 
     render() {
-        // entities, sprites, hud
-
         CONTEXT.clear(CONTEXT.COLOR_BUFFER_BIT | CONTEXT.DEPTH_BUFFER_BIT);
 
         CONTEXT.useProgram(this.program.shaderProgram);
@@ -90,10 +79,10 @@ class E3D_scene {
         this.drawnElemenets = 0;
 
         for (let i = 0; i < ENTITIES.length; ++i) {
-            if ((ENTITIES[i].visible) && (ENTITIES[i].numElements > 0) && (this.cull_check_visible(i)) ) {
+            if ((ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (this.cull_check_visible(i)) ) {
 
                 // Entity Attributes
-                if (ENTITIES[i].dynamic) {
+                if (ENTITIES[i].isDynamic) {
                     if (ENTITIES[i].dataSizeChanged) { 
                         // reset buffer
                         this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
@@ -146,17 +135,10 @@ class E3D_scene {
                 this.drawnElemenets += ENTITIES[i].numElements;
             }
         }
-
-        if (this.renderFunction) {
-            this.renderFunction(this);
-        }
     }
 
     postRender() {
         // cleanup or other events
-        if (this.postRenderFunction) {
-            this.postRenderFunction(this);
-        }
     }
 
 
@@ -204,7 +186,7 @@ class E3D_scene {
         ent.normalBuffer = CONTEXT.createBuffer();
         ent.strokeIndexBuffer = CONTEXT.createBuffer();
 
-        var usage = (ent.dynamic) ? CONTEXT.DYNAMIC_DRAW : CONTEXT.STATIC_DRAW;
+        var usage = (ent.isDynamic) ? CONTEXT.DYNAMIC_DRAW : CONTEXT.STATIC_DRAW;
 
         CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.vertexBuffer);
         CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.vertexArray, usage);        
@@ -243,11 +225,11 @@ class E3D_scene {
         let idx = this.getEntityIndexFromId(id);
         if (idx > -1) {
 
-            var ent = new E3D_entity(newId, ENTITIES[idx].filename, ENTITIES[idx].dynamic);
+            var ent = new E3D_entity(newId, ENTITIES[idx].filename, ENTITIES[idx].isDynamic);
 
             ent.cloneData(ENTITIES[idx]);   
 
-            if (ent.dynamic) {
+            if (ent.isDynamic) {
                 ent.vertexBuffer = CONTEXT.createBuffer();
                 ent.colorBuffer = CONTEXT.createBuffer();
                 ent.normalBuffer = CONTEXT.createBuffer();
@@ -302,7 +284,7 @@ class E3D_scene {
     }
 
     cull_check_visible(idx) {
-        if (ENTITIES[idx].vis_culling) {
+        if (ENTITIES[idx].isVisibiltyCullable) {
             var pos = v3_sub_new(ENTITIES[idx].position, CAMERA.position);
             pos = CAMERA.negateCamera(pos);
             var dist = -pos[2]; // only check for Z
@@ -344,10 +326,10 @@ class E3D_scene_cell_shader extends E3D_scene {
         CONTEXT.uniform1f(this.strokeProgram.shaderUniforms["uFar"], CAMERA.far);  
         
         for (let i = 0; i < ENTITIES.length; ++i)
-            if ((ENTITIES[i].visible) && (ENTITIES[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
+            if ((ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0)  && (this.cull_check_visible(i) ) ) {
 
             // Entity Attributes
-            if (ENTITIES[i].dynamic) {
+            if (ENTITIES[i].isDynamic) {
                 this.bindAndUpdate3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexPosition"], this.vertexBuffer, ENTITIES[i].vertexArray);
                 this.bindAndUpdate3FloatBuffer(this.strokeProgram.shaderAttributes["aVertexNormal"], this.normalBuffer, ENTITIES[i].normalArray);  
 
@@ -376,10 +358,10 @@ class E3D_scene_cell_shader extends E3D_scene {
         CONTEXT.uniform4fv(this.program.shaderUniforms["uStrokeColor"], this.strokeColor);  
         
         for (let i = 0; i < ENTITIES.length; ++i)
-            if ((ENTITIES[i].visible) && (ENTITIES[i].numElements > 0) && (this.cull_check_visible(i) ) ) {
+            if ((ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (this.cull_check_visible(i) ) ) {
 
                 // Entity Attributes
-                if (ENTITIES[i].dynamic) {
+                if (ENTITIES[i].isDynamic) {
                     this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], this.vertexBuffer, ENTITIES[i].vertexArray);
                     this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], this.normalBuffer, ENTITIES[i].normalArray);    
                     this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], this.colorBuffer, ENTITIES[i].colorArray);  

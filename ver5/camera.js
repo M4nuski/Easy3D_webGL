@@ -24,9 +24,9 @@ class E3D_camera {
 
     // recalculate projection (base) matrix
     resize() {
-        let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2 : E3D_HEIGHT / 2;
-        E3D_NEAR = -dd2;
-        E3D_FAR = dd2;
+      //  let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2 : E3D_HEIGHT / 2;
+      //  E3D_NEAR = -dd2;
+      //  E3D_FAR = dd2;
  
         m4_ortho_res(this.projectionMatrix, E3D_WIDTH, E3D_HEIGHT, E3D_NEAR, E3D_FAR);  
 

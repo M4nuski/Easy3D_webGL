@@ -192,23 +192,24 @@ class E3D_animation {  // TODO merge with entity
 
 
 
-function singlePassAnimator(animList /*, animGroup*/) {
-    for (let i = 0; i < animList.length; ++i) animList[i].animateFirstPass();
+function singlePassAnimator(/*animGroup*/) {
+    //for (let i = 0; i < animList.length; ++i) animList[i].animateFirstPass();
+    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
 }
 
-function multiPassAnimator(animList /*, animGroup*/) {
-    for (let i = 0; i < animList.length; ++i) animList[i].animateFirstPass();
-    for (let i = 0; i < animList.length; ++i) animList[i].animateResolvePass();
-    for (let i = 0; i < animList.length; ++i) animList[i].animateLastPass();
+function multiPassAnimator(/*animGroup*/) {
+    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
+    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateResolvePass();
+    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateLastPass();
 }
 
-function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIterations = 10) {
+function collisionDetectionAnimator(/*animGroup, */ maxCDIterations = 10) {
     // Animate / Calculate Expected target position and state
 
     // First pass, calculate expected next position
-    for (let i = 0; i < animList.length; ++i) {
-        animList[i].animateFirstPass();
-        animList[i].resetCollisions();
+    for (let i = 0; i < ENTITIES.length; ++i) {
+        if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
+        if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.resetCollisions();
     } 
 
     // calc distance every time top 100% of 0.050s at 800 entities 
@@ -218,16 +219,16 @@ function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIteratio
     //  multi pass, only add if closest max at 600
 
     // Cull Collission Detection
-    for (let i = 0; i < animList.length; ++i) // CD culling
-    if ((animList[i].target.collisionDetection) && (animList[i].deltaLength > -1)) { 
+    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed)  // CD culling
+    if ((ENTITIES[i].collisionDetection) && (ENTITIES[i].animation.deltaLength > -1)) { 
 
-        animList[i].candidates = new Array(scn.entities.length);
-        for (let j = 0; j < scn.entities.length; ++j) {// all entities are targets
-            animList[i].candidates[j] = false;
-            if ((scn.entities[j].collisionDetection == true) && (animList[i].target.id != scn.entities[j].id) ) { 
-                var deltaP = v3_distance( animList[i].target.position, scn.entities[j].position); // TODO cache in entity
-                var deltaD = animList[i].deltaLength + animList[i].target.cull_dist + scn.entities[j].cull_dist; // TODO add other ent deltaLength
-                animList[i].candidates[j] = deltaP <= deltaD;  
+        ENTITIES[i].animation.candidates = new Array(ENTITIES.length);
+        for (let j = 0; j < ENTITIES.length; ++j) {// all entities are targets
+            ENTITIES[i].animation.candidates[j] = false;
+            if ((ENTITIES[j].collisionDetection == true) && (ENTITIES[i].id != ENTITIES[j].id) ) { 
+                var deltaP = v3_distance(ENTITIES[i].position, ENTITIES[j].position); // TODO cache in entity
+                var deltaD = ENTITIES[i].animation.deltaLength + ENTITIES[i].cull_dist + ENTITIES[j].cull_dist; // TODO add other ent deltaLength
+                ENTITIES[i].animation.candidates[j] = deltaP <= deltaD;  
             }
         }
 
@@ -240,21 +241,23 @@ function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIteratio
 
         // Collision Detection
         hitDetected = false;
-        for (let i = 0; i < animList.length; ++i) if ((animList[i].target.collisionDetection) && (animList[i].deltaLength > 0.0)) {
-            if (animList[i].target.CD_sph > 0) CheckForAnimationCollisions_SphSource(animList[i], scn, animList);
-            if (animList[i].target.CD_point > 0) CheckForAnimationCollisions_PointSource(animList[i], scn, animList);
+        for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) 
+        if ((ENTITIES[i].collisionDetection) && (ENTITIES[i].animation.deltaLength > 0.0)) {
+            if (ENTITIES[i].CD_sph > 0) CheckForAnimationCollisions_SphSource(ENTITIES[i].animation);
+            if (ENTITIES[i].CD_point > 0) CheckForAnimationCollisions_PointSource(ENTITIES[i].animation);
         }
         
         // Collision Response
-        for (let i = 0; i < animList.length; ++i) if ((animList[i].collisionDetected) || (animList[i].collisionFromOther)) {
-            animList[i].animateResolvePass(maxCDIterations - numIter); 
+        for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) 
+        if ((ENTITIES[i].animation.collisionDetected) || (ENTITIES[i].animation.collisionFromOther)) {
+            ENTITIES[i].animation.animateResolvePass(maxCDIterations - numIter); 
             hitDetected = true;
         }
         numIter--;
     }
 
     // Last pass, post-process animation state after collisions are resolved
-    for (let i = 0; i < animList.length; ++i) animList[i].animateLastPass();
+    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateLastPass();
     
     return maxCDIterations - numIter;
 }
@@ -754,12 +757,12 @@ function anim_Base_endPass_ttl() {
 
     if (this.ttl < 0) {
         this.state = this.endState;
-        this.target.visible = false;
+        this.isVisible = false;
     }
 }
 
 function anim_Base_endPass() {
-    if (this.state == E3D_DONE) this.target.visible = false;
+    if (this.state == E3D_DONE) this.isVisible = false;
 }
 
 
@@ -768,14 +771,15 @@ function anim_Base_endPass() {
 
 
 
-function cleanupDoneAnimations(animations, scn) {
-    var someremoved = false;
-    for (let i = animations.length -1; i >=0; --i) if (animations[i].state == E3D_DONE) {
-        scn.removeEntity(animations[i].target.id, false);
-        animations.splice(i, 1);
-        someremoved = true;
+function cleanupDoneAnimations() {
+    //var someremoved = false;
+    for (let i = ENTITIES.length-1; i >= 0; --i) if ( (ENTITIES[i].isAnimaed) && (ENTITIES[i].animation.state == E3D_DONE) ) {
+
+        SCENE.removeEntity(ENTITIES[i].id, false);
+
+      //  someremoved = true;
     }
     // Recalc indices until animations are merged with entities
-    if (someremoved) for (let i = 0; i < animations.length; ++i) animations[i].target.animIndex = i;
+    //if (someremoved) for (let i = 0; i < animations.length; ++i) animations[i].target.animIndex = i;
 }
 
