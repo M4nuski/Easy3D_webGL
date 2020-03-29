@@ -1,7 +1,7 @@
 // Easy3D_WebGL
 // Scene camera class to handle controls and matrix calculations
 // Polyfill and handler classes for fullscreen
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

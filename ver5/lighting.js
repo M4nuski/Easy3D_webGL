@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Base class for ambiant and 2 directional lights for current shader model
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

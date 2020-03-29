@@ -1,7 +1,7 @@
 // Easy3D_WebGL
 // Base class container for GLSL shader program loading and compiling
 // Container file for various WebGL GLSL shaders and their attribute lists
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

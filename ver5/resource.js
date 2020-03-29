@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Async resource manager class
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

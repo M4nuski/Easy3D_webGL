@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // State container for animations
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 
@@ -778,3 +778,4 @@ function cleanupDoneAnimations(animations, scn) {
     // Recalc indices until animations are merged with entities
     if (someremoved) for (let i = 0; i < animations.length; ++i) animations[i].target.animIndex = i;
 }
+

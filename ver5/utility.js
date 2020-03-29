@@ -1,7 +1,7 @@
 // Easy3D_WebGL
 // String padding and justify methods
 // Polyfill and handler classes for "on pointer hover" css switching supporting mobile touch
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

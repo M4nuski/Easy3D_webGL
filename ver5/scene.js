@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Scene class, gathering all state and entities, shaders, lights and camera
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 

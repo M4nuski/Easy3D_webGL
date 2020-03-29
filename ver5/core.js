@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Core container for state and engine
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 
@@ -14,7 +14,7 @@ var E3D_HEIGHT = 480;
 var E3D_G = 386.22;
 
 // Global default 
-var TIMER = new E3D_timing(false, 100, E3D_onTick); 
+var TIMER = new E3D_timing(false, 20, E3D_onTick); 
 var CANVAS = null;
 var CONTEXT = null;
 var SCENE = new E3D_scene("scene0");
@@ -50,11 +50,8 @@ function E3D_Init(element) {
         CANVAS = document.createElement("canvas");
         CANVAS.id = "E3D_canvas";
         element.appendChild(CANVAS);
-        CANVAS.style.position = "absolute";
-        CANVAS.style.width = element.style.width;
-        CANVAS.style.height = element.style.height;
-      //  CANVAS.style.left = "0px";
-      //  CANVAS.style.top = "0px";
+        CANVAS.style.width = "100%";
+        CANVAS.style.height = "100%";
     }
 
     CANVAS.width = CANVAS.offsetWidth;

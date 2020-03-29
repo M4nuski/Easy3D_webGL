@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Main timer class for synchronisation, smoothing and basic engine running
-// Emmanuel Charette 2017-2019
+// Emmanuel Charette 2017-2020
 
 "use strict"
 
