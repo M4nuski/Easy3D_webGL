@@ -209,8 +209,7 @@ class E3D_input {
 
         CANVAS.addEventListener("dblclick", (e) => { this.mouseDblClick(e) } );
 
-        this.elemScaleX = 1.0 / CANVAS.offsetWidth; 
-        this.elemScaleY = 1.0 / CANVAS.offsetHeight; 
+        this.resize(); 
     }
     
     supportKeyboard() {
@@ -224,12 +223,16 @@ class E3D_input {
         CANVAS.addEventListener("touchcancel", (e) => { this.touchEnd(e) } );
         CANVAS.addEventListener("touchmove", (e) => { this.touchMove(e) } );
 
-        this.elemScaleX = 1.0 / CANVAS.offsetWidth; 
-        this.elemScaleY = 1.0 / CANVAS.offsetHeight; 
+        this.resize(); 
     }
 
     supportPointerLock() {
         if (pLockSupported) CB_pointerlockMove = (x, y) => { this.mouseLockedMove(x, y) }; 
+    }
+
+    resize() {
+        this.elemScaleX = 1.0 / CANVAS.offsetWidth; 
+        this.elemScaleY = 1.0 / CANVAS.offsetHeight; 
     }
 
     // Process keys and pointer inputs to get final output values
@@ -766,8 +769,8 @@ class E3D_input {
             // pinch panning
             secondTouch.button = this.touchMap.get("touch_double");
 
-            this.mouseMove( { pageX: (firstTouch.pageX + secondTouch) / 2,
-                              pageY: (firstTouch.pageY + secondTouch) / 2,
+            this.mouseMove( { pageX: (firstTouch.pageX + secondTouch.pageX) / 2,
+                              pageY: (firstTouch.pageY + secondTouch.pageY) / 2,
                               button: secondTouch.button } );
 
             if (Math.abs(this.touchDist - newTouchDist) > this._pinchHysteresis) {
@@ -794,9 +797,7 @@ class E3D_input {
 
 // Virtual keybaord: binds event on element and transpose "vKey=" DOM element attribute value to keyboard input handler
 class E3D_input_virtual_kb {
-    constructor(element, inputClass, supportTouch) {
-
-        this.inputClass = inputClass;
+    constructor(element, supportTouch) {
 
         element.addEventListener("mousedown", (e) => this.vKeyDown(e));
         element.addEventListener("mouseup",  (e) => this.vKeyUp(e));
@@ -813,7 +814,7 @@ class E3D_input_virtual_kb {
     vKeyDown(event) {
         let k = event.target.getAttribute("vKey");
         if (k) {
-            this.inputClass.keyDown( { code : k } );
+            INPUTS.keyDown( { code : k } );
         }
         event.preventDefault();
     }
@@ -821,7 +822,7 @@ class E3D_input_virtual_kb {
     vKeyUp(event) {
         let k = event.target.getAttribute("vKey");
         if (k) {
-            this.inputClass.keyUp( { code : k } );
+            INPUTS.keyUp( { code : k } );
         }
     }
 
@@ -832,9 +833,8 @@ class E3D_input_virtual_kb {
 
 // Virtual trackpad handler from a DOM element
 class E3D_input_virtual_trackpad {
-    constructor (element, inputClass) {
+    constructor (element) {
 
-        this.inputClass = inputClass;
         this.element = element;
         this.xScale = 1.0;
         this.yScale = 1.0;
@@ -853,31 +853,31 @@ class E3D_input_virtual_trackpad {
     } 
 
     onResize() {
-        this.xScale = this.inputClass.element.offsetWidth / this.element.offsetWidth;
-        this.yScale = this.inputClass.element.offsetHeight / this.element.offsetHeight;
+        this.xScale = CANVAS.offsetWidth / this.element.offsetWidth;
+        this.yScale = CANVAS.offsetHeight / this.element.offsetHeight;
 
-        this.xOffset = this.inputClass.element.offsetLeft - this.element.offsetLeft;
-        this.yOffset = this.inputClass.element.offsetTop - this.element.offsetTop;
+        this.xOffset = CANVAS.offsetLeft - this.element.offsetLeft;
+        this.yOffset = CANVAS.offsetTop - this.element.offsetTop;
     }
 
     onTouchStart(event) {
         event.preventDefault();
-        this.inputClass.touchStart( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
+        INPUTS.touchStart( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
     }
 
     onTouchEnd(event) {
         event.preventDefault();
-        this.inputClass.touchEnd( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
+        INPUTS.touchEnd( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
     }
 
     onTouchMove(event) {
         event.preventDefault();
-        this.inputClass.touchMove( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
+        INPUTS.touchMove( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
     }
 
     onTouchCancel(event) {
         event.preventDefault();
-        this.inputClass.touchCancel( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
+        INPUTS.touchCancel( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
     }
     
 
@@ -895,9 +895,8 @@ class E3D_input_virtual_trackpad {
 
 // Virtual thumb stick input from a DOM element
 class E3D_input_virtual_thumbstick {
-    constructor (element, inputClass, doubleTapCommand = "", liftTapCommand = "action0") {
+    constructor (element, doubleTapCommand = "", liftTapCommand = "action0") {
 
-        this.inputClass = inputClass;
         this.element = element;
 
         this.doubleTapCommand = doubleTapCommand;        
@@ -963,7 +962,7 @@ class E3D_input_virtual_thumbstick {
                 //Normalize
                 dx = (dx - this.deadZone) / (1.0 - this.deadZone);
                 //Inject
-                if (this.inputClass[xTarget] != undefined) this.inputClass[xTarget] += dx * this.Xspeed;
+                if (INPUTS[xTarget] != undefined) INPUTS[xTarget] += dx * this.Xspeed;
             }
 
             // Y
@@ -971,7 +970,7 @@ class E3D_input_virtual_thumbstick {
                 //Normalize
                 dy = (dy - this.deadZone) / (1.0 - this.deadZone);
                 //Inject
-                if (this.inputClass[yTarget] != undefined) this.inputClass[yTarget] += dy * this.Yspeed;
+                if (INPUTS[yTarget] != undefined) INPUTS[yTarget] += dy * this.Yspeed;
             }
         }
     }
@@ -984,8 +983,8 @@ class E3D_input_virtual_thumbstick {
 
         if (this.doubleTapping) {
             if (this.doubleTapCommand != "") {
-                this.inputClass.keyUp( { code : this.inputClass.keyMap.get(this.doubleTapCommand) } );
-                this.inputClass.keyDown( { code : this.inputClass.keyMap.get(this.doubleTapCommand) } );
+                INPUTS.keyUp(   { code : INPUTS.keyMap.get(this.doubleTapCommand) } );
+                INPUTS.keyDown( { code : INPUTS.keyMap.get(this.doubleTapCommand) } );
             }
             this.doubleTapping = false;
             if (this.doubleTapTimer) {
@@ -994,13 +993,13 @@ class E3D_input_virtual_thumbstick {
             }
         } else {
             this.doubleTapping = true;
-            this.doubleTapTimer = setTimeout( () => { this.doubleTapping = false; }, this.inputClass._doubleTapDelay );
+            this.doubleTapTimer = setTimeout( () => { this.doubleTapping = false; }, INPUTS._doubleTapDelay );
         }
 
         if (this.liftTapping) {
             if (this.liftTapCommand != "") {
-                this.inputClass.keyUp( { code : this.inputClass.keyMap.get(this.liftTapCommand) } );
-                this.inputClass.keyDown( { code : this.inputClass.keyMap.get(this.liftTapCommand) } );
+                INPUTS.keyUp(   { code : INPUTS.keyMap.get(this.liftTapCommand) } );
+                INPUTS.keyDown( { code : INPUTS.keyMap.get(this.liftTapCommand) } );
             }
             this.liftTapping = false;
             if (this.liftTimer) { 
@@ -1021,7 +1020,7 @@ class E3D_input_virtual_thumbstick {
                 clearTimeout(this.liftTimer); 
                 this.liftTimer = false; 
             }
-            this.liftTimer = setTimeout( () => { this.liftTapping = false; }, this.inputClass._doubleTapDelay );
+            this.liftTimer = setTimeout( () => { this.liftTapping = false; }, INPUTS._doubleTapDelay );
         }
     }
 

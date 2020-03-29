@@ -156,6 +156,7 @@ function E3D_onResize() {
     // reset viewport and camera
     CONTEXT.viewport(0, 0, E3D_WIDTH, E3D_HEIGHT);
     CAMERA.resize();
+    INPUTS.resize(); 
     //log("Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
     if (CB_resize) CB_resize();
 }
