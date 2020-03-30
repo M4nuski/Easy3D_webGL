@@ -8,7 +8,7 @@
 function E3D_userInit() {
     log("E3D_userInit");
 
-    // Load all default engine parts, scene, lights, timer, inputs, camera
+    // Load all default engine parts: scene, lights, timer, inputs, camera
     E3D_InitAll();
 
     // Create a new entity
@@ -25,7 +25,7 @@ function E3D_userInit() {
     // Move the camera back and up a little
     CAMERA.moveTo(0, 24, 100);
 
-    // If the buttons exists register the events
+    // If the buttons exists register the events (demo3)
     var btn = document.getElementById("btn_fs");
     if (btn) btn.addEventListener("click", x => fullscreenEnable(CANVAS) );
     var btn = document.getElementById("btn_pl");

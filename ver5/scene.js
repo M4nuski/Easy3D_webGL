@@ -42,12 +42,12 @@ class E3D_scene { // Basic, single pass
     }
 
     setSceneUniforms() {
-        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, CAMERA.getProjectionViewMatrix());
-        CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uProjectionMatrix, false, CAMERA.getProjectionViewMatrix());
+        if (this.program.shaderUniforms.uStrokePass != -1) CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
     }
     setEntityUniforms(i) {
-        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uModelMatrix"], false, ENTITIES[i].modelMatrix);
-        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uNormalMatrix"], false, ENTITIES[i].normalMatrix); 
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uModelMatrix, false, ENTITIES[i].modelMatrix);
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uNormalMatrix, false, ENTITIES[i].normalMatrix); 
     }
 
     render() {
@@ -65,43 +65,43 @@ class E3D_scene { // Basic, single pass
                 if (ENTITIES[i].isDynamic) {
                     if (ENTITIES[i].dataSizeChanged) { 
                         // reset buffer
-                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
-                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
-                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
+                        this.bindAndReset3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
                         if (ENTITIES[i].drawStrokes) this.bindAndResetShortIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
                         ENTITIES[i].dataSizeChanged = false;
 
                     } else if (ENTITIES[i].dataContentChanged) { 
                         // update buffer
-                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
-                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
-                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
+                        this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
                         if (ENTITIES[i].drawStrokes) this.bindAndUpdateShortIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
                         ENTITIES[i].dataContentChanged = false;
 
                     } else {
                         // bind buffer
-                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer);  
-                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer);    
-                        this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer);
+                        this.bind3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer);  
+                        this.bind3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer);    
+                        this.bind3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer);
                         if (ENTITIES[i].drawStrokes) this.bindShortIndexBuffer(ENTITIES[i].strokeIndexBuffer);
                     }
                                        
 
                  } else { // static, bind only
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexPosition"], ENTITIES[i].vertexBuffer);  
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexNormal"], ENTITIES[i].normalBuffer);    
-                    this.bind3FloatBuffer(this.program.shaderAttributes["aVertexColor"], ENTITIES[i].colorBuffer);
+                    this.bind3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer);  
+                    this.bind3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer);    
+                    this.bind3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer);
                     if (ENTITIES[i].drawStrokes) this.bindShortIndexBuffer(ENTITIES[i].strokeIndexBuffer);
                 }
 
                 this.setEntityUniforms(i);
 
                 // Draw strokes
-                if (ENTITIES[i].drawStrokes) {
-                    CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 1);
+                if ((ENTITIES[i].drawStrokes) && (this.program.shaderUniforms.uStrokePass != -1)) {
+                    CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 1);
                     CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
-                    CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
+                    CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
                     this.drawnElemenets += ENTITIES[i].numStrokeElements;
                 }
                 
@@ -118,12 +118,14 @@ class E3D_scene { // Basic, single pass
 
 
     bind3FloatBuffer(location, buffer) {
+        if (location == -1) return;
         CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
         CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
         CONTEXT.enableVertexAttribArray(location);
     }
     
     bindAndUpdate3FloatBuffer(location, buffer, data) {
+        if (location == -1) return;
         CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
         CONTEXT.bufferSubData(CONTEXT.ARRAY_BUFFER, 0, data);
         CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
@@ -131,6 +133,7 @@ class E3D_scene { // Basic, single pass
     }
 
     bindAndReset3FloatBuffer(location, buffer, data) {
+        if (location == -1) return;
         CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
         CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, data, CONTEXT.DYNAMIC_DRAW); 
         CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
@@ -204,20 +207,20 @@ class E3D_scene_default extends E3D_scene {
     }
 
     setSceneUniforms() {
-        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, CAMERA.getProjectionViewMatrix());
-        CONTEXT.uniform1i(this.program.shaderUniforms["uStrokePass"], 0);
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uProjectionMatrix, false, CAMERA.getProjectionViewMatrix());
+        if (this.program.shaderUniforms.uStrokePass != -1) CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
 
-        CONTEXT.uniform3fv(this.program.shaderUniforms["uLightA_Color"], this.lightA_color);
+        CONTEXT.uniform3fv(this.program.shaderUniforms.uLightA_Color, this.lightA_color);
 
-        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight0_Color"], this.light0_color);
-        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight0_Direction"], this.light0_adjusted);
+        CONTEXT.uniform3fv(this.program.shaderUniforms.uLight0_Color, this.light0_color);
+        CONTEXT.uniform3fv(this.program.shaderUniforms.uLight0_Direction, this.light0_adjusted);
 
-        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight1_Color"], this.light1_color);
-        CONTEXT.uniform3fv(this.program.shaderUniforms["uLight1_Direction"], this.light1_adjusted);
+        CONTEXT.uniform3fv(this.program.shaderUniforms.uLight1_Color, this.light1_color);
+        CONTEXT.uniform3fv(this.program.shaderUniforms.uLight1_Direction, this.light1_adjusted);
 
-        CONTEXT.uniform3fv(this.program.shaderUniforms["uFogColor"], this.clearColor);
-        CONTEXT.uniform1f(this.program.shaderUniforms["uFogLimit"], this.fogLimit);
-        CONTEXT.uniform1f(this.program.shaderUniforms["uFogFactor"], this.fogFactor);
+        CONTEXT.uniform3fv(this.program.shaderUniforms.uFogColor, this.clearColor);
+        CONTEXT.uniform1f(this.program.shaderUniforms.uFogLimit, this.fogLimit);
+        CONTEXT.uniform1f(this.program.shaderUniforms.uFogFactor, this.fogFactor);
     }
 
 }
@@ -234,7 +237,7 @@ class E3D_scene_default extends E3D_scene {
 
 
 // Entension to allow dual shaders for toon/cell shading of mesh
-class E3D_scene_cell_shader extends E3D_scene {
+class E3D_scene_cell_shader extends E3D_scene { // TODO 2 pass scene
     constructor(id, vBackColor = [0.9, 0.9, 0.9]) {
         super(id, vBackColor);
 

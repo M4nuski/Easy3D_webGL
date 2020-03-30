@@ -6,10 +6,10 @@
         <style>
             #E3D_mainDiv {
                 position: absolute;
-                width : 80%;
-                height : 80%;
-                top : 10%;
-                left : 10%;
+                width : 90%;
+                height : 90%;
+                top : 5%;
+                left : 5%;
             }
             .fakeButton {
                 cursor: pointer;
@@ -20,15 +20,17 @@
             }
         </style>
         <script type="text/javascript" src="ver5/E3D_Engine.js"></script>
-        <script type="text/javascript" src="ver5demo.js" defer="true"></script>
+        <script type="text/javascript" src="ver5demoShader.js" defer="true"></script>
     </head>
 
     <body>
         <div>
-            Easy3D ver 5 FullScreen and PointerLock Tests
-            <span id="btn_fs" class="fakeButton">Enable FullScreen</span>
-            <span id="btn_pl" class="fakeButton">Enable PointerLock</span>
-            <span id="btn_fspl" class="fakeButton">Enable Both</span>
+            Easy3D ver 5 Base Shader Tests
+            <span id="btn_s1" class="fakeButton">PassTrough</span>
+            <span id="btn_s2" class="fakeButton">Normals</span>
+            <span id="btn_s3" class="fakeButton">Depth</span>
+            <span id="btn_s4" class="fakeButton">Shade</span>
+            <span id="btn_s5" class="fakeButton">Shade and Depth</span>
         </div>
         <div id="E3D_mainDiv"></div>
     </body>

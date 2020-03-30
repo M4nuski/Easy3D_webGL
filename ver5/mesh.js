@@ -561,8 +561,32 @@ class E3D_loader {
         var prightTop = v3_val_new(pright[0], pright[1] + height, pright[2]);
 
         this.pushQuad4p(prightTop, pleftTop, pleft, pright, color);
-     }
+    }
   
+
+    // 
+    pushBox(width, height, depth, color = _v3_white) {
+        width /= 2;
+        height /= 2;
+        depth /= 2;
+        var lbb = [-width, -height, -depth];
+        var rbb = [ width, -height, -depth];
+        var rbf = [ width, -height,  depth];
+        var lbf = [-width, -height,  depth];
+        var ltb = [-width,  height, -depth];
+        var rtb = [ width,  height, -depth];
+        var rtf = [ width,  height,  depth];
+        var ltf = [-width,  height,  depth];
+
+        this.pushQuad4p(lbb, rbb, rbf, lbf, color); /// bottom
+        this.pushQuad4p(ltb, ltf, rtf, rtb, color); /// top
+
+        this.pushQuad4p(lbb, lbf, ltf, ltb, color); /// left
+        this.pushQuad4p(rbf, rbb, rtb, rtf, color); /// right
+
+        this.pushQuad4p(lbb, ltb, rtb, rbb, color); /// back
+        this.pushQuad4p(lbf, rbf, rtf, ltf, color); /// front
+    }
 
 
 }
