@@ -1,5 +1,5 @@
 // Easy3D_WebGL
-// Helper class to load 3D model data into entities
+// Helper class to parse model data or create primitives, and load them into entities
 // Emmanuel Charette 2017-2020
 
 "use strict"
@@ -59,6 +59,9 @@ class E3D_loader {
         entity.normalArray = new Float32Array(this.normals);
 
         entity.numElements = this.numFloats / 3;
+
+        entity.dataContentChanged = true;
+        entity.dataSizeChanged = true;
     }
 
     addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8)  {       
@@ -561,6 +564,13 @@ class E3D_loader {
         var prightTop = v3_val_new(pright[0], pright[1] + height, pright[2]);
 
         this.pushQuad4p(prightTop, pleftTop, pleft, pright, color);
+    }
+
+    pushPlane(width, height, color = _v3_white, depthOffset = 0.0) {
+        width /= 2;
+        height /= 2;
+        this.pushQuad4p([-width, -height, depthOffset], [ width, -height, depthOffset], 
+                        [ width,  height, depthOffset], [-width,  height, depthOffset], color);
     }
   
 

@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Main demo program for version 0.5
-// Display various basic shaders and simple out-of-engine animation
+// Demonstrate various basic shaders
 // Emmanuel Charette 2020
 
 "use strict"
@@ -37,6 +37,12 @@ function E3D_userInit() {
     SCENE.initialize();
     SCENE.state = E3D_ACTIVE;
 
+
+    // Move the camera back and up a little, add some nod 
+    CAMERA.moveTo(0, 100, 100, 0.5);
+
+
+    
 
     // Create the entities
     var groundEntity = new E3D_entity_wireframe_canvas("entity0");
@@ -75,10 +81,6 @@ function E3D_userInit() {
         newEnt.updateMatrix();
     }
 
-
-
-    // Move the camera back and up a little, add some nod 
-    CAMERA.moveTo(0, 100, 100, 0.5);
 
 
     // Register the button events

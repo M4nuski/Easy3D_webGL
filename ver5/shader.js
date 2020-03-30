@@ -199,9 +199,11 @@ var programData_passtrough_shade = {
         varying lowp vec4 vColor;            
 
         void main(void) {      
-            lowp vec4 p = uProjectionMatrix * vec4(0.0, 0.0, 1.0, 1.0);
+           // mat4 nMatrix = uProjectionMatrix;
+            //nMatrix[3] = vec4(0.0, 0.0, 0.0, 0.0);
+            lowp vec4 p = vec4(-0.5, -1.0, -0.5, 0.0);
             p = normalize(p);
-            lowp float f = dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
+            lowp float f = -dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
             f = 0.5 * f + 0.5;            
             vColor = vec4(aVertexColor * f, 1.0);
             gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
@@ -240,9 +242,9 @@ var programData_passtrough_shadeAndDepth = {
         varying lowp vec4 vPosition;          
 
         void main(void) {      
-            lowp vec4 p = uProjectionMatrix * vec4(0.0, 0.0, 1.0, 1.0);
+            lowp vec4 p = vec4(-0.5, -1.0, -0.5, 0.0);
             p = normalize(p);
-            lowp float f = dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
+            lowp float f = -dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
             f = 0.5 * f + 0.5;            
             vColor = vec4(aVertexColor * f, 1.0);
             vPosition = uProjectionMatrix * uModelMatrix * aVertexPosition;
