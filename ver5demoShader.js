@@ -42,7 +42,7 @@ function E3D_userInit() {
     CAMERA.moveTo(0, 100, 100, 0.5);
 
 
-    
+
 
     // Create the entities
     var groundEntity = new E3D_entity_wireframe_canvas("entity0");
@@ -51,35 +51,69 @@ function E3D_userInit() {
     groundEntity.isVisible = true;
     E3D_addEntity(groundEntity);
 
-    // Create a solid cube
-    var cubeEntity = new E3D_entity("cube1", "", false);
 
-    // Create mesh
+    // Create a solid cube
     meshLoader.pushBox(48, 48, 48);     
     // Randomize colors
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
-    // Load data from mesh to entity
-    meshLoader.addModelData(cubeEntity);
 
-    // Setup entity
-    cubeEntity.isVisible = true;
-    cubeEntity.position = [0, 24, 0];
-    E3D_addEntity(cubeEntity);
-
-    // Clone the cube a few times
+    // Create the entities, and place around the ground
     for (var x = -2; x < 2; ++x) for (var y = -2; y < 2; ++y) {
 
-        var newEnt = E3D_cloneEntity("cube1", "cube" + x + "-" + y);
+        var newEnt = new E3D_entity("cube" + x + "-" + y);
+        meshLoader.addModelData(newEnt);
         newEnt.isVisible = true;
 
         // Spread positions, randomize rotation
         newEnt.position = [x * 150 + 75, 24, y * 150 + 75];
         newEnt.rotation = [rndPM(Math.PI), rndPM(Math.PI), 0];
 
-        // Update the entity matrix, once all changes to the position and rotation are done
-        newEnt.updateMatrix();
+        E3D_addEntity(newEnt);
     }
+
+
+
+    var torusEntity = new E3D_entity("torus", "", false);
+
+    // Create a torus mesh
+    meshLoader.reset();
+
+    var radius = 32;
+    var sectionRadius = 12;
+    var sections = 32;
+    var sectionsRes = 16;
+    var pts = [];
+
+    // create section circle
+    pts.push([sectionRadius, 0, 0]);
+    for (var i = 1; i < sectionsRes; ++i) pts.push(v3_rotateZ_new(pts[0], (PIx2 / sectionsRes) * i));
+    // move section to radius
+    var offset = [radius, 0, 0];
+    for (var i = 0; i < sectionsRes; ++i) v3_add_mod(pts[i], offset);
+    // copy and rotate section around center at radius
+    for (var j = 1; j < sections; ++j) for (var i = 0; i < sectionsRes; ++i) pts.push(v3_rotateY_new(pts[i], (PIx2 / sections) * j));
+
+    // faces
+    for (var j = 0; j < sections; ++j) for (var i = 0; i < sectionsRes; ++i) {
+        var nextI = (i + 1) % sectionsRes;
+        var nextJ = (j + 1) % sections;
+        meshLoader.pushQuad4p( pts[i     + (j     * sectionsRes) ], 
+                               pts[i     + (nextJ * sectionsRes) ], 
+                               pts[nextI + (nextJ * sectionsRes) ], 
+                               pts[nextI + (j     * sectionsRes) ] );   
+    }
+
+
+    for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+
+    // Check and smooth adjascent normals if they are similar
+    meshLoader.smoothNormals(0.7);
+    meshLoader.addModelData(torusEntity);
+    torusEntity.isVisible = true;
+    torusEntity.position = [0, 24, 0];
+    E3D_addEntity(torusEntity);
+
 
 
 
@@ -95,11 +129,11 @@ function E3D_userInit() {
     var btn = document.getElementById("btn_s5");
     if (btn) btn.addEventListener("click", x => SCENE.program = programs[4] );
 
-    // use the engine OnTick event callback to change the rotation of the center cube
+    // use the engine OnTick event callback to change the rotation of the torus
     CB_tick = function() {
         // rotate around Y
-        cubeEntity.rotation[1] += TIMER.delta * 0.33;
-        cubeEntity.updateMatrix();
+        torusEntity.rotation[1] += TIMER.delta * 0.33;
+        torusEntity.updateMatrix();
     }
 }
 
