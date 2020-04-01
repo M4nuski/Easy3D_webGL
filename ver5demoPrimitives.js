@@ -8,7 +8,8 @@
 
 function E3D_userInit() {
 
-    
+var paramText = document.getElementById("params");
+
     log("E3D_userInit");
     
     // Load all default engine parts: scene, lights, timer, inputs, camera
@@ -33,7 +34,8 @@ function E3D_userInit() {
     var entity = new E3D_entity("entity1", "", true); // dynamic entity, GPU data will be updated when changed
 
     // Create mesh
-    meshLoader.pushBox(48, 48, 48);     
+    meshLoader.pushBox(48, 48, 48);
+    paramText.innerText = "Box 48.00 x 48.00 x 48.00";
     // Randomize colors
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
@@ -64,17 +66,24 @@ function E3D_userInit() {
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
 
+        paramText.innerText = `Plane ${w*2} x ${h*2}`;
+
     } );
     var btn = document.getElementById("btn_s2"); // box
     if (btn) btn.addEventListener("click", x =>  {
 
         meshLoader.reset();
-        meshLoader.pushBox(48 + rndPM(10), 48 + rndPM(10), 48 + rndPM(10));     
+        var w = 48 + rndPM(10);
+        var h = 48 + rndPM(10);
+        var d = 48 + rndPM(10);
+        meshLoader.pushBox(w, h, d);     
 
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
+
+        paramText.innerText = `Box ${w.toFixed(2)} x ${h.toFixed(2)} x ${d.toFixed(2)}`;
 
     } );
     var btn = document.getElementById("btn_s3"); // pyramid
@@ -100,6 +109,8 @@ function E3D_userInit() {
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
+
+        paramText.innerText = `Pyramid ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
 
     } );
     var btn = document.getElementById("btn_s4"); // prism
@@ -131,6 +142,8 @@ function E3D_userInit() {
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
+
+        paramText.innerText = `Prism ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
 
     } );
     var btn = document.getElementById("btn_s5"); // sphere
@@ -252,7 +265,7 @@ function E3D_userInit() {
         faces.push([8, 6, 7]);
         faces.push([9, 8, 1]);
 
-
+        paramText.innerText = `Ico Sphere radius ${radius.toFixed(2)} recursion depth of ${depth}`;
 
 
 
@@ -308,6 +321,8 @@ function E3D_userInit() {
         var sections = 4 + rndInt(48);
         var sectionsRes = 4 + rndInt(24);
         var pts = [];
+
+        paramText.innerText = `Torus radius: ${radius.toFixed(2)}, section radius: ${sectionRadiu.toFixed(2)}, ${sections} sections of ${sectionsRes} sides`;
 
         // create section circle
         pts.push([sectionRadius, 0, 0]);
