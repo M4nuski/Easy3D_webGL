@@ -317,12 +317,12 @@ var paramText = document.getElementById("params");
         meshLoader.reset();
 
         var radius = 32 + rndPM(16);
-        var sectionRadius = 8 + rndPM(8);
+        var sectionRadius = 12 + rndPM(8);
         var sections = 4 + rndInt(48);
         var sectionsRes = 4 + rndInt(24);
         var pts = [];
 
-        paramText.innerText = `Torus radius: ${radius.toFixed(2)}, section radius: ${sectionRadiu.toFixed(2)}, ${sections} sections of ${sectionsRes} sides`;
+        paramText.innerText = `Torus radius: ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, ${sections} sections of ${sectionsRes} sides`;
 
         // create section circle
         pts.push([sectionRadius, 0, 0]);
