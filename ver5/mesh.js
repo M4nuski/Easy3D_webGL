@@ -598,6 +598,31 @@ class E3D_loader {
         this.pushQuad4p(lbf, rbf, rtf, ltf, color); /// front
     }
 
+    pushTorus(radius, sectionRadius, nbSections, sbSides) {
+        
+        var pts = [];
+        // create section circle
+        pts.push([sectionRadius, 0, 0]);
+        for (var i = 1; i < sbSides; ++i) pts.push(v3_rotateZ_new(pts[0], (PIx2 / sbSides) * i));
+
+        // move circle to radius
+        var offset = [radius, 0, 0];
+        for (var i = 0; i < sbSides; ++i) v3_add_mod(pts[i], offset);
+
+        // copy and rotate section around center at radius
+        for (var j = 1; j < nbSections; ++j) for (var i = 0; i < sbSides; ++i) pts.push(v3_rotateY_new(pts[i], (PIx2 / nbSections) * j));
+
+        // create faces
+        for (var j = 0; j < nbSections; ++j) for (var i = 0; i < sbSides; ++i) {
+            var nextI = (i + 1) % sbSides;
+            var nextJ = (j + 1) % nbSections;
+            this.pushQuad4p( pts[i     + (j     * sbSides) ], 
+                                pts[i     + (nextJ * sbSides) ], 
+                                pts[nextI + (nextJ * sbSides) ], 
+                                pts[nextI + (j     * sbSides) ] );   
+        }
+    }
+
 
 }
 

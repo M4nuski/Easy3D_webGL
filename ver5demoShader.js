@@ -58,14 +58,14 @@ function E3D_userInit() {
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
 
-    // Create the entities, and place around the ground
+    // Create a few more cubes spread around
     for (var x = -2; x < 2; ++x) for (var y = -2; y < 2; ++y) {
 
         var newEnt = new E3D_entity("cube" + x + "-" + y);
         meshLoader.addModelData(newEnt);
         newEnt.isVisible = true;
 
-        // Spread positions, randomize rotation
+        // Set positions, randomize rotation
         newEnt.position = [x * 150 + 75, 24, y * 150 + 75];
         newEnt.rotation = [rndPM(Math.PI), rndPM(Math.PI), 0];
 
@@ -73,38 +73,13 @@ function E3D_userInit() {
     }
 
 
-
-    var torusEntity = new E3D_entity("torus", "", false);
-
+    
     // Create a torus mesh
+    var torusEntity = new E3D_entity("torus", "", false);
     meshLoader.reset();
+    meshLoader.pushTorus(32, 12, 31, 16);
 
-    var radius = 32;
-    var sectionRadius = 12;
-    var sections = 32;
-    var sectionsRes = 16;
-    var pts = [];
-
-    // create section circle
-    pts.push([sectionRadius, 0, 0]);
-    for (var i = 1; i < sectionsRes; ++i) pts.push(v3_rotateZ_new(pts[0], (PIx2 / sectionsRes) * i));
-    // move section to radius
-    var offset = [radius, 0, 0];
-    for (var i = 0; i < sectionsRes; ++i) v3_add_mod(pts[i], offset);
-    // copy and rotate section around center at radius
-    for (var j = 1; j < sections; ++j) for (var i = 0; i < sectionsRes; ++i) pts.push(v3_rotateY_new(pts[i], (PIx2 / sections) * j));
-
-    // faces
-    for (var j = 0; j < sections; ++j) for (var i = 0; i < sectionsRes; ++i) {
-        var nextI = (i + 1) % sectionsRes;
-        var nextJ = (j + 1) % sections;
-        meshLoader.pushQuad4p( pts[i     + (j     * sectionsRes) ], 
-                               pts[i     + (nextJ * sectionsRes) ], 
-                               pts[nextI + (nextJ * sectionsRes) ], 
-                               pts[nextI + (j     * sectionsRes) ] );   
-    }
-
-
+    // Randomize colors
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
     // Check and smooth adjascent normals if they are similar
@@ -129,11 +104,15 @@ function E3D_userInit() {
     var btn = document.getElementById("btn_s5");
     if (btn) btn.addEventListener("click", x => SCENE.program = programs[4] );
 
+
+
     // use the engine OnTick event callback to change the rotation of the torus
     CB_tick = function() {
         // rotate around Y
         torusEntity.rotation[1] += TIMER.delta * 0.33;
         torusEntity.updateMatrix();
     }
+
+
 }
 
