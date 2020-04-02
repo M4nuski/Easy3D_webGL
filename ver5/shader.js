@@ -172,7 +172,8 @@ var programData_passtrough_showdepth = {
         varying lowp vec4 vPosition;
 
         void main(void) {
-            lowp float z = 1.0 - (vPosition.z / 500.0);
+            lowp float z = 1.0 - (vPosition.z / 600.0);
+            z = pow(z, 2.5);
             gl_FragColor = vec4(z, z, z, 1.0);
         }
 
@@ -254,7 +255,8 @@ var programData_passtrough_shadeAndDepth = {
         varying lowp vec4 vColor;
         varying lowp vec4 vPosition;
         void main(void) {
-            lowp float z = 1.0 - (vPosition.z / 500.0);
+            lowp float z = 1.0 - (vPosition.z / 600.0);
+            z = pow(z, 2.5);
             gl_FragColor = vec4(vColor.r * z, vColor.g * z, vColor.b * z, 1.0);
         }
 

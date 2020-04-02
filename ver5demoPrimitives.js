@@ -29,12 +29,12 @@ var paramText = document.getElementById("params");
 
     
 
-    var meshLoader = new E3D_loader();
+    var meshLoader = new E3D_mesh();
     // Create a solid cube
     var entity = new E3D_entity("entity1", "", true); // dynamic entity, GPU data will be updated when changed
 
     // Create mesh
-    meshLoader.pushBox(48, 48, 48);
+    meshLoader.pushBox(_v3_origin, _v3_null, 48, 48, 48);
     paramText.innerText = "Box 48.00 x 48.00 x 48.00";
     // Randomize colors
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
@@ -76,7 +76,7 @@ var paramText = document.getElementById("params");
         var w = 48 + rndPM(10);
         var h = 48 + rndPM(10);
         var d = 48 + rndPM(10);
-        meshLoader.pushBox(w, h, d);     
+        meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
 
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
@@ -319,30 +319,9 @@ var paramText = document.getElementById("params");
         var radius = 32 + rndPM(16);
         var sectionRadius = 12 + rndPM(8);
         var sections = 4 + rndInt(48);
-        var sectionsRes = 4 + rndInt(24);
-        var pts = [];
+        var sides = 4 + rndInt(24);
 
-        paramText.innerText = `Torus radius: ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, ${sections} sections of ${sectionsRes} sides`;
-
-        // create section circle
-        pts.push([sectionRadius, 0, 0]);
-        for (var i = 1; i < sectionsRes; ++i) pts.push(v3_rotateZ_new(pts[0], (PIx2 / sectionsRes) * i));
-        // move section to radius
-        var offset = [radius, 0, 0];
-        for (var i = 0; i < sectionsRes; ++i) v3_add_mod(pts[i], offset);
-        // copy and rotate section around center at radius
-        for (var j = 1; j < sections; ++j) for (var i = 0; i < sectionsRes; ++i) pts.push(v3_rotateY_new(pts[i], (PIx2 / sections) * j));
-
-        // faces
-        for (var j = 0; j < sections; ++j) for (var i = 0; i < sectionsRes; ++i) {
-            var nextI = (i + 1) % sectionsRes;
-            var nextJ = (j + 1) % sections;
-            meshLoader.pushQuad4p( pts[i     + (j     * sectionsRes) ], 
-                                   pts[i     + (nextJ * sectionsRes) ], 
-                                   pts[nextI + (nextJ * sectionsRes) ], 
-                                   pts[nextI + (j     * sectionsRes) ] );   
-        }
-
+        meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
 
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 

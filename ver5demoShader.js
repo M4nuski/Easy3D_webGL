@@ -8,7 +8,7 @@
 
 function E3D_userInit() {
     var programs = [];
-    var meshLoader = new E3D_loader();
+    var meshLoader = new E3D_mesh();
 
     log("E3D_userInit");
 
@@ -39,7 +39,7 @@ function E3D_userInit() {
 
 
     // Move the camera back and up a little, add some nod 
-    CAMERA.moveTo(0, 100, 100, 0.5);
+    CAMERA.moveTo(0, 80, 100, 0.5);
 
 
 
@@ -53,7 +53,7 @@ function E3D_userInit() {
 
 
     // Create a solid cube
-    meshLoader.pushBox(48, 48, 48);     
+    meshLoader.pushBox(_v3_origin, _v3_null, 48, 48, 48);     
     // Randomize colors
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
@@ -77,7 +77,7 @@ function E3D_userInit() {
     // Create a torus mesh
     var torusEntity = new E3D_entity("torus", "", false);
     meshLoader.reset();
-    meshLoader.pushTorus(32, 12, 31, 16);
+    meshLoader.pushTorus(_v3_origin, _v3_null, 32, 12, 31, 16);
 
     // Randomize colors
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
@@ -109,7 +109,7 @@ function E3D_userInit() {
     // use the engine OnTick event callback to change the rotation of the torus
     CB_tick = function() {
         // rotate around Y
-        torusEntity.rotation[1] += TIMER.delta * 0.33;
+        torusEntity.rotation[1] += TIMER.delta * 0.33333;
         torusEntity.updateMatrix();
     }
 

@@ -2011,3 +2011,31 @@ function m4_persp_res(res, yfov, ar, znear, zfar){
     res[14] = 2 * zfar * znear * nf;
     res[15] = 0; 
 }
+
+
+function m4_transform_new(position, rotation){
+    var m = m4_rotationZ_new(rotation[2]);
+    m4_rotateX_mod(m, rotation[0]);
+    m4_rotateY_mod(m, rotation[1]);
+    m[12] = position[0];
+    m[13] = position[1];
+    m[14] = position[2];
+}
+
+function m4_transform_res(res, position, rotation){
+    m4_rotationZ_res(res, rotation[2]);
+    m4_rotateX_mod(res, rotation[0]);
+    m4_rotateY_mod(res, rotation[1]);
+    res[12] = position[0];
+    res[13] = position[1];
+    res[14] = position[2];
+}
+
+function m4_transform_mod(res, position, rotation){
+    m4_rotateZ_mod(res, rotation[2]);
+    m4_rotateX_mod(res, rotation[0]);
+    m4_rotateY_mod(res, rotation[1]);
+    res[12] += position[0];
+    res[13] += position[1];
+    res[14] += position[2];
+}
