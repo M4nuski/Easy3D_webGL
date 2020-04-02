@@ -36,8 +36,9 @@ var paramText = document.getElementById("params");
     // Create mesh
     meshLoader.pushBox(_v3_origin, _v3_null, 48, 48, 48);
     paramText.innerText = "Box 48.00 x 48.00 x 48.00";
-    // Randomize colors
-    for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+
+    // Change colors
+    for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
     // Load data from mesh to entity
     meshLoader.addModelData(entity);
@@ -56,12 +57,12 @@ var paramText = document.getElementById("params");
     if (btn) btn.addEventListener("click", x => {
 
         meshLoader.reset();
-        var w = 24 + rndPM(10);
-        var h = 24 + rndPM(10);
+        var w = 24 + rndPM(12);
+        var h = 24 + rndPM(12);
         meshLoader.pushQuad4p([-w, -h,  0.01], [ w, -h,  0.01], [ w,  h,  0.01], [-w,  h,  0.01]);
         meshLoader.pushQuad4p([-w, -h, -0.01], [-w,  h, -0.01], [ w,  h, -0.01], [ w, -h, -0.01]);
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -73,12 +74,12 @@ var paramText = document.getElementById("params");
     if (btn) btn.addEventListener("click", x =>  {
 
         meshLoader.reset();
-        var w = 48 + rndPM(10);
-        var h = 48 + rndPM(10);
-        var d = 48 + rndPM(10);
+        var w = 36 + rndPM(18);
+        var h = 36 + rndPM(18);
+        var d = 36 + rndPM(18);
         meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -91,8 +92,8 @@ var paramText = document.getElementById("params");
 
         meshLoader.reset();
         var nbSide = rndInt(6) + 3;
-        var height = 48 + rndPM(20);
-        var radius = 24 + rndPM(10);
+        var height = 36 + rndPM(20);
+        var radius = 24 + rndPM(12);
 
         // points
         var ps = [0, height, 0];
@@ -105,7 +106,7 @@ var paramText = document.getElementById("params");
         for (var i = 0; i < nbSide; ++i) meshLoader.pushTriangle3p(pts[(i + 1) % nbSide]  , ps, pts[i]);     
         for (var i = 0; i < nbSide; ++i) meshLoader.pushTriangle3p(pts[i], pb, pts[(i + 1) % nbSide ]  );   
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -118,7 +119,7 @@ var paramText = document.getElementById("params");
 
         meshLoader.reset();
         var nbSide = rndInt(12) + 3;
-        var height = 48 + rndPM(20);
+        var height = 36 + rndPM(20);
         var radius = 24 + rndPM(10);
 
         // points
@@ -138,7 +139,7 @@ var paramText = document.getElementById("params");
         // bottom
         for (var i = 0; i < nbSide; ++i) meshLoader.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSide ]  );   
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -304,7 +305,7 @@ var paramText = document.getElementById("params");
         // write the faces to the mesh
         for (var i = 0; i < faces.length; ++i) meshLoader.pushTriangle3p(pts[faces[i][0]], pts[faces[i][1]], pts[faces[i][2]]);
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -321,9 +322,11 @@ var paramText = document.getElementById("params");
         var sections = 4 + rndInt(48);
         var sides = 4 + rndInt(24);
 
+        paramText.innerText = `Torus radius ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, sections:${sections}, sides: ${sides}`;
+
         meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
         meshLoader.smoothNormals(0.7);
         meshLoader.addModelData(entity);

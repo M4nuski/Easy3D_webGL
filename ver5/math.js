@@ -680,6 +680,33 @@ function v3_addnoise_res(res, a, range) {
 }
 
 
+// Color sweeps
+const _v3_sweep_RGB = [ _v3_red, _v3_green, _v3_blue ];
+const _v3_sweep_RGBCMY = [ _v3_red, _v3_green, _v3_blue, _v3_cyan, _v3_magenta, _v3_yellow ];
+
+function v3_colorsweep_RGB_new(index) {
+    return v3_clone(_v3_sweep_RGB[index % 3]);
+}
+function v3_colorsweep_RGB_mod(a, index) {
+    v3_copy(a, _v3_sweep_RGB[index % 3]);
+}
+
+function v3_colorsweep_RGBCMY_new(index) {
+    return v3_clone(_v3_sweep_RGBCMY[index % 6]);
+}
+function v3_colorsweep_RGBCMY_mod(a, index) {
+    v3_copy(a, _v3_sweep_RGBCMY[index % 6]);
+}
+
+
+function float_colorsweep_RGB(index) {
+    return _v3_sweep_RGB[Math.floor(index / 3) % 3][index % 3];
+}
+function float_colorsweep_RGBCMY(index) {
+    return _v3_sweep_RGBCMY[Math.floor(index / 3) % 6][index % 3];
+}
+
+
 
 // v3 Arrays
 
