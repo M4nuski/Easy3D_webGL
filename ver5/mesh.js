@@ -581,6 +581,23 @@ class E3D_mesh {
                         color, c2, c3, c4);
     }
   
+    pushDoubleSidedPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, c2 = null, c3 = null, c4 = null) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+        width /= 2;
+        height /= 2;
+        depthOffset /= 2;
+        this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat), 
+                        v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat), 
+                        v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat), 
+                        v3_applym4_new([-width,  height, depthOffset], _mesh_prim_mat), 
+                        color, c2, c3, c4);
+        this.pushQuad4p(v3_applym4_new([-width,  height, -depthOffset], _mesh_prim_mat), 
+                        v3_applym4_new([ width,  height, -depthOffset], _mesh_prim_mat), 
+                        v3_applym4_new([ width, -height, -depthOffset], _mesh_prim_mat), 
+                        v3_applym4_new([-width, -height, -depthOffset], _mesh_prim_mat), 
+                        c4, c3, c2, color);
+    }
+
 
     // box
     pushBox(position, rotation, width, height, depth, color = _v3_white, cback = null, ctop = null, cbottom = null, cright = null, cleft = null) {
@@ -613,35 +630,94 @@ class E3D_mesh {
         this.pushQuad4p(lbb, ltb, rtb, rbb, cback); /// back
         this.pushQuad4p(lbf, rbf, rtf, ltf, color); /// front
     }
-
-    pushTorus(position, rotation, radius, sectionRadius, nbSections, sbSides, color = _v3_white) {
+    
+    pushPyramid(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true) {
         m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        // points
+        var ps = [0, height, 0];
+        var pb = [0, 0, 0];
         var pts = [];
-        // create section circle
+        pts[0] = [radius, 0, 0];
+        for (var i = 1; i < nbSides; ++i) pts.push(v3_rotateY_new(pts[0], (PIx2 / nbSides) * i));
+
+        // adjust for position and rotation
+        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+
+        // faces
+        for (var i = 0; i < nbSides; ++i) {
+            meshLoader.pushTriangle3p( pts[(i + 1) % nbSides], ps, pts[i], color); //sides
+            if (closedBase) meshLoader.pushTriangle3p( pts[i], pb, pts[(i + 1) % nbSides], color); //base
+        }
+    }
+
+    pushPrism(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        // points
+        var pt = [0, height, 0];
+        var pb = [0, 0, 0];
+        var ptst = [];
+        var ptsb = [];
+        ptsb[0] = [radius, 0, 0]; 
+        for (var i = 1; i < nbSides; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides) * i));
+        for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
+
+        // adjust for position and rotation
+        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+        
+        // faces
+        for (var i = 0; i < nbSides; ++i) {
+            meshLoader.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides 
+            if (closedBase) meshLoader.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base  
+            if (closedTop) meshLoader.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top   
+        }
+
+    }
+
+    pushTorus(position, rotation, radius, sectionRadius, nbSections, nbSides, color = _v3_white) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        var pts = [];
+        // create section circle around Z
         pts.push([sectionRadius, 0, 0]);
-        for (var i = 1; i < sbSides; ++i) pts.push(v3_rotateZ_new(pts[0], (PIx2 / sbSides) * i));
+        for (var i = 1; i < nbSides; ++i) pts.push(v3_rotateZ_new(pts[0], (PIx2 / nbSides) * i));
 
         // move circle to radius
         var offset = [radius, 0, 0];
-        for (var i = 0; i < sbSides; ++i) v3_add_mod(pts[i], offset);
+        for (var i = 0; i < nbSides; ++i) v3_add_mod(pts[i], offset);
 
-        // copy and rotate section around center at radius
-        for (var j = 1; j < nbSections; ++j) for (var i = 0; i < sbSides; ++i) pts.push(v3_rotateY_new(pts[i], (PIx2 / nbSections) * j));
+        // copy and rotate section around Y center at radius
+        for (var j = 1; j < nbSections; ++j) for (var i = 0; i < nbSides; ++i) pts.push(v3_rotateY_new(pts[i], (PIx2 / nbSections) * j));
 
         // adjust for position and rotation
         for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
 
         // create faces
-        for (var j = 0; j < nbSections; ++j) for (var i = 0; i < sbSides; ++i) {
-            var nextI = (i + 1) % sbSides;
+        for (var j = 0; j < nbSections; ++j) for (var i = 0; i < nbSides; ++i) {
+            var nextI = (i + 1) % nbSides;
             var nextJ = (j + 1) % nbSections;
-            this.pushQuad4p( pts[i     + (j     * sbSides) ], 
-                                pts[i     + (nextJ * sbSides) ], 
-                                pts[nextI + (nextJ * sbSides) ], 
-                                pts[nextI + (j     * sbSides) ], color);   
+            this.pushQuad4p( pts[i     + (j     * nbSides) ], 
+                                pts[i     + (nextJ * nbSides) ], 
+                                pts[nextI + (nextJ * nbSides) ], 
+                                pts[nextI + (j     * nbSides) ], color);   
         }
+    }
+
+    sphereBaseType = {
+        ICO: 0,
+        OCTA: 2, // TODO retest all bases 
+        BITETRA: 3,
+        TETRA: 4,
+        CUBE: 5,
+        strings: ["Icosahedron", "Octahedron", "Bi-Tetrahedron", "Tetrahedron", "Cube"]
+      };
+
+    pushSphere(position, rotation, radius, depth = 3, color = _v3_white, baseType = this.sphereBaseType.ICO) {
+
 
     }
+
 
 
 }

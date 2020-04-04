@@ -706,6 +706,9 @@ function float_colorsweep_RGBCMY(index) {
     return _v3_sweep_RGBCMY[Math.floor(index / 3) % 6][index % 3];
 }
 
+// TODO Rainbow gen
+
+
 
 
 // v3 Arrays

@@ -59,8 +59,8 @@ var paramText = document.getElementById("params");
         meshLoader.reset();
         var w = 24 + rndPM(12);
         var h = 24 + rndPM(12);
-        meshLoader.pushQuad4p([-w, -h,  0.01], [ w, -h,  0.01], [ w,  h,  0.01], [-w,  h,  0.01]);
-        meshLoader.pushQuad4p([-w, -h, -0.01], [-w,  h, -0.01], [ w,  h, -0.01], [ w, -h, -0.01]);
+
+        meshLoader.pushDoubleSidedPlane(_v3_origin, _v3_null, w, h, 0.001);
 
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
@@ -77,6 +77,7 @@ var paramText = document.getElementById("params");
         var w = 36 + rndPM(18);
         var h = 36 + rndPM(18);
         var d = 36 + rndPM(18);
+
         meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
 
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
@@ -91,20 +92,11 @@ var paramText = document.getElementById("params");
     if (btn) btn.addEventListener("click", x => {
 
         meshLoader.reset();
-        var nbSide = rndInt(6) + 3;
+        var nbSide = rndInt(12) + 3;
         var height = 36 + rndPM(20);
         var radius = 24 + rndPM(12);
 
-        // points
-        var ps = [0, height, 0];
-        var pb = [0, 0, 0];
-        var pts = [];
-        pts[0] = [radius, 0, 0];        
-        for (var i = 1; i < nbSide; ++i) pts.push(v3_rotateY_new(pts[0], (PIx2 / nbSide) * i));
-
-        // faces
-        for (var i = 0; i < nbSide; ++i) meshLoader.pushTriangle3p(pts[(i + 1) % nbSide]  , ps, pts[i]);     
-        for (var i = 0; i < nbSide; ++i) meshLoader.pushTriangle3p(pts[i], pb, pts[(i + 1) % nbSide ]  );   
+        meshLoader.pushPyramid(_v3_origin, _v3_null, radius, height, nbSide);
 
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
@@ -122,22 +114,7 @@ var paramText = document.getElementById("params");
         var height = 36 + rndPM(20);
         var radius = 24 + rndPM(10);
 
-        // points
-        var pt = [0, height, 0];
-        var pb = [0, 0, 0];
-        var ptsb = [];
-        var ptst = [];
-        ptsb[0] = [radius, 0, 0]; 
-        ptst[0] = [radius, height, 0]; 
-        for (var i = 1; i < nbSide; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSide) * i));
-        for (var i = 1; i < nbSide; ++i) ptst.push(v3_add_new(ptsb[i], pt));
-
-        // faces
-        for (var i = 0; i < nbSide; ++i) meshLoader.pushQuad4p(ptsb[(i + 1) % nbSide], ptst[(i + 1) % nbSide], ptst[i] , ptsb[i] );    
-        // top 
-        for (var i = 0; i < nbSide; ++i) meshLoader.pushTriangle3p(ptst[(i + 1) % nbSide], pt, ptst[i]  );   
-        // bottom
-        for (var i = 0; i < nbSide; ++i) meshLoader.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSide ]  );   
+        meshLoader.pushPrism(_v3_origin, _v3_null, radius, height, nbSide);
 
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
@@ -305,8 +282,11 @@ var paramText = document.getElementById("params");
         // write the faces to the mesh
         for (var i = 0; i < faces.length; ++i) meshLoader.pushTriangle3p(pts[faces[i][0]], pts[faces[i][1]], pts[faces[i][2]]);
 
+
+        
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
+        meshLoader.smoothNormals(0.7);
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
 
@@ -322,17 +302,19 @@ var paramText = document.getElementById("params");
         var sections = 4 + rndInt(48);
         var sides = 4 + rndInt(24);
 
-        paramText.innerText = `Torus radius ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, sections:${sections}, sides: ${sides}`;
-
         meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
-
+        
         for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-
+        
         meshLoader.smoothNormals(0.7);
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
-
+        
+        paramText.innerText = `Torus radius ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, sections:${sections}, sides: ${sides}`;
     } );
+
+
+
 
     // use the engine OnTick event callback to change the rotation of the entity
     CB_tick = function() {
