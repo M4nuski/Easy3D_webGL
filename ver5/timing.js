@@ -73,11 +73,10 @@ class E3D_timing {
     }
 
     setInterval(interval) {
+        var wasActive = this.active;
         this.pause();
         this.tickInterval = interval;
-        if (this.active) {
-            this.run();
-        }
+        if (wasActive) this.run();
     }
 
 

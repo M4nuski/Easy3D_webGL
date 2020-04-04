@@ -586,6 +586,7 @@ class E3D_mesh {
         width /= 2;
         height /= 2;
         depthOffset /= 2;
+        if (c4 == null) c4 = color;
         this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat), 
                         v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat), 
                         v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat), 
@@ -646,8 +647,8 @@ class E3D_mesh {
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
-            meshLoader.pushTriangle3p( pts[(i + 1) % nbSides], ps, pts[i], color); //sides
-            if (closedBase) meshLoader.pushTriangle3p( pts[i], pb, pts[(i + 1) % nbSides], color); //base
+            this.pushTriangle3p( pts[(i + 1) % nbSides], ps, pts[i], color); //sides
+            if (closedBase) this.pushTriangle3p( pts[i], pb, pts[(i + 1) % nbSides], color); //base
         }
     }
 
@@ -664,13 +665,14 @@ class E3D_mesh {
         for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
 
         // adjust for position and rotation
-        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+        for (var i = 0; i < ptsb.length; ++i) v3_applym4_mod(ptsb[i], _mesh_prim_mat);
+        for (var i = 0; i < ptst.length; ++i) v3_applym4_mod(ptst[i], _mesh_prim_mat);
         
         // faces
         for (var i = 0; i < nbSides; ++i) {
-            meshLoader.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides 
-            if (closedBase) meshLoader.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base  
-            if (closedTop) meshLoader.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top   
+            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides 
+            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base  
+            if (closedTop) this.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top   
         }
 
     }
@@ -706,14 +708,188 @@ class E3D_mesh {
 
     sphereBaseType = {
         ICO: 0,
-        OCTA: 2, // TODO retest all bases 
-        BITETRA: 3,
-        TETRA: 4,
-        CUBE: 5,
-        strings: ["Icosahedron", "Octahedron", "Bi-Tetrahedron", "Tetrahedron", "Cube"]
+        OCTA: 1, // TODO retest all bases 
+        BITETRA: 2,
+        TETRA: 3,
+        CUBE: 4,
+        strings: ["Icosahedron", "Octahedron", "Bi-Tetrahedron", "Tetrahedron", "Cube"],
+        qty: 5
       };
 
     pushSphere(position, rotation, radius, depth = 3, color = _v3_white, baseType = this.sphereBaseType.ICO) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        var pts = [];
+        var faces = [];
+
+        switch(baseType) {
+            case this.sphereBaseType.CUBE:
+                pts[0] = [ 0.5,  0.5,  0.5]; //tfr
+                pts[1] = [ 0.5,  0.5, -0.5]; //tbr
+                pts[2] = [-0.5,  0.5, -0.5]; //tbl
+                pts[3] = [-0.5,  0.5,  0.5]; //tfl
+        
+                pts[4] = [ 0.5, -0.5,  0.5]; //bfr
+                pts[5] = [ 0.5, -0.5, -0.5]; //bbr
+                pts[6] = [-0.5, -0.5, -0.5]; //bbl
+                pts[7] = [-0.5, -0.5,  0.5]; //bfl
+        
+         
+                faces.push([0, 1, 2]);
+                faces.push([0, 2, 3]);
+        
+                faces.push([4, 6, 5]);
+                faces.push([4, 7, 6]);
+        
+        
+                faces.push([0, 3, 7]);
+                faces.push([0, 7, 4]);
+                 
+                faces.push([2, 1, 5]);
+                faces.push([2, 5, 6]);
+        
+        
+                faces.push([0, 4, 5]);
+                faces.push([0, 5, 1]);
+                
+                faces.push([2, 6, 7]);
+                faces.push([2, 7, 3]);
+            break;
+
+            case this.sphereBaseType.TETRA:
+                pts[0] = [ 0.0000,  1.0000,  0.0000];
+                pts[1] = [ 0.9428, -0.3333,  0.0000];
+                pts[2] = [-0.4714, -0.3333,  0.8165];     
+                pts[3] = [-0.4714, -0.3333, -0.8165];  
+
+                faces.push([0, 1, 3]);
+                faces.push([0, 3, 2]);
+                faces.push([0, 2, 1]);
+                faces.push([1, 2, 3]);
+            break;
+
+            case this.sphereBaseType.BITETRA:
+                pts[0] = [0,  1, 0];
+                pts[1] = [0, -1, 0];
+                pts[2] = [1,  0, 0];        
+                for (var i = 1; i < 3; ++i) pts.push(v3_rotateY_new(pts[2], (PIx2 / 3) * i)); // 2 3 4 are the middle points
+        
+                faces.push([0, 2, 3]);
+                faces.push([0, 3, 4]);
+                faces.push([0, 4, 2]);
+                faces.push([1, 4, 3]);
+                faces.push([1, 3, 2]);
+                faces.push([1, 2, 4]);
+            break;
+
+            case this.sphereBaseType.OCTA:
+                pts[0] = [ 0,  1,  0]; // top
+                pts[1] = [ 0, -1,  0]; // bottom
+                pts[2] = [ 1,  0,  0]; // right
+                pts[3] = [-1,  0,  0]; // left
+                pts[4] = [ 0,  0,  1]; // front
+                pts[5] = [ 0,  0, -1]; // back
+                         
+                faces.push([0, 4, 2]);
+                faces.push([0, 3, 4]);        
+                faces.push([0, 5, 3]);
+                faces.push([0, 2, 5]);        
+        
+                faces.push([1, 2, 4]);
+                faces.push([1, 4, 3]);                 
+                faces.push([1, 3, 5]);
+                faces.push([1, 5, 2]);
+            break;
+
+            case this.sphereBaseType.ICO:
+                // icoharedon
+                //https://wiki.unity3d.com/index.php/ProceduralPrimitives
+
+                var t = 1.618;
+        
+                pts.push([-1,  t,  0]);
+                pts.push([ 1,  t,  0]);
+                pts.push([-1, -t,  0]);
+                pts.push([ 1, -t,  0]);
+        
+                pts.push([ 0, -1,  t]);
+                pts.push([ 0,  1,  t]);
+                pts.push([ 0, -1, -t]);
+                pts.push([ 0,  1, -t]);
+        
+                pts.push([ t,  0, -1]);
+                pts.push([ t,  0,  1]);
+                pts.push([-t,  0, -1]);
+                pts.push([-t,  0,  1]);
+    
+                // 5 faces around point 0
+                faces.push([0, 11, 5]);
+                faces.push([0, 5, 1]);
+                faces.push([0, 1, 7]);
+                faces.push([0, 7, 10]);
+                faces.push([0, 10, 11]);
+        
+                // 5 adjacent faces 
+                faces.push([1, 5, 9]);
+                faces.push([5, 11, 4]);
+                faces.push([11, 10, 2]);
+                faces.push([10, 7, 6]);
+                faces.push([7, 1, 8]);
+        
+                // 5 faces around point 3
+                faces.push([3, 9, 4]);
+                faces.push([3, 4, 2]);
+                faces.push([3, 2, 6]);
+                faces.push([3, 6, 8]);
+                faces.push([3, 8, 9]);
+    
+                // 5 adjacent faces 
+                faces.push([4, 9, 5]);
+                faces.push([2, 4, 11]);
+                faces.push([6, 2, 10]);
+                faces.push([8, 6, 7]);
+                faces.push([9, 8, 1]);
+            break;
+        }
+
+        for (var i = 0; i < pts.length; ++i) v3_normalize_mod(pts[i]);
+
+        // subdivide faces 
+        for (var d = 0; d < depth; ++d) {
+            var newFaces = [];
+            for (var i = 0; i < faces.length; ++i) {
+
+                // divide edges
+                pts.push(v3_avg2_new(pts[faces[i][0]], pts[faces[i][1]] ));
+                var newpts01 = pts.length-1;
+                pts.push(v3_avg2_new(pts[faces[i][1]], pts[faces[i][2]] ));
+                var newpts12 = pts.length-1;
+                pts.push(v3_avg2_new(pts[faces[i][2]], pts[faces[i][0]] ));
+                var newpts20 = pts.length-1;
+
+                // normalize the new points
+                v3_normalize_mod(pts[newpts01]);
+                v3_normalize_mod(pts[newpts12]);
+                v3_normalize_mod(pts[newpts20]);
+
+                // create the new faces
+                newFaces.push([newpts01,    newpts12, newpts20]);
+                newFaces.push([faces[i][0], newpts01, newpts20]);
+                newFaces.push([faces[i][1], newpts12, newpts01]);
+                newFaces.push([faces[i][2], newpts20, newpts12]);
+            }
+            faces = newFaces.slice();
+        }
+
+        // size the points to radius
+        for (var i = 0; i < pts.length; ++i) v3_scale_mod(pts[i], radius);
+
+        // adjust for position and rotation
+        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+
+        // write the faces to the mesh
+        for (var i = 0; i < faces.length; ++i) this.pushTriangle3p(pts[faces[i][0]], pts[faces[i][1]], pts[faces[i][2]], color);
+
 
 
     }

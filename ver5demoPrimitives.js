@@ -49,8 +49,11 @@ var paramText = document.getElementById("params");
     E3D_addEntity(entity);
 
 
-
-
+    // checkboxes
+    var check_colored = document.getElementById("chk_colored");
+    if (!check_colored) check_colored = { checked: false }; 
+    var check_smooth = document.getElementById("chk_smooth");
+    if (!check_smooth) check_smooth = { checked: false }; 
 
     // Register the button events
     var btn = document.getElementById("btn_s1"); // plane
@@ -62,7 +65,8 @@ var paramText = document.getElementById("params");
 
         meshLoader.pushDoubleSidedPlane(_v3_origin, _v3_null, w, h, 0.001);
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -80,7 +84,8 @@ var paramText = document.getElementById("params");
 
         meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_smooth.checked) meshLoader.smoothNormals(-0.9);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -98,7 +103,8 @@ var paramText = document.getElementById("params");
 
         meshLoader.pushPyramid(_v3_origin, _v3_null, radius, height, nbSide);
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_smooth.checked) meshLoader.smoothNormals(0.7);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -116,7 +122,8 @@ var paramText = document.getElementById("params");
 
         meshLoader.pushPrism(_v3_origin, _v3_null, radius, height, nbSide);
 
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_smooth.checked) meshLoader.smoothNormals(0.7);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -131,165 +138,17 @@ var paramText = document.getElementById("params");
 
         var radius = 32 + rndPM(10);
         var depth = rndInt(6);
-        var pts = [];
-        var faces = [];
+        var type = rndInt(meshLoader.sphereBaseType.qty);
 
-        /*
-        // points, mirrored triangular pyramid
-        pts[0] = [0,  1, 0];
-        pts[1] = [0, -1, 0];
-        pts[2] = [1,  0, 0];        
-        for (var i = 1; i < 3; ++i) pts.push(v3_rotateY_new(pts[2], (PIx2 / 3) * i)); // 2 3 4 are the middle points
+        meshLoader.pushSphere(_v3_origin, _v3_null, radius, depth, _v3_white, type);
 
-        faces.push([0, 2, 3]);
-        faces.push([0, 3, 4]);
-        faces.push([0, 4, 2]);
-        faces.push([1, 4, 3]);
-        faces.push([1, 3, 2]);
-        faces.push([1, 2, 4]);
-        */
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_smooth.checked) meshLoader.smoothNormals(0.0);
 
-        /*
-        // points, cube
-        pts[0] = [ 0.5,  0.5,  0.5]; //tfr
-        pts[1] = [ 0.5,  0.5, -0.5]; //tbr
-        pts[2] = [-0.5,  0.5, -0.5]; //tbl
-        pts[3] = [-0.5,  0.5,  0.5]; //tfl
-
-        pts[4] = [ 0.5, -0.5,  0.5]; //bfr
-        pts[5] = [ 0.5, -0.5, -0.5]; //bbr
-        pts[6] = [-0.5, -0.5, -0.5]; //bbl
-        pts[7] = [-0.5, -0.5,  0.5]; //bfl
-
- 
-        faces.push([0, 1, 2]);
-        faces.push([0, 2, 3]);
-
-        faces.push([4, 6, 5]);
-        faces.push([4, 7, 6]);
-
-
-        faces.push([0, 3, 7]);
-        faces.push([0, 7, 4]);
-         
-        faces.push([2, 1, 5]);
-        faces.push([2, 5, 6]);
-
-
-        faces.push([0, 4, 5]);
-        faces.push([0, 5, 1]);
-        
-        faces.push([2, 6, 7]);
-        faces.push([2, 7, 3]);
-       */
-        /*
-        // points, tetrahedron based
-        pts[0] = [ 0.0000,  1.0000,  0.0000];
-        pts[1] = [ 0.9428, -0.3333,  0.0000];
-        pts[2] = [-0.4714, -0.3333,  0.8165];     
-        pts[3] = [-0.4714, -0.3333, -0.8165];  
-        faces.push([0, 1, 3]);
-        faces.push([0, 3, 2]);
-        faces.push([0, 2, 1]);
-        faces.push([1, 2, 3]);
-        */
-
-
-        // points, icoharedon based
-        //https://wiki.unity3d.com/index.php/ProceduralPrimitives
-
-        var t = 1.618;
- 
-        pts.push([-1,  t,  0]);
-        pts.push([ 1,  t,  0]);
-        pts.push([-1, -t,  0]);
-        pts.push([ 1, -t,  0]);
- 
-        pts.push([ 0, -1,  t]);
-        pts.push([ 0,  1,  t]);
-        pts.push([ 0, -1, -t]);
-        pts.push([ 0,  1, -t]);
- 
-        pts.push([ t,  0, -1]);
-        pts.push([ t,  0,  1]);
-        pts.push([-t,  0, -1]);
-        pts.push([-t,  0,  1]);
-  
-        // 5 faces around point 0
-        faces.push([0, 11, 5]);
-        faces.push([0, 5, 1]);
-        faces.push([0, 1, 7]);
-        faces.push([0, 7, 10]);
-        faces.push([0, 10, 11]);
- 
-        // 5 adjacent faces 
-        faces.push([1, 5, 9]);
-        faces.push([5, 11, 4]);
-        faces.push([11, 10, 2]);
-        faces.push([10, 7, 6]);
-        faces.push([7, 1, 8]);
- 
-        // 5 faces around point 3
-        faces.push([3, 9, 4]);
-        faces.push([3, 4, 2]);
-        faces.push([3, 2, 6]);
-        faces.push([3, 6, 8]);
-        faces.push([3, 8, 9]);
- 
-        // 5 adjacent faces 
-        faces.push([4, 9, 5]);
-        faces.push([2, 4, 11]);
-        faces.push([6, 2, 10]);
-        faces.push([8, 6, 7]);
-        faces.push([9, 8, 1]);
-
-        paramText.innerText = `Ico Sphere radius ${radius.toFixed(2)} recursion depth of ${depth}`;
-
-
-
-        for (var i = 0; i < pts.length; ++i) v3_normalize_mod(pts[i]);
-
-        // subdivide faces 
-        for (var d = 0; d < depth; ++d) {
-            var newFaces = [];
-            for (var i = 0; i < faces.length; ++i) {
-
-                // divide edges
-                pts.push(v3_avg2_new(pts[faces[i][0]], pts[faces[i][1]] ));
-                var newpts01 = pts.length-1;
-                pts.push(v3_avg2_new(pts[faces[i][1]], pts[faces[i][2]] ));
-                var newpts12 = pts.length-1;
-                pts.push(v3_avg2_new(pts[faces[i][2]], pts[faces[i][0]] ));
-                var newpts20 = pts.length-1;
-
-                // normalize the new points
-                v3_normalize_mod(pts[newpts01]);
-                v3_normalize_mod(pts[newpts12]);
-                v3_normalize_mod(pts[newpts20]);
-
-                // create the new faces
-                newFaces.push([newpts01,    newpts12, newpts20]);
-                newFaces.push([faces[i][0], newpts01, newpts20]);
-                newFaces.push([faces[i][1], newpts12, newpts01]);
-                newFaces.push([faces[i][2], newpts20, newpts12]);
-            }
-            faces = newFaces.slice();
-        }
-
-        // size the points to radius
-        for (var i = 0; i < pts.length; ++i) v3_scale_mod(pts[i], radius);
-
-        // write the faces to the mesh
-        for (var i = 0; i < faces.length; ++i) meshLoader.pushTriangle3p(pts[faces[i][0]], pts[faces[i][1]], pts[faces[i][2]]);
-
-
-        
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-
-        meshLoader.smoothNormals(0.7);
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
-
+        
+        paramText.innerText = `Sphere radius ${radius.toFixed(2)} base type: ${meshLoader.sphereBaseType.strings[type]} recursion depth of ${depth}`;
     } );
 
     var btn = document.getElementById("btn_s6"); // torus
@@ -304,9 +163,9 @@ var paramText = document.getElementById("params");
 
         meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
         
-        for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-        
-        meshLoader.smoothNormals(0.7);
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);        
+        if (check_smooth.checked) meshLoader.smoothNormals(0.2);
+
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
         
@@ -319,7 +178,7 @@ var paramText = document.getElementById("params");
     // use the engine OnTick event callback to change the rotation of the entity
     CB_tick = function() {
         // rotate around Y
-        entity.rotation[1] += TIMER.delta * 0.33;
+        entity.rotation[1] += TIMER.delta * 0.4;
         entity.updateMatrix();
     }    
 }

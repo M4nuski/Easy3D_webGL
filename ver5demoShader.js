@@ -77,7 +77,7 @@ function E3D_userInit() {
     // Create a torus mesh
     var torusEntity = new E3D_entity("torus", "", false);
     meshLoader.reset();
-    meshLoader.pushTorus(_v3_origin, _v3_null, 32, 12, 31, 16);
+    meshLoader.pushTorus(_v3_origin, _v3_null, 32, 12, 32, 16);
 
     // Randomize colors
     for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
@@ -109,7 +109,7 @@ function E3D_userInit() {
     // use the engine OnTick event callback to change the rotation of the torus
     CB_tick = function() {
         // rotate around Y
-        torusEntity.rotation[1] += TIMER.delta * 0.33333;
+        torusEntity.rotation[1] += TIMER.delta * 0.4;
         torusEntity.updateMatrix();
     }
 
