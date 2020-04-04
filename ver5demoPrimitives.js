@@ -6,188 +6,186 @@
 "use strict"
 
 
-function E3D_userInit() {
-
 var paramText = document.getElementById("params");
 
-    log("E3D_userInit");
-    
-    // Load all default engine parts: scene, lights, timer, inputs, camera
-    E3D_InitAll();
-    SCENE.strokeColor = _v3_black;
-    
-    
-    // Create the entities
-    var groundEntity = new E3D_entity_wireframe_canvas("entity0");
-    // Large ground plane
-    groundEntity.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray);
-    groundEntity.isVisible = true;
-    E3D_addEntity(groundEntity);
-    
-    // Move the camera back and up a little, add some nod 
-    CAMERA.moveTo(0, 80, 100, 0.5);
-    
+log("E3D_userInit");
 
-    
+// Load all default engine parts: scene, lights, timer, inputs, camera
+E3D_InitAll();
+SCENE.strokeColor = _v3_black;
 
-    var meshLoader = new E3D_mesh();
-    // Create a solid cube
-    var entity = new E3D_entity("entity1", "", true); // dynamic entity, GPU data will be updated when changed
 
-    // Create mesh
-    meshLoader.pushBox(_v3_origin, _v3_null, 48, 48, 48);
-    paramText.innerText = "Box 48.00 x 48.00 x 48.00";
+// Create the entities
+var groundEntity = new E3D_entity_wireframe_canvas("entity0");
+// Large ground plane
+groundEntity.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray);
+groundEntity.isVisible = true;
+E3D_addEntity(groundEntity);
 
-    // Change colors
-    for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+// Move the camera back and up a little, add some nod 
+CAMERA.moveTo(0, 80, 100, 0.5);
 
-    // Load data from mesh to entity
+
+
+
+var meshLoader = new E3D_mesh();
+// Create a solid cube
+var entity = new E3D_entity("entity1", "", true); // dynamic entity, GPU data will be updated when changed
+
+// Create mesh
+meshLoader.pushBox(_v3_origin, _v3_null, 48, 48, 48);
+paramText.innerText = "Box 48.00 x 48.00 x 48.00";
+
+// Change colors
+for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+
+// Load data from mesh to entity
+meshLoader.addModelData(entity);
+
+// Setup entity
+entity.isVisible = true;
+entity.position = [0, 24, 0];
+E3D_addEntity(entity);
+
+
+// checkboxes
+var check_colored = document.getElementById("chk_colored");
+if (!check_colored) check_colored = { checked: false }; 
+var check_smooth = document.getElementById("chk_smooth");
+if (!check_smooth) check_smooth = { checked: false }; 
+var check_outline = document.getElementById("chk_outline");
+if (!check_outline) check_outline = { checked: false }; 
+
+// Register the button events
+var btn = document.getElementById("btn_s1"); // plane
+if (btn) btn.addEventListener("click", x => {
+
+    meshLoader.reset();
+    var w = 24 + rndPM(12);
+    var h = 24 + rndPM(12);
+
+    meshLoader.pushDoubleSidedPlane(_v3_origin, _v3_null, w, h, 0.001);
+
+
+    if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+    if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.5);
     meshLoader.addModelData(entity);
+    E3D_updateEntity(entity);
 
-    // Setup entity
-    entity.isVisible = true;
-    entity.position = [0, 24, 0];
-    E3D_addEntity(entity);
+    paramText.innerText = `Plane ${w*2} x ${h*2}`;
 
+} );
+var btn = document.getElementById("btn_s2"); // box
+if (btn) btn.addEventListener("click", x =>  {
 
-    // checkboxes
-    var check_colored = document.getElementById("chk_colored");
-    if (!check_colored) check_colored = { checked: false }; 
-    var check_smooth = document.getElementById("chk_smooth");
-    if (!check_smooth) check_smooth = { checked: false }; 
-    var check_outline = document.getElementById("chk_outline");
-    if (!check_outline) check_outline = { checked: false }; 
+    meshLoader.reset();
+    var w = 36 + rndPM(18);
+    var h = 36 + rndPM(18);
+    var d = 36 + rndPM(18);
 
-    // Register the button events
-    var btn = document.getElementById("btn_s1"); // plane
-    if (btn) btn.addEventListener("click", x => {
+    meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
 
-        meshLoader.reset();
-        var w = 24 + rndPM(12);
-        var h = 24 + rndPM(12);
+    if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);        
+    if (check_smooth.checked) meshLoader.smoothNormals(-0.9);
+    if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.5);
 
-        meshLoader.pushDoubleSidedPlane(_v3_origin, _v3_null, w, h, 0.001);
+    meshLoader.addModelData(entity);
+    E3D_updateEntity(entity);
 
+    paramText.innerText = `Box ${w.toFixed(2)} x ${h.toFixed(2)} x ${d.toFixed(2)}`;
 
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-        if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.5);
-        meshLoader.addModelData(entity);
-        E3D_updateEntity(entity);
+} );
+var btn = document.getElementById("btn_s3"); // pyramid
+if (btn) btn.addEventListener("click", x => {
 
-        paramText.innerText = `Plane ${w*2} x ${h*2}`;
+    meshLoader.reset();
+    var nbSide = rndInt(30) + 3;
+    var height = 36 + rndPM(20);
+    var radius = 24 + rndPM(12);
 
-    } );
-    var btn = document.getElementById("btn_s2"); // box
-    if (btn) btn.addEventListener("click", x =>  {
+    meshLoader.pushPyramid(_v3_origin, _v3_null, radius, height, nbSide);
 
-        meshLoader.reset();
-        var w = 36 + rndPM(18);
-        var h = 36 + rndPM(18);
-        var d = 36 + rndPM(18);
+    if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+    if (check_smooth.checked) meshLoader.smoothNormals(0.7);
+    if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
 
-        meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
+    meshLoader.addModelData(entity);
+    E3D_updateEntity(entity);
 
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);        
-        if (check_smooth.checked) meshLoader.smoothNormals(-0.9);
-        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.5);
+    paramText.innerText = `Pyramid ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
 
-        meshLoader.addModelData(entity);
-        E3D_updateEntity(entity);
+} );
+var btn = document.getElementById("btn_s4"); // prism
+if (btn) btn.addEventListener("click", x =>  {
 
-        paramText.innerText = `Box ${w.toFixed(2)} x ${h.toFixed(2)} x ${d.toFixed(2)}`;
+    meshLoader.reset();
+    var nbSide = rndInt(30) + 3;
+    var height = 36 + rndPM(20);
+    var radius = 24 + rndPM(10);
 
-    } );
-    var btn = document.getElementById("btn_s3"); // pyramid
-    if (btn) btn.addEventListener("click", x => {
+    meshLoader.pushPrism(_v3_origin, _v3_null, radius, height, nbSide);
 
-        meshLoader.reset();
-        var nbSide = rndInt(30) + 3;
-        var height = 36 + rndPM(20);
-        var radius = 24 + rndPM(12);
+    if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+    if (check_smooth.checked) meshLoader.smoothNormals(0.7);
+    if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
 
-        meshLoader.pushPyramid(_v3_origin, _v3_null, radius, height, nbSide);
+    meshLoader.addModelData(entity);
+    E3D_updateEntity(entity);
 
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-        if (check_smooth.checked) meshLoader.smoothNormals(0.7);
-        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
+    paramText.innerText = `Prism ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
 
-        meshLoader.addModelData(entity);
-        E3D_updateEntity(entity);
+} );
+var btn = document.getElementById("btn_s5"); // sphere
+if (btn) btn.addEventListener("click", x =>  {
 
-        paramText.innerText = `Pyramid ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
+    meshLoader.reset();
 
-    } );
-    var btn = document.getElementById("btn_s4"); // prism
-    if (btn) btn.addEventListener("click", x =>  {
+    var radius = 32 + rndPM(10);
+    var depth = rndInt(6);
+    var type = rndInt(meshLoader.sphereBaseType.qty);
 
-        meshLoader.reset();
-        var nbSide = rndInt(30) + 3;
-        var height = 36 + rndPM(20);
-        var radius = 24 + rndPM(10);
+    meshLoader.pushSphere(_v3_origin, _v3_null, radius, depth, _v3_white, type);
 
-        meshLoader.pushPrism(_v3_origin, _v3_null, radius, height, nbSide);
+    if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+    if (check_outline.checked) meshLoader.addStrokeData(entity, false, 1.0001);
+    if (check_smooth.checked) meshLoader.smoothNormals(0.0);
 
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-        if (check_smooth.checked) meshLoader.smoothNormals(0.7);
-        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
+    meshLoader.addModelData(entity);
+    E3D_updateEntity(entity);
+    
+    paramText.innerText = `Sphere radius ${radius.toFixed(2)} base type: ${meshLoader.sphereBaseType.strings[type]} recursion depth of ${depth}`;
+} );
 
-        meshLoader.addModelData(entity);
-        E3D_updateEntity(entity);
+var btn = document.getElementById("btn_s6"); // torus
+if (btn) btn.addEventListener("click", x =>  {
 
-        paramText.innerText = `Prism ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
+    meshLoader.reset();
 
-    } );
-    var btn = document.getElementById("btn_s5"); // sphere
-    if (btn) btn.addEventListener("click", x =>  {
+    var radius = 32 + rndPM(16);
+    var sectionRadius = 16 + rndPM(8);
+    var sections = 4 + rndInt(45);
+    var sides = 4 + rndInt(29);
 
-        meshLoader.reset();
+    meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
+    
+    if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i); 
+    if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.99999);       
+    if (check_smooth.checked) meshLoader.smoothNormals(0.2);
 
-        var radius = 32 + rndPM(10);
-        var depth = rndInt(6);
-        var type = rndInt(meshLoader.sphereBaseType.qty);
-
-        meshLoader.pushSphere(_v3_origin, _v3_null, radius, depth, _v3_white, type);
-
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 1.0001);
-        if (check_smooth.checked) meshLoader.smoothNormals(0.0);
-
-        meshLoader.addModelData(entity);
-        E3D_updateEntity(entity);
-        
-        paramText.innerText = `Sphere radius ${radius.toFixed(2)} base type: ${meshLoader.sphereBaseType.strings[type]} recursion depth of ${depth}`;
-    } );
-
-    var btn = document.getElementById("btn_s6"); // torus
-    if (btn) btn.addEventListener("click", x =>  {
-
-        meshLoader.reset();
-
-        var radius = 32 + rndPM(16);
-        var sectionRadius = 16 + rndPM(8);
-        var sections = 4 + rndInt(45);
-        var sides = 4 + rndInt(29);
-
-        meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
-        
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i); 
-        if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.99999);       
-        if (check_smooth.checked) meshLoader.smoothNormals(0.2);
-
-        meshLoader.addModelData(entity);
-        E3D_updateEntity(entity);
-        
-        paramText.innerText = `Torus radius ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, sections:${sections}, sides: ${sides}`;
-    } );
+    meshLoader.addModelData(entity);
+    E3D_updateEntity(entity);
+    
+    paramText.innerText = `Torus radius ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, sections:${sections}, sides: ${sides}`;
+} );
 
 
 
 
-    // use the engine OnTick event callback to change the rotation of the entity
-    CB_tick = function() {
-        // rotate around Y
-        entity.rotation[1] += TIMER.delta * 0.4;
-        entity.updateMatrix();
-    }    
-}
+// use the engine OnTick event callback to change the rotation of the entity
+CB_tick = function() {
+    // rotate around Y
+    entity.rotation[1] += TIMER.delta * 0.4;
+    entity.updateMatrix();
+}    
+
 

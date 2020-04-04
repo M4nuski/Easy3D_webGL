@@ -26,6 +26,7 @@ var E3D_scriptList = [
     "ver5/mesh.js"
 ];
     
+var E3D_fallbackScript = "";
 var E3D_numScriptLoaded = 0;
 var E3D_currentScript = "";
 
@@ -34,12 +35,17 @@ function E3D_scriptLoaded() {
     if (E3D_DEBUG_VERBOSE) console.log(E3D_currentScript + " Loaded");
     if (E3D_numScriptLoaded >= E3D_scriptList.length) {
         console.log("All Scripts Loaded");
-        if (E3D_userInit) E3D_userInit();
     } else E3D_loadNextScript();
 }
 
 function E3D_scriptLoadError(event){
     console.log("Script Load Error for " + E3D_currentScript + ": " + event.type);
+    if (E3D_fallbackScript != "") {
+        var s = document.createElement("script");
+        s.type = "text/javascript"; 
+        s.src = E3D_fallbackScript;
+        document.head.appendChild(s);
+    }
 }
 
 function E3D_loadNextScript() {
@@ -52,6 +58,14 @@ function E3D_loadNextScript() {
         E3D_currentScript = E3D_scriptList[E3D_numScriptLoaded];
         document.head.appendChild(s);
     }
+}
+
+var scriptTags = document.querySelectorAll("SCRIPT");
+for (var tag of scriptTags) {
+    var main = tag.getAttribute("data-main");
+    if (main) E3D_scriptList.push(main);
+    var fail = tag.getAttribute("data-fail");
+    if (fail) E3D_fallbackScript = fail;
 }
 
 E3D_loadNextScript();
