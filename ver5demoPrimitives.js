@@ -14,6 +14,7 @@ var paramText = document.getElementById("params");
     
     // Load all default engine parts: scene, lights, timer, inputs, camera
     E3D_InitAll();
+    SCENE.strokeColor = _v3_black;
     
     
     // Create the entities
@@ -54,6 +55,8 @@ var paramText = document.getElementById("params");
     if (!check_colored) check_colored = { checked: false }; 
     var check_smooth = document.getElementById("chk_smooth");
     if (!check_smooth) check_smooth = { checked: false }; 
+    var check_outline = document.getElementById("chk_outline");
+    if (!check_outline) check_outline = { checked: false }; 
 
     // Register the button events
     var btn = document.getElementById("btn_s1"); // plane
@@ -67,7 +70,7 @@ var paramText = document.getElementById("params");
 
 
         if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-
+        if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.5);
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
 
@@ -84,8 +87,9 @@ var paramText = document.getElementById("params");
 
         meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
 
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);        
         if (check_smooth.checked) meshLoader.smoothNormals(-0.9);
+        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.5);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -97,7 +101,7 @@ var paramText = document.getElementById("params");
     if (btn) btn.addEventListener("click", x => {
 
         meshLoader.reset();
-        var nbSide = rndInt(12) + 3;
+        var nbSide = rndInt(30) + 3;
         var height = 36 + rndPM(20);
         var radius = 24 + rndPM(12);
 
@@ -105,6 +109,7 @@ var paramText = document.getElementById("params");
 
         if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
         if (check_smooth.checked) meshLoader.smoothNormals(0.7);
+        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -116,7 +121,7 @@ var paramText = document.getElementById("params");
     if (btn) btn.addEventListener("click", x =>  {
 
         meshLoader.reset();
-        var nbSide = rndInt(12) + 3;
+        var nbSide = rndInt(30) + 3;
         var height = 36 + rndPM(20);
         var radius = 24 + rndPM(10);
 
@@ -124,6 +129,7 @@ var paramText = document.getElementById("params");
 
         if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
         if (check_smooth.checked) meshLoader.smoothNormals(0.7);
+        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
 
         meshLoader.addModelData(entity);
         E3D_updateEntity(entity);
@@ -143,6 +149,7 @@ var paramText = document.getElementById("params");
         meshLoader.pushSphere(_v3_origin, _v3_null, radius, depth, _v3_white, type);
 
         if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+        if (check_outline.checked) meshLoader.addStrokeData(entity, false, 1.0001);
         if (check_smooth.checked) meshLoader.smoothNormals(0.0);
 
         meshLoader.addModelData(entity);
@@ -157,13 +164,14 @@ var paramText = document.getElementById("params");
         meshLoader.reset();
 
         var radius = 32 + rndPM(16);
-        var sectionRadius = 12 + rndPM(8);
-        var sections = 4 + rndInt(48);
-        var sides = 4 + rndInt(24);
+        var sectionRadius = 16 + rndPM(8);
+        var sections = 4 + rndInt(45);
+        var sides = 4 + rndInt(29);
 
         meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
         
-        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);        
+        if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i); 
+        if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.99999);       
         if (check_smooth.checked) meshLoader.smoothNormals(0.2);
 
         meshLoader.addModelData(entity);

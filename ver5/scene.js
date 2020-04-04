@@ -16,6 +16,7 @@ class E3D_scene { // Basic, single pass
         this.id = id;
         this.state = E3D_CREATED;
         this.clearColor = v3_clone(clearColor);
+        this.strokeColor = v3_clone(_v3_white);
         this.drawnElemenets = 0;
         this.program = null;    
     }
@@ -100,6 +101,7 @@ class E3D_scene { // Basic, single pass
                 // Draw strokes
                 if ((ENTITIES[i].drawStrokes) && (this.program.shaderUniforms.uStrokePass != -1)) {
                     CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 1);
+                    CONTEXT.uniform3fv(this.program.shaderUniforms.uStrokeColor, this.strokeColor);
                     CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
                     CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
                     this.drawnElemenets += ENTITIES[i].numStrokeElements;

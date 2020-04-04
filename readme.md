@@ -32,6 +32,8 @@ Current work-in-progress and next steps
 * Regroup vertexArrays for mesh data (interleaved array in scene)
 * interleaved array in entity
 * interleaved array in loader
+* convert all shader and scenes to vec4 colors
+* convert all mesh to vec4 colors
 * Sprites (always facing viewer, shader with minimal inputs)
 * Text render in 3D scene (in world, world-to-viewport)
 * CD object, single for simple and array of for complex

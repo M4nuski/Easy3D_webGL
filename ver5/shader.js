@@ -200,7 +200,7 @@ var programData_passtrough_shade = {
         varying lowp vec4 vColor;            
 
         void main(void) {      
-            lowp vec4 p = vec4(-1.0, -1.0, -0.5, 0.0);
+            lowp vec4 p = vec4(-1.0, -1.0, -1.0, 0.0);
             p = normalize(p);
             lowp float f = -dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
             f = 0.5 * f + 0.5;            
@@ -241,7 +241,7 @@ var programData_passtrough_shadeAndDepth = {
         varying lowp vec4 vPosition;          
 
         void main(void) {      
-            lowp vec4 p = vec4(-1.0, -1.0, -0.5, 0.0);
+            lowp vec4 p = vec4(-1.0, -1.0, -1.0, 0.0);
             p = normalize(p);
             lowp float f = -dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
             f = 0.5 * f + 0.5;            
@@ -285,6 +285,7 @@ var programData_default = {
         uniform mat4 uNormalMatrix;
 
         uniform int uStrokePass; // 0: triangle pass, 1: stroke pass
+        uniform vec3 uStrokeColor;
 
         //from scene
         uniform mat4 uProjectionMatrix;
@@ -311,7 +312,7 @@ var programData_default = {
 
             if (uStrokePass == 1) {
 
-                vColor = vec3(1.0, 1.0, 1.0);
+                vColor = uStrokeColor;
                 buf_normal = uProjectionMatrix * uModelMatrix * aVertexPosition;
                 buf_normal.w = buf_normal.w + 0.001;
                 gl_Position = buf_normal;
@@ -366,7 +367,7 @@ var programData_default = {
 
     UniformList: ["uModelMatrix", "uNormalMatrix", "uProjectionMatrix", 
     "uLightA_Color", "uLight0_Color", "uLight1_Color", "uLight0_Direction", "uLight1_Direction",
-    "uFogColor", "uFogLimit", "uFogFactor", "uStrokePass"]    
+    "uFogColor", "uFogLimit", "uFogFactor", "uStrokePass", "uStrokeColor"]    
 }
 
 
