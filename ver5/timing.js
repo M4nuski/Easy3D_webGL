@@ -27,7 +27,7 @@ class E3D_timing {
 
         this.g = E3D_G;
 
-        this.smoothFactor = 2.5;
+        this.smoothFactor = 0.5;
 
         if (run) {
             this.timer = setInterval( () => {this.tickEvent() }, interval);
@@ -42,7 +42,7 @@ class E3D_timing {
 
     run() {
         this.lastTick = Date.now();
-        this.timer = setInterval( () => {this.tickEvent() }, this.tickInterval);
+        this.timer = setInterval( () => { this.tickEvent() }, this.tickInterval);
         this.active = true;
     }
 
@@ -54,7 +54,7 @@ class E3D_timing {
     tickEvent(){
         const ts = Date.now(); 
 
-        this.delta = (ts - this.lastTick) / 1000;
+        this.delta = (ts - this.lastTick) / 1000.0;
         this.lastTick = ts;
 
         this.g = this.delta * E3D_G;

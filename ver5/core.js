@@ -58,7 +58,7 @@ function E3D_InitAll(element) {
          
         log("Timer", false);
         TIMER.onTick = E3D_onTick_default;
-        TIMER.setInterval(20);
+        TIMER.setInterval(25);
         TIMER.run();
     }    
 }

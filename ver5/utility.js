@@ -25,6 +25,39 @@ function justify(str1, str2, len) {
 }
 
 
+
+// DOM helpers
+function getElem(id) {
+    var elem = document.getElementById(id);
+    if (elem) return elem;
+    return false;
+}
+
+function onClick(elemOrID, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener("click", callback);
+}
+
+function onEvent(elemOrID, event, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener(event, callback);
+}
+
+var elementMap = new Map();
+function $(elem) {
+    var res = elementMap.get(elem);
+    if (res == undefined) {
+        res = document.getElementById(elem);
+        if (res != undefined) {
+            elementMap.set(elem, res);
+            return res;
+        }
+    } else return res;
+    return false;
+}
+
+
+
 // Hover support for touch
 var hover2elements;
 const _hoverclassMarker = ".hover2";

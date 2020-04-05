@@ -18,6 +18,12 @@
             .fakeButton:hover {
                 background-color: cadetblue;
             }
+            #bottomDiv {
+                position: absolute;
+                bottom:1%;
+                white-space: pre;
+                font-family: 'Courier New', Courier, monospace;
+            }
         </style>
         <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoShader.js" defer="true"></script>
     </head>
@@ -32,6 +38,7 @@
             <span id="btn_s5" class="fakeButton">Shade and Depth</span>
         </div>
         <div id="E3D_mainDiv"></div>
+        <div id="bottomDiv"><span id="spanFPS"></span> FPS, <span id="spanSFPS"></span> FPS(smoothed), <span id="spanPct"></span>%, Target FPS:<input type="number" id="input_FPS" value = "40" min = "1" nax = "250" /></div>
     </body>
 
 </html>

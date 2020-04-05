@@ -708,7 +708,7 @@ class E3D_mesh {
 
     sphereBaseType = {
         ICO: 0,
-        OCTA: 1, // TODO retest all bases 
+        OCTA: 1,
         BITETRA: 2,
         TETRA: 3,
         CUBE: 4,

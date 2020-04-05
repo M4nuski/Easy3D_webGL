@@ -76,7 +76,7 @@ for (var x = -2; x < 2; ++x) for (var y = -2; y < 2; ++y) {
 // Create a torus mesh
 var torusEntity = new E3D_entity("torus", "", false);
 meshLoader.reset();
-meshLoader.pushTorus(_v3_origin, _v3_null, 32, 12, 32, 16);
+meshLoader.pushTorus(_v3_origin, _v3_null, 32, 12, 64, 32);
 
 // Randomize colors
 for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
@@ -105,10 +105,23 @@ if (btn) btn.addEventListener("click", x => SCENE.program = programs[4] );
 
 
 
+// some stats to show 
+var spanFPS = getElem("spanFPS");
+var spanSFPS = getElem("spanSFPS");
+var spanPct = getElem("spanPct");
+// handle FPS changes
+var input_FPS = getElem("input_FPS");
+onEvent(input_FPS, "change", (x) => TIMER.setInterval(1000.0 / input_FPS.value) );
+
+
+
 // use the engine OnTick event callback to change the rotation of the torus
 CB_tick = function() {
     // rotate around Y
     torusEntity.rotation[1] += TIMER.delta * 0.4;
     torusEntity.updateMatrix();
-}
 
+    spanFPS.innerText = padStart(""+TIMER.fps.toFixed(2), " ", 8);
+    spanSFPS.innerText = padStart(""+TIMER.fpsSmoothed.toFixed(1), " ", 8);
+    spanPct.innerText = padStart(""+(TIMER.usageSmoothed).toFixed(1), " ", 8);
+}
