@@ -76,10 +76,10 @@ const _v3_darkgray  = [ 0.25,  0.25,  0.25];
 
 
 // Randoms
-function rndPM(val) { // random between plus or minus "val"
+function randomFloatPlusMinus(val) { // random float between plus or minus "val"
     return ( 2.0 * val * Math.random() ) - val;
 }
-function rndInt(val) { // integer random between 0 and val-1
+function randomInteger(val) { // random integer between 0 and val-1
     return Math.floor( Math.random() * val);
 }
 
@@ -645,38 +645,38 @@ function v3_avg3_res(res, a, b, c) {
 
 function v3_addv3noise_new(a, range) {
     return [
-        a[0] + rndPM(range[0]),
-        a[1] + rndPM(range[1]),
-        a[2] + rndPM(range[2])
+        a[0] + randomFloatPlusMinus(range[0]),
+        a[1] + randomFloatPlusMinus(range[1]),
+        a[2] + randomFloatPlusMinus(range[2])
     ];
 }
 function v3_addv3noise_mod(a, range) {
-    a[0] += rndPM(range[0]);
-    a[1] += rndPM(range[1]);
-    a[2] += rndPM(range[2]);
+    a[0] += randomFloatPlusMinus(range[0]);
+    a[1] += randomFloatPlusMinus(range[1]);
+    a[2] += randomFloatPlusMinus(range[2]);
 }
 function v3_addv3noise_res(res, a, range) {
-    res[0] = a[0] + rndPM(range[0]);
-    res[1] = a[1] + rndPM(range[1]);
-    res[2] = a[2] + rndPM(range[2]);
+    res[0] = a[0] + randomFloatPlusMinus(range[0]);
+    res[1] = a[1] + randomFloatPlusMinus(range[1]);
+    res[2] = a[2] + randomFloatPlusMinus(range[2]);
 }
 
 function v3_addnoise_new(a, range) {
     return [
-        a[0] + rndPM(range),
-        a[1] + rndPM(range),
-        a[2] + rndPM(range)
+        a[0] + randomFloatPlusMinus(range),
+        a[1] + randomFloatPlusMinus(range),
+        a[2] + randomFloatPlusMinus(range)
     ];
 }
 function v3_addnoise_mod(a, range) {
-    a[0] += rndPM(range);
-    a[1] += rndPM(range);
-    a[2] += rndPM(range);
+    a[0] += randomFloatPlusMinus(range);
+    a[1] += randomFloatPlusMinus(range);
+    a[2] += randomFloatPlusMinus(range);
 }
 function v3_addnoise_res(res, a, range) {
-    res[0] = a[0] + rndPM(range);
-    res[1] = a[1] + rndPM(range);
-    res[2] = a[2] + rndPM(range);
+    res[0] = a[0] + randomFloatPlusMinus(range);
+    res[1] = a[1] + randomFloatPlusMinus(range);
+    res[2] = a[2] + randomFloatPlusMinus(range);
 }
 
 
@@ -706,10 +706,82 @@ function float_colorsweep_RGBCMY(index) {
     return _v3_sweep_RGBCMY[Math.floor(index / 3) % 6][index % 3];
 }
 
-// TODO Rainbow gen
-
-
-
+function v3_huesweep_new(pos, max) {
+    var section = Math.floor(6.0 * pos / max);
+    var base = (section / 6.0) * max;
+    max /= 6.0;
+    var res = v3_new();
+    switch(section) {
+        case 0: // red 1, green 0-1, blue 0
+            res[0] = 1.0;
+            res[1] = (pos - base) / max;
+            res[2] = 0.0;
+        break;
+        case 1: // red 1-0, green 1, blue 0
+            res[0] = 1.0 - ((pos - base) / max);
+            res[1] = 1.0;
+            res[2] = 0.0;
+        break;
+        case 2: // red 0, green 1, blue 0-1
+            res[0] = 0.0;
+            res[1] = 1.0;
+            res[2] = (pos - base) / max;
+        break;
+        case 3: // red 0, green 1-0, blue 1
+            res[0] = 0.0;
+            res[1] = 1.0 - ((pos - base) / max);
+            res[2] = 1.0;
+        break;
+        case 4: // red 0-1, green 0, blue 1
+            res[0] = (pos - base) / max;
+            res[1] = 0.0;
+            res[2] = 1.0;
+        break;
+        case 5: // red 1, green 0, blue 1-0
+            res[0] = 1.0;
+            res[1] = 0.0;
+            res[2] = 1.0 - ((pos - base) / max);
+        break;
+    }
+    return res;
+}
+function v3_huesweep_res(res, pos, max) {
+    var section = Math.floor(6.0 * pos / max);
+    var base = (section / 6.0) * max;
+    max /= 6.0;
+    switch(section) {
+        case 0: // red 1, green 0-1, blue 0
+            res[0] = 1.0;
+            res[1] = (pos - base) / max;
+            res[2] = 0.0;
+        break;
+        case 1: // red 1-0, green 1, blue 0
+            res[0] = 1.0 - ((pos - base) / max);
+            res[1] = 1.0;
+            res[2] = 0.0;
+        break;
+        case 2: // red 0, green 1, blue 0-1
+            res[0] = 0.0;
+            res[1] = 1.0;
+            res[2] = (pos - base) / max;
+        break;
+        case 3: // red 0, green 1-0, blue 1
+            res[0] = 0.0;
+            res[1] = 1.0 - ((pos - base) / max);
+            res[2] = 1.0;
+        break;
+        case 4: // red 0-1, green 0, blue 1
+            res[0] = (pos - base) / max;
+            res[1] = 0.0;
+            res[2] = 1.0;
+        break;
+        case 5: // red 1, green 0, blue 1-0
+            res[0] = 1.0;
+            res[1] = 0.0;
+            res[2] = 1.0 - ((pos - base) / max);
+        break;
+    }
+}
 
 // v3 Arrays
 

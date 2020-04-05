@@ -61,8 +61,8 @@ var btn = document.getElementById("btn_s1"); // plane
 if (btn) btn.addEventListener("click", x => {
 
     meshLoader.reset();
-    var w = 24 + rndPM(12);
-    var h = 24 + rndPM(12);
+    var w = 24 + randomFloatPlusMinus(12);
+    var h = 24 + randomFloatPlusMinus(12);
 
     meshLoader.pushDoubleSidedPlane(_v3_origin, _v3_null, w, h, 0.001);
 
@@ -79,9 +79,9 @@ var btn = document.getElementById("btn_s2"); // box
 if (btn) btn.addEventListener("click", x =>  {
 
     meshLoader.reset();
-    var w = 36 + rndPM(18);
-    var h = 36 + rndPM(18);
-    var d = 36 + rndPM(18);
+    var w = 36 + randomFloatPlusMinus(18);
+    var h = 36 + randomFloatPlusMinus(18);
+    var d = 36 + randomFloatPlusMinus(18);
 
     meshLoader.pushBox(_v3_origin, _v3_null, w, h, d);     
 
@@ -99,9 +99,9 @@ var btn = document.getElementById("btn_s3"); // pyramid
 if (btn) btn.addEventListener("click", x => {
 
     meshLoader.reset();
-    var nbSide = rndInt(30) + 3;
-    var height = 36 + rndPM(20);
-    var radius = 24 + rndPM(12);
+    var nbSide = randomInteger(30) + 3;
+    var height = 36 + randomFloatPlusMinus(20);
+    var radius = 24 + randomFloatPlusMinus(12);
 
     meshLoader.pushPyramid(_v3_origin, _v3_null, radius, height, nbSide);
 
@@ -119,9 +119,9 @@ var btn = document.getElementById("btn_s4"); // prism
 if (btn) btn.addEventListener("click", x =>  {
 
     meshLoader.reset();
-    var nbSide = rndInt(30) + 3;
-    var height = 36 + rndPM(20);
-    var radius = 24 + rndPM(10);
+    var nbSide = randomInteger(30) + 3;
+    var height = 36 + randomFloatPlusMinus(20);
+    var radius = 24 + randomFloatPlusMinus(10);
 
     meshLoader.pushPrism(_v3_origin, _v3_null, radius, height, nbSide);
 
@@ -140,9 +140,9 @@ if (btn) btn.addEventListener("click", x =>  {
 
     meshLoader.reset();
 
-    var radius = 32 + rndPM(10);
-    var depth = rndInt(6);
-    var type = rndInt(meshLoader.sphereBaseType.qty);
+    var radius = 32 + randomFloatPlusMinus(10);
+    var depth = randomInteger(6);
+    var type = randomInteger(meshLoader.sphereBaseType.qty);
 
     meshLoader.pushSphere(_v3_origin, _v3_null, radius, depth, _v3_white, type);
 
@@ -161,10 +161,10 @@ if (btn) btn.addEventListener("click", x =>  {
 
     meshLoader.reset();
 
-    var radius = 32 + rndPM(16);
-    var sectionRadius = 16 + rndPM(8);
-    var sections = 4 + rndInt(45);
-    var sides = 4 + rndInt(29);
+    var radius = 32 + randomFloatPlusMinus(16);
+    var sectionRadius = 16 + randomFloatPlusMinus(8);
+    var sections = 4 + randomInteger(45);
+    var sides = 4 + randomInteger(29);
 
     meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
     

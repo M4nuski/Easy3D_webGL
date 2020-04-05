@@ -125,8 +125,10 @@ var programData_passtrough_shownormals = {
         varying lowp vec4 vColor;
 
         void main(void) {
-            vColor = uNormalMatrix * vec4(aVertexNormal, 1.0);
-            vColor = (vColor * 0.5) + 0.5; 
+            if (aVertexNormal != vec3(0.0, 0.0, 0.0)) {
+                vColor = uNormalMatrix * vec4(aVertexNormal, 1.0);
+                vColor = abs(vColor);
+            } else vColor = vec4(1.0, 1.0, 1.0, 1.0);
             gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
         }
 

@@ -66,7 +66,7 @@ for (var x = -2; x < 2; ++x) for (var y = -2; y < 2; ++y) {
 
     // Set positions, randomize rotation
     newEnt.position = [x * 150 + 75, 24, y * 150 + 75];
-    newEnt.rotation = [rndPM(Math.PI), rndPM(Math.PI), 0];
+    newEnt.rotation = [randomFloatPlusMinus(Math.PI), randomFloatPlusMinus(Math.PI), 0];
 
     E3D_addEntity(newEnt);
 }
@@ -78,8 +78,14 @@ var torusEntity = new E3D_entity("torus", "", false);
 meshLoader.reset();
 meshLoader.pushTorus(_v3_origin, _v3_null, 32, 12, 64, 32);
 
-// Randomize colors
-for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
+// Rainbow colors (hue sweep)
+var c = v3_new();
+for (var i = 0; i < meshLoader.colors.length / 3; ++i) {
+    v3_huesweep_res(c, i, meshLoader.colors.length / 3);
+    meshLoader.colors[(i * 3)    ] = c[0];
+    meshLoader.colors[(i * 3) + 1] = c[1];
+    meshLoader.colors[(i * 3) + 2] = c[2];
+}
 
 // Check and smooth adjascent normals if they are similar
 meshLoader.smoothNormals(0.7);

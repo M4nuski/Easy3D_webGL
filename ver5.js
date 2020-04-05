@@ -351,10 +351,10 @@ function timerTick() {  // Game Loop
      //   log("action0", true); throw a ball
         let newSph = scn.cloneEntity("sph", "sph" + timer.lastTick);
         newSph.position[1] = 5;
-        newSph.rotation[0] = rndPM(PIx2);
-        newSph.rotation[1] = rndPM(PIx2);
+        newSph.rotation[0] = randomFloatPlusMinus(PIx2);
+        newSph.rotation[1] = randomFloatPlusMinus(PIx2);
         animations.push(newBaseAnim_RelativeToCamera(newSph, scn.camera,
-             [rndPM(1), rndPM(1), rndPM(1) -100], _v3_null, 1.0, 10, true));
+             [randomFloatPlusMinus(1), randomFloatPlusMinus(1), randomFloatPlusMinus(1) -100], _v3_null, 1.0, 10, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
 
         animations[animations.length-1].group = "splodable";      
@@ -365,7 +365,7 @@ function timerTick() {  // Game Loop
         newPyra.moveTo([10, -10, 0]); // originate from bottom right corner of view
 
         animations.push(newParticuleAnim_RelativeToCamera(newPyra, scn.camera,
-            [rndPM(2), rndPM(2), -150 - rndPM(2) ], _v3_null, 10, 
+            [randomFloatPlusMinus(2), randomFloatPlusMinus(2), -150 - randomFloatPlusMinus(2) ], _v3_null, 10, 
             shotgunPartPos, shotgunPartDir, 0.2, 2.0, true));
         animations[animations.length-1].target.animIndex = animations.length-1;
         animations[animations.length-1].animLastPass = collisionResult_lastPass_splode;
@@ -470,7 +470,7 @@ function cloneWar() {
 
 // Returns the starting positions of the shotgun's pellet particules
 function shotgunPartPos(n, nbPart) {
-    return [rndPM(5), rndPM(5), rndPM(2)];    
+    return [randomFloatPlusMinus(5), randomFloatPlusMinus(5), randomFloatPlusMinus(2)];    
 }
 
 // Returns the direction of the shotgun pellets
@@ -497,8 +497,8 @@ function collisionResult_lastPass_splode() {
             var vect = Array(nvect);
             var location = v3_new();
             for (i = 0; i < nvect; ++i) {
-                vect[i] = [rndPM(10), rndPM(10), rndPM(10)] ;
-                dvect[i] = [rndPM(10), 5+rndPM(10), rndPM(10)] ;
+                vect[i] = [randomFloatPlusMinus(10), randomFloatPlusMinus(10), randomFloatPlusMinus(10)] ;
+                dvect[i] = [randomFloatPlusMinus(10), 5+randomFloatPlusMinus(10), randomFloatPlusMinus(10)] ;
             }
             var colorIndex = 0;
             for (var i = 0; i < iter; ++i) {

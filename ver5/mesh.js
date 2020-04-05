@@ -682,7 +682,7 @@ class E3D_mesh {
 
         var pts = [];
         // create section circle around Z
-        pts.push([sectionRadius, 0, 0]);
+        pts.push([-sectionRadius, 0, 0]);
         for (var i = 1; i < nbSides; ++i) pts.push(v3_rotateZ_new(pts[0], (PIx2 / nbSides) * i));
 
         // move circle to radius
