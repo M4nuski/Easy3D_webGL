@@ -16,7 +16,7 @@ class E3D_timing {
 
         this.timer; 
 
-        this.start = Date.now();
+        this.start = performance.now();
         this.lastTick = this.start;
         this.active = run;
 
@@ -41,7 +41,7 @@ class E3D_timing {
     }
 
     run() {
-        this.lastTick = Date.now();
+        this.lastTick = performance.now();
         this.timer = setInterval( () => { this.tickEvent() }, this.tickInterval);
         this.active = true;
     }
@@ -52,23 +52,25 @@ class E3D_timing {
     }
 
     tickEvent(){
-        const ts = Date.now(); 
-
-        this.delta = (ts - this.lastTick) / 1000.0;
-        this.lastTick = ts;
+        //this.delta = this.tickInterval / 1000.0;
+        const ts1 = performance.now(); 
+        
+        this.delta = (ts1 - this.lastTick) / 1000.0;
+        this.lastTick = ts1;        
 
         this.g = this.delta * E3D_G;
 
-        if (this.onTick) {             
-            this.onTick(); 
-        }
+        if (this.onTick) this.onTick(); 
 
-        this.usage = 100 * (Date.now() - this.lastTick) / this.tickInterval;
+        const ts2 = performance.now(); 
+
+        this.usage = 100 * (ts2 - ts1) / this.tickInterval;
         this.usageSmoothed = this.smooth(this.usageSmoothed, this.usage, this.smoothFactor);
 
         if (this.delta > 0) {
             this.fps = 1.0 / this.delta;
             this.fpsSmoothed = this.smooth(this.fpsSmoothed, this.fps, this.smoothFactor);
+           // this.delta = this.smooth(this.delta, this.delta, this.smoothFactor);
         }
     }
 

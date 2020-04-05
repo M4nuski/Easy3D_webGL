@@ -51,21 +51,21 @@ groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 
 
-// Create a solid cube
-meshLoader.pushBox(_v3_origin, _v3_null, 48, 48, 48);     
+// Create a box
+meshLoader.pushBox(_v3_origin, _v3_null, 8, 16, 24);     
 // Randomize colors
 for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = Math.random();
 
 
-// Create a few more cubes spread around
-for (var x = -2; x < 2; ++x) for (var y = -2; y < 2; ++y) {
+// Create a few more boxes spread around
+for (var x = -8; x < 8; ++x) for (var y = -8; y < 8; ++y) {
 
     var newEnt = new E3D_entity("cube" + x + "-" + y);
     meshLoader.addModelData(newEnt);
     newEnt.isVisible = true;
 
     // Set positions, randomize rotation
-    newEnt.position = [x * 150 + 75, 24, y * 150 + 75];
+    newEnt.position = [x * 50 + 25, 0, y * 50 + 25];
     newEnt.rotation = [randomFloatPlusMinus(Math.PI), randomFloatPlusMinus(Math.PI), 0];
 
     E3D_addEntity(newEnt);
@@ -115,9 +115,12 @@ if (btn) btn.addEventListener("click", x => SCENE.program = programs[4] );
 var spanFPS = getElem("spanFPS");
 var spanSFPS = getElem("spanSFPS");
 var spanPct = getElem("spanPct");
-// handle FPS changes
-var input_FPS = getElem("input_FPS");
-onEvent(input_FPS, "change", (x) => TIMER.setInterval(1000.0 / input_FPS.value) );
+var spanSPct = getElem("spanSPct");
+var spanTFPS = getElem("spanTFPS");
+
+// handle interval changes
+var input_INT = getElem("input_INT");
+onEvent(input_INT, "change", (x) => TIMER.setInterval(input_INT.value) );
 
 
 
@@ -127,7 +130,9 @@ CB_tick = function() {
     torusEntity.rotation[1] += TIMER.delta * 0.4;
     torusEntity.updateMatrix();
 
+    spanTFPS.innerText = padStart(""+(1000.0 / input_INT.value).toFixed(2), " ", 8);
     spanFPS.innerText = padStart(""+TIMER.fps.toFixed(2), " ", 8);
     spanSFPS.innerText = padStart(""+TIMER.fpsSmoothed.toFixed(1), " ", 8);
-    spanPct.innerText = padStart(""+(TIMER.usageSmoothed).toFixed(1), " ", 8);
+    spanPct.innerText = padStart(""+(TIMER.usage).toFixed(1), " ", 8);
+    spanSPct.innerText = padStart(""+(TIMER.usageSmoothed).toFixed(1), " ", 8);
 }
