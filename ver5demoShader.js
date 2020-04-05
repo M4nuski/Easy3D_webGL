@@ -116,7 +116,7 @@ var spanFPS = getElem("spanFPS");
 var spanSFPS = getElem("spanSFPS");
 var spanPct = getElem("spanPct");
 var spanSPct = getElem("spanSPct");
-var spanTFPS = getElem("spanTFPS");
+
 
 // handle interval changes
 var input_INT = getElem("input_INT");
@@ -130,7 +130,6 @@ CB_tick = function() {
     torusEntity.rotation[1] += TIMER.delta * 0.4;
     torusEntity.updateMatrix();
 
-    spanTFPS.innerText = padStart(""+(1000.0 / input_INT.value).toFixed(2), " ", 8);
     spanFPS.innerText = padStart(""+TIMER.fps.toFixed(2), " ", 8);
     spanSFPS.innerText = padStart(""+TIMER.fpsSmoothed.toFixed(1), " ", 8);
     spanPct.innerText = padStart(""+(TIMER.usage).toFixed(1), " ", 8);

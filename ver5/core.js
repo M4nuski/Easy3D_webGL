@@ -14,7 +14,7 @@ var E3D_HEIGHT = 480;
 var E3D_G = 386.22;
 
 // Global members 
-var TIMER = new E3D_timing(false, 100, E3D_onTick_callback); 
+var TIMER = new E3D_timing(E3D_onTick_callback); 
 var CANVAS = null;
 var CONTEXT = null;
 var SCENE = new E3D_scene_default("scene0");
@@ -58,7 +58,6 @@ function E3D_InitAll(element) {
          
         log("Timer", false);
         TIMER.onTick = E3D_onTick_default;
-        TIMER.setInterval(25);
         TIMER.run();
     }    
 }
@@ -202,8 +201,9 @@ function E3D_onTick_callback() {
 
 
 var E3D_logElement = null;
+var E3D_logStart = Date.now();
 function log(text, silent = true) {
-    let ts = Date.now() - TIMER.start;
+    let ts = Date.now() - E3D_logStart;
     if (!silent) {
         if (E3D_logElement == null) E3D_logElement = document.getElementById("E3D_logDiv");        
         if (E3D_logElement != null) {

@@ -7,14 +7,14 @@
 
 class E3D_timing {
 
-    constructor(run, interval, onTick) {
+    constructor(onTick, run = false, interval = 1) {
 
         this.onTick = onTick;
 
-        this.delta = interval / 1000;
-        this.tickInterval = interval;
-
-        this.timer; 
+        this.delta = 1.0 / 60.0;
+        if (interval < 1) interval = 1;
+        this.interval = interval;
+        this.frame = 0;
 
         this.start = performance.now();
         this.lastTick = this.start;
@@ -26,12 +26,9 @@ class E3D_timing {
         this.fpsSmoothed = 60;
 
         this.g = E3D_G;
-
         this.smoothFactor = 0.5;
 
-        if (run) {
-            this.timer = setInterval( () => {this.tickEvent() }, interval);
-        }
+        if (run) window.requestAnimationFrame( (t) => this.tickEvent(t) );
     }
 
     smooth(val, target, fact) { 
@@ -41,44 +38,45 @@ class E3D_timing {
     }
 
     run() {
-        this.lastTick = performance.now();
-        this.timer = setInterval( () => { this.tickEvent() }, this.tickInterval);
         this.active = true;
+        this.lastTick = performance.now();
+        window.requestAnimationFrame( (t) => this.tickEvent(t) );
     }
 
     pause() {
-        clearInterval(this.timer);
         this.active = false;
     }
 
-    tickEvent(){
-        //this.delta = this.tickInterval / 1000.0;
-        const ts1 = performance.now(); 
-        
-        this.delta = (ts1 - this.lastTick) / 1000.0;
-        this.lastTick = ts1;        
+    tickEvent(time){
+        if (this.active) {
+            this.frame++;
 
-        this.g = this.delta * E3D_G;
+            if (this.frame % this.interval == 0) {
 
-        if (this.onTick) this.onTick(); 
+                this.delta = (time - this.lastTick) * 0.001;
+                this.lastTick = time;
 
-        const ts2 = performance.now(); 
+                this.g = this.delta * E3D_G;
 
-        this.usage = 100 * (ts2 - ts1) / this.tickInterval;
-        this.usageSmoothed = this.smooth(this.usageSmoothed, this.usage, this.smoothFactor);
+                if (this.onTick) this.onTick(); 
 
-        if (this.delta > 0) {
-            this.fps = 1.0 / this.delta;
-            this.fpsSmoothed = this.smooth(this.fpsSmoothed, this.fps, this.smoothFactor);
-           // this.delta = this.smooth(this.delta, this.delta, this.smoothFactor);
+                this.usage = 0.1 * (performance.now() - time) / this.delta;
+                
+                this.usageSmoothed = this.smooth(this.usageSmoothed, this.usage, this.smoothFactor);
+
+                if (this.delta > 0) {
+                    this.fps = 1.0 / this.delta;
+                    this.fpsSmoothed = this.smooth(this.fpsSmoothed, this.fps, this.smoothFactor);
+
+                }
+            }
+            window.requestAnimationFrame( (t) => this.tickEvent(t) );
         }
     }
 
     setInterval(interval) {
-        var wasActive = this.active;
-        this.pause();
-        this.tickInterval = interval;
-        if (wasActive) this.run();
+        if (interval < 1) interval = 1;
+        this.interval = interval;
     }
 
 
