@@ -7,7 +7,7 @@
 
 class E3D_timing {
 
-    constructor(onTick, run = false, interval = 1) {
+    constructor(onTick, run = false, interval = 2) {
 
         this.onTick = onTick;
 

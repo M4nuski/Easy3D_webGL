@@ -205,7 +205,7 @@ var programData_passtrough_shade = {
             lowp vec4 p = vec4(-1.0, -1.0, 0.0, 0.0);
             p = normalize(p);
             lowp float f = -dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
-            f = (f + 0.5) / 1.5;
+            f = (f + 0.65) / 1.5;
             vColor = vec4(aVertexColor * f, 1.0);
             gl_Position = uProjectionMatrix * uModelMatrix * aVertexPosition;
         }
@@ -246,7 +246,7 @@ var programData_passtrough_shadeAndDepth = {
             lowp vec4 p = vec4(-1.0, -1.0, 0.0, 0.0);
             p = normalize(p);
             lowp float f = -dot(uNormalMatrix * vec4(aVertexNormal, 0.0), p);
-            f = (f + 0.5) / 1.5;
+            f = (f + 0.65) / 1.5;
             vColor = vec4(aVertexColor * f, 1.0);
             vPosition = uProjectionMatrix * uModelMatrix * aVertexPosition;
             gl_Position = vPosition;
@@ -258,7 +258,7 @@ var programData_passtrough_shadeAndDepth = {
         varying lowp vec4 vPosition;
         void main(void) {
             lowp float z = 1.0 - (vPosition.z / 600.0);
-            z = pow(z, 2.5) + .2;
+            z = pow(z, 2.5) + 0.05;
             gl_FragColor = vec4(vColor.r * z, vColor.g * z, vColor.b * z, 1.0);
         }
 

@@ -562,7 +562,7 @@ class E3D_input {
 
 
     keyDown(event) {
-        if ((!event.metaKey) && (event.code != "F12") && (event.code != "ControlRight")) {
+        if ((!event.metaKey) && (event.code != "F12") && (event.code != "ControlRight") && (event.target == CANVAS)) {
             if (event.preventDefault) event.preventDefault();
         }
 

@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Math heleprs
-// 3D vectors and 4x4 matrix methods
+// 3D vectors (v3) and 4x4 matrix (m4) methods
 // Modified version of gl-matrix.js by Brandon Jones and Colin MacKenzie IV version 2.4.0 (see notice below)
 // Uses faster vanilla array, most methods have 3 version suffixes:
 //      _new returns a new object: add(a, b) -> return new (a + b)
@@ -40,7 +40,7 @@ const RadToDeg = (180.0 / Math.PI);
 const DegToRad = (Math.PI / 180.0);
 
 
-// Premade vec and mat to avoid inline creation of instances
+// Premade v3 and m4 to avoid inline creation of instances
 const _v3_origin = [ 0,  0,  0];
 const _v3_null =   [ 0,  0,  0];
 const _v3_x =      [ 1,  0,  0];
@@ -55,34 +55,42 @@ const _v3_nunit =  [-1, -1, -1];
 const _v3_90x    = [ PIdiv2, 0, 0];
 const _v3_90y    = [ 0, PIdiv2, 0];
 const _v3_90z    = [ 0, 0, PIdiv2];
+const _v3_n90x    = [-PIdiv2, 0, 0];
+const _v3_n90y    = [ 0,-PIdiv2, 0];
+const _v3_n90z    = [ 0, 0,-PIdiv2];
 
 const _v3_epsilon = 0.00001;
 
 const _m4_identity = m4_new(); 
 
-const _v3_white     = [ 1.0,  1.0,  1.0];
-const _v3_black     = [ 0.0,  0.0,  0.0];
-const _v3_red       = [ 1.0,  0.0,  0.0];
-const _v3_green     = [ 0.0,  1.0,  0.0];
-const _v3_blue      = [ 0.0,  0.0,  1.0];
-const _v3_lightblue = [ 0.5,  0.5,  1.0];
-const _v3_cyan      = [ 0.0,  1.0,  1.0];
-const _v3_magenta   = [ 1.0,  0.0,  1.0];
-const _v3_yellow    = [ 1.0,  1.0,  0.0];
-const _v3_orange    = [ 1.0,  0.5,  0.0];
-const _v3_gray      = [ 0.50,  0.50,  0.50];
-const _v3_lightgray = [ 0.75,  0.75,  0.75];
-const _v3_darkgray  = [ 0.25,  0.25,  0.25];
+// Colors
+const _v3_white      = [ 1.0,  1.0,  1.0];
+const _v3_black      = [ 0.0,  0.0,  0.0];
+const _v3_red        = [ 1.0,  0.0,  0.0];
+const _v3_lightred   = [ 1.0,  0.5,  0.5];
+const _v3_darkred    = [ 0.5,  0.0,  0.0];
+const _v3_green      = [ 0.0,  1.0,  0.0];
+const _v3_lightgreen = [ 0.5,  1.0,  0.5];
+const _v3_darkgreen  = [ 0.0,  0.5,  0.0];
+const _v3_blue       = [ 0.0,  0.0,  1.0];
+const _v3_lightblue  = [ 0.5,  0.5,  1.0];
+const _v3_darkblue   = [ 0.0,  0.0,  0.5];
+const _v3_cyan       = [ 0.0,  1.0,  1.0];
+const _v3_magenta    = [ 1.0,  0.0,  1.0];
+const _v3_yellow     = [ 1.0,  1.0,  0.0];
+const _v3_orange     = [ 1.0,  0.5,  0.0];
+const _v3_gray       = [ 0.50,  0.50,  0.50];
+const _v3_lightgray  = [ 0.75,  0.75,  0.75];
+const _v3_darkgray   = [ 0.25,  0.25,  0.25];
 
 
 // Randoms
-function randomFloatPlusMinus(val) { // random float between plus or minus "val"
+function randomFloatPlusMinus(val) { // random float between plus and minus "val" inclusive
     return ( 2.0 * val * Math.random() ) - val;
 }
 function randomInteger(val) { // random integer between 0 and val-1
-    return Math.floor( Math.random() * val);
+    return Math.floor( Math.random() * val );
 }
-
 
 // Seeded RNG based on https://gist.github.com/blixt/f17b47c62508be59987b
 class Random {
@@ -107,14 +115,14 @@ class Random {
   
  // Clamping
 function clamp(val, min, max) {
-    if (val < min) val = min;
-    if (val > max) val = max;
+    if (val < min) return min;
+    if (val > max) return max;
     return val;
 }
 
-function clampPM(val, limit) {
-    if (val < -limit) val = -limit;
-    if (val >  limit) val =  limit;
+function clampPlusMinus(val, limit) {
+    if (val < -limit) return -limit;
+    if (val >  limit) return  limit;
     return val;
 }
 
@@ -684,6 +692,7 @@ function v3_addnoise_res(res, a, range) {
 const _v3_sweep_RGB = [ _v3_red, _v3_green, _v3_blue ];
 const _v3_sweep_RGBCMY = [ _v3_red, _v3_green, _v3_blue, _v3_cyan, _v3_magenta, _v3_yellow ];
 
+// v3
 function v3_colorsweep_RGB_new(index) {
     return v3_clone(_v3_sweep_RGB[index % 3]);
 }
@@ -698,7 +707,7 @@ function v3_colorsweep_RGBCMY_mod(a, index) {
     v3_copy(a, _v3_sweep_RGBCMY[index % 6]);
 }
 
-
+// float by float (index %3 == 0 will be red component, == 1 green, == 2 blue)
 function float_colorsweep_RGB(index) {
     return _v3_sweep_RGB[Math.floor(index / 3) % 3][index % 3];
 }
@@ -706,6 +715,7 @@ function float_colorsweep_RGBCMY(index) {
     return _v3_sweep_RGBCMY[Math.floor(index / 3) % 6][index % 3];
 }
 
+// "Rainbow" hue sweep
 function v3_huesweep_new(pos, max) {
     var section = Math.floor(6.0 * pos / max);
     var base = (section / 6.0) * max;
@@ -847,7 +857,7 @@ function v3_applym4_mod(a, m) {
 
 
 
-// m4 Matrixes
+// m4 Matrices
 
 
 // Create new identity matrix
@@ -2114,7 +2124,7 @@ function m4_persp_res(res, yfov, ar, znear, zfar){
     res[15] = 0; 
 }
 
-
+// Pitch Yaw Roll Position matrix 
 function m4_transform_new(position, rotation){
     var m = m4_rotationZ_new(rotation[2]);
     m4_rotateX_mod(m, rotation[0]);

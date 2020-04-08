@@ -9,6 +9,9 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 * ver5demo3.html demo for full screen and pointer lock
 * ver5demo4.html primitive mesh generation with random paramenters
 * ver5demo5.html varius basic shaders demo page
+* Transform Animator
+* Particule Animator
+* Physics Animator
 * 
 * /ver4: 
 * ver4.html: Works with mouse/keyboard in destktop browser, touch controls for mobile.
@@ -30,14 +33,14 @@ Current work-in-progress and next steps
 * --ver5:
 * flatten engine to reduce nested calls and hierarchy walking
 * extract all "DEV" stuff to a debug class
-* Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
+* convert all shader and scenes to vec4 colors
 * Regroup vertexArrays for mesh data (interleaved array in scene)
 * interleaved array in entity
 * interleaved array in loader
-* convert all shader and scenes to vec4 colors
-* convert all mesh to vec4 colors
+* convert all mesh, loader, generators, to vec4 colors, by-face struct
 * Sprites (always facing viewer, shader with minimal inputs)
 * Text render in 3D scene (in world, world-to-viewport)
+* Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
 * CD object, single for simple and array of for complex
 * Improved Collision Detection with dual Interpolation and Static test (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions

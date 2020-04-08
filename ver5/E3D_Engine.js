@@ -1,6 +1,7 @@
 // Easy3D_WebGL v0.5
 // Script loader for the full engine stack
-// Global function "E3D_userInit" will be called at the end to give control back to the main game script
+// Script in the "data-main" attribute of the <script> element will by added and loaded at the end of the list
+// The "data-fail" script will be ran in the loading fail.
 // Emmanuel Charette 2020
 
 E3D_DEBUG_VERBOSE = false;
