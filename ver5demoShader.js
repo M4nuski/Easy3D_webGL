@@ -121,7 +121,7 @@ var spanSPct = getElem("spanSPct");
 // handle interval changes
 var input_INT = getElem("input_INT");
 TIMER.setInterval(input_INT.value);
-onEvent(input_INT, "change", (x) => TIMER.setInterval(input_INT.value) );
+onEvent(input_INT, "change", (e) => { TIMER.setInterval(input_INT.value); e.target.blur(); } );
 
 
 
