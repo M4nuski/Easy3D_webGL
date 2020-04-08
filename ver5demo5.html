@@ -2,25 +2,42 @@
 <html>
     <head>
         <title>Easy3D Engine webGL version 0.5</title>
-        <meta charset="UTF-8">    
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
-            #E3D_mainDiv {
-                position: absolute;
-                width : 90%;
-                height : 90%;
-                top : 5%;
-                left : 5%;
+            body {
+                display: table;
+                height: 100%;
+                margin: 0px;
+                height: 100%;
+               /* width: 100%;*/
+                font-size: 2.5vh;
+            }
+            input {
+                font-size: 2.0vh;
             }
             .fakeButton {
                 cursor: pointer;
-                background-color: bisque;                
+                background-color: bisque;
+                margin-left: 2px;
+                margin-right: 2px;
             }
             .fakeButton:hover {
                 background-color: cadetblue;
             }
+            #E3D_mainDiv {
+                display: table-row;
+                padding:0.5vh;
+            }
+            #topDiv {
+                top: 0px;
+                display: table-row;
+                height: fit-content;
+            }
             #bottomDiv {
-                position: absolute;
-                bottom:1%;
+                bottom: 0px;
+                display: table-row;
+                height: fit-content;
                 white-space: pre;
                 font-family: 'Courier New', Courier, monospace;
             }
@@ -29,7 +46,7 @@
     </head>
 
     <body>
-        <div>
+        <div id="topDiv">
             Easy3D ver 5 Base Shader Tests
             <span id="btn_s1" class="fakeButton">PassTrough</span>
             <span id="btn_s2" class="fakeButton">Normals</span>

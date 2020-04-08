@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Layout tests for PC VS Mobile</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            height: 100vh;
+            width: 100%;
+            font-size: large;
+        }
+        input {
+            font-size: initial;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        #wrapDiv {
+            width: 100%;
+            height: 100%;
+            display: table;
+        }
+        #topDiv {
+            background-color: #E0E0E0;
+            display: table-row;
+            height: fit-content;
+        }
+        #middleDiv{
+            background-color: #A0A0A0;
+            display: table-row;
+        }
+        #bottomDiv{
+            background-color: #D0D0D0;
+            display: table-row;
+            height: fit-content;
+        }
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+
+            window.addEventListener("resize", resize);
+            c.addEventListener("click", resize);
+
+            function resize() {
+                var ww = window.innerWidth;
+                var wh = window.innerHeight;
+                var w = c.offsetWidth;
+                var h = c.offsetHeight;
+                var wt = "Resize window to " + ww + "x" + wh;
+                var t = "Resize canvas to " + w + "x" + h;
+                console.log(wt);
+                console.log(t);
+                c.width = w;
+                c.height = h;
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, h/4, 0, 2 * Math.PI);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w, h);
+                ctx.moveTo(0, h);
+                ctx.lineTo(w, 0);
+                ctx.stroke();
+
+                ctx.font = "24px Arial";
+                ctx.fillText(wt, 10, 32);
+                ctx.fillText(t, 10, 64);
+            }
+
+            resize();
+
+        } );
+    </script>
+</head>
+
+<body>
+    <div id="wrapDiv">
+        <div id="topDiv">Lorem ipsum dolor sit amet consectetur adipisicing elit. <input type="text" value="alias," /> velit aspernatur culpa quo tempora inventore. Libero pariatur ea fugit id ipsam neque explicabo, officia laborum cumque odio autem. Doloribus!</div>
+        <div id="middleDiv"><canvas id="canvas" width="320" height="240">Canvas</canvas></div>
+        <div id="bottomDiv">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iste blanditiis rem autem, corporis error facere earum ab vitae nesciunt est, perspiciatis obcaecati? Iure, dicta iste odio voluptatum in ipsa sit.</div>
+    </div>
+</body>
+
+</html>
