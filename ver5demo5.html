@@ -4,59 +4,27 @@
         <title>Easy3D Engine webGL version 0.5</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <style>
-            body {
-                display: table;
-                height: 100%;
-                margin: 0px;
-                height: 100%;
-               /* width: 100%;*/
-                font-size: 2.5vh;
-            }
-            input {
-                font-size: 2.0vh;
-            }
-            .fakeButton {
-                cursor: pointer;
-                background-color: bisque;
-                margin-left: 2px;
-                margin-right: 2px;
-            }
-            .fakeButton:hover {
-                background-color: cadetblue;
-            }
-            #E3D_mainDiv {
-                display: table-row;
-                padding:0.5vh;
-            }
-            #topDiv {
-                top: 0px;
-                display: table-row;
-                height: fit-content;
-            }
-            #bottomDiv {
-                bottom: 0px;
-                display: table-row;
-                height: fit-content;
-                white-space: pre;
-                font-family: 'Courier New', Courier, monospace;
-            }
-        </style>
-        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoShader.js" defer="true"></script>
+        <link rel="stylesheet" href="ver5.css">
+        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoShader.js" data-fail="ver5demoFail.js" defer="true"></script>
     </head>
 
     <body>
-        <div id="topDiv">
-            Easy3D ver 5 Base Shader Tests
-            <span id="btn_s1" class="fakeButton">PassTrough</span>
-            <span id="btn_s2" class="fakeButton">Normals</span>
-            <span id="btn_s3" class="fakeButton">Depth</span>
-            <span id="btn_s4" class="fakeButton">Shade</span>
-            <span id="btn_s5" class="fakeButton">Shade and Depth</span>
-            Frame Interval (render every x frames):<input type="number" id="input_INT" value = "2" min = "1" nax = "200" />
+        <div class="fullClientAreaWrapDiv">
+            <div class="headerFooterDiv">
+                <div class="marginDiv">
+                    Easy3D ver 5 Base Shader Tests
+                    <span id="btn_s1" class="fakeButton">PassTrough</span>
+                    <span id="btn_s2" class="fakeButton">Normals</span>
+                    <span id="btn_s3" class="fakeButton">Depth</span>
+                    <span id="btn_s4" class="fakeButton">Shade</span>
+                    <span id="btn_s5" class="fakeButton">Shade and Depth</span>
+                    Frame Interval (render every x frames):<input type="number" id="input_INT" value = "2" min = "1" nax = "200" />
+                </div>
+            </div>
+            <div id="E3D_mainDiv" class="contentDiv"></div>
+            <div class="headerFooterDiv">
+                <div class="monoText marginDiv"><span id="spanFPS"></span> FPS, <span id="spanSFPS"></span> FPS(smoothed), <span id="spanPct"></span>%, <span id="spanSPct"></span>% (smoothed)</div>
+            </div>
         </div>
-        <div id="E3D_mainDiv"></div>
-        <div id="bottomDiv"><span id="spanFPS"></span> FPS, <span id="spanSFPS"></span> FPS(smoothed), <span id="spanPct"></span>%, <span id="spanSPct"></span>% (smoothed)</div>
     </body>
-
 </html>

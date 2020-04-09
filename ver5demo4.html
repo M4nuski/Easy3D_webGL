@@ -4,40 +4,27 @@
         <title>Easy3D Engine webGL version 0.5</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <style>
-            #E3D_mainDiv {
-                position: absolute;
-                width : 90%;
-                height : 90%;
-                top : 5%;
-                left : 5%;
-            }
-            .fakeButton {
-                cursor: pointer;
-                background-color: bisque;                
-            }
-            .fakeButton:hover {
-                background-color: cadetblue;
-            }
-        </style>
-        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoPrimitives.js" defer="true"></script>
+        <link rel="stylesheet" href="ver5.css">
+        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoPrimitives.js" data-fail="ver5demoFail.js" defer="true"></script>
     </head>
 
     <body>
-        <div>
-            Easy3D ver 5 Primitive generation (random parameters)
-            <span id="btn_s1" class="fakeButton">Plane</span>
-            <span id="btn_s2" class="fakeButton">Box</span>
-            <span id="btn_s3" class="fakeButton">Pyramid</span>
-            <span id="btn_s4" class="fakeButton">Prism</span>
-            <span id="btn_s5" class="fakeButton">Sphere</span>
-            <span id="btn_s6" class="fakeButton">Torus</span>
-            <span>Flat/Smooth</span><input type="checkbox" id="chk_smooth" />
-            <span>White/Colors</span><input type="checkbox" id="chk_colored" />
-            <span>Outline</span><input type="checkbox" id="chk_outline" />
-            <div id="params"></div>
+        <div class="fullClientAreaWrapDiv">
+            <div class="headerFooterDiv"><div class="marginDiv">
+                Easy3D ver 5 Primitive generation (random parameters)
+                <span id="btn_s1" class="fakeButton">Plane</span>
+                <span id="btn_s2" class="fakeButton">Box</span>
+                <span id="btn_s3" class="fakeButton">Pyramid</span>
+                <span id="btn_s4" class="fakeButton">Prism</span>
+                <span id="btn_s5" class="fakeButton">Sphere</span>
+                <span id="btn_s6" class="fakeButton">Torus</span>
+                <span>Flat/Smooth</span><input type="checkbox" id="chk_smooth" />
+                <span>White/Colors</span><input type="checkbox" id="chk_colored" />
+                <span>Outline</span><input type="checkbox" id="chk_outline" />
+                <div id="params"></div></div>
+            </div>
+            <div id="E3D_mainDiv" class="contentDiv"></div>            
         </div>
-        <div id="E3D_mainDiv"></div>
     </body>
 
 </html>

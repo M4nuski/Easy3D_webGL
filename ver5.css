@@ -1,0 +1,35 @@
+html, body {
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    font-size: large;
+}
+.contentDiv {
+    display: table-row;
+}
+.headerFooterDiv {
+    display: table-row;
+    height: fit-content;
+    padding: 0.5%;
+}
+.fullClientAreaWrapDiv {
+    width: 100%;
+    height: 100%;
+    display: table;
+}
+.marginDiv {
+    margin: 0.25em;
+}
+.fakeButton {
+    cursor: pointer;
+    background-color: #d0d0d0;   
+    padding-right: 0.2em;
+    padding-left: 0.2em;             
+}
+.fakeButton:hover {
+    background-color: #a0a0a0;
+}
+.monoText {
+    white-space: pre-wrap;
+    font-family: 'Courier New', Courier, monospace;
+}
