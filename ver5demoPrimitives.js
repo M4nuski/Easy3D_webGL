@@ -30,7 +30,7 @@ CAMERA.moveTo(0, 80, 100, 0.5);
 
 var meshLoader = new E3D_mesh();
 // Create a solid cube
-var entity = new E3D_entity("entity1", "", true); // dynamic entity, GPU data will be updated when changed
+var entity = new E3D_entity("entity1", true); // dynamic entity, GPU data will be updated when changed
 
 // Create mesh
 meshLoader.pushBox(_v3_origin, _v3_null, 48, 48, 48);

@@ -58,6 +58,58 @@ class E3D_CDdata {
         this.candidates = []; // for all other entities, bool to test for CD after culling pass
         this.lastHitMarker = ""; // marker of last hit target to ignore on next pass
     }
+
+    resetCollisions() {             
+        for (var i = 0; i < this.colNum; ++i) this.closestCollision[i].reset();
+        for (var i = 0; i < this.otherColNum; ++i) this.otherCollision[i].reset();
+
+        this.collisionDetected = false;
+        this.collisionFromOther = false;
+
+        this.colNum = 0;
+        this.otherColNum = 0;
+    }
+
+    pushCollisionSource(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi) {
+        if (this.colNum >= this.closestCollision.length) this.closestCollision.push(new CDresult());
+        
+        this.closestCollision[this.colNum].marker = ""+m;
+        this.closestCollision[this.colNum].t0 = t;
+        v3_copy(this.closestCollision[this.colNum].n, n);
+        v3_copy(this.closestCollision[this.colNum].p0, p);
+        
+        this.closestCollision[this.colNum].source_desc = sDesc;
+        this.closestCollision[this.colNum].source_cdi = scdi;
+        this.closestCollision[this.colNum].target_ei = tei;
+        this.closestCollision[this.colNum].target_desc = tDesc;
+        this.closestCollision[this.colNum].target_cdi = tcdi; 
+        
+        this.colNum++;
+        this.collisionDetected = true;
+    }
+
+
+
+    pushCollisionTarget(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi, s) {
+        if (this.otherColNum >= this.otherCollision.length) this.otherCollision.push(new CDresult());
+       
+        this.otherCollision[this.otherColNum].marker = ""+m;
+        this.otherCollision[this.otherColNum].t0 = t;
+        v3_copy(this.otherCollision[this.otherColNum].n, n);
+        v3_copy(this.otherCollision[this.otherColNum].p0, p);
+        
+        this.otherCollision[this.otherColNum].source_desc = sDesc;
+        this.otherCollision[this.otherColNum].source_cdi = scdi;
+        this.otherCollision[this.otherColNum].target_ei = tei;
+        this.otherCollision[this.otherColNum].target_desc = tDesc;
+        this.otherCollision[this.otherColNum].target_cdi = tcdi; 
+        
+        v3_copy(this.otherCollision[this.otherColNum].s, s);
+
+        this.otherColNum++;
+        this.collisionFromOther = true;
+
+    }
 }
 
 

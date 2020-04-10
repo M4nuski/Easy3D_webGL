@@ -74,7 +74,7 @@ for (var x = -8; x < 8; ++x) for (var y = -8; y < 8; ++y) {
 
     
 // Create a torus mesh
-var torusEntity = new E3D_entity("torus", "", false);
+var torusEntity = new E3D_entity("torus",false);
 meshLoader.reset();
 meshLoader.pushTorus(_v3_origin, _v3_null, 32, 12, 64, 32);
 

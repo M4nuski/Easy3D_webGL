@@ -32,19 +32,20 @@ Current work-in-progress and next steps
 * --ver5:
 * flatten engine to reduce nested calls and hierarchy walking
 * extract all "DEV" stuff to a debug class
-* convert all shader and scenes to vec4 colors
+* textures
+* convert all mesh, loader, generators, to LUT colors, add by-face struct
+* convert all shader and scenes to LUT colors
 * Regroup vertexArrays for mesh data (interleaved array in scene)
 * interleaved array in entity
 * interleaved array in loader
-* convert all mesh, loader, generators, to vec4 colors, by-face struct
 * Sprites (always facing viewer, shader with minimal inputs)
 * Text render in 3D scene (in world, world-to-viewport)
 * Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
-* CD object, single for simple and array of for complex
-* Improved Collision Detection with dual Interpolation and Static test (point, edge, sphere, plane, box, triangles)
+* Improved Collision Detection with Static test handling
+* Improved Collision Detection with dual Interpolation (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions
 * --Some kind of game:
-* Path interpolation animator for bots and animations.
+* Path interpolation animator for bots and animations. (linear, sharp, dull)
 * Basic AI
 * 3D cube tree or AABB Collision target culling
 * Sounds
@@ -53,6 +54,7 @@ Current work-in-progress and next steps
 * STL, OBJ, MS3D to JSON or other ready-to-use format for mesh data and entities
 * Improved Entity loading (ideally external tool should prepare model data for better load perf)
 * --ver6:
+* CD object, single for simple and array of for complex
 * Entity hierarchy (parents with n-childs, matrix propagation etc)
 * Mesh hierarchy (vertex bind, weight, keyframe anim and interpolation)
 * Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine

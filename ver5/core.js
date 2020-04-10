@@ -243,7 +243,7 @@ function E3D_addEntity(ent) {
     CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
     CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
     
-    ent.cull_dist = v3_length(E3D_calculate_max_pos(ent.vertexArray));
+    ent.visibilityDistance = v3_length(E3D_calculate_max_pos(ent.vertexArray));
 
     ent.updateMatrix();
 
@@ -264,7 +264,7 @@ function E3D_updateEntity(ent) {
     if (idx > -1) {
         ent.dataContentChanged = true;
         ent.dataSizeChanged = true;        
-        ent.cull_dist = v3_length(E3D_calculate_max_pos(ent.vertexArray));
+        ent.visibilityDistance = v3_length(E3D_calculate_max_pos(ent.vertexArray));
         ent.updateMatrix();
     } else {
         return E3D_addEntity(ent);
@@ -288,7 +288,7 @@ function E3D_cloneEntity(id, newId) {
     let idx = E3D_getEntityIndexFromId(id);
     if ((idx > -1) && (id != newId)) {
 
-        var ent = new E3D_entity(newId, ENTITIES[idx].filename, ENTITIES[idx].isDynamic);
+        var ent = new E3D_entity(newId, ENTITIES[idx].isDynamic);
 
         ent.cloneData(ENTITIES[idx]);   
 
@@ -336,8 +336,8 @@ function E3D_check_entity_visible(idx) {
         v3_sub_res(_E3D_check_entity_visible_pos, ENTITIES[idx].position, CAMERA.position);
         CAMERA.negateCamera_mod(_E3D_check_entity_visible_pos);
         var dist = -_E3D_check_entity_visible_pos[2]; // only check for Z
-        return ( ((dist - ENTITIES[idx].cull_dist) < E3D_FAR) && 
-        ((dist + ENTITIES[idx].cull_dist) > E3D_NEAR) );
+        return ( ((dist - ENTITIES[idx].visibilityDistance) < E3D_FAR) && 
+        ((dist + ENTITIES[idx].visibilityDistance) > E3D_NEAR) );
     }
     return true;
 }

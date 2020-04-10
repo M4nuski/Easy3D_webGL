@@ -54,8 +54,6 @@ class E3D_mesh {
 // Entity Data Writers
 
     addModelData(entity){
-        entity.file = this.file;
-
         entity.vertexArray = new Float32Array(this.positions);
         entity.colorArray = new Float32Array(this.colors);
         entity.normalArray = new Float32Array(this.normals);

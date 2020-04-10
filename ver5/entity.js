@@ -7,12 +7,12 @@
 
 // Base class for static entity, optionnally dynamic
 class E3D_entity {
-    constructor(id, filename, dynamic = false) {
+    constructor(id, dynamic = false) {
 
         this.id = id; // to find object in list
         this.isVisible = false;
         this.isDynamic = dynamic; // Static (non-dynamic) entities have their data pushed to the GPU memory only once when added to scene.
-                                // Dynamic entities can have their data modified on the fly (with performance cost).
+                                  // Dynamic entities can have their data modified on the fly (at a performance cost).
 
         this.dataContentChanged = false; // GPU buffers will be updated  
         this.dataSizeChanged = true; // GPU buffers will be reset and updated
@@ -23,15 +23,15 @@ class E3D_entity {
 
         // fustrum culling
         this.isVisibiltyCullable = true; // Setting to false will force the entity to always be redrawn
-        this.cull_dist = 0; // maximum vertex distance from object center for culling
+        this.visibilityDistance = 0; // maximum vertex distance from object center for culling (spherical envelope)
         
         // Computed matrix
         this.modelMatrix = m4_new();
-        this.normalMatrix = m4_new();
+        this.normalMatrix = m4_new(); // (model matrix without translations)
 
         // Data
         this.numElements = 0; // Actual number of vertices to draw.
-        this.drawMode = 4;
+        this.drawMode = CONTEXT.TRIANGLES;
 
         // GL buffer data stores
         // TODO: combine to single data store (v1 v2 v3 n1 n2 n3 u  v  pad = face // smooth shaded
@@ -68,13 +68,15 @@ class E3D_entity {
         this.vertexArray; 
         this.normalArray;
         this.colorArray;
-        this.strokeIndexArray = new Uint16Array(0);
 
+        this.strokeIndexArray = new Uint16Array(0);
         this.drawStrokes = false;
         this.numStrokeElements = 0;
 
         //this.textureID = ""; // todo        
-        this.filename = filename;
+
+
+        // TODO isTransparent // z-sort before render, dont write to depth buffer
 
 
         // Animation
@@ -95,7 +97,7 @@ class E3D_entity {
         this.collisionDetection = false;
 
         // TODO isCollisionFragmented // CD object is a list of multiple CD object with sph pre-cull
-        // TODO isTransparent // z-sort before render, dont write to depth buffer
+
      
 
 
@@ -228,7 +230,7 @@ class E3D_entity {
             this.strokeIndexBuffer = entity.strokeIndexBuffer;
         }
 
-        this.cull_dist = entity.cull_dist;
+        this.visibilityDistance = entity.visibilityDistance;
 
         if (entity.CD_point > 0) {
             this.CD_point = entity.CD_point;
@@ -318,7 +320,7 @@ class E3D_entity {
 
         // fustrum culling
         this.isVisibiltyCullable = true; // Setting to false will force the entity to always be redrawn
-        this.cull_dist = 0; // maximum vertex distance from object center for culling
+        this.visibilityDistance = 0; // maximum vertex distance from object center for culling
         
         // Computed matrix
         this.modelMatrix = m4_new();
@@ -326,7 +328,7 @@ class E3D_entity {
 
         // Data
         this.numElements = 0; // Actual number of vertices to draw.
-        this.drawMode = 4;
+        this.drawMode = CONTEXT.TRIANGLES; // Triangles
 
         /*this.vertexBuffer;
         this.normalBuffer;
@@ -583,7 +585,7 @@ class E3D_entity_axis extends E3D_entity {
 
         this.vectorScale = vectorScale;
         this.normalize = normalize;
-        this.drawMode = 1; // gl.LINES;
+        this.drawMode = CONTEXT.LINES; // gl.LINES;
 
         this.isVisibiltyCullable = false;
 
@@ -620,7 +622,7 @@ class E3D_entity_axis extends E3D_entity {
 class E3D_entity_wireframe_canvas extends E3D_entity {
     constructor(id, finiteSize = false) {
         super(id, "E3D_entity_wireframe_canvas/"+id, true);
-        this.drawMode = 1; // gl.LINES;      
+        this.drawMode = CONTEXT.LINES;
         this.arraySize = 512;
         this.arrayIncrement = 512; // 256 lines
 
@@ -1191,7 +1193,7 @@ class E3D_entity_dynamicCopy extends E3D_entity_wireframe_canvas {
         super(id, true);
 
         this.numElements = 0;
-        this.drawMode = 4;//gl.TRIANGLES;
+        this.drawMode = CONTEXT.TRIANGLES;
 
         this.srcVertex = new Float32Array(sourceEntity.vertexArray);
         this.srcColor  = new Float32Array(sourceEntity.colorArray);

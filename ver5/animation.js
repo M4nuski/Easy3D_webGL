@@ -6,7 +6,7 @@
 
 
 // Animation State and commands (exclusives)
-const E3D_RESET = 0; // initial, back to start and pause, animator function should build the stateData object if nec
+const E3D_RESET = 0; // initial, back to start and pause, setup animation data
 const E3D_PLAY = 1;  // play
 const E3D_PAUSE = 2; // pause
 const E3D_RESTART = 3; // reset and play
@@ -33,7 +33,7 @@ class E3D_animationData {
         this.last_position = v3_new();
         
         // Tranforms
-        this.pspd = v3_new(); // TODO refactor to better names ..
+        this.pspd = v3_new(); // TODO refactor to less confusing names ..
         this.rspd = v3_new();
         this.gravity = 0.0;
         this.frameG = 0.0;
@@ -47,13 +47,6 @@ class E3D_animationData {
         this.pSpdLength = []; // direction vertors lengths
         this.pCD = false;
     }
-}
-
-
-
-class E3D_animation {  // TODO merge with entity
-    constructor(id, targetEntity, animFirstPass, collResolver_asSource = null, collResolver_asTarget = null, animLastPass =  null, group = 0) {
-    }
 
     animateFirstPass(x) {
         if (this.animFirstPass) {
@@ -62,7 +55,7 @@ class E3D_animation {  // TODO merge with entity
     }
 
     animateResolvePass(x) {
-        if (this.collisionDetected && this.collisionFromOther) { 
+        if (this.collisionDetected && this.collisionFromOther) { // TODO extract to animator
             if (this.sourceCollResolver && this.targetCollResolver) {
                 if (this.closestCollision.t0 < this.otherCollision.t0) {
                     this.sourceCollResolver(x);
@@ -99,67 +92,12 @@ class E3D_animation {  // TODO merge with entity
     pause() {
         this.state = E3D_PAUSE;  
     }
-    restart(x) {
-        this.startObject = x;
+    restart() {
         this.state = E3D_RESTART;  
     }
     done() {
         this.state = E3D_DONE;  
     }
-
-
-    resetCollisions() {             
-        for (var i = 0; i < this.colNum; ++i) this.closestCollision[i].reset();
-        for (var i = 0; i < this.otherColNum; ++i) this.otherCollision[i].reset();
-
-        this.collisionDetected = false;
-        this.collisionFromOther = false;
-
-        this.colNum = 0;
-        this.otherColNum = 0;
-    }
-
-    pushCollisionSource(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi) {
-        if (this.colNum >= this.closestCollision.length) this.closestCollision.push(new CDresult());
-        
-        this.closestCollision[this.colNum].marker = ""+m;
-        this.closestCollision[this.colNum].t0 = t;
-        v3_copy(this.closestCollision[this.colNum].n, n);
-        v3_copy(this.closestCollision[this.colNum].p0, p);
-        
-        this.closestCollision[this.colNum].source_desc = sDesc;
-        this.closestCollision[this.colNum].source_cdi = scdi;
-        this.closestCollision[this.colNum].target_ei = tei;
-        this.closestCollision[this.colNum].target_desc = tDesc;
-        this.closestCollision[this.colNum].target_cdi = tcdi; 
-        
-        this.colNum++;
-        this.collisionDetected = true;
-    }
-
-
-
-    pushCollisionTarget(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi, s) {
-        if (this.otherColNum >= this.otherCollision.length) this.otherCollision.push(new CDresult());
-       
-        this.otherCollision[this.otherColNum].marker = ""+m;
-        this.otherCollision[this.otherColNum].t0 = t;
-        v3_copy(this.otherCollision[this.otherColNum].n, n);
-        v3_copy(this.otherCollision[this.otherColNum].p0, p);
-        
-        this.otherCollision[this.otherColNum].source_desc = sDesc;
-        this.otherCollision[this.otherColNum].source_cdi = scdi;
-        this.otherCollision[this.otherColNum].target_ei = tei;
-        this.otherCollision[this.otherColNum].target_desc = tDesc;
-        this.otherCollision[this.otherColNum].target_cdi = tcdi; 
-        
-        v3_copy(this.otherCollision[this.otherColNum].s, s);
-
-        this.otherColNum++;
-        this.collisionFromOther = true;
-
-    }
-
 
 }
 
@@ -174,7 +112,7 @@ function singlePassAnimator(/*animGroup*/) {
     for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
 }
 
-function multiPassAnimator(/*animGroup*/) {
+function multiPassAnimator(/*animGroup*/) { // TODO test if culling to list once is faster than the 3X if (.isAnimated)
     for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
     for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateResolvePass();
     for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateLastPass();
@@ -206,7 +144,7 @@ function collisionDetectionAnimator(/*animGroup, */ maxCDIterations = 10) {
             ENTITIES[i].animation.candidates[j] = false;
             if ((ENTITIES[j].collisionDetection == true) && (ENTITIES[i].id != ENTITIES[j].id) ) { 
                 var deltaP = v3_distance(ENTITIES[i].position, ENTITIES[j].position); // TODO cache in entity
-                var deltaD = ENTITIES[i].animation.deltaLength + ENTITIES[i].cull_dist + ENTITIES[j].cull_dist; // TODO add other ent deltaLength
+                var deltaD = ENTITIES[i].animation.deltaLength + ENTITIES[i].visibilityDistance + ENTITIES[j].visibilityDistance; // TODO add other ent deltaLength
                 ENTITIES[i].animation.candidates[j] = deltaP <= deltaD;  
             }
         }
@@ -718,7 +656,7 @@ function anim_Part_firstPass() {
             if (this.pCD) v3_copy(this.target.CD_point_p0[i], this.pPos[i]); 
         }
 
-        this.target.cull_dist = v3_length(max);
+        this.target.visibilityDistance = v3_length(max);
         this.target.dataContentChanged = true;
         this.target.updateMatrix();
         this.lastHitMarker = ""; 
