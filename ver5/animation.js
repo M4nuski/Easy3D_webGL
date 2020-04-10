@@ -137,12 +137,12 @@ function collisionDetectionAnimator(/*animGroup, */ maxCDIterations = 10) {
 
     // Cull Collission Detection
     for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed)  // CD culling
-    if ((ENTITIES[i].collisionDetection) && (ENTITIES[i].animation.deltaLength > -1)) { 
+    if ((ENTITIES[i].collisionDetection()) && (ENTITIES[i].animation.deltaLength > -1)) { 
 
         ENTITIES[i].animation.candidates = new Array(ENTITIES.length);
         for (let j = 0; j < ENTITIES.length; ++j) {// all entities are targets
             ENTITIES[i].animation.candidates[j] = false;
-            if ((ENTITIES[j].collisionDetection == true) && (ENTITIES[i].id != ENTITIES[j].id) ) { 
+            if ((ENTITIES[j].collisionDetection() == true) && (ENTITIES[i].id != ENTITIES[j].id) ) { 
                 var deltaP = v3_distance(ENTITIES[i].position, ENTITIES[j].position); // TODO cache in entity
                 var deltaD = ENTITIES[i].animation.deltaLength + ENTITIES[i].visibilityDistance + ENTITIES[j].visibilityDistance; // TODO add other ent deltaLength
                 ENTITIES[i].animation.candidates[j] = deltaP <= deltaD;  
@@ -159,7 +159,7 @@ function collisionDetectionAnimator(/*animGroup, */ maxCDIterations = 10) {
         // Collision Detection
         hitDetected = false;
         for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) 
-        if ((ENTITIES[i].collisionDetection) && (ENTITIES[i].animation.deltaLength > 0.0)) {
+        if ((ENTITIES[i].collisionDetection()) && (ENTITIES[i].animation.deltaLength > 0.0)) {
             if (ENTITIES[i].CD_sph > 0) CheckForAnimationCollisions_SphSource(ENTITIES[i].animation);
             if (ENTITIES[i].CD_point > 0) CheckForAnimationCollisions_PointSource(ENTITIES[i].animation);
         }
@@ -303,7 +303,8 @@ function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, par
         if (CD) anim.target.pushCD_point(anim.pPos[i]);
     }
 
-    anim.target.collisionDetection = CD;
+    // TODO repair anim.target.collisionDetection = CD;
+
     anim.state = E3D_PLAY;
     anim.target.visible = true;
     anim.target.updateMatrix();
@@ -368,7 +369,7 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
         if (CD) anim.target.pushCD_point(anim.pPos[i]);
     }
 
-    anim.target.collisionDetection = CD;
+    //TODO repair anim.target.collisionDetection = CD;
     anim.state = E3D_PLAY;
     anim.target.visible = true;
     anim.target.updateMatrix();

@@ -123,7 +123,7 @@ class E3D_mesh {
         }
 
         log(entity.CD_edge + " CD edges");
-        entity.collisionDetection = true;
+
     }
 
 
