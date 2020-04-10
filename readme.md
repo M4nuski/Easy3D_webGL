@@ -3,15 +3,14 @@ Easy3D - webGL
 Yet another JS 3D/game engine test
 
 Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
+
 * /ver5: current WIP
 * ver5demo1.html basic test page, no html, auto-setup
 * ver5demo2.html test page with dedicated div, auto-setup
 * ver5demo3.html demo for full screen and pointer lock
 * ver5demo4.html primitive mesh generation with random paramenters
 * ver5demo5.html varius basic shaders demo page
-* Transform Animator
-* Particule Animator
-* Physics Animator
+* ver5demo6.html animator demo (Direct, Transform, Physics, Particules)
 * 
 * /ver4: 
 * ver4.html: Works with mouse/keyboard in destktop browser, touch controls for mobile.
@@ -45,7 +44,7 @@ Current work-in-progress and next steps
 * Improved Collision Detection with dual Interpolation and Static test (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions
 * --Some kind of game:
-* Path interpolation for bots and animations.
+* Path interpolation animator for bots and animations.
 * Basic AI
 * 3D cube tree or AABB Collision target culling
 * Sounds
@@ -55,6 +54,7 @@ Current work-in-progress and next steps
 * Improved Entity loading (ideally external tool should prepare model data for better load perf)
 * --ver6:
 * Entity hierarchy (parents with n-childs, matrix propagation etc)
+* Mesh hierarchy (vertex bind, weight, keyframe anim and interpolation)
 * Update shaders to leverage GPU matrix multiplication efficiency instead of JS engine
 * Basic Physics (hit, bounce, move etc) as body data attached to entity, mass, moment of rotation etc
 * Evaluate value of render culling on mobile

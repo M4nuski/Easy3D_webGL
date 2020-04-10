@@ -5,7 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" href="ver5.css">
-        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demo6.js" data-fail="ver5demoFail.js" defer="true"></script>
+        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoAnim.js" data-fail="ver5demoFail.js" defer="true"></script>
         <style>
         #menu {
             position: absolute;
@@ -15,7 +15,8 @@
             border-radius: 0px 0px 10px 0px;
             z-index: 10;             
             overflow: hidden;
-
+            padding: 0.2em;
+            padding-right: 0.3em;
             border-right: solid 2px black;
             border-bottom: solid 2px black;
         }        
@@ -28,8 +29,8 @@
             transition: all 0.15s linear;
         }      
         .hoverSize:hover{
-            max-width: 150px;
-            max-height: 200px;
+            max-width: 200px;
+            max-height: 200px; /* should be equal to max-width to avoid transition overshoot */
             background-color: rgba(255, 255, 255, 0.95);
         }
         </style>
@@ -39,16 +40,15 @@
         <div class="fullClientAreaWrapDiv">
             <div id="E3D_mainDiv" class="contentDiv">
                 <div id="menu" class="hoverSize">
-                    <img src="../Images/Menu.svg" width="50" height="50" style="opacity: 0.75;" />
-                    <div class="fakeButton">New Game</div>
-                    <div class="fakeButton">Load Game</div>
-                    <div class="fakeButton">Save Game</div>
-                    <div class="fakeButton">Setup</div>
-                    <div class="fakeButton">Quit</div>
+                    <img src="../Images/Menu.svg" width="50" height="50" />
+                    <div class="fakeButton">Direct</div>
+                    <div class="fakeButton">Transform</div>
+                    <div class="fakeButton">Base (Physics)</div>
+                    <div class="fakeButton">Particules</div>
                 </div>
             </div>
             <div class="headerFooterDiv">
-                <div class="monoText marginDiv"><span id="spanFPS"></span> FPS, <span id="spanSFPS"></span> FPS(smoothed), <span id="spanPct"></span>%, <span id="spanSPct"></span>% (smoothed)</div>
+                <div class="monoText marginDiv"><span id="spanSFPS"></span> FPS, <span id="spanSPCT"></span>%</div>
             </div>
         </div>
     </body>

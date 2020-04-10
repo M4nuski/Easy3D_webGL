@@ -56,7 +56,7 @@ class E3D_timing {
                 this.delta = (time - this.lastTick) * 0.001;
                 this.lastTick = time;
 
-                this.g = this.delta * E3D_G;
+                this.g = this.delta * E3D_G; // current frame G accelleration
 
                 if (this.onTick) this.onTick(); 
 

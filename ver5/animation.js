@@ -13,68 +13,46 @@ const E3D_RESTART = 3; // reset and play
 const E3D_DONE = 4;
 
 
-/**
- * Animation class
- * 
- * @param {String} id Animation identifier
- * @param {E3D_timer} timerclass Timer object
- * @param {function} animFirstPass Delegate function for calculating single or ideal animation results
- * @param {function} animNPass Delegate function to recalculate animation result based on collision detections
- * @param {function} animLastPass Delegate function to commit animation results or to post-process
- */
-class E3D_animation {  // TODO merge with entity
-    constructor(id, targetEntity, animFirstPass, collResolver_asSource = null, collResolver_asTarget = null, animLastPass =  null, group = 0) {
 
-        this.id = id;
-        
-        this.animFirstPass = animFirstPass; //  calculate ideal next position
-        this.sourceCollResolver = collResolver_asSource;
-        this.targetCollResolver = collResolver_asTarget;
-        this.animLastPass = animLastPass; // commit final state after collision detections are completed or prep next pass
 
-        this.target = targetEntity;
-        this.group = group;
-        
-        this.ttl = 0; // -1 to disable
+
+class E3D_animationData {
+    constructor(group = 0) {
+        this.group = group; // animation can use different animators that only process specific groups
+
+        this.ttl = 0; // time to live, -1 to disable
         this.state = E3D_RESET;
-        this.endState = E3D_DONE; // once ttl reached 0
+        this.endState = E3D_DONE; // state to set after ttl reaches 0
+
+        this.animFirstPass = null; //  calculate ideal next position
+        this.sourceCollResolver = null; // function to resolve collisions when entity is a source
+        this.targetCollResolver = null; // function to resulve collisions when entity is a target
+        this.animLastPass = null; // commit final state after collision detections are completed or prep next pass
 
         // Custom data
         this.last_position = v3_new();
         
         // Tranforms
-        this.pspd = v3_new();
+        this.pspd = v3_new(); // TODO refactor to better names ..
         this.rspd = v3_new();
         this.gravity = 0.0;
         this.frameG = 0.0;
 
         // Particules
-        this.pNum = 10;
+        this.pNum = 1;
         this.pActive = [];
         this.pLastPos = [];
         this.pPos = [];
-        this.pSpd = [];
-        this.pSpdLength = [];
+        this.pSpd = []; // normalized direction vectors
+        this.pSpdLength = []; // direction vertors lengths
         this.pCD = false;
-
-        // For Collision Detection
-        this.delta = [0, 0, 0]; // Position delta
-        this.deltaLength = -1; // length of this.delta during animation step for culling, -1 anim target is not a source
-
-        this.colNumStart = 3;
-        this.collisionDetected = false;
-        this.colNum = 0;
-        this.closestCollision = new Array(this.colNumStart);
-        for (var i = 0; i < this.colNumStart; ++i) this.closestCollision[i] = new CDresult(); 
-
-        this.collisionFromOther = false;
-        this.otherColNum = 0;
-        this.otherCollision = new Array(this.colNumStart);
-        for (var i = 0; i < this.colNumStart; ++i) this.otherCollision[i] = new CDresult(); 
+    }
+}
 
 
-        this.candidates = []; // for all other entities, bool to test for CD after culling pass
-        this.lastHitMarker = ""; // marker of last hit target to ignore on next pass
+
+class E3D_animation {  // TODO merge with entity
+    constructor(id, targetEntity, animFirstPass, collResolver_asSource = null, collResolver_asTarget = null, animLastPass =  null, group = 0) {
     }
 
     animateFirstPass(x) {
@@ -202,6 +180,8 @@ function multiPassAnimator(/*animGroup*/) {
     for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateLastPass();
 }
 
+
+// TODO CD should only affect Visible entities 
 function collisionDetectionAnimator(/*animGroup, */ maxCDIterations = 10) {
     // Animate / Calculate Expected target position and state
 
@@ -468,7 +448,7 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
 function collisionResult_asSource_bounce(){
     if (this.deltaLength > 0) {
 
-        nHits++;
+        E3D_DEBUG_CD_NB_HIT++;
         var firstCol = this.closestCollision[0];
         if (this.colNum > 1) {
             var firstColt0 = this.closestCollision[0].t0;
@@ -480,7 +460,7 @@ function collisionResult_asSource_bounce(){
 
         this.lastHitMarker = ""+firstCol.marker;        
 
-        /*if (show_DEV_CD) { 
+        /*if (E3D_DEBUG_SHOW_HIT_RESULT) { 
             phyTracers.addWireCross(this.last_position, 1, _v3_red);
             phyTracers.addWireCross(firstCol.p0, 1, _v3_green);
             phyTracers.addWireCross(this.target.position, 1, _v3_blue);
@@ -548,7 +528,7 @@ function collisionResult_asSource_mark(){
     this.lastHitMarker = "";
     for (var i = 0; i < this.colNum; ++i) {
         v3_normalize_mod(this.closestCollision[i].n);
-        if (show_DEV_CD) { 
+        if (E3D_DEBUG_SHOW_HIT_RESULT) { 
             phyTracers.addWireCross(this.closestCollision[i].p0, 2, _v3_green);
             phyTracers.addLineByPosNormLen(this.closestCollision[i].p0, this.closestCollision[i].n, 2, false, _v3_white);
         }
@@ -562,7 +542,7 @@ function collisionResult_asSource_mark(){
 function collisionResult_asSource_slide(){
     if (this.deltaLength > 0) {
 
-        nHits++;
+        E3D_DEBUG_CD_NB_HIT++;
         var firstCol = this.closestCollision[0];
         if (this.colNum > 1) {
             var firstColt0 = this.closestCollision[0].t0;
@@ -635,7 +615,7 @@ function collisionResult_asSource_slide(){
 function collisionResult_asTarget_mark(){
     for (var i = 0; i < this.otherColNum; ++i) {
         v3_normalize_mod(this.collisionFromOther[i].n);
-        if (show_DEV_CD) { 
+        if (E3D_DEBUG_SHOW_HIT_RESULT) { 
             phyTracers.addWireCross(this.collisionFromOther[i].p0, 2, _v3_red);
             phyTracers.addLineByPosNormLen(this.collisionFromOther[i].p0, this.collisionFromOther[i].n, 2, false, _v3_white);
         }

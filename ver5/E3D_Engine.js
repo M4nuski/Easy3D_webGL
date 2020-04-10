@@ -4,7 +4,9 @@
 // The "data-fail" script will be ran in the loading fail.
 // Emmanuel Charette 2020
 
-E3D_DEBUG_VERBOSE = false;
+"use strict"
+
+var E3D_DEBUG_VERBOSE = false;
 
 var E3D_scriptList = [
     "ver5/math.js",
@@ -64,9 +66,15 @@ function E3D_loadNextScript() {
 var scriptTags = document.querySelectorAll("SCRIPT");
 for (var tag of scriptTags) {
     var main = tag.getAttribute("data-main");
-    if (main) E3D_scriptList.push(main);
+    if (main) { 
+        E3D_scriptList.push(main);
+        if (E3D_DEBUG_VERBOSE) console.log("adding main script " + main);
+    }
     var fail = tag.getAttribute("data-fail");
-    if (fail) E3D_fallbackScript = fail;
+    if (fail) {
+        E3D_fallbackScript = fail;
+        if (E3D_DEBUG_VERBOSE) console.log("using fallback script " + fail);
+    }
 }
 
 E3D_loadNextScript();

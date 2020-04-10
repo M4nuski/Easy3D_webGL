@@ -576,6 +576,7 @@ class E3D_input {
 
         //prevent scroll down on spacebar
         if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("keyDown");
     }
     
     keyUp(event) {    
@@ -584,6 +585,7 @@ class E3D_input {
 
         this.inputTable.set(event.code, false);
         this.inputDoneTable.set(event.code, true);
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("keyUp");
     }
 
 
@@ -597,6 +599,7 @@ class E3D_input {
         this.keyDown( { code : event.button, type:"mouseDown" } );
 
         if (event.preventDefault) { event.preventDefault(); };
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("mouseDown");
         return false;
     }
     
@@ -604,11 +607,13 @@ class E3D_input {
         this.keyUp( { code : event.button, type:"mouseUp" } );
 
         if (event.preventDefault) { event.preventDefault(); };
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("mouseUp");
         return false;
     }
     
     mouseLeave() {
         for (let i = 0; i < 3; ++i) this.keyUp( { code : i } );
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("mouseLeave");
     }
     
     mouseMove(event) {
@@ -617,11 +622,13 @@ class E3D_input {
 
         this.pinx = event.pageX;
         this.piny = event.pageY;
+        if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseMove");
     }
     
     mouseLockedMove(x, y) {
         this.mx += x * this._mouseSpeed * this.elemScaleX;
         this.my += y * this._mouseSpeed * this.elemScaleY;
+        if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseLockedMove");
     }
     
     mouseWheel(event) {   
@@ -629,6 +636,7 @@ class E3D_input {
         this.mw += (event.deltaY > 0) ? this._mouseWheelSpeed : -this._mouseWheelSpeed;
 
         if (event.preventDefault) { event.preventDefault(); };
+        if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseWheel");
     }
     
     mouseDblClick(event) {
@@ -636,6 +644,7 @@ class E3D_input {
         this.keyDown( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
 
         if (event.preventDefault) { event.preventDefault(); };
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("mouseDoubleClick");
     }
 
 
@@ -705,6 +714,7 @@ class E3D_input {
                 this.liftTimer = false; 
             }
         }
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("touchStart");
     }
 
 
@@ -739,6 +749,7 @@ class E3D_input {
         
         for (var i = 0; i < event.changedTouches.length; i++) this.ongoingTouches.delete(event.changedTouches[i].identifier);
 
+        if (E3D_DEBUG_LOG_INPUT_STATES) log("touchEnd");
     }
 
 
@@ -783,7 +794,7 @@ class E3D_input {
             }
 
         } // end 2 touches
-
+        if (E3D_DEBUG_LOG_INPUT_MOVES) log("touchMove");
     } // end touch move
 
     copyTouch(touch) {

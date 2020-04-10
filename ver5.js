@@ -6,12 +6,12 @@
 
 
 
-var nHitTest = 0;
-var nHits = 0;
+
+
 
 var show_DEV_CD = false;
 var phyTracers, dev_Hits;
-var gAccel = 0;
+
 
 var timer = { delta : 0, start : Date.now() }; // dummy timer 
 
@@ -58,7 +58,7 @@ var l0v, l1v;// light vector entities
 var testSph, splos, planes, fplanes, cubes, dev_CD; // entities
 var cloned = false;
 var animations = [];
-var nHitTest = 0;
+
 
 // Engine Components
 
