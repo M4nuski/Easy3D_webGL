@@ -649,6 +649,25 @@ class E3D_mesh {
             if (closedBase) this.pushTriangle3p( pts[i], pb, pts[(i + 1) % nbSides], color); //base
         }
     }
+    pushBiPyramid(position, rotation, radius, height, nbSides, color = _v3_white) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        // points
+        var ps = [0,  height / 2, 0];
+        var pb = [0, -height / 2, 0];
+        var pts = [];
+        pts[0] = [radius, 0, 0];
+        for (var i = 1; i < nbSides; ++i) pts.push(v3_rotateY_new(pts[0], (PIx2 / nbSides) * i));
+
+        // adjust for position and rotation
+        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+
+        // faces
+        for (var i = 0; i < nbSides; ++i) {
+            this.pushTriangle3p( pts[(i + 1) % nbSides], ps, pts[i], color); //top sides
+            this.pushTriangle3p( pts[i], pb, pts[(i + 1) % nbSides], color); //bottom sides
+        }
+    }
 
     pushPrism(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
         m4_transform_res(_mesh_prim_mat, position, rotation);
