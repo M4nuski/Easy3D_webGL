@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Easy3D Engine webGL version 0.5</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="ver5.css">
+        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demo6.js" data-fail="ver5demoFail.js" defer="true"></script>
+        <style>
+        #menu {
+            position: absolute;
+            display: block;
+            left : 0px;
+            top : 0px;
+            border-radius: 0px 0px 10px 0px;
+            z-index: 10;             
+            overflow: hidden;
+
+            border-right: solid 2px black;
+            border-bottom: solid 2px black;
+        }        
+
+        .hoverSize {
+            max-width: 50px;
+            max-height: 50px;
+            background-color: rgba(255, 255, 255, 0.25);
+
+            transition: all 0.15s linear;
+        }      
+        .hoverSize:hover{
+            max-width: 150px;
+            max-height: 200px;
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+        </style>
+    </head>
+
+    <body>
+        <div class="fullClientAreaWrapDiv">
+            <div id="E3D_mainDiv" class="contentDiv">
+                <div id="menu" class="hoverSize">
+                    <img src="../Images/Menu.svg" width="50" height="50" style="opacity: 0.75;" />
+                    <div class="fakeButton">New Game</div>
+                    <div class="fakeButton">Load Game</div>
+                    <div class="fakeButton">Save Game</div>
+                    <div class="fakeButton">Setup</div>
+                    <div class="fakeButton">Quit</div>
+                </div>
+            </div>
+            <div class="headerFooterDiv">
+                <div class="monoText marginDiv"><span id="spanFPS"></span> FPS, <span id="spanSFPS"></span> FPS(smoothed), <span id="spanPct"></span>%, <span id="spanSPct"></span>% (smoothed)</div>
+            </div>
+        </div>
+    </body>
+</html>

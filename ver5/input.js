@@ -644,7 +644,7 @@ class E3D_input {
 
     touchStart(event) {
 
-        if (event.preventDefault) { event.preventDefault(); };
+        if ((event.preventDefault) && (event.calcelable)) { event.preventDefault(); };
 
         for (var i = 0; i < event.changedTouches.length; i++) // append changed touches to the map
             this.ongoingTouches.set(event.changedTouches[i].identifier, this.copyTouch(event.changedTouches[i]));
@@ -710,7 +710,7 @@ class E3D_input {
 
     touchEnd(event) {
 
-        if (event.preventDefault) { event.preventDefault(); };
+     //   if (event.preventDefault) { event.preventDefault(); }; // commented-out to fix css :hover not de-activating on mobile
         
         if (this.ongoingTouches.size == 1) {
             var firstTouch = this.ongoingTouches.get(event.changedTouches[0].identifier);
