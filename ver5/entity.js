@@ -71,19 +71,20 @@ class E3D_entity {
         // Animation
         // TODO isAnimated
         this.isAnimated = false;
-        this.animation = null; // E3D_animationData
+        this.animation = new E3D_animationData();
 
         //Collisions
         this.isCollisionSource = false;
         this.isCollisionTarget = false;
         this.collision = new E3D_collisionData();
-        // TODO isCollisionFragmented // CD object is a list of multiple CD object with sph pre-cull
+
+        // TODO isCollisionFragmented
     
         this.updateMatrix();
     } 
 
     collisionDetection() {
-        return this.isCollisionSource || this.isCollisionTarget || this.isVisible;
+        return this.isVisible && (this.isCollisionSource || this.isCollisionTarget);
     }
 
     clear() {
@@ -800,10 +801,16 @@ class E3D_entity_dynamicCopy extends E3D_entity {
         this.dataContentChanged = true;
         this.dataSizeChanged = true;
     }
-    copySource() {
+    copySource(offset = _v3_null) {
         this.vertexArray.set(this.srcVertex, this.numElements * 3);
         this.colorArray.set( this.srcColor,  this.numElements * 3);
         this.normalArray.set(this.srcNormal, this.numElements * 3);
+
+        for (var i = 0; i < this.srcNumElements; ++i) {
+            var vertex = this.vertexArray.subarray((this.numElements + i) * 3, (this.numElements + i + 1) * 3);
+            v3_add_mod(vertex, offset);
+       //     this.vertexArray.set(vert, elem*3);
+        }    
 
         this.numElements += this.srcNumElements;
 
