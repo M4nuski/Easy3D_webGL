@@ -55,7 +55,7 @@ class E3D_animationData {
     }
 
     animateResolvePass(x) {
-        if (this.collisionDetected && this.collisionFromOther) { // TODO extract to animator
+        if (this.isCollisionSource && this.isCollisionTarget) { // TODO extract to animator
             if (this.sourceCollResolver && this.targetCollResolver) {
                 if (this.closestCollision.t0 < this.otherCollision.t0) {
                     this.sourceCollResolver(x);
@@ -67,14 +67,14 @@ class E3D_animationData {
             } else if (this.targetCollResolver) {
                 this.targetCollResolver(x);
             }
-        } else if (this.collisionDetected && this.sourceCollResolver) {
+        } else if (this.isCollisionSource && this.sourceCollResolver) {
             this.sourceCollResolver(x);
-        } else if (this.collisionFromOther && this.targetCollResolver) {
+        } else if (this.isCollisionTarget && this.targetCollResolver) {
             this.targetCollResolver(x);
         }
         
-        this.collisionDetected = false;
-        this.collisionFromOther = false;
+        this.isCollisionSource = false;
+        this.isCollisionTarget = false;
     }
 
     animateLastPass(x) {
@@ -166,7 +166,7 @@ function collisionDetectionAnimator(/*animGroup, */ maxCDIterations = 10) {
         
         // Collision Response
         for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) 
-        if ((ENTITIES[i].animation.collisionDetected) || (ENTITIES[i].animation.collisionFromOther)) {
+        if ((ENTITIES[i].animation.isCollisionSource) || (ENTITIES[i].animation.isCollisionTarget)) {
             ENTITIES[i].animation.animateResolvePass(maxCDIterations - numIter); 
             hitDetected = true;
         }
@@ -553,10 +553,10 @@ function collisionResult_asSource_slide(){
 
 function collisionResult_asTarget_mark(){
     for (var i = 0; i < this.otherColNum; ++i) {
-        v3_normalize_mod(this.collisionFromOther[i].n);
+        v3_normalize_mod(this.isCollisionTarget[i].n);
         if (E3D_DEBUG_SHOW_HIT_RESULT) { 
-            phyTracers.addWireCross(this.collisionFromOther[i].p0, 2, _v3_red);
-            phyTracers.addLineByPosNormLen(this.collisionFromOther[i].p0, this.collisionFromOther[i].n, 2, false, _v3_white);
+            phyTracers.addWireCross(this.isCollisionTarget[i].p0, 2, _v3_red);
+            phyTracers.addLineByPosNormLen(this.isCollisionTarget[i].p0, this.isCollisionTarget[i].n, 2, false, _v3_white);
         }
     }
 }
