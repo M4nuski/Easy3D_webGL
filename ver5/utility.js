@@ -43,16 +43,16 @@ function onEvent(elemOrID, event, callback) {
     if (elemOrID) elemOrID.addEventListener(event, callback);
 }
 
-var elementMap = new Map();
+var __$elementMap = new Map();
 function $(elem) {
-    var res = elementMap.get(elem);
+    var res = __$elementMap.get(elem);
     if (res == undefined) {
         res = document.getElementById(elem);
-        if (res != undefined) {
-            elementMap.set(elem, res);
-            return res;
-        }
-    } else return res;
-    return false;
+        if (res != undefined) __$elementMap.set(elem, res);
+    }
+    return res;
 }
 
+function $forEach(selector, lambda) {
+    document.querySelectorAll(selector).forEach(lambda);
+}

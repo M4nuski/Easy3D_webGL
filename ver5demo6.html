@@ -26,7 +26,7 @@
             max-height: 50px;
             background-color: rgba(255, 255, 255, 0.25);
 
-            transition: all 0.15s linear;
+            transition: all 0.1s linear;
         }      
         .hoverSize:hover{
             max-width: 200px;
@@ -41,14 +41,14 @@
             <div id="E3D_mainDiv" class="contentDiv">
                 <div id="menu" class="hoverSize">
                     <img src="../Images/Menu.svg" width="50" height="50" />
-                    <div class="fakeButton">Direct</div>
-                    <div class="fakeButton">Transform</div>
-                    <div class="fakeButton">Physics</div>
-                    <div class="fakeButton">Particules</div>
+                    <div class="fakeButton" data-mode="direct">Direct</div>
+                    <div class="fakeButton" data-mode="transform">Transform</div>
+                    <div class="fakeButton" data-mode="physics">Physics</div>
+                    <div class="fakeButton" data-mode="particules">Particules</div>
                 </div>
             </div>
             <div class="headerFooterDiv">
-                <div class="monoText marginDiv"><span id="spanSFPS"></span> FPS, <span id="spanSPCT"></span>%</div>
+                <div class="monoText marginDiv"><span id="spanSFPS"></span> FPS, <span id="spanSPCT"></span>%, <span id="spanMODE"></span></div>
             </div>
         </div>
     </body>

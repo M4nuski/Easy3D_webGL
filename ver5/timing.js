@@ -75,8 +75,10 @@ class E3D_timing {
     }
 
     setInterval(interval) {
-        if (interval < 1) interval = 1;
-        this.interval = interval;
+        if (!isNaN(Number(interval))) {
+            if (interval < 1) interval = 1;
+            this.interval = interval;
+        } else if (E3D_DEBUG_VERBOSE) log("attemp to set timing interval with something else than a number");
     }
 
 

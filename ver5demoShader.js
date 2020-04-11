@@ -98,30 +98,12 @@ E3D_addEntity(torusEntity);
 
 
 // Register the button events
-var btn = document.getElementById("btn_s1");
-if (btn) btn.addEventListener("click", x => SCENE.program = programs[0] );
-var btn = document.getElementById("btn_s2");
-if (btn) btn.addEventListener("click", x => SCENE.program = programs[1] );
-var btn = document.getElementById("btn_s3");
-if (btn) btn.addEventListener("click", x => SCENE.program = programs[2] );
-var btn = document.getElementById("btn_s4");
-if (btn) btn.addEventListener("click", x => SCENE.program = programs[3] );
-var btn = document.getElementById("btn_s5");
-if (btn) btn.addEventListener("click", x => SCENE.program = programs[4] );
-
-
-
-// some stats to show 
-var spanFPS = getElem("spanFPS");
-var spanSFPS = getElem("spanSFPS");
-var spanPct = getElem("spanPct");
-var spanSPct = getElem("spanSPct");
-
+$forEach(".fakeButton", button => onClick(button, (event) => SCENE.program = programs[event.target.getAttribute("data-shader")]));
 
 // handle interval changes
-var input_INT = getElem("input_INT");
-TIMER.setInterval(input_INT.value);
-onEvent(input_INT, "change", (e) => { TIMER.setInterval(input_INT.value); e.target.blur(); } );
+
+TIMER.setInterval($("inputINT").value);
+onEvent($("inputINT"), "change", (event) => { TIMER.setInterval(event.target.value); event.target.blur(); } );
 
 
 
@@ -130,9 +112,10 @@ CB_tick = function() {
     // rotate around Y
     torusEntity.rotation[1] += TIMER.delta * 0.4;
     torusEntity.updateMatrix();
-
-    spanFPS.innerText = padStart(""+TIMER.fps.toFixed(2), " ", 8);
-    spanSFPS.innerText = padStart(""+TIMER.fpsSmoothed.toFixed(1), " ", 8);
-    spanPct.innerText = padStart(""+(TIMER.usage).toFixed(1), " ", 8);
-    spanSPct.innerText = padStart(""+(TIMER.usageSmoothed).toFixed(1), " ", 8);
+    
+    // some stats
+    $("spanFPS").innerText = padStart(TIMER.fps.toFixed(2), " ", 8);
+    $("spanSFPS").innerText = padStart(TIMER.fpsSmoothed.toFixed(1), " ", 8);
+    $("spanPct").innerText = padStart(TIMER.usage.toFixed(1), " ", 8);
+    $("spanSPct").innerText = padStart(TIMER.usageSmoothed.toFixed(1), " ", 8);
 }

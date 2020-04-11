@@ -14,11 +14,9 @@ CAMERA.moveTo(0, 24, 100, 0.25);
 // Set FPS to 1:1 vs screen refresh
 TIMER.setInterval(1);
 
-// Stats elements
-var spanSFPS = getElem("spanSFPS");
-var spanSPCT = getElem("spanSPCT");
 
-
+// State
+var animMode = "direct";
 
 
 // Create entities
@@ -53,39 +51,47 @@ var directBeatSlice = 0.5 / 3; // 120 bpm, 3t
 
 
 
+
+// Events
+$forEach(".fakeButton", button => onClick(button, (event) => animMode = event.target.getAttribute("data-mode")));
+//document.querySelectorAll(".fakeButton").forEach(button => onClick(button, (event) => animMode = event.target.getAttribute("data-mode")));
+
+
 // use the engine OnTick event callback for stats and direct animations
 CB_tick = function() {
 
 
 // Stats
-    spanSFPS.innerText = padStart(""+TIMER.fpsSmoothed.toFixed(1), " ", 8);
-    spanSPCT.innerText = padStart(""+TIMER.usageSmoothed.toFixed(1), " ", 8);
-
+    $("spanSFPS").innerText = padStart(TIMER.fpsSmoothed.toFixed(1), " ", 8);
+    $("spanSPCT").innerText = padStart(TIMER.usageSmoothed.toFixed(1), " ", 8);
+    $("spanMODE").innerText = animMode;
 
 
 // Direct Animation
+    if (animMode == "direct") {
 
-    // Position and rotation
-    v3_rotateY_mod(directEntity.position, -TIMER.delta); // move around Y
-    directEntity.rotation[1] = -TIMER.delta; // always face inward
-    directEntity.updateMatrix(); 
+        // Position and rotation
+        v3_rotateY_mod(directEntity.position, -TIMER.delta); // move around Y
+        directEntity.rotation[1] -= TIMER.delta; // always face inward
+        directEntity.updateMatrix(); 
 
-    // Beat
-    var directBeatNum = Math.floor(TIMER.elapsed / directBeatSlice);
-    if (directBeatNum != directBeatLast) {
-        directBeatCurrentScale = directBeat[directBeatNum % directBeat.length];
-        directBeatLast = directBeatNum;
-    } else {
-        directBeatCurrentScale = TIMER.smooth(directBeatCurrentScale, 1.0, 10);
-    }
-    
-    // Vertex scaling
-    for (var i = 0; i < directEntity.numElements; ++i) {
-        var srcVertex = baseEntity.getVertex(i);
-        var dstVertex = directEntity.getVertex(i);
-        v3_mult_res(dstVertex, srcVertex, [1.0, directBeatCurrentScale, 1.0]);        
-    }
-    directEntity.dataContentChanged = true; // update GPU memory
+        // Beat
+        var directBeatNum = Math.floor(TIMER.elapsed / directBeatSlice);
+        if (directBeatNum != directBeatLast) {
+            directBeatCurrentScale = directBeat[directBeatNum % directBeat.length];
+            directBeatLast = directBeatNum;
+        } else {
+            directBeatCurrentScale = TIMER.smooth(directBeatCurrentScale, 1.0, 10);
+        }
+        
+        // Vertex scaling
+        for (var i = 0; i < directEntity.numElements; ++i) {
+            var srcVertex = baseEntity.getVertex(i);
+            var dstVertex = directEntity.getVertex(i);
+            v3_mult_res(dstVertex, srcVertex, [1.0, directBeatCurrentScale, 1.5 - (directBeatCurrentScale / 2.0)]);        
+        }
 
+        directEntity.dataContentChanged = true; // update GPU memory
+    } // direct anim mode
 
 }
