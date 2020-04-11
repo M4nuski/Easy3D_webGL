@@ -239,9 +239,10 @@ function E3D_addEntity(ent) {
 
     CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
     CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, usage);
-
-    CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
-    CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
+    if (ent.strokeIndexArray) {
+        CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
+        CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
+    }
     
     ent.visibilityDistance = v3_length(E3D_calculate_max_pos(ent.vertexArray));
 
@@ -303,8 +304,10 @@ function E3D_cloneEntity(id, newId) {
             CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.colorArray, CONTEXT.DYNAMIC_DRAW);
             CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
             CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, CONTEXT.DYNAMIC_DRAW);
-            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.strokeIndexBuffer);
-            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.strokeIndexArray, CONTEXT.DYNAMIC_DRAW);
+            if (ent.strokeIndexArray) {
+                CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.strokeIndexBuffer);
+                CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.strokeIndexArray, CONTEXT.DYNAMIC_DRAW);
+            }
             ent.dataSizeChanged = true;
         }
 

@@ -11,16 +11,17 @@ class E3D_timing {
 
         this.onTick = onTick;
 
-        this.delta = 1.0 / 60.0;
+        this.delta = 1.0 / 30.0;
         if (interval < 1) interval = 1;
         this.interval = interval;
         this.frame = 0;
+        this.elapsed = 0;
 
         this.start = performance.now();
         this.lastTick = this.start;
         this.active = run;
 
-        this.usage = 0;
+        this.usage = 0; // % of time spent in the game loop vs available time between frames
         this.usageSmoothed = 0;
         this.fps = 60;
         this.fpsSmoothed = 60;
@@ -48,9 +49,9 @@ class E3D_timing {
     }
 
     tickEvent(time){
+        this.elapsed = (time - this.start) * 0.001;
         if (this.active) {
             this.frame++;
-
             if (this.frame % this.interval == 0) {
 
                 this.delta = (time - this.lastTick) * 0.001;
@@ -60,14 +61,13 @@ class E3D_timing {
 
                 if (this.onTick) this.onTick(); 
 
-                this.usage = 0.1 * (performance.now() - time) / this.delta;
+                this.usage = 0.01 * (performance.now() - time) / this.delta;
                 
                 this.usageSmoothed = this.smooth(this.usageSmoothed, this.usage, this.smoothFactor);
 
                 if (this.delta > 0) {
                     this.fps = 1.0 / this.delta;
                     this.fpsSmoothed = this.smooth(this.fpsSmoothed, this.fps, this.smoothFactor);
-
                 }
             }
             window.requestAnimationFrame( (t) => this.tickEvent(t) );
