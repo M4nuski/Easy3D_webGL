@@ -53,6 +53,15 @@ function $(elem) {
     return res;
 }
 
+function $remove(elem) {
+    if ($(elem) != undefined) {
+        try { 
+            $(elem).parentElement.removeChild($(elem));
+        } catch {};
+        __$elementMap.delete(elem);
+    }
+}
+
 function $forEach(selector, lambda) {
     document.querySelectorAll(selector).forEach(lambda);
 }
