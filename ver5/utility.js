@@ -57,7 +57,7 @@ function $remove(elem) {
     if ($(elem) != undefined) {
         try { 
             $(elem).parentElement.removeChild($(elem));
-        } catch {};
+        } catch (ex) {};
         __$elementMap.delete(elem);
     }
 }

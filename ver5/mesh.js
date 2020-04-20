@@ -30,6 +30,17 @@ class E3D_mesh {
 
         // TODO create struct with v3s for loading and parsing
         // and convert to array of float only on "add"
+
+        // moved in constructor to avoir error in Edge
+        this.sphereBaseType = {
+            ICO: 0,
+            OCTA: 1,
+            BITETRA: 2,
+            TETRA: 3,
+            CUBE: 4,
+            strings: ["Icosahedron", "Octahedron", "Bi-Tetrahedron", "Tetrahedron", "Cube"],
+            qty: 5
+          };
     }
 
     reset() {
@@ -722,16 +733,6 @@ class E3D_mesh {
                                 pts[nextI + (j     * nbSides) ], color);   
         }
     }
-
-    sphereBaseType = {
-        ICO: 0,
-        OCTA: 1,
-        BITETRA: 2,
-        TETRA: 3,
-        CUBE: 4,
-        strings: ["Icosahedron", "Octahedron", "Bi-Tetrahedron", "Tetrahedron", "Cube"],
-        qty: 5
-      };
 
     pushSphere(position, rotation, radius, depth = 3, color = _v3_white, baseType = this.sphereBaseType.ICO) {
         m4_transform_res(_mesh_prim_mat, position, rotation);
