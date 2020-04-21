@@ -19,7 +19,6 @@ var CANVAS = null;
 var CONTEXT = null;
 var SCENE = new E3D_scene_default("scene0");
 var ENTITIES = [];
-var ANIMS = []; // list of ENTITIES that need to be animated
 var CAMERA = new E3D_camera("camera0");
 var INPUTS = new E3D_input();
 
@@ -33,6 +32,7 @@ var CB_tick;
 // engine loop
 var CB_processInputs;
 var CB_processCamera;
+var CB_processAnimations;
 var CB_processPreRender;
 var CB_processRender;
 var CB_processPostRender;
@@ -164,6 +164,9 @@ function E3D_onTick_default() {
                    INPUTS.rx_delta_smth, INPUTS.ry_delta_smth, INPUTS.rz_delta_smth);
     CAMERA.updateMatrix();
 
+    // Animations 
+    singlePassAnimator();
+
     // Render
     if (SCENE.state == E3D_ACTIVE) {
         SCENE.preRender();
@@ -176,6 +179,7 @@ function E3D_onTick_default() {
 function E3D_onTick_scene() {
     if (CB_processInputs) CB_processInputs();
     if (CB_processCamera) CB_processCamera();
+    if (CB_processAnimations) CB_processAnimations();
     // Render
     if (SCENE.state == E3D_ACTIVE) {
         SCENE.preRender();
@@ -191,6 +195,7 @@ function E3D_onTick_scene() {
 function E3D_onTick_callback() {
     if (CB_processInputs) CB_processInputs();
     if (CB_processCamera) CB_processCamera();
+    if (CB_processAnimations) CB_processAnimations();
     if (CB_processPreRender) CB_processPreRender();
     if (CB_processRender) CB_processRender();
     if (CB_processPostRender) CB_processPostRender();  
@@ -253,7 +258,7 @@ function E3D_addEntity(ent) {
     return ENTITIES.length - 1; // return new entity's index in the list
 }
 
-function E3D_getEntityIndexFromId(id) {  // TODO replace by Map
+function E3D_getEntityIndexFromId(id) {
     for (let i = 0; i < ENTITIES.length; ++i) {
         if (ENTITIES[i].id == id) return i;
     }

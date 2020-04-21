@@ -239,6 +239,22 @@ class E3D_scene_2pass extends E3D_scene {
         this.state = ( (this.program != null) && (this.program2 != null) ) ? E3D_READY : E3D_CREATED; 
     }
 
+    setPass1SceneUniforms() {
+        super.setSceneUniforms();
+    }
+
+    setPass2SceneUniforms() {
+        super.setSceneUniforms(); 
+    }
+
+    setPass1EntityUniforms(i) {
+        super.setEntityUniforms(i);
+    }
+
+    setPass2EntityUniforms(i) {
+        super.setEntityUniforms(i);
+    }
+
     render() {        
         this.drawnElemenets = 0;
 
@@ -250,12 +266,12 @@ class E3D_scene_2pass extends E3D_scene {
         // 1st pass
         CONTEXT.useProgram(this.program.shaderProgram);
   
-        this.setSceneUniforms();
+        this.setPass1SceneUniforms();
 
         for (let i = 0; i < ENTITIES.length; ++i) if (this.visibilityList[i]) {
 
             this.setEntityBuffers(i);
-            this.setEntityUniforms(i);
+            this.setPass1EntityUniforms(i);
 
             // Draw strokes
             if ((ENTITIES[i].drawStrokes) && (this.program.shaderUniforms.uStrokePass != -1)) {
@@ -276,12 +292,12 @@ class E3D_scene_2pass extends E3D_scene {
         // 2nd pass
         CONTEXT.useProgram(this.program2.shaderProgram);
   
-        this.setSceneUniforms();
+        this.setPass2SceneUniforms();
 
         for (let i = 0; i < ENTITIES.length; ++i) if (this.visibilityList[i]) {
 
             this.setEntityBuffers(i);
-            this.setEntityUniforms(i);
+            this.setPass2EntityUniforms(i);
 
             // Draw strokes
             if ((ENTITIES[i].drawStrokes) && (this.program.shaderUniforms.uStrokePass != -1)) {
@@ -350,7 +366,7 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
         for (let i = 0; i < ENTITIES.length; ++i) if (this.visibilityList[i]) {
 
             this.setEntityBuffers(i);
-            this.setEntityUniforms(i);
+            this.setPass1EntityUniforms(i);
             
             // Draw Outline extensions
             CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
@@ -367,7 +383,7 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
         for (let i = 0; i < ENTITIES.length; ++i) if (this.visibilityList[i]) {
 
             this.setEntityBuffers(i);
-            this.setEntityUniforms(i);
+            this.setPass2EntityUniforms(i);
                 
             // Draw
             CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);

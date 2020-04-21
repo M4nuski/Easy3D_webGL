@@ -73,24 +73,20 @@ class E3D_entity {
         // int16Array
         this.strokeIndexArray;
 
-
         // TODO this.textureID = ""; 
         // TODO isTransparent // z-sort before render, dont write to depth buffer
-
-
+        // this.zPos = 0; relative to fustrum, for z-sort
 
         // Animation
-        // TODO isAnimated
         this.isAnimated = false;
         this.animation = new E3D_animationData();
 
         //Collisions
-        this.isCollisionSource = false;
+        this.isCollisionSource = false; // global entity state, not per frame CD result
         this.isCollisionTarget = false;
         this.collision = new E3D_collisionData();
 
-        // TODO isCollisionFragmented
-    
+
         this.updateMatrix();
     } 
 

@@ -7,10 +7,10 @@
 
 // Animation State and commands (exclusives)
 const E3D_RESET = 0; // initial, back to start and pause, setup animation data
-const E3D_PLAY = 1;  // play
+const E3D_PLAY = 1;  // call animation function
 const E3D_PAUSE = 2; // pause
 const E3D_RESTART = 3; // reset and play
-const E3D_DONE = 4;
+const E3D_DONE = 4; // call end function
 
 
 
@@ -20,67 +20,33 @@ class E3D_animationData {
     constructor(group = 0) {
         this.group = group; // animation can use different animators that only process specific groups
 
-        this.ttl = 0; // time to live, -1 to disable
+        this.ttl = -1; // time to live in seconds, -1 to disable
         this.state = E3D_RESET;
         this.endState = E3D_DONE; // state to set after ttl reaches 0
 
-        this.animFirstPass = null; //  calculate ideal next position
-        this.sourceCollResolver = null; // function to resolve collisions when entity is a source
-        this.targetCollResolver = null; // function to resulve collisions when entity is a target
-        this.animLastPass = null; // commit final state after collision detections are completed or prep next pass
+        this.animFunction = null; // function to calculate next step of animation
+        this.sourceResolver = null; // function to resolve collisions when entity is a source
+        this.targetResolver = null; // function to resolve collisions when entity is a target
+        this.endFunction = null; // function to call when TTL reaches 0
 
         // Custom data
         this.last_position = v3_new();
+        this.last_rotation = v3_new();
+        this.gravity = 0.0; // factor to tweak how much global gravity affect animation
+        this.frameGravity = 0.0; // calculated gravity for this frame
         
         // Tranforms
-        this.pspd = v3_new(); // TODO refactor to less confusing names ..
-        this.rspd = v3_new();
-        this.gravity = 0.0;
-        this.frameG = 0.0;
+        this.trans_pos_spd = v3_new();
+        this.trans_rot_spd = v3_new();
 
         // Particules
-        this.pNum = 1;
-        this.pActive = [];
-        this.pLastPos = [];
-        this.pPos = [];
-        this.pSpd = []; // normalized direction vectors
-        this.pSpdLength = []; // direction vertors lengths
-        this.pCD = false;
-    }
-
-    animateFirstPass(x) {
-        if (this.animFirstPass) {
-            this.animFirstPass(x);
-        }
-    }
-
-    animateResolvePass(x) {
-        if (this.isCollisionSource && this.isCollisionTarget) { // TODO extract to animator
-            if (this.sourceCollResolver && this.targetCollResolver) {
-                if (this.closestCollision.t0 < this.otherCollision.t0) {
-                    this.sourceCollResolver(x);
-                } else {
-                    this.targetCollResolver(x);
-                }
-            } else if (this.sourceCollResolver) {
-                this.sourceCollResolver(x);
-            } else if (this.targetCollResolver) {
-                this.targetCollResolver(x);
-            }
-        } else if (this.isCollisionSource && this.sourceCollResolver) {
-            this.sourceCollResolver(x);
-        } else if (this.isCollisionTarget && this.targetCollResolver) {
-            this.targetCollResolver(x);
-        }
-        
-        this.isCollisionSource = false;
-        this.isCollisionTarget = false;
-    }
-
-    animateLastPass(x) {
-        if (this.animLastPass) {
-            this.animLastPass(x);
-        }
+        this.part_nb = 1;
+        this.part_active = [];
+        this.part_last_pos = [];
+        this.part_pos = [];
+        this.part_dir = []; // normalized direction vectors
+        this.part_spd = []; // direction vertors lengths
+        this.part_CD = false; // register and process particules CD as Point
     }
 
     reset() {
@@ -107,82 +73,112 @@ class E3D_animationData {
 
 
 
-function singlePassAnimator(/*animGroup*/) {
-    //for (let i = 0; i < animList.length; ++i) animList[i].animateFirstPass();
-    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
-}
-
-function multiPassAnimator(/*animGroup*/) { // TODO test if culling to list once is faster than the 3X if (.isAnimated)
-    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
-    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateResolvePass();
-    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateLastPass();
+function singlePassAnimator(animGroup = 0) {
+    for (let i = 0; i < ENTITIES.length; ++i) 
+        if ( ENTITIES[i].isAnimaed && 
+                (ENTITIES[i].animation.animGroup == animGroup) && 
+                    (ENTITIES[i].animation.animFunction != null)) ENTITIES[i].animation.animFunction(ENTITIES[i]);
 }
 
 
-// TODO CD should only affect Visible entities 
-function collisionDetectionAnimator(/*animGroup, */ maxCDIterations = 10) {
-    // Animate / Calculate Expected target position and state
+
+
+
+
+
+function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
+     // build list of all entities with animations, and CD sources
+    var ACTOR = [];
+    var SOURCE = [];
+    for (let i = 0; i < ENTITIES.length; ++i) if 
+    ( ENTITIES[i].isAnimaed && ENTITIES[i].isVisible &&
+                (ENTITIES[i].animation.animGroup == animGroup) && 
+                    (ENTITIES[i].animation.animFunction != null) ) {
+                        ACTOR[i] = true;
+                        SOURCE[i] = ENTITIES[i].collisionDetection() && (ENTITIES[i].collision.deltaLength > 0.0);
+                    } else ACTOR[i] = false;
+
 
     // First pass, calculate expected next position
-    for (let i = 0; i < ENTITIES.length; ++i) {
-        if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateFirstPass();
-        if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.resetCollisions();
+    for (let i = 0; i < ENTITIES.length; ++i) if (ACTOR[i]) {
+        ENTITIES[i].animation.animFunction(ENTITIES[i]);
+        ENTITIES[i].collision.resetCollisions();
     } 
 
-    // calc distance every time top 100% of 0.050s at 800 entities 
-    // map with distance and hash of ID 100 at 200 entities
-    // list in animation target entity at 700
-    //  list in both and map to lookup at 600
-    //  multi pass, only add if closest max at 600
 
     // Cull Collission Detection
-    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed)  // CD culling
-    if ((ENTITIES[i].collisionDetection()) && (ENTITIES[i].animation.deltaLength > -1)) { 
-
+    for (let i = 0; i < ENTITIES.length; ++i) if (SOURCE[i]) { 
         ENTITIES[i].animation.candidates = new Array(ENTITIES.length);
-        for (let j = 0; j < ENTITIES.length; ++j) {// all entities are targets
-            ENTITIES[i].animation.candidates[j] = false;
-            if ((ENTITIES[j].collisionDetection() == true) && (ENTITIES[i].id != ENTITIES[j].id) ) { 
-                var deltaP = v3_distance(ENTITIES[i].position, ENTITIES[j].position); // TODO cache in entity
-                var deltaD = ENTITIES[i].animation.deltaLength + ENTITIES[i].visibilityDistance + ENTITIES[j].visibilityDistance; // TODO add other ent deltaLength
-                ENTITIES[i].animation.candidates[j] = deltaP <= deltaD;  
+        for (let j = 0; j < ENTITIES.length; ++j) { // all entities are targets
+            ENTITIES[i].collision.candidates[j] = false; // default
+            if ((i != j) && ENTITIES[j].collisionDetection()) {  // different entity with CD
+                
+                var deltaP = 0;
+                if (j > i) { // distance not checked yet
+                    deltaP = v3_distance(ENTITIES[i].position, ENTITIES[j].position); 
+                    ENTITIES[j].collision.othersDistances[i] = deltaP;
+                    ENTITIES[i].collision.othersDistances[j] = deltaP;
+                } else deltaP = ENTITIES[j].collision.othersDistances[i];
+
+                var deltaD = ENTITIES[i].collision.deltaLength + ENTITIES[i].visibilityDistance + 
+                             ENTITIES[j].collision.deltaLength + ENTITIES[j].visibilityDistance; 
+
+                ENTITIES[i].collision.candidates[j] = deltaP <= deltaD;
             }
         }
-
     }
 
     var numIter = maxCDIterations;
     var hitDetected = true;
 
-    while ((numIter > 0) && (hitDetected)){
+    while ((numIter > 0) && hitDetected){
 
         // Collision Detection
         hitDetected = false;
-        for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) 
-        if ((ENTITIES[i].collisionDetection()) && (ENTITIES[i].animation.deltaLength > 0.0)) {
-            if (ENTITIES[i].CD_sph > 0) CheckForAnimationCollisions_SphSource(ENTITIES[i].animation);
-            if (ENTITIES[i].CD_point > 0) CheckForAnimationCollisions_PointSource(ENTITIES[i].animation);
+        for (let i = 0; i < ENTITIES.length; ++i) if (SOURCE[i]) {
+            if (ENTITIES[i].collision.CD_sph > 0) CheckForAnimationCollisions_SphSource(ENTITIES[i]);
+            if (ENTITIES[i].collision.CD_point > 0) CheckForAnimationCollisions_PointSource(ENTITIES[i]);
         }
         
         // Collision Response
-        for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) 
-        if ((ENTITIES[i].animation.isCollisionSource) || (ENTITIES[i].animation.isCollisionTarget)) {
-            ENTITIES[i].animation.animateResolvePass(maxCDIterations - numIter); 
+        for (let i = 0; i < ENTITIES.length; ++i) if (ACTOR[i]) 
+        if ((ENTITIES[i].collision.isCollisionSource) || (ENTITIES[i].collision.isCollisionTarget)) {
+            resolverPass(ENTITIES[i].collision, ENTITIES[i].animation); 
             hitDetected = true;
         }
         numIter--;
     }
 
-    // Last pass, post-process animation state after collisions are resolved
-    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].isAnimaed) ENTITIES[i].animation.animateLastPass();
-    
     return maxCDIterations - numIter;
 }
 
 
+function resolverPass(entCol, entAnim) {
+    if (entCol.isCollisionSource && entCol.isCollisionTarget) { // both source and target
+        if (entAnim.sourceColResolver && entAnim.targetColResolver) { // resolver for both source and target
+            if (entCol.closestCollision.t0 < entCol.otherCollision.t0) { // closest event
+                entAnim.sourceColResolver();
+            } else {
+                entAnim.targetColResolver();
+            }
+        } else if (entAnim.sourceColResolver) { // source resolver only
+            entAnim.sourceColResolver();
+        } else if (entAnim.targetColResolver) { // target resolver only
+            entAnim.targetColResolver();
+        }
+    } else if (entCol.isCollisionSource && entAnim.sourceColResolver) { // only a source with a source resolver
+        entAnim.sourceColResolver();
+    } else if (entCol.isCollisionTarget && entAnim.targetColResolver) { // only a target with a target resolver
+        entAnim.targetColResolver();
+    }
+    
+    entCol.isCollisionSource = false;
+    entCol.isCollisionTarget = false;
+}
+
 
 // Animation factories
-
+// TODO fix for new flat engine structure
 
 
 function newTransformAnim(entity, pos_speed, rot_speed, ttl = -1, CD = false, endState = E3D_DONE) {
@@ -303,7 +299,7 @@ function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, par
         if (CD) anim.target.pushCD_point(anim.pPos[i]);
     }
 
-    // TODO repair anim.target.collisionDetection = CD;
+    entity.isCollisionSource = CD;
 
     anim.state = E3D_PLAY;
     anim.target.visible = true;
@@ -369,7 +365,8 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
         if (CD) anim.target.pushCD_point(anim.pPos[i]);
     }
 
-    //TODO repair anim.target.collisionDetection = CD;
+    entity.isCollisionSource = CD;
+
     anim.state = E3D_PLAY;
     anim.target.visible = true;
     anim.target.updateMatrix();

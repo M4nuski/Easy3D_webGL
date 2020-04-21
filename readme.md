@@ -44,8 +44,11 @@ Current work-in-progress and next steps
 * Improved Collision Detection with Static test handling
 * Improved Collision Detection with dual Interpolation (point, edge, sphere, plane, box, triangles)
 * Evaluate quaternions
+* Tetris demo
 * --Some kind of game:
-* Path interpolation animator for bots and animations. (linear, sharp, dull)
+* (3D asteroid/3D bullet hell, space war, dogfighter, horde/tower defence)
+* Transform animations with state list and transitions (linear, sharp, dull)
+* Path interpolation animator for bots and animations
 * Basic AI
 * 3D cube tree or AABB Collision target culling
 * Sounds
