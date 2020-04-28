@@ -11,6 +11,7 @@ const E3D_READY = 1;
 const E3D_ACTIVE = 2;
 
 
+
 class E3D_scene { // Basic, single pass 
     constructor(id, clearColor = [0.0, 0.0, 0.1]) {
         this.id = id;

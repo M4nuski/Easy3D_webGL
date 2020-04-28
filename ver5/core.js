@@ -6,11 +6,14 @@
 
 
 // Config
+//  Camera settings
 var E3D_FOV = 45 * DegToRad;
 var E3D_NEAR = 0.1;
 var E3D_FAR = 500.0;
+//  Default viewport size
 var E3D_WIDTH = 640;
 var E3D_HEIGHT = 480;
+ //  Gravitational constant
 var E3D_G = 386.22;
 
 // Global members 
@@ -18,9 +21,14 @@ var TIMER = new E3D_timing(E3D_onTick_callback);
 var CANVAS = null;
 var CONTEXT = null;
 var SCENE = new E3D_scene_default("scene0");
-var ENTITIES = [];
 var CAMERA = new E3D_camera("camera0");
 var INPUTS = new E3D_input();
+
+// Content containers
+// Those 3 arrays are linked: the animation and body class at a same given index is used to compute the state of this index's entity.
+var ENTITIES = []; // E3D_entity, mesh content and information, transform data, state
+var ANIMATIONS = []; // E3D_animation that transforms an entity's position and rotation, or any other properties
+var BODIES = []; // E3D_body that transforms an entity's state and it's animation when it reacts with other bodies
 
 // Callbacks
 // base events
@@ -38,7 +46,9 @@ var CB_processRender;
 var CB_processPostRender;
 
 
+
 // Engine initialization functions
+
 
 
 // Context, timer, perspective camera, all input types, default scene and shaders, lights 
@@ -128,7 +138,9 @@ function E3D_InitContext(element) {
 
 
 
+
 // on resize handlers
+
 
 
 // Default resize function
@@ -143,12 +155,14 @@ function E3D_onResize() {
     CONTEXT.viewport(0, 0, E3D_WIDTH, E3D_HEIGHT);
     CAMERA.resize();
     INPUTS.resize(); 
-    //log("Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
+    if (E3D_DEBUG_VERBOSE) log("Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
     if (CB_resize) CB_resize();
 }
 
 
+
 // on tick handlers
+
 
 
 // Default timer tick event handler
@@ -202,7 +216,9 @@ function E3D_onTick_callback() {
 }
 
 
+
 // Default Logger
+
 
 
 var E3D_logElement = null;
@@ -220,7 +236,9 @@ function log(text, silent = true) {
 }
 
 
+
 // Entities management
+
 
 
 function E3D_addEntity(ent) {
@@ -254,6 +272,8 @@ function E3D_addEntity(ent) {
     ent.updateMatrix();
 
     ENTITIES.push(ent);
+    ANIMATIONS.push(null);
+    BODIES.push(null);
 
     return ENTITIES.length - 1; // return new entity's index in the list
 }
@@ -265,7 +285,7 @@ function E3D_getEntityIndexFromId(id) {
     return -1;
 }
 
-function E3D_updateEntity(ent) {
+function E3D_updateEntityData(ent) {
     let idx = E3D_getEntityIndexFromId(ent.id);
     if (idx > -1) {
         ent.dataContentChanged = true;
@@ -286,9 +306,21 @@ function E3D_removeEntity(id, deleteBuffers = true) {
             CONTEXT.deleteBuffer(ENTITIES[idx].normalBuffer);
             CONTEXT.deleteBuffer(ENTITIES[idx].strokeIndexBuffer);
         }
-        ENTITIES.splice(idx, 1);        
+        ENTITIES.splice(idx, 1);     
+        ANIMATIONS.splice(idx, 1);   
+        BODIES.splice(idx, 1);      
     }
 }
+
+function E3D_clearEntity(id, mesh = true, animation = true, body = true) {
+    let idx = this.E3D_getEntityIndexFromId(id);
+    if (idx > -1) {
+        if (mesh) ENTITIES[idx].clear();
+        if (animation && (ANIMATIONS[idx] != null)) ANIMATIONS[idx] = null;
+        if (body && (BODIES[idx] != null)) BODIES[idx].clear();
+    }
+}
+
 
 function E3D_cloneEntity(id, newId) {
     let idx = E3D_getEntityIndexFromId(id);
@@ -316,7 +348,21 @@ function E3D_cloneEntity(id, newId) {
             ent.dataSizeChanged = true;
         }
 
-        ENTITIES.push(ent);   
+        ENTITIES.push(ent);
+
+        var anim = null;
+        if (ANIMATIONS[idx] != null) {
+            anim = new E3D_animation();
+            anim.cloneData(ANIMATIONS[idx]);
+        }
+        ANIMATIONS.push(anim);
+
+        var body = null;
+        if (BODIES[idx] != null) {
+            body = new E3D_body();
+            body.cloneData(BODIES[idx]);
+        } 
+        BODIES.push(body);
         return ent; // return reference to new entity
     } else {
         log("Invalid entity ID (not found or duplicate): " + id);
@@ -339,6 +385,7 @@ function E3D_calculate_max_pos(vertArray) {
 }
 
 var _E3D_check_entity_visible_pos = v3_new();
+// Basic culling, only if in front of camera plane
 function E3D_check_entity_visible(idx) {
     if (ENTITIES[idx].isVisibiltyCullable) {
         v3_sub_res(_E3D_check_entity_visible_pos, ENTITIES[idx].position, CAMERA.position);
@@ -348,9 +395,4 @@ function E3D_check_entity_visible(idx) {
         ((dist + ENTITIES[idx].visibilityDistance) > E3D_NEAR) );
     }
     return true;
-}
-
-function E3D_createAnimList() {
-
-
 }

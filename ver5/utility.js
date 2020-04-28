@@ -6,6 +6,7 @@
 "use strict"
 
 
+
 // Strings
 function padStart(str, pad, len) {
     if (pad.length < 1) return str;

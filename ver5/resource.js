@@ -11,6 +11,7 @@ const E3D_RES_LOAD = 1;
 const E3D_RES_ALL = 2;
 
 
+
 class resource {
     constructor(path, name, type, cb, binary) {
         this.path = path;

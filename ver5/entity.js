@@ -5,6 +5,7 @@
 "use strict"
 
 
+
 // Base class for static entity, optionnally dynamic
 class E3D_entity {
     constructor(id, dynamic = false, finiteSize = false) {
@@ -12,6 +13,26 @@ class E3D_entity {
         this.id = id; // to find object in list
         this.isVisible = false;
 
+        // Spatial properties
+        this.position = v3_new();
+        this.rotation = v3_new();
+
+        // Computed model matrix from position and rotation
+        this.modelMatrix = m4_new();
+        this.normalMatrix = m4_new(); // (model matrix without translations)
+
+        // Animations
+        this.isAnimated = false;
+
+        // Rigid body collisions
+        this.isCollisionSource = false;
+        this.isCollisionTarget = false;
+
+        // For scene fustrum culling
+        this.isVisibiltyCullable = true; // Setting to false will force the entity to always be redrawn
+        this.visibilityDistance = 0; // maximum vertex distance from object center for culling (spherical envelope)
+        
+        // Mesh data
         this.isDynamic = dynamic; // Static (non-dynamic) entities have their data pushed to the GPU memory only once when added to scene.
                                   // Dynamic entities can have their data modified on the fly (at a performance cost).
         this.arraySize = 512; // base data array size for dynamic
@@ -22,22 +43,10 @@ class E3D_entity {
         this.dataContentChanged = false; // GPU buffers will be updated  
         this.dataSizeChanged = true; // GPU buffers will be reset and updated
 
-        // Properties
-        this.position = v3_new();
-        this.rotation = v3_new();
-
-        // fustrum culling
-        this.isVisibiltyCullable = true; // Setting to false will force the entity to always be redrawn
-        this.visibilityDistance = 0; // maximum vertex distance from object center for culling (spherical envelope)
-        
-        // Computed matrix
-        this.modelMatrix = m4_new();
-        this.normalMatrix = m4_new(); // (model matrix without translations)
-
-        // Data
         this.numElements = 0; // Actual number of vertices to draw.
         this.drawMode = CONTEXT.TRIANGLES;
 
+        // To draw line overlay on model
         this.numStrokeElements = 0;
         this.drawStrokes = false;
 
@@ -53,6 +62,7 @@ class E3D_entity {
         // _dataOffset_u = 18
         // _dataOffset_v = 19
 
+        // OpenGL GPU buffer references
         this.vertexBuffer;
         this.normalBuffer;
         this.colorBuffer; // TODO replace by texture with this.uvBuffer;
@@ -76,16 +86,6 @@ class E3D_entity {
         // TODO this.textureID = ""; 
         // TODO isTransparent // z-sort before render, dont write to depth buffer
         // this.zPos = 0; relative to fustrum, for z-sort
-
-        // Animation
-        this.isAnimated = false;
-        this.animation = new E3D_animationData();
-
-        //Collisions
-        this.isCollisionSource = false; // global entity state, not per frame CD result
-        this.isCollisionTarget = false;
-        this.collision = new E3D_collisionData();
-
 
         this.updateMatrix();
     } 
@@ -132,7 +132,7 @@ class E3D_entity {
 
         this.isCollisionSource = false;
         this.isCollisionTarget = false;
-        this.collision = new E3D_collisionData();
+        this.collision = new E3D_body();
     }*/
 
 
@@ -186,8 +186,6 @@ class E3D_entity {
 
 
     // Data management and access for dynamic data
-
-
     setSize(newSize) {
         if (newSize > this.arraySize) this.increaseSize(newSize - this.arraySize);
     }
@@ -231,8 +229,6 @@ class E3D_entity {
     clear() {
         this.numElements = 0;
         this.dataContentChanged = true;
-
-        if (this.collisionDetection()) this.collision.clear();
 
         this.isCollisionSource = false;
         this.isCollisionTarget = false;

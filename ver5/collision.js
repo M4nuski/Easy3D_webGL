@@ -1,5 +1,6 @@
 // Easy3D_WebGL
 // Collision detection methods
+// Body class
 // Emmanuel Charette 2019-2020
 
 "use strict"
@@ -36,20 +37,15 @@ const E3D_initial_nb_E3D_collisionResult = 3;
 
 
 
-var phyTracers, dev_Hits; // TODO extract to debug.js and setup auto initialization
-
-
-class E3D_collisionData {
+class E3D_body {
     constructor() {
         this.delta = v3_new(); // Position delta vector
         this.deltaLength = -1; // length of this.delta during animation step for culling and interpolation
 
-        this.isCollisionSource = false; // after frame CD pass
         this.nbSourceCollision = 0;
         this.sourceCollisions = new Array(E3D_initial_nb_E3D_collisionResult);
         for (var i = 0; i < E3D_initial_nb_E3D_collisionResult; ++i) this.sourceCollisions[i] = new E3D_collisionResult(); 
 
-        this.isCollisionTarget = false; // after frame CD pass
         this.nbTargetCollision = 0;
         this.targetCollisions = new Array(E3D_initial_nb_E3D_collisionResult);
         for (var i = 0; i < E3D_initial_nb_E3D_collisionResult; ++i) this.targetCollisions[i] = new E3D_collisionResult(); 
@@ -328,7 +324,7 @@ class E3D_collisionData {
     
 
 
-    cloneCDdata(targetCDdata) {
+    cloneData(targetCDdata) {
 
   
             if (targetCDdata.CD_point > 0) {
@@ -425,9 +421,6 @@ class E3D_collisionData {
         for (var i = 0; i < this.nbSourceCollision; ++i)this.sourceCollisions[i].reset();
         for (var i = 0; i < this.nbTargetCollision; ++i)this.targetCollisions[i].reset();
 
-        this.isCollisionSource = false;
-        this.isCollisionTarget = false;
-
         this.nbSourceCollision = 0;
         this.nbTargetCollision = 0;
     }
@@ -435,42 +428,40 @@ class E3D_collisionData {
     pushCollisionSource(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi) {
         if (this.nbSourceCollision >= this.sourceCollisions.length) this.sourceCollisions.push(new E3D_collisionResult());
         
-       this.sourceCollisions[this.nbSourceCollision].marker = ""+m;
-       this.sourceCollisions[this.nbSourceCollision].t0 = t;
+        this.sourceCollisions[this.nbSourceCollision].marker = ""+m;
+        this.sourceCollisions[this.nbSourceCollision].t0 = t;
         v3_copy(this.closestCollision[this.nbSourceCollision].n, n);
         v3_copy(this.closestCollision[this.nbSourceCollision].p0, p);
         
-       this.sourceCollisions[this.nbSourceCollision].source_desc = sDesc;
-       this.sourceCollisions[this.nbSourceCollision].source_cdi = scdi;
-       this.sourceCollisions[this.nbSourceCollision].target_ei = tei;
-       this.sourceCollisions[this.nbSourceCollision].target_desc = tDesc;
-       this.sourceCollisions[this.nbSourceCollision].target_cdi = tcdi; 
+        this.sourceCollisions[this.nbSourceCollision].source_desc = sDesc;
+        this.sourceCollisions[this.nbSourceCollision].source_cdi = scdi;
+
+        this.sourceCollisions[this.nbSourceCollision].target_ei = tei;
+        this.sourceCollisions[this.nbSourceCollision].target_desc = tDesc;
+        this.sourceCollisions[this.nbSourceCollision].target_cdi = tcdi; 
         
         this.nbSourceCollision++;
-        this.isCollisionSource = true;
     }
 
 
 
-    pushCollisionTarget(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi, s) {
+    pushCollisionTarget(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi, sei) {
         if (this.nbTargetCollision >=this.targetCollisions.length)this.targetCollisions.push(new E3D_collisionResult());
-       
-       this.targetCollisions[this.nbTargetCollision].marker = ""+m;
-       this.targetCollisions[this.nbTargetCollision].t0 = t;
+
+        this.targetCollisions[this.nbTargetCollision].marker = ""+m;
+        this.targetCollisions[this.nbTargetCollision].t0 = t;
         v3_copy(this.otherCollision[this.nbTargetCollision].n, n);
         v3_copy(this.otherCollision[this.nbTargetCollision].p0, p);
-        
-       this.targetCollisions[this.nbTargetCollision].source_desc = sDesc;
-       this.targetCollisions[this.nbTargetCollision].source_cdi = scdi;
-       this.targetCollisions[this.nbTargetCollision].target_ei = tei;
-       this.targetCollisions[this.nbTargetCollision].target_desc = tDesc;
-       this.targetCollisions[this.nbTargetCollision].target_cdi = tcdi; 
-        
-        v3_copy(this.otherCollision[this.nbTargetCollision].s, s);
+
+        this.targetCollisions[this.nbTargetCollision].source_ei = sei;
+        this.targetCollisions[this.nbTargetCollision].source_desc = sDesc;
+        this.targetCollisions[this.nbTargetCollision].source_cdi = scdi;
+
+        this.targetCollisions[this.nbTargetCollision].target_ei = tei;
+        this.targetCollisions[this.nbTargetCollision].target_desc = tDesc;
+        this.targetCollisions[this.nbTargetCollision].target_cdi = tcdi; 
 
         this.nbTargetCollision++;
-        this.isCollisionTarget = true;
-
     }
 }
 
@@ -480,15 +471,17 @@ class E3D_collisionData {
 class E3D_collisionResult {
     constructor() {
         this.marker = "";
-        this.t0 = Infinity;
-        this.n = v3_new(); 
-        this.p0 = v3_new(); 
-        this.source_desc = ""; // CD desc
+        this.t0 = Infinity; // t of collision
+        this.n = v3_new();  // normal
+        this.p0 = v3_new();  // first hit point at t
+
+        this.source_ei = 0; // source entity index
+        this.source_desc = ""; // CD description
         this.source_cdi = 0; // CD index
-        this.target_ei = 0; // entity index
-        this.target_desc = "";
-        this.target_cdi = 0; 
-        this.s = v3_new(); // TODO remove when source_ai is source_ei and animations/entities are global, replace by target entity index
+
+        this.target_ei = 0; // target entity index
+        this.target_desc = ""; // target CD description
+        this.target_cdi = 0;  // target CD index
     }
 
     reset() {

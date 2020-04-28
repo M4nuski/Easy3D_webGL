@@ -24,3 +24,7 @@ var E3D_DEBUG_CD_NB_PASSES = 0;
 // Data
 // Collision Detection
 var E3D_DEBUG_DATA_CD = new Map(); // process and result data from CD functions
+
+
+// Entities
+var phyTracers, dev_Hits; // TODO setup initialization and handling, change names

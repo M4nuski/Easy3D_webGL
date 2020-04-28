@@ -1,5 +1,8 @@
 // Easy3D_WebGL
-// State container for animations
+// State container object for animations
+// Animator functions
+// Sample animation functions
+// Sample collision resolver functions
 // Emmanuel Charette 2017-2020
 
 "use strict"
@@ -14,9 +17,7 @@ const E3D_DONE = 4; // call end function
 
 
 
-
-
-class E3D_animationData {
+class E3D_animation {
     constructor(group = 0) {
         this.group = group; // animation can use different animators that only process specific groups
 
@@ -32,7 +33,7 @@ class E3D_animationData {
         // Custom data
         this.last_position = v3_new();
         this.last_rotation = v3_new();
-        this.gravity = 0.0; // factor to tweak how much global gravity affect animation
+        this.gravity = 1.0; // factor to tweak how much global gravity affect animation
         this.frameGravity = 0.0; // calculated gravity for this frame
         
         // Tranforms
@@ -65,6 +66,10 @@ class E3D_animationData {
         this.state = E3D_DONE;  
     }
 
+    cloneData(target) {
+        throw "NOT IMPLEMENTED: E3D_animation.cloneData(target)";
+    }
+
 }
 
 
@@ -79,10 +84,6 @@ function singlePassAnimator(animGroup = 0) {
                 (ENTITIES[i].animation.animGroup == animGroup) && 
                     (ENTITIES[i].animation.animFunction != null)) ENTITIES[i].animation.animFunction(ENTITIES[i]);
 }
-
-
-
-
 
 
 
@@ -110,7 +111,7 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
     for (let i = 0; i < ENTITIES.length; ++i) if (SOURCE[i]) { 
         ENTITIES[i].animation.candidates = new Array(ENTITIES.length);
         for (let j = 0; j < ENTITIES.length; ++j) { // all entities are targets
-            ENTITIES[i].collision.candidates[j] = false; // default
+            ENTITIES[i].collision.candidates[j] = false; // default 
             if ((i != j) && ENTITIES[j].collisionDetection()) {  // different entity with CD
                 
                 var deltaP = 0;

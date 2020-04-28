@@ -22,6 +22,7 @@ const E3D_INP_Y = 1; // up down
 const E3D_INP_W = 2; // mouse wheel / touch pinch
 
 
+
 // Bind events to an element to capture and manage inputs
 class E3D_input {
     constructor () {

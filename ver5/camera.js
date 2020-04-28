@@ -5,6 +5,9 @@
 
 "use strict"
 
+
+
+
 // Base class for scene view matrix generation (orthogonal projection)
 class E3D_camera {
 
