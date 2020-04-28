@@ -26,9 +26,9 @@ var INPUTS = new E3D_input();
 
 // Content containers
 // Those 3 arrays are linked: the animation and body class at a same given index is used to compute the state of this index's entity.
-var ENTITIES = []; // E3D_entity, mesh content and information, transform data, state
+var ENTITIES = []; // E3D_entity, mesh content and information, spatial data, state
 var ANIMATIONS = []; // E3D_animation that transforms an entity's position and rotation, or any other properties
-var BODIES = []; // E3D_body that transforms an entity's state and it's animation when it reacts with other bodies
+var BODIES = []; // E3D_body to interract with other entity's body
 
 // Callbacks
 // base events
@@ -240,7 +240,7 @@ function log(text, silent = true) {
 // Entities management
 
 
-
+// Add a new entity to the current scene and setup the GPU buffers
 function E3D_addEntity(ent) {
     if (E3D_getEntityIndexFromId(ent.id) != -1) { 
         log("Duplicate entity ID: " + ent.id);

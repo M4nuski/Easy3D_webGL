@@ -42,9 +42,9 @@ class E3D_body {
         this.delta = v3_new(); // Position delta vector
         this.deltaLength = -1; // length of this.delta during animation step for culling and interpolation
 
-        this.nbSourceCollision = 0;
-        this.sourceCollisions = new Array(E3D_initial_nb_E3D_collisionResult);
-        for (var i = 0; i < E3D_initial_nb_E3D_collisionResult; ++i) this.sourceCollisions[i] = new E3D_collisionResult(); 
+        this.nbsourceBody = 0;
+        this.sourceBodys = new Array(E3D_initial_nb_E3D_collisionResult);
+        for (var i = 0; i < E3D_initial_nb_E3D_collisionResult; ++i) this.sourceBodys[i] = new E3D_collisionResult(); 
 
         this.nbTargetCollision = 0;
         this.targetCollisions = new Array(E3D_initial_nb_E3D_collisionResult);
@@ -418,29 +418,29 @@ class E3D_body {
     }
 
     resetCollisions() {             
-        for (var i = 0; i < this.nbSourceCollision; ++i)this.sourceCollisions[i].reset();
+        for (var i = 0; i < this.nbsourceBody; ++i)this.sourceBodys[i].reset();
         for (var i = 0; i < this.nbTargetCollision; ++i)this.targetCollisions[i].reset();
 
-        this.nbSourceCollision = 0;
+        this.nbsourceBody = 0;
         this.nbTargetCollision = 0;
     }
 
     pushCollisionSource(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi) {
-        if (this.nbSourceCollision >= this.sourceCollisions.length) this.sourceCollisions.push(new E3D_collisionResult());
+        if (this.nbsourceBody >= this.sourceBodys.length) this.sourceBodys.push(new E3D_collisionResult());
         
-        this.sourceCollisions[this.nbSourceCollision].marker = ""+m;
-        this.sourceCollisions[this.nbSourceCollision].t0 = t;
-        v3_copy(this.closestCollision[this.nbSourceCollision].n, n);
-        v3_copy(this.closestCollision[this.nbSourceCollision].p0, p);
+        this.sourceBodys[this.nbsourceBody].marker = ""+m;
+        this.sourceBodys[this.nbsourceBody].t0 = t;
+        v3_copy(this.closestCollision[this.nbsourceBody].n, n);
+        v3_copy(this.closestCollision[this.nbsourceBody].p0, p);
         
-        this.sourceCollisions[this.nbSourceCollision].source_desc = sDesc;
-        this.sourceCollisions[this.nbSourceCollision].source_cdi = scdi;
+        this.sourceBodys[this.nbsourceBody].source_desc = sDesc;
+        this.sourceBodys[this.nbsourceBody].source_cdi = scdi;
 
-        this.sourceCollisions[this.nbSourceCollision].target_ei = tei;
-        this.sourceCollisions[this.nbSourceCollision].target_desc = tDesc;
-        this.sourceCollisions[this.nbSourceCollision].target_cdi = tcdi; 
+        this.sourceBodys[this.nbsourceBody].target_ei = tei;
+        this.sourceBodys[this.nbsourceBody].target_desc = tDesc;
+        this.sourceBodys[this.nbsourceBody].target_cdi = tcdi; 
         
-        this.nbSourceCollision++;
+        this.nbsourceBody++;
     }
 
 
@@ -495,8 +495,10 @@ class E3D_collisionResult {
 
 
 
-function CheckForAnimationCollisions_SphSource(sourceEntity){
-var sourceCollision = sourceEntity.collision;
+function CheckForAnimationCollisions_SphSource(sourceEntityIndex){
+var sourceEntity = ENTITIES[sourceEntityIndex];
+var sourceAnim = ANIMATIONS[sourceEntityIndex];    
+var sourceBody = BODIES[sourceEntityIndex];
 
 var firstHit  = v3_new();
 var hitNormal = v3_new();
@@ -511,35 +513,42 @@ var sourceSph_n  = v3_new();
 
 
 // for each sph CD as source
-for (var sourceIndex = 0; sourceIndex < sourceCollision.CD_sph; ++sourceIndex) {
+for (var sourceIndex = 0; sourceIndex < sourceBody.CD_sph; ++sourceIndex) {
         
-    let sourceSph_p = sourceCollision.CD_sph_p[sourceIndex];
-    let sourceSph_r = sourceCollision.CD_sph_r[sourceIndex];
-    let sourceSph_l =  sourceCollision.deltaLength;
-    v3_sub_res(sourceSph_p0, sourceSph_p, sourceCollision.delta);
-    v3_invscale_res(sourceSph_n, sourceCollision.delta, sourceSph_l);  
+    let sourceSph_p = sourceBody.CD_sph_p[sourceIndex];
+    let sourceSph_r = sourceBody.CD_sph_r[sourceIndex];
+    let sourceSph_l =  sourceBody.deltaLength;
+    v3_sub_res(sourceSph_p0, sourceSph_p, sourceBody.delta);
+    v3_invscale_res(sourceSph_n, sourceBody.delta, sourceSph_l);  
     //if (E3D_DEBUG_SHOW_HIT_TEST && (dev_Hits != undefined)) {
     //    dev_Hits.addWireSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
      //   dev_Hits.addWireSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
     //}
+
+    // temporary CD result data
+    var _tempCDRes_marker = "";
     var _tempCDRes_t0  = Infinity;
     var _tempCDRes_n   = v3_new();
     var _tempCDRes_p0  = v3_new();
+
+    var _tempCDRes_source_ei = sourceEntityIndex;
     var _tempCDRes_source_desc = "Sph";
     var _tempCDRes_source_cdi  = sourceIndex;
     
-    var _tempCDRes_marker = "";
+    var _tempCDRes_target_ei = 0;
     var _tempCDRes_target_desc = "";
     var _tempCDRes_target_cdi = 0;
-    var _tempCDRes_target_ei = 0;
 
 // for each candidate entity       
-    for (let targetIndex = 0; targetIndex < ENTITIES.length; ++targetIndex) if (sourceCollision.candidates[targetIndex] == true) {
+    for (let targetIndex = 0; targetIndex < ENTITIES.length; ++targetIndex) if (sourceBody.candidates[targetIndex]) {
+
         _tempCDRes_target_ei = targetIndex;
-        var target = ENTITIES[targetIndex];
-        var targetCol = target.collision;
+        var targetEntity = ENTITIES[targetIndex];
+        var targetAnim = ANIMATIONS[targetIndex];
+        var targetBody = BODIES[targetIndex];
 
     // TODO special cases when deltaLength is 0.0
+    // TODO target delta is 0, if source delta is 0 theres no CD done
        
         // collision detection - sourceEntity.sph to other sph (static sph target)
         // TODO use path to path interpolation for both     
@@ -568,7 +577,7 @@ for (var sourceIndex = 0; sourceIndex < sourceCollision.CD_sph; ++sourceIndex) {
                         _tempCDRes_target_desc = "Sph";
                         _tempCDRes_target_cdi = j;
 
-                      //  if ((sourceCollision.animIndex != -1) && (target.animIndex != -1)) {
+                      //  if ((sourceBody.animIndex != -1) && (target.animIndex != -1)) {
                       // TODO repair animations[target.animIndex].pushCollisionTarget(marker, t0 / sourceSph_l, hitNormal, firstHit, "Sph", "Sph", targetIndex, sourceIndex, j, sourceEntity.pspd);
                       //  }                            
                     }
@@ -1203,7 +1212,7 @@ for (var sourceIndex = 0; sourceIndex < sourceCollision.CD_sph; ++sourceIndex) {
                         }
 
                         if (edgeHit) { // calc firstHit and hitNormal
-                         //   v3_addscaled_res(firstHit, sourceSph_p0, sourceCollision.delta, closestHit);
+                         //   v3_addscaled_res(firstHit, sourceSph_p0, sourceBody.delta, closestHit);
                          //   point_segment_point_res(posOffset, closestP, closestN, closestL, firstHit);
                             v3_sub_res(hitNormal, firstHit, closestT);
                             //if (E3D_DEBUG_SHOW_HIT_TEST) log("box edge hit");
@@ -1287,7 +1296,7 @@ for (var sourceIndex = 0; sourceIndex < sourceCollision.CD_sph; ++sourceIndex) {
 
 
 function CheckForAnimationCollisions_PointSource(sourceEntity){
-    var sourceCollision = sourceEntity.collision;
+    var sourceBody = sourceEntity.collision;
 
     var firstHit  = v3_new();
     var hitNormal = v3_new();
@@ -1307,10 +1316,10 @@ function CheckForAnimationCollisions_PointSource(sourceEntity){
 
     
 // for each point CD as source
-for (var sourceIndex = 0; sourceIndex < sourceCollision.CD_point; ++sourceIndex) {
+for (var sourceIndex = 0; sourceIndex < sourceBody.CD_point; ++sourceIndex) {
         
     v3_add_res(sourcePts_p0, sourceEntity.pLastPos[sourceIndex], sourceEntity.last_position);
-    v3_copy(sourcePts_p1, sourceCollision.CD_point_p[sourceIndex]);
+    v3_copy(sourcePts_p1, sourceBody.CD_point_p[sourceIndex]);
     v3_sub_res(sourcePts_v, sourcePts_p1, sourcePts_p0);
     var sourcePts_l = v3_length(sourcePts_v);
     v3_invscale_res(sourcePts_n, sourcePts_v, sourcePts_l);
@@ -1328,7 +1337,7 @@ for (var sourceIndex = 0; sourceIndex < sourceCollision.CD_point; ++sourceIndex)
     var _tempCDRes_target_cdi = 0;
     var _tempCDRes_target_ei = 0;
 
-    for (var targetIndex = 0; targetIndex < ENTITIES.length; ++targetIndex) if (sourceCollision.candidates[targetIndex]) { // for each candidate entities
+    for (var targetIndex = 0; targetIndex < ENTITIES.length; ++targetIndex) if (sourceBody.candidates[targetIndex]) { // for each candidate entities
         _tempCDRes_target_ei = targetIndex;
         var target = ENTITIES[targetIndex];
         var targetCol = target.collision;

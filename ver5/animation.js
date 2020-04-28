@@ -77,104 +77,105 @@ class E3D_animation {
 // Animator methods
 
 
-
+// Call animation function on each entities of a group. Even invisible ones.
 function singlePassAnimator(animGroup = 0) {
     for (let i = 0; i < ENTITIES.length; ++i) 
         if ( ENTITIES[i].isAnimaed && 
-                (ENTITIES[i].animation.animGroup == animGroup) && 
-                    (ENTITIES[i].animation.animFunction != null)) ENTITIES[i].animation.animFunction(ENTITIES[i]);
+            (ANIMATIONS[i].group == animGroup) &&
+            (ANIMATIONS[i].animFunction != null) ) ANIMATIONS[i].animFunction(ENTITIES[i], ANIMATIONS[i]);
 }
 
 
 
 function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
      // build list of all entities with animations, and CD sources
-    var ACTOR = [];
-    var SOURCE = [];
-    for (let i = 0; i < ENTITIES.length; ++i) if 
-    ( ENTITIES[i].isAnimaed && ENTITIES[i].isVisible &&
-                (ENTITIES[i].animation.animGroup == animGroup) && 
-                    (ENTITIES[i].animation.animFunction != null) ) {
-                        ACTOR[i] = true;
-                        SOURCE[i] = ENTITIES[i].collisionDetection() && (ENTITIES[i].collision.deltaLength > 0.0);
-                    } else ACTOR[i] = false;
+    var actors = new Array(ENTITIES.length); // entities with animations
+    var sources = new Array(ENTITIES.length); // entities with animations that have bodies that can be sources
+    for (let i = 0; i < ENTITIES.length; ++i)
+        if ( ENTITIES[i].isAnimaed && (ANIMATIONS[i].group == animGroup) && (ANIMATIONS[i].animFunction != null) ) {
+            actors[i] = true;
+            sources[i] = ENTITIES[i].isVisible && ENTITIES[i].isCollisionSource && (BODIES[i].deltaLength > 0.0);
+        } else actors[i] = false;
 
 
     // First pass, calculate expected next position
-    for (let i = 0; i < ENTITIES.length; ++i) if (ACTOR[i]) {
-        ENTITIES[i].animation.animFunction(ENTITIES[i]);
-        ENTITIES[i].collision.resetCollisions();
+    for (let i = 0; i < ENTITIES.length; ++i) if (actors[i]) {
+        ANIMATIONS[i].animFunction(i);
+        BODIES[i].resetCollisions();
     } 
 
 
     // Cull Collission Detection
-    for (let i = 0; i < ENTITIES.length; ++i) if (SOURCE[i]) { 
-        ENTITIES[i].animation.candidates = new Array(ENTITIES.length);
-        for (let j = 0; j < ENTITIES.length; ++j) { // all entities are targets
-            ENTITIES[i].collision.candidates[j] = false; // default 
-            if ((i != j) && ENTITIES[j].collisionDetection()) {  // different entity with CD
+    for (let i = 0; i < ENTITIES.length; ++i) if (sources[i]) { 
+        BODIES[i].candidates = new Array(ENTITIES.length);
+        for (let j = 0; j < ENTITIES.length; ++j) { // all other entities are targets
+            BODIES[i].candidates[j] = false; // default 
+            if ((i != j) && ENTITIES[j].isVisible && ENTITIES[j].collisionDetection()) {  // different visible entity with CD
                 
-                var deltaP = 0;
+                var deltaPosition = 0;
+
                 if (j > i) { // distance not checked yet
-                    deltaP = v3_distance(ENTITIES[i].position, ENTITIES[j].position); 
-                    ENTITIES[j].collision.othersDistances[i] = deltaP;
-                    ENTITIES[i].collision.othersDistances[j] = deltaP;
-                } else deltaP = ENTITIES[j].collision.othersDistances[i];
+                    deltaPosition = v3_distance(ENTITIES[i].position, ENTITIES[j].position); 
+                    BODIES[i].othersDistances[j] = deltaPosition;
+                    BODIES[j].othersDistances[i] = deltaPosition;
+                } else deltaPosition = BODIES[j].othersDistances[i];
 
-                var deltaD = ENTITIES[i].collision.deltaLength + ENTITIES[i].visibilityDistance + 
-                             ENTITIES[j].collision.deltaLength + ENTITIES[j].visibilityDistance; 
+                var totalVolume = BODIES[i].deltaLength + ENTITIES[i].visibilityDistance + 
+                                  BODIES[j].deltaLength + ENTITIES[j].visibilityDistance; 
 
-                ENTITIES[i].collision.candidates[j] = deltaP <= deltaD;
+                BODIES[i].candidates[j] = deltaPosition <= totalVolume;
             }
         }
     }
 
     var numIter = maxCDIterations;
     var hitDetected = true;
-
-    while ((numIter > 0) && hitDetected){
+    E3D_DEBUG_CD_NB_HIT = 0;
+    
+    while ((numIter > 0) && hitDetected) {
 
         // Collision Detection
         hitDetected = false;
-        for (let i = 0; i < ENTITIES.length; ++i) if (SOURCE[i]) {
-            if (ENTITIES[i].collision.CD_sph > 0) CheckForAnimationCollisions_SphSource(ENTITIES[i]);
-            if (ENTITIES[i].collision.CD_point > 0) CheckForAnimationCollisions_PointSource(ENTITIES[i]);
+        for (let i = 0; i < ENTITIES.length; ++i) if (sources[i]) {
+            if (BODIES[i].CD_sph > 0) CheckForAnimationCollisions_SphSource(i);
+            if (BODIES[i].CD_point > 0) CheckForAnimationCollisions_PointSource(i);
         }
         
         // Collision Response
-        for (let i = 0; i < ENTITIES.length; ++i) if (ACTOR[i]) 
-        if ((ENTITIES[i].collision.isCollisionSource) || (ENTITIES[i].collision.isCollisionTarget)) {
-            resolverPass(ENTITIES[i].collision, ENTITIES[i].animation); 
+        for (let i = 0; i < ENTITIES.length; ++i) if (actors[i]) 
+        if ((BODIES[i].nbSourceCollision > 0) || (BODIES[i].nbTargetCollision > 0)) {
+            resolverPass(BODIES[i], ANIMATIONS[i]); 
             hitDetected = true;
+            E3D_DEBUG_CD_NB_HIT++;
         }
         numIter--;
     }
 
-    return maxCDIterations - numIter;
+    E3D_DEBUG_CD_NB_PASSES = maxCDIterations - numIter;
 }
 
 
-function resolverPass(entCol, entAnim) {
-    if (entCol.isCollisionSource && entCol.isCollisionTarget) { // both source and target
-        if (entAnim.sourceColResolver && entAnim.targetColResolver) { // resolver for both source and target
-            if (entCol.closestCollision.t0 < entCol.otherCollision.t0) { // closest event
-                entAnim.sourceColResolver();
+function resolverPass(body, anim) {
+    if ((body.nbSourceCollision > 0) && (body.nbTargetCollision > 0)) { // both source and target
+        if (anim.sourceColResolver && anim.targetColResolver) { // resolver for both source and target
+            if (body.closestCollision.t0 < body.otherCollision.t0) { // closest event
+                anim.sourceColResolver();
             } else {
-                entAnim.targetColResolver();
+                anim.targetColResolver();
             }
-        } else if (entAnim.sourceColResolver) { // source resolver only
-            entAnim.sourceColResolver();
-        } else if (entAnim.targetColResolver) { // target resolver only
-            entAnim.targetColResolver();
+        } else if (anim.sourceColResolver) { // source resolver only
+            anim.sourceColResolver();
+        } else if (anim.targetColResolver) { // target resolver only
+            anim.targetColResolver();
         }
-    } else if (entCol.isCollisionSource && entAnim.sourceColResolver) { // only a source with a source resolver
-        entAnim.sourceColResolver();
-    } else if (entCol.isCollisionTarget && entAnim.targetColResolver) { // only a target with a target resolver
-        entAnim.targetColResolver();
+    } else if ((BODIES[i].nbSourceCollision > 0) && anim.sourceColResolver) { // only a source with a source resolver
+        anim.sourceColResolver();
+    } else if ((BODIES[i].nbTargetCollision > 0) && anim.targetColResolver) { // only a target with a target resolver
+        anim.targetColResolver();
     }
     
-    entCol.isCollisionSource = false;
-    entCol.isCollisionTarget = false;
+    body.nbSourceCollision = 0;
+    body.nbTargetCollision = 0;
 }
 
 
@@ -689,7 +690,7 @@ function anim_Base_endPass() {
 
 function cleanupDoneAnimations() {
     //var someremoved = false;
-    for (let i = ENTITIES.length-1; i >= 0; --i) if ( (ENTITIES[i].isAnimaed) && (ENTITIES[i].animation.state == E3D_DONE) ) {
+    for (let i = ENTITIES.length-1; i >= 0; --i) if ( (ENTITIES[i].isAnimaed) && (ANIMATIONS[i].state == E3D_DONE) ) {
 
         SCENE.removeEntity(ENTITIES[i].id, false);
 

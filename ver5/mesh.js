@@ -525,8 +525,11 @@ class E3D_mesh {
         log("edges: " + this.edges.length);
     }
 
+
     
 // Mesh creation methods
+
+
 
     pushVertex(p, n, c) {        
         this.positions.push(p[0]);      this.positions.push(p[1]);      this.positions.push(p[2]);  
@@ -572,6 +575,8 @@ class E3D_mesh {
     }
 
 
+
+
     // Add quad, vertical, facing viewer
     pushWall(pleft, pright, height, color = _v3_white) {
         var pleftTop = v3_val_new(pleft[0], pleft[1] + height, pleft[2]);
@@ -611,6 +616,8 @@ class E3D_mesh {
     }
 
 
+
+    
     // box
     pushBox(position, rotation, width, height, depth, color = _v3_white, cback = null, ctop = null, cbottom = null, cright = null, cleft = null) {
         if (cback == null) {

@@ -777,13 +777,51 @@ t.test7 = function() {
     var o1 = { a0: 1, a1 : 2, a2 : 3 };
     dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
-        s = new Float32Array(3);
-        s[0]=1;
-        s[1]=2;
-        s[2]=3;
+        s += o1.a0;
+        s += o1.a1;
+        s += o1.a2;
     }
     et = performance.now();
     addLine("access o.a0 o.a1, o.a2: " + (et-dt));
+
+
+    var a1 = [ { p0: 1, p1 : 2, p2 : 3 }, { p0: 10, p1 : 20, p2 : 30 } ];
+    var numtst1 = 1000;
+    var numtst2 = 5000;
+    s = 0;
+    dt = performance.now();
+    for (let i = 0; i < numtst1; ++i) {
+        var o0 = a1[0];
+        var o1 = a1[1];
+        for (let j = 0; j < numtst2; ++j) {
+            s += o0.p0;
+            s += o0.p1;
+            s += o0.p2;
+
+            s += o1.p0;
+            s += o1.p1;
+            s += o1.p2;
+        }
+    }
+    et = performance.now();
+    addLine("access oi = a[i], oi.p : " + (et-dt));
+
+    
+    s = 0;
+    dt = performance.now();
+    for (let i = 0; i < numtst1; ++i) {
+        for (let j = 0; j < numtst2; ++j) {
+            s += a1[0].p0;
+            s += a1[0].p1;
+            s += a1[0].p2;
+
+            s += a1[1].p0;
+            s += a1[1].p1;
+            s += a1[1].p2;
+        }
+    }
+    et = performance.now();
+    addLine("access a[i].p : " + (et-dt));
 
 
 
@@ -861,10 +899,31 @@ t.test7 = function() {
     s = 0;
     dt = performance.now();
     for (let i = 0; i < numtst; ++i) {
+        s = new Array(3);
+        s[0]=1;
+        s[1]=2;
+        s[2]=3;
+    }
+    et = performance.now();
+    addLine("create new Array(3) +  [0]=1 [1]=2 [2]=3: " + (et-dt));
+
+
+    s = 0;
+    dt = performance.now();
+    for (let i = 0; i < numtst; ++i) {
         s = Array(1, 2, 3);
     }
     et = performance.now();
     addLine("create Array(1, 2, 3): " + (et-dt));
+
+    s = 0;
+    dt = performance.now();
+    for (let i = 0; i < numtst; ++i) {
+        s = Array([1, 2, 3]);
+    }
+    et = performance.now();
+    addLine("create Array([1, 2, 3]): " + (et-dt));
+
 
     s = 0;
     dt = performance.now();
