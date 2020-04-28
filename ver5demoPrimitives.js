@@ -70,7 +70,7 @@ if (btn) btn.addEventListener("click", x => {
     if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
     if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.5);
     meshLoader.addModelData(entity);
-    E3D_updateEntity(entity);
+    E3D_updateEntityData(entity);
 
     paramText.innerText = `Plane ${w*2} x ${h*2}`;
 
@@ -90,7 +90,7 @@ if (btn) btn.addEventListener("click", x =>  {
     if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.5);
 
     meshLoader.addModelData(entity);
-    E3D_updateEntity(entity);
+    E3D_updateEntityData(entity);
 
     paramText.innerText = `Box ${w.toFixed(2)} x ${h.toFixed(2)} x ${d.toFixed(2)}`;
 
@@ -110,7 +110,7 @@ if (btn) btn.addEventListener("click", x => {
     if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
 
     meshLoader.addModelData(entity);
-    E3D_updateEntity(entity);
+    E3D_updateEntityData(entity);
 
     paramText.innerText = `Pyramid ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
 
@@ -130,7 +130,7 @@ if (btn) btn.addEventListener("click", x =>  {
     if (check_outline.checked) meshLoader.addStrokeData(entity, false, 0.9999);
 
     meshLoader.addModelData(entity);
-    E3D_updateEntity(entity);
+    E3D_updateEntityData(entity);
 
     paramText.innerText = `Prism ${radius.toFixed(2)} x ${height.toFixed(2)}, ${nbSide} sides`;
 
@@ -151,7 +151,7 @@ if (btn) btn.addEventListener("click", x =>  {
     if (check_smooth.checked) meshLoader.smoothNormals(0.0);
 
     meshLoader.addModelData(entity);
-    E3D_updateEntity(entity);
+    E3D_updateEntityData(entity);
     
     paramText.innerText = `Sphere radius ${radius.toFixed(2)} base type: ${meshLoader.sphereBaseType.strings[type]} recursion depth of ${depth}`;
 } );
@@ -173,7 +173,7 @@ if (btn) btn.addEventListener("click", x =>  {
     if (check_smooth.checked) meshLoader.smoothNormals(0.2);
 
     meshLoader.addModelData(entity);
-    E3D_updateEntity(entity);
+    E3D_updateEntityData(entity);
     
     paramText.innerText = `Torus radius ${radius.toFixed(2)}, section radius: ${sectionRadius.toFixed(2)}, sections:${sections}, sides: ${sides}`;
 } );
