@@ -7,8 +7,36 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome ver5demo1",
+            "name": "Launch ver5demo1",
             "url": "http://localhost:8080/ver5demo1.html",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch ver5demo2",
+            "url": "http://localhost:8080/ver5demo2.html",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch ver5demo3",
+            "url": "http://localhost:8080/ver5demo3.html",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch ver5demo4",
+            "url": "http://localhost:8080/ver5demo4.html",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch ver5demo5",
+            "url": "http://localhost:8080/ver5demo5.html",
             "webRoot": "${workspaceFolder}"
         }
     ]

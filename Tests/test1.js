@@ -2096,6 +2096,66 @@ t.test15 = function() {
 
 
 
+t.test16 = function() {
+
+    const numIter = 10000;
+    const numtst = 1000;
+  
+    addLine("Num iter: " + numtst);
+
+    let a0 = new Array(numtst);
+    let a1 = new Array(numtst);
+    let a2 = new Array(numtst);
+    let a3 = new Array(numtst);
+
+    var dt = performance.now();
+    for (let i = 0; i < numIter; ++i) {
+        for (let j = 0; j < numtst; ++j) {
+            a0[j] = "string0" + i + "string1" + j + "string2";
+        }
+    }
+    var et = performance.now();
+    addLine(" str + i + str + j + str: " + (et-dt));
+
+    var dt = performance.now();
+    for (let i = 0; i < numIter; ++i) {
+        for (let j = 0; j < numtst; ++j) {
+            a1[j] = "string0".concat(i).concat("string1").concat(j).concat("string2");
+        }
+    }
+    var et = performance.now();
+    addLine(" str.concat(i).concat(str)...: " + (et-dt));
+
+    var dt = performance.now();
+    for (let i = 0; i < numIter; ++i) {
+        for (let j = 0; j < numtst; ++j) {
+            a2[j] = `string0${i}string1${j}string2`;
+        }
+    }
+    var et = performance.now();
+    addLine(" 'str${i}str${j}str': " + (et-dt));
+
+    var dt = performance.now();
+    for (let i = 0; i < numIter; ++i) {
+        for (let j = 0; j < numtst; ++j) {
+            a3[j] = ["string0", i, "string1", j, "string2"].join("");
+        }
+    }
+    var et = performance.now();
+    addLine(" [str, i, str...].join(): " + (et-dt));
+/*
+    addLine(a0[0]);
+    addLine(a1[0]);
+    addLine(a2[0]);
+    addLine(a3[0]);
+*/
+    addLine("");
+    addLine("End Test 16");
+}
+
+
+
+
 
 
 function rndPM(val) { // random between plus or minus "val"

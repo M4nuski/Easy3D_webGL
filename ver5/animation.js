@@ -114,11 +114,11 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
                 
                 var deltaPosition = 0;
 
-                if (j > i) { // distance not checked yet
-                    deltaPosition = v3_distance(ENTITIES[i].position, ENTITIES[j].position); 
-                    BODIES[i].othersDistances[j] = deltaPosition;
-                    BODIES[j].othersDistances[i] = deltaPosition;
-                } else deltaPosition = BODIES[j].othersDistances[i];
+                //if (j > i) { // TODO cache distances 
+                deltaPosition = v3_distance(ENTITIES[i].position, ENTITIES[j].position); 
+                //   BODIES[i].distances[j] = deltaPosition;
+                //   BODIES[j].distances[i] = deltaPosition;
+                //} else deltaPosition = BODIES[j].distances[i];
 
                 var totalVolume = BODIES[i].deltaLength + ENTITIES[i].visibilityDistance + 
                                   BODIES[j].deltaLength + ENTITIES[j].visibilityDistance; 
@@ -131,14 +131,16 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
     var numIter = maxCDIterations;
     var hitDetected = true;
     E3D_DEBUG_CD_NB_HIT = 0;
-    
+
     while ((numIter > 0) && hitDetected) {
 
         // Collision Detection
         hitDetected = false;
         for (let i = 0; i < ENTITIES.length; ++i) if (sources[i]) {
-            if (BODIES[i].CD_sph > 0) CheckForAnimationCollisions_SphSource(i);
-            if (BODIES[i].CD_point > 0) CheckForAnimationCollisions_PointSource(i);
+            if (BODIES[i].CD_point > 0) CheckForBodyCollisions_PointSource(i);
+            if (BODIES[i].CD_sph > 0) CheckForBodyCollisions_SphSource(i);
+            //if (BODIES[i].CD_edge > 0) CheckForBodyCollisions_EdgeSource(i);
+            //if (BODIES[i].CD_capsule > 0) CheckForBodyCollisions_CapSource(i);
         }
         
         // Collision Response
