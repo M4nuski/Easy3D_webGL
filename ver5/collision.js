@@ -564,7 +564,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                     if (hitRes < 0.0) hitRes = 0.0;
 
                     v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes);
-                    var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                    var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
 
                     if (t0 < _tempCDRes_t0) {
 
@@ -601,7 +601,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                 if (hitRes != false) {
 
                     v3_addscaled_res(firstHit, sourceSph_p0, sourceSph_n, hitRes * sourceSph_l);
-                    var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                    var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {        
 
@@ -649,9 +649,9 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                         var d0 = v3_dot(posDelta, hitNormal);                         
                         if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
 
-                        var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                        var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
                         if ( t0 <= _tempCDRes_t0 ) {
-                            if (E3D_DEBUG_SHOW_HIT_TEST) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -1233,10 +1233,10 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                     if (planeHit || edgeHit) {
 
                         // check dist, if dist less than current hit declare hit
-                        var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                        var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
 
-                            if (E3D_DEBUG_SHOW_HIT_TEST) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -1270,10 +1270,10 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
 
                 if ((hitRes != false) && (hitRes <= sourceSph_l)/* && (hitRes >= -sourceSph_r)*/ ) {      
 
-                    var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                    var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
 
                     if ( t0 <= _tempCDRes_t0 ) {          
-                        if (E3D_DEBUG_SHOW_HIT_TEST) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                        if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
                         v3_copy(_tempCDRes_n, target.CD_triangle_n[targetCDindex]);
@@ -1376,7 +1376,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
 
                     if (hitRes != false) {
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
-                        var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes); 
+                        var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes); 
                         if ( t0 < _tempCDRes_t0) {
                             v3_sub_res(hitNormal, firstHit, targetBody.CD_sph_p[j]);
                             if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, _v3_red);
@@ -1400,7 +1400,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
 
                         v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
                         
-                        var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);  
+                        var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);  
                         if ( t0 < _tempCDRes_t0) {    
                             v3_sub_res(hitNormal, firstHit, targetBody.CD_sph_p[j]);
                             _tempCDRes_marker = marker;
@@ -1442,9 +1442,9 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
 
                         if (d0 < 0.0) v3_negate_mod(hitNormal); // if d >= 0 on side of normal, else on opposite side of normal
 
-                        var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                        var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
-                        //    if (E3D_DEBUG_SHOW_HIT_TEST) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                        //    if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -1592,7 +1592,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
 
 
                 if (planeHit) {
-                    var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                    var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);
                     if ( t0 < _tempCDRes_t0 ) {
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
@@ -1623,10 +1623,10 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
 
                 if ((hitRes != false) && (hitRes <= sourcePts_l) && (hitRes >= 0.0) ) {      
 
-                    var t0 = v3_distancesquared(firstHit, sourceEntity.last_position) * Math.sign(hitRes);
+                    var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {          
-                       // if (E3D_DEBUG_SHOW_HIT_TEST) if (v3_distancesquared(firstHit, sourceSph_p0) > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                       // if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
                         v3_copy(_tempCDRes_n, target.CD_triangle_n[j]);
