@@ -1,35 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CSS Layout tests for PC VS Mobile</title>
+    <title>CSS Layout tests for PC VS Mobile - Full</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-        html, body {
+        body {
             margin: 0px;
-            width: 100%;
-            height: 100%;
             font-size: large;
-        }
-        input {
-            font-size: initial;
         }
         canvas {
             width: 100%;
             height: 100%;
         }
-        .tableDiv {
-            display: table-row;
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
         }
-        .tableDivFit {
-            display: table-row;
-            height: fit-content;
-        }
-        .wrapDiv {
-            width: 100%;
-            height: 100%;
-            display: table;
-        }
+
     </style>
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() { 
@@ -61,7 +53,8 @@
 
                 ctx.font = "24px Arial";
                 ctx.fillText(wt, 10, 32);
-                ctx.fillText(t, 10, 64);
+                ctx.fillText(t, 10, 64);    
+
             }
 
             resize();
@@ -71,10 +64,8 @@
 </head>
 
 <body>
-    <div class="wrapDiv">
-        <div class="tableDivFit">Lorem ipsum dolor sit amet consectetur adipisicing elit. <input type="text" value="alias," /> velit aspernatur culpa quo tempora inventore. Libero pariatur ea fugit id ipsam neque explicabo, officia laborum cumque odio autem. Doloribus!</div>
-        <div class="tableDiv"><canvas id="canvas" width="320" height="240" style="width: 100%; height: 100%;">Canvas</canvas></div>
-        <div class="tableDivFit">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iste blanditiis rem autem, corporis error facere earum ab vitae nesciunt est, perspiciatis obcaecati? Iure, dicta iste odio voluptatum in ipsa sit.</div>
+    <div class="E3D_fullscreenContainer">
+        <canvas id="canvas" width="320" height="240">Canvas</canvas>
     </div>
 </body>
 

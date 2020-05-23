@@ -1,12 +1,17 @@
 /*
   Global CSS for inset page using the full available client area.
 */
-html, body {
+html {
     margin: 0px;
     width: 100%;
     height: 100%;
     font-size: large;
 }
+
+body {
+    height: 100%;
+}
+
 .contentDiv {
     display: table-row;
 }

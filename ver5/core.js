@@ -101,7 +101,7 @@ function E3D_InitContext(element) {
         if (element == undefined) {
             log("No target element found", false);
             element = document.createElement("div");
-            element.id = "E3D_mainDiv";
+            element.id = "E3D_mainDiv"; // TODO set class to E3D_fullscreenDiv ?
             element.style.position = "absolute";
             element.style.width = "100%";
             element.style.height = "100%";

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Layout tests for PC VS Mobile - Over</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }        
+        input {
+            font-size: initial;
+        }
+        
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+        .E3D_flexVertical {
+            display: flex;
+            flex-direction: column;
+        }
+        .E3D_flexHorizontal {
+            display: flex;
+            flex-direction: row;
+        }
+        .E3D_flexContent {
+            overflow: hidden;
+            flex: 1 1 auto;
+        }
+        .E3D_flexVerticalContentFixed {
+            width: 100%;
+            height: fit-content;
+        }
+        .E3D_flexHorizontalContentFixed {
+            width: fit-content;
+            height: 100%;
+        }
+
+
+        .menuTopLeft {
+            position: absolute;
+            display: block;
+            left : 0px;
+            top : 0px;
+            border-radius: 0px 0px 10px 0px;
+            z-index: 10;
+            overflow: hidden;
+            padding: 0.2em;
+            padding-right: 0.3em;
+            border-right: solid 2px black;
+            border-bottom: solid 2px black;
+        }        
+
+        .hoverSize {
+            max-width: 50px;
+            max-height: 50px;
+            background-color: rgba(255, 255, 255, 0.25);
+
+            transition: all 0.1s linear;
+        }      
+        .hoverSize:hover{
+            max-width: 200px;
+            max-height:  200px; /* should be equal to max-width to avoid transition overshoot */
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .c1 {
+            background-color: #FFAAAA;
+        }
+        .c2 {
+            background-color: #AAFFAA;
+        }
+        .c3 {
+            background-color: #AAAAFF;
+        }
+        .c4 {
+            background-color: #FFAAFF;
+        }
+
+
+
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+            var tl = document.getElementById("tl");
+            var br = document.getElementById("br");
+
+            window.addEventListener("resize", resize);
+            c.addEventListener("click", resize);
+
+            function resize() {
+                var ww = window.innerWidth;
+                var wh = window.innerHeight;
+                var bw = document.body.offsetWidth;
+                var bh = document.body.offsetHeight;
+                var w = c.offsetWidth;
+                var h = c.offsetHeight;
+                var pw = c.parentElement.offsetWidth;
+                var ph = c.parentElement.offsetHeight;
+                var aw = br.offsetLeft + br.offsetWidth - tl.offsetLeft;
+                var ah = br.offsetTop + br.offsetHeight - tl.offsetTop;
+                var wt = "Resize window to " + ww + "x" + wh;
+                var bt = "Resize body to " + bw + "x" + bh;
+                var at = "Resize absolute to " + aw + "x" + ah;
+                var pt = "Resize parent to " + pw + "x" + ph;
+                var t = "Resize canvas to " + w + "x" + h;
+                console.log(wt);
+                console.log(bt);
+                console.log(at);
+                console.log(pt);
+                console.log(t);
+                c.width = w;
+                c.height = h;
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, h/4, 0, 2 * Math.PI);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w, h);
+                ctx.moveTo(0, h);
+                ctx.lineTo(w, 0);
+                ctx.stroke();
+
+                ctx.font = "24px Arial";
+                ctx.fillText(wt, 10, 32);
+                ctx.fillText(bt, 10, 64);
+                ctx.fillText(at, 10, 96);
+                ctx.fillText(pt, 10, 128);
+                ctx.fillText(t, 10, 160);
+
+            }
+
+            resize();
+
+        } );
+    </script>
+</head>
+
+<body>
+
+        <div id="tl" style="position: absolute; top:0px; left:0px; background-color: blue;">TL</div>
+        <div style="position: absolute; top:0px; right:0px; background-color: red;">TR</div>
+        <div style="position: absolute; bottom:0px; left:0px; background-color: green;">BL <input type="text"/></div>
+        <div id="br" style="position: absolute; bottom:0px; right:0px; background-color: yellow;">BR</div>
+
+        <div class="E3D_fullscreenContainer E3D_flexVertical c1">
+            
+            <div class="menuTopLeft hoverSize">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Labore, explicabo ea iste consequuntur sit magnam esse tempore suscipit mollitia, rerum recusandae. Excepturi veniam consequuntur qui exerre suscipit mollitia, rerum recusandae. Excepturi veniam consequuntur qui exercitationem alias tempora est doloribus?citationem alias tere suscipit mollitia, rerum recusandae. Excepturi veniam consequuntur qui exercitationem alias tempora est doloribus?mpora est doloribus?</div>
+        <div class="E3D_flexContent c3"><canvas id="canvas" width="320" height="240">Canvas</canvas></div>
+        <div class="E3D_flexVerticalContentFixed c4">Lorem ipsum dolor sit amet consectetur adipisicing elit. Praesentium ipsam qui voluptas corporis esse eius incidunt sit et? Deleniti eius aliquid minus! Mollitia nesciunt voluptatibus quod unde, totam nulla dolore?</div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Layout tests for PC VS Mobile - Inset</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }        
+        input {
+            font-size: initial;
+        }
+        
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+        .E3D_flexVertical {
+            display: flex;
+            flex-direction: column;
+        }
+        .E3D_flexHorizontal {
+            display: flex;
+            flex-direction: row;
+        }
+        .E3D_flexContent {
+            overflow: hidden;
+            flex: 1 1 auto;
+        }
+        .E3D_flexVerticalContentFixed {
+            width: 100%;
+            height: fit-content;
+        }
+        .E3D_flexHorizontalContentFixed {
+            width: fit-content;
+            height: 100%;
+        }
+
+
+        .c1 {
+            background-color: #FFAAAA;
+        }
+        .c2 {
+            background-color: #AAFFAA;
+        }
+        .c3 {
+            background-color: #AAAAFF;
+        }
+        .c4 {
+            background-color: #FFAAFF;
+        }
+
+
+
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+
+            window.addEventListener("resize", resize);
+            c.addEventListener("click", resize);
+
+            function resize() {
+                var ww = window.innerWidth;
+                var wh = window.innerHeight;
+                var bw = document.body.offsetWidth;
+                var bh = document.body.offsetHeight;
+                var w = c.offsetWidth;
+                var h = c.offsetHeight;
+                var pw = c.parentElement.offsetWidth;
+                var ph = c.parentElement.offsetHeight;
+
+                var wt = "Resize window to " + ww + "x" + wh;
+                var bt = "Resize body to " + bw + "x" + bh;
+                var pt = "Resize parent to " + pw + "x" + ph;
+                var t = "Resize canvas to " + w + "x" + h;
+
+                console.log(wt);
+                console.log(bt);
+                console.log(pt);
+                console.log(t);
+
+                c.width = pw;
+                c.height = ph;
+
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, h/4, 0, 2 * Math.PI);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w, h);
+                ctx.moveTo(0, h);
+                ctx.lineTo(w, 0);
+                ctx.stroke();
+
+                ctx.font = "24px Arial";
+                ctx.fillText(wt, 10, 32);
+                ctx.fillText(bt, 10, 64);
+                ctx.fillText(pt, 10, 128);
+                ctx.fillText(t, 10, 160);
+            }
+
+            resize();
+
+        } );
+    </script>
+</head>
+
+<body>
+        <div class="E3D_fullscreenContainer E3D_flexVertical c4">
+            <div class="E3D_flexVerticalContentFixed c1">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Labore, <input type="text" value="blah" /> ore suscipit motur qui exercitationem alias tempora est doloribus?citationem alias tere suscipit mollitia,us?mpora est doloribus?
+            </div>
+            <div class="E3D_flexContent c2">
+                <canvas id="canvas">Canvas</canvas>
+            </div>
+            <div class="E3D_flexVerticalContentFixed c3">
+                Lorem ipsum dolor, sit amet consectetur adipiipit mollitia, rentur qui exerre suscipit mollitia, rerum recusandae. Excepturi veniam consequuntur qui exercitationem alias tempora est doloribus?citationem alias tere suscipit mollitia, rerum recusandae. Excepturi veniam consequuntur qui exercitationem alias tempora est doloribus?mpora est doloribus?
+            </div>
+        </div>
+
+</body>
+
+</html>
