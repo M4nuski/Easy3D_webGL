@@ -53,7 +53,7 @@ var directBeatSlice = 0.5 / 3; // 120 bpm, 3t
 
 
 // Events
-$forEach(".fakeButton", button => onClick(button, (event) => animMode = event.target.getAttribute("data-mode")));
+$forEach(".E3D_fakeButton", button => onClick(button, (event) => animMode = event.target.getAttribute("data-mode")));
 //document.querySelectorAll(".fakeButton").forEach(button => onClick(button, (event) => animMode = event.target.getAttribute("data-mode")));
 
 

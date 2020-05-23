@@ -4,13 +4,17 @@
         <title>Easy3D Engine webGL version 0.5</title>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="ver5.css">
+        <!-- Fullscreen and PointerLock demo for engine -->
+        <!-- Basic page body, target div for engine output is tagged with id="E3D_mainDiv" -->
+        <!-- Default ver5.css style for buttons -->
+        <!-- Default script load -->
         <style>
             #E3D_mainDiv {
                 position: absolute;
-                width : 80%;
-                height : 80%;
-                top : 10%;
-                left : 10%;
+                width : 90%;
+                height : 90%;
+                top : 5%;
+                left : 5%;
             }
 
         </style>
@@ -20,9 +24,9 @@
     <body>
         <div>
             Easy3D ver 5 FullScreen and PointerLock Tests
-            <span id="btn_fs" class="fakeButton">Enable FullScreen</span>
-            <span id="btn_pl" class="fakeButton">Enable PointerLock</span>
-            <span id="btn_fspl" class="fakeButton">Enable Both</span>
+            <span id="btn_fs" class="E3D_fakeButton">Enable FullScreen</span>
+            <span id="btn_pl" class="E3D_fakeButton">Enable PointerLock</span>
+            <span id="btn_fspl" class="E3D_fakeButton">Enable Both</span>
         </div>
         <div id="E3D_mainDiv"></div>
     </body>

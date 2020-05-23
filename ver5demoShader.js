@@ -98,7 +98,7 @@ E3D_addEntity(torusEntity);
 
 
 // Register the button events
-$forEach(".fakeButton", button => onClick(button, (event) => SCENE.program = programs[event.target.getAttribute("data-shader")]));
+$forEach(".E3D_fakeButton", button => onClick(button, (event) => SCENE.program = programs[event.target.getAttribute("data-shader")]));
 
 // handle interval changes
 TIMER.setInterval($("inputINT").value);

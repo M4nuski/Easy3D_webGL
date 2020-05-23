@@ -5,6 +5,10 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" href="ver5.css">
+        <!-- Animation demo for engine -->
+        <!-- Flex page for header, footer and content, target div for engine output is tagged with id="E3D_mainDiv" -->
+        <!-- Default ver5.css style for buttons and flex -->
+        <!-- Specific script load -->
         <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoAnim.js" data-fail="ver5demoFail.js" defer="true"></script>
         <style>
         #menu {
@@ -37,18 +41,18 @@
     </head>
 
     <body>
-        <div class="fullClientAreaWrapDiv">
-            <div id="E3D_mainDiv" class="contentDiv">
+        <div class="E3D_fullscreenContainer E3D_flexVertical">
+            <div id="E3D_mainDiv" class="E3D_flexContent">
                 <div id="menu" class="hoverSize">
                     <img src="../Images/Menu.svg" width="50" height="50" />
-                    <div class="fakeButton" data-mode="direct">Direct</div>
-                    <div class="fakeButton" data-mode="transform">Transform</div>
-                    <div class="fakeButton" data-mode="physics">Physics</div>
-                    <div class="fakeButton" data-mode="particules">Particules</div>
+                    <div class="E3D_fakeButton" data-mode="direct">Direct</div>
+                    <div class="E3D_fakeButton" data-mode="transform">Transform</div>
+                    <div class="E3D_fakeButton" data-mode="physics">Physics</div>
+                    <div class="E3D_fakeButton" data-mode="particules">Particules</div>
                 </div>
             </div>
-            <div class="headerFooterDiv">
-                <div class="monoText marginDiv"><span id="spanSFPS"></span> FPS, <span id="spanSPCT"></span>%, <span id="spanMODE"></span></div>
+            <div class="E3D_flexVerticalContentFit E3D_margin">
+                <div class="E3D_monospaceText"><span id="spanSFPS"></span> FPS, <span id="spanSPCT"></span>%, <span id="spanMODE"></span></div>
             </div>
         </div>
     </body>

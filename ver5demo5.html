@@ -5,26 +5,32 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" href="ver5.css">
+        <!-- Shader demo for engine -->
+        <!-- Flex page for header, footer and content, target div for engine output is tagged with id="E3D_mainDiv" -->
+        <!-- Default ver5.css style for buttons and flex -->
+        <!-- Specific script load -->
         <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5demoShader.js" data-fail="ver5demoFail.js" defer="true"></script>
     </head>
 
     <body>
-        <div class="fullClientAreaWrapDiv">
-            <div class="headerFooterDiv">
-                <div class="marginDiv">
-                    Easy3D ver 5 Base Shader Tests
-                    <span class="fakeButton" data-shader="0">PassTrough</span>
-                    <span class="fakeButton" data-shader="1">Normals</span>
-                    <span class="fakeButton" data-shader="2">Depth</span>
-                    <span class="fakeButton" data-shader="3">Shade</span>
-                    <span class="fakeButton" data-shader="4">Shade and Depth</span>
-                    Frame Interval (render every x frames):<input type="number" id="inputINT" value = "2" min = "1" nax = "200" />
-                </div>
+        <div class="E3D_fullscreenContainer E3D_flexVertical"> 
+
+            <div class="E3D_flexVerticalContentFit E3D_margin">
+                Easy3D ver 5 Base Shader Tests
+                <span class="E3D_fakeButton" data-shader="0">PassTrough</span>
+                <span class="E3D_fakeButton" data-shader="1">Normals</span>
+                <span class="E3D_fakeButton" data-shader="2">Depth</span>
+                <span class="E3D_fakeButton" data-shader="3">Shade</span>
+                <span class="E3D_fakeButton" data-shader="4">Shade and Depth</span>
+                Frame Interval (render every x frames):<input type="number" id="inputINT" value="2" min="1" nax="200" style="width: 2em" />
             </div>
-            <div id="E3D_mainDiv" class="contentDiv"></div>
-            <div class="headerFooterDiv">
-                <div class="monoText marginDiv"><span id="spanFPS"></span> FPS, <span id="spanSFPS"></span> FPS(smoothed), <span id="spanPct"></span>%, <span id="spanSPct"></span>% (smoothed)</div>
+
+            <div id="E3D_mainDiv" class="E3D_flexContent"></div>
+
+            <div class="E3D_flexVerticalContentFit">
+                <div class="E3D_monospaceText"><span id="spanFPS"></span> FPS, <span id="spanSFPS"></span> FPS(smoothed), <span id="spanPct"></span>%, <span id="spanSPct"></span>% (smoothed)</div>
             </div>
+
         </div>
     </body>
 </html>

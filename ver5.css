@@ -1,34 +1,58 @@
 /*
-  Global CSS for inset page using the full available client area.
+    Global CSS for inset page using the full available client area.
 */
-html {
+body {
     margin: 0px;
-    width: 100%;
-    height: 100%;
     font-size: large;
 }
-
-body {
-    height: 100%;
-}
-
-.contentDiv {
-    display: table-row;
-}
-.headerFooterDiv {
-    display: table-row;
-    height: fit-content;
-    padding: 0.5%;
-}
-.fullClientAreaWrapDiv {
+canvas {
     width: 100%;
     height: 100%;
-    display: table;
+}        
+input {
+    font-size: initial;
 }
-.marginDiv {
+
+.E3D_fullscreenContainer {
+    position:fixed;
+    top:0px;
+    bottom:0px;
+    right:0px;
+    left:0px;
+}
+
+/*
+    Flex area to have either header or footer or both with space in middle filled with canvas  
+*/
+.E3D_flexVertical {
+    display: flex;
+    flex-direction: column;
+}
+.E3D_flexHorizontal {
+    display: flex;
+    flex-direction: row;
+}
+.E3D_flexContent {
+    overflow: hidden;
+    flex: 1 1 auto;
+}
+.E3D_flexVerticalContentFit {
+    width: 100%;
+    height: fit-content;
+}
+.E3D_flexHorizontalContentFit {
+    width: fit-content;
+    height: 100%;
+}
+
+/*
+    Common classes
+*/
+.E3D_margin {
     margin: 0.25em;
 }
-.fakeButton {
+
+.E3D_fakeButton {
     cursor: pointer;
     background-color: #d0d0d0;   
     padding-right: 0.2em;
@@ -38,10 +62,11 @@ body {
     border-radius: 0.2em; 
     margin: 0.1em 0.2em 0.2em 0.2em;
 }
-.fakeButton:hover {
+.E3D_fakeButton:hover {
     background-color: #a0a0a0;
 }
-.monoText {
+
+.E3D_monospaceText {
     white-space: pre-wrap;
     font-family: 'Courier New', Courier, monospace;
 }
