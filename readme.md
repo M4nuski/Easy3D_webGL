@@ -7,27 +7,27 @@ Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine st
 Current project is available for testing [here](https://m4nusky.com/projects/easy3d_webgl/) updated every 24h.
 
 * /ver5: current WIP
-* ver5demo1.html basic test page, no html, auto-setup
-* ver5demo2.html test page with dedicated div, auto-setup
-* ver5demo3.html demo for full screen and pointer lock
-* ver5demo4.html primitive mesh generation with random paramenters
-* ver5demo5.html varius basic shaders demo page
-* ver5demo6.html animator demo (Direct, Transform, Physics, Particules)
+* [ver5demo1.html](https://m4nusky.com/projects/easy3d_webgl/ver5demo1.html) basic test page, no html, auto-setup
+* [ver5demo2.html](https://m4nusky.com/projects/easy3d_webgl/ver5demo2.html) test page with dedicated div, auto-setup
+* [ver5demo3.html](https://m4nusky.com/projects/easy3d_webgl/ver5demo3.html) demo for full screen and pointer lock
+* [ver5demo4.html](https://m4nusky.com/projects/easy3d_webgl/ver5demo4.html) primitive mesh generation with random paramenters
+* [ver5demo5.html](https://m4nusky.com/projects/easy3d_webgl/ver5demo5.html) varius basic shaders demo page
+* [ver5demo6.html](https://m4nusky.com/projects/easy3d_webgl/ver5demo6.html) animator demo (Direct, Transform, Physics, Particules)
 * 
 * /ver4: 
-* ver4.html: Works with mouse/keyboard in destktop browser, touch controls for mobile.
-* ver4cellshader.html: toon shading render test and demo
-* ver4fullscreen.html: pointer lock, full screen tests
-* ver4stl.html: binary STL loader/viewer app 
-* ver4physic.html: CD and physics test app
-* ver4maze.html: Ball in Maze game, game loop and logic, random maze generation.
+* [ver4.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4.hmtl): Works with mouse/keyboard in destktop browser, touch controls for mobile.
+* [ver4cellshader.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4cellshader.hmtl): toon shading render test and demo
+* [ver4fullscreen.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4fullscreen.hmtl): pointer lock, full screen tests
+* [ver4stl.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4stl.hmtl): binary STL loader/viewer app 
+* [ver4physic.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4physic.hmtl): CD and physics test app
+* [ver4maze.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4maze.hmtl): Ball in Maze game, game loop and logic, random maze generation.
 * 
-* /Electron: content specific for Electron app
+* /Electron: content specific for Electron app (STL viewer, like MS photo or image viewer but for 3D stl files)
 * /Images: icons / sprites / images resources
 * /Models: Meshs
-* /Tests: performance test for JS, gl-matrix and WebGL
-* /ver0: WebGL tutorial transcript and tests, controls abstraction and demo
-* /ver3: basic engine contorls, model loading
+* /Tests: [performance test](https://m4nusky.com/projects/easy3d_webgl/tests/test1.html) for JS, [JS gl-matrix vs WebGL sahders](https://m4nusky.com/projects/easy3d_webgl/tests/testMat.html) and [WebGL](https://m4nusky.com/projects/easy3d_webgl/Tests/testMatShader.html)
+* /ver0: WebGL [tutorial](https://m4nusky.com/projects/easy3d_webgl/ver0/tuto1.html) transcript and tests, controls abstraction and [demo](https://m4nusky.com/projects/easy3d_webgl/ver0/tuto2.html)
+* /[ver3](https://m4nusky.com/projects/easy3d_webgl/ver3/ver3.html): basic engine contorls, model loading
 
 Current work-in-progress and next steps
 ----------
