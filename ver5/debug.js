@@ -7,23 +7,23 @@
 // CD hit box 
 var E3D_DEBUG_SHOW_CD_ENTITY = null;
 function E3D_DEBUG_HIDE_CD() {
-    if (E3D_DEBUG_SHOW_CD_ENTITY != null) E3D_DEBUG_SHOW_CD_ENTITY.visible = false;
+    if (E3D_DEBUG_SHOW_CD_ENTITY != null) E3D_DEBUG_SHOW_CD_ENTITY.isVisible = false;
 }
 function E3D_DEBUG_SHOW_CD() {
     // Create or show entity
     if (E3D_DEBUG_SHOW_CD_ENTITY == null) {
         E3D_DEBUG_SHOW_CD_ENTITY = new E3D_entity_wireframe_canvas("E3D_DEBUG_SHOW_CD_ENTITY");
         addEntity(E3D_DEBUG_SHOW_CD_ENTITY);
-        E3D_DEBUG_SHOW_CD_ENTITY.vis_culling = false;
+        E3D_DEBUG_SHOW_CD_ENTITY.isVisibiltyCullable = false;
     } 
 
-    E3D_DEBUG_SHOW_CD_ENTITY.visible = true;
+    E3D_DEBUG_SHOW_CD_ENTITY.isVisible = true;
     E3D_DEBUG_SHOW_CD_ENTITY.clear();
 
     for (let i = 0; i < ENTITIES.length; ++i) {
 
         // vis culling
-        if (ENTITIES[i].vis_culling) E3D_DEBUG_SHOW_CD_ENTITY.addWireSphere(ENTITIES[i].position, ENTITIES[i].cull_dist * 2, _v3_orange, 24, false);
+        if (ENTITIES[i].isVisibiltyCullable) E3D_DEBUG_SHOW_CD_ENTITY.addWireSphere(ENTITIES[i].position, ENTITIES[i].cull_dist * 2, _v3_orange, 24, false);
 
         // sph
         for (let j = 0; j < ENTITIES[i].CD_sph; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addWireSphere(ENTITIES[i].CD_sph_p[j], ENTITIES[i].CD_sph_r[j] * 2, _v3_lightred, 4, false);
@@ -99,7 +99,7 @@ function DEBUG_FORMAT_DATA_CD(precision = 4, length = 30) {
 var E3D_DEBUG_SHOW_HITTEST_ENTITY = null;
 var _E3D_DEBUG_SHOW_HITTEST = false;
 function E3D_DEBUG_HIDE_HITTEST() {
-    if (E3D_DEBUG_SHOW_HITTEST_ENTITY != null) E3D_DEBUG_SHOW_HITTEST_ENTITY.visible = false;
+    if (E3D_DEBUG_SHOW_HITTEST_ENTITY != null) E3D_DEBUG_SHOW_HITTEST_ENTITY.isVisible = false;
     _E3D_DEBUG_SHOW_HITTEST = false;
 }
 function E3D_DEBUG_CLEAR_HITTEST() {
@@ -110,9 +110,9 @@ function E3D_DEBUG_SHOW_HITTEST() {
     if (E3D_DEBUG_SHOW_HITTEST_ENTITY == null) {
         E3D_DEBUG_SHOW_HITTEST_ENTITY = new E3D_entity_wireframe_canvas("E3D_DEBUG_SHOW_HITTEST_ENTITY", 1024 * 32 * 6); // 32k lines
         addEntity(E3D_DEBUG_SHOW_HITTEST_ENTITY);
-        E3D_DEBUG_SHOW_HITTEST_ENTITY.vis_culling = false;
+        E3D_DEBUG_SHOW_HITTEST_ENTITY.isVisibiltyCullable = false;
     }
-    E3D_DEBUG_SHOW_HITTEST_ENTITY.visible = true;
+    E3D_DEBUG_SHOW_HITTEST_ENTITY.isVisible = true;
     _E3D_DEBUG_SHOW_HITTEST = true;
 }
 // TODO function E3D_DEBUG_HITTEST_SPHERE(...) _LINE _CROSS
@@ -122,7 +122,7 @@ function E3D_DEBUG_SHOW_HITTEST() {
 var E3D_DEBUG_SHOW_HIT_ENTITY = null;
 var _E3D_DEBUG_SHOW_HIT = false;
 function E3D_DEBUG_HIDE_HIT() {
-    if (E3D_DEBUG_SHOW_HIT_ENTITY != null) E3D_DEBUG_SHOW_HIT_ENTITY.visible = false;
+    if (E3D_DEBUG_SHOW_HIT_ENTITY != null) E3D_DEBUG_SHOW_HIT_ENTITY.isVisible = false;
     _E3D_DEBUG_SHOW_HIT = false;
 }
 function E3D_DEBUG_CLEAR_HIT() {
@@ -133,9 +133,9 @@ function E3D_DEBUG_SHOW_HIT() {
     if (E3D_DEBUG_SHOW_HIT_ENTITY == null) {
         E3D_DEBUG_SHOW_HIT_ENTITY = new E3D_entity_wireframe_canvas("E3D_DEBUG_SHOW_HIT_ENTITY", 1024 * 32 * 6); // 32k lines
         addEntity(E3D_DEBUG_SHOW_HIT_ENTITY);
-        E3D_DEBUG_SHOW_HIT_ENTITY.vis_culling = false;
+        E3D_DEBUG_SHOW_HIT_ENTITY.isVisibiltyCullable = false;
     }
-    E3D_DEBUG_SHOW_HIT_ENTITY.visible = true;
+    E3D_DEBUG_SHOW_HIT_ENTITY.isVisible = true;
     _E3D_DEBUG_SHOW_HIT = true;
 }
 // TODO function E3D_DEBUG_HIT_SPHERE(...) _LINE _CROSS
@@ -145,7 +145,7 @@ function E3D_DEBUG_SHOW_HIT() {
 var E3D_DEBUG_SHOW_PATH_ENTITY = null;
 
 function E3D_DEBUG_HIDE_PATH() {
-    if (E3D_DEBUG_SHOW_PATH_ENTITY != null) E3D_DEBUG_SHOW_PATH_ENTITY.visible = false;
+    if (E3D_DEBUG_SHOW_PATH_ENTITY != null) E3D_DEBUG_SHOW_PATH_ENTITY.isVisible = false;
 
 }
 function E3D_DEBUG_CLEAR_PATH() {
@@ -156,9 +156,9 @@ function E3D_DEBUG_SHOW_PATH() {
     if (E3D_DEBUG_SHOW_PATH_ENTITY == null) {
         E3D_DEBUG_SHOW_PATH_ENTITY = new E3D_entity_wireframe_canvas("E3D_DEBUG_SHOW_PATH_ENTITY", 1024 * 64 * 6); // 64k lines
         addEntity(E3D_DEBUG_SHOW_PATH_ENTITY);
-        E3D_DEBUG_SHOW_PATH_ENTITY.vis_culling = false;
+        E3D_DEBUG_SHOW_PATH_ENTITY.isVisibiltyCullable = false;
     }
-    E3D_DEBUG_SHOW_PATH_ENTITY.visible = true;
+    E3D_DEBUG_SHOW_PATH_ENTITY.isVisible = true;
 
     for (var i = 0; i < ENTITIES.length; ++i) if (ANIMATIONS[i] != null) E3D_DEBUG_SHOW_PATH_ENTITY.addLine(ANIMATIONS[i].last_position, ENTITIES[i].position, true);
 
@@ -169,7 +169,7 @@ var E3D_DEBUG_SHOW_DIR_ENTITY = null;
 var _E3D_DEBUG_SHOW_DIR = false;
 
 function E3D_DEBUG_HIDE_DIR() {
-    if (E3D_DEBUG_SHOW_DIR_ENTITY != null) E3D_DEBUG_SHOW_DIR_ENTITY.visible = false;
+    if (E3D_DEBUG_SHOW_DIR_ENTITY != null) E3D_DEBUG_SHOW_DIR_ENTITY.isVisible = false;
     _E3D_DEBUG_SHOW_DIR = false;
 
 }
@@ -178,9 +178,9 @@ function E3D_DEBUG_SHOW_DIR() {
     if (E3D_DEBUG_SHOW_DIR_ENTITY == null) {
         E3D_DEBUG_SHOW_DIR_ENTITY = new E3D_entity_wireframe_canvas("E3D_DEBUG_SHOW_DIR_ENTITY", 1024 * 64 * 6); // 64k lines
         addEntity(E3D_DEBUG_SHOW_DIR_ENTITY);
-        E3D_DEBUG_SHOW_DIR_ENTITY.vis_culling = false;
+        E3D_DEBUG_SHOW_DIR_ENTITY.isVisibiltyCullable = false;
     }
-    E3D_DEBUG_SHOW_DIR_ENTITY.visible = true;
+    E3D_DEBUG_SHOW_DIR_ENTITY.isVisible = true;
     _E3D_DEBUG_SHOW_DIR = true;
 
     E3D_DEBUG_SHOW_DIR_ENTITY.clear();
