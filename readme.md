@@ -16,11 +16,11 @@ Current project is available for testing [here](https://m4nusky.com/projects/eas
 * 
 * /ver4: 
 * [ver4.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4.hmtl): Works with mouse/keyboard in destktop browser, touch controls for mobile.
-* [ver4cellshader.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4cellshader.hmtl): toon shading render test and demo
-* [ver4fullscreen.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4fullscreen.hmtl): pointer lock, full screen tests
-* [ver4stl.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4stl.hmtl): binary STL loader/viewer app 
-* [ver4physic.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4physic.hmtl): CD and physics test app
-* [ver4maze.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4maze.hmtl): Ball in Maze game, game loop and logic, random maze generation.
+* [ver4cellshader.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4cellshader.html): toon shading render test and demo
+* [ver4fullscreen.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4fullscreen.html): pointer lock, full screen tests
+* [ver4stl.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4stl.html): binary STL loader/viewer app 
+* [ver4physic.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4physic.html): CD and physics test app
+* [ver4maze.html](https://m4nusky.com/projects/easy3d_webgl/ver4/ver4maze.html): Ball in Maze game, game loop and logic, random maze generation.
 * 
 * /Electron: content specific for Electron app (STL viewer, like MS photo or image viewer but for 3D stl files)
 * /Images: icons / sprites / images resources
