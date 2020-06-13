@@ -5,14 +5,6 @@
 "use strict"
 
 
-
-
-
-
-var show_DEV_CD = false;
-var phyTracers, dev_Hits;
-
-
 var timer = { delta : 0, start : Date.now() }; // dummy timer 
 
 var logElement = null;
