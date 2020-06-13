@@ -25,10 +25,10 @@ class E3D_animation {
         this.state = E3D_RESET;
         this.endState = E3D_DONE; // state to set after ttl reaches 0
 
-        this.animFunction = null; // function to calculate next step of animation
-        this.sourceResolver = null; // function to resolve collisions when entity is a source
-        this.targetResolver = null; // function to resolve collisions when entity is a target
-        this.endFunction = null; // function to call when TTL reaches 0
+        this.animFunction = null; // function(entityIndex) to calculate next step of animation
+        this.sourceColResolver = null; // function(entityIndex) to resolve collisions when entity is a source
+        this.targetColResolver = null; // function(entityIndex) to resolve collisions when entity is a target
+        this.endFunction = null; // function(entityIndex) to call when TTL reaches 0 and state is E3D_DONE
 
         // Custom data
         this.last_position = v3_new();
@@ -82,7 +82,7 @@ function singlePassAnimator(animGroup = 0) {
     for (let i = 0; i < ENTITIES.length; ++i) 
         if ( ENTITIES[i].isAnimaed && 
             (ANIMATIONS[i].group == animGroup) &&
-            (ANIMATIONS[i].animFunction != null) ) ANIMATIONS[i].animFunction(ENTITIES[i], ANIMATIONS[i]);
+            (ANIMATIONS[i].animFunction != null) ) ANIMATIONS[i].animFunction(i);
 }
 
 
@@ -146,7 +146,7 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
         // Collision Response
         for (let i = 0; i < ENTITIES.length; ++i) if (actors[i]) 
         if ((BODIES[i].nbSourceCollision > 0) || (BODIES[i].nbTargetCollision > 0)) {
-            resolverPass(BODIES[i], ANIMATIONS[i]); 
+            resolverPass(i); 
             hitDetected = true;
             E3D_DEBUG_CD_NB_HIT++;
         }
@@ -157,23 +157,25 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
 }
 
 
-function resolverPass(body, anim) {
+function resolverPass(i) {
+    var anim = ANIMATIONS[i];
+    var body = BODIES[i];
     if ((body.nbSourceCollision > 0) && (body.nbTargetCollision > 0)) { // both source and target
         if (anim.sourceColResolver && anim.targetColResolver) { // resolver for both source and target
             if (body.closestCollision.t0 < body.otherCollision.t0) { // closest event
-                anim.sourceColResolver();
+                anim.sourceColResolver(i);
             } else {
-                anim.targetColResolver();
+                anim.targetColResolver(i);
             }
         } else if (anim.sourceColResolver) { // source resolver only
-            anim.sourceColResolver();
+            anim.sourceColResolver(i);
         } else if (anim.targetColResolver) { // target resolver only
-            anim.targetColResolver();
+            anim.targetColResolver(i);
         }
     } else if ((BODIES[i].nbSourceCollision > 0) && anim.sourceColResolver) { // only a source with a source resolver
-        anim.sourceColResolver();
+        anim.sourceColResolver(i);
     } else if ((BODIES[i].nbTargetCollision > 0) && anim.targetColResolver) { // only a target with a target resolver
-        anim.targetColResolver();
+        anim.targetColResolver(i);
     }
     
     body.nbSourceCollision = 0;

@@ -23,9 +23,10 @@ var animMode = "direct";
 
 // Large ground plane
 var ground = new E3D_entity_wireframe_canvas("entity0");
-ground.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray);
+ground.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray, true);
 ground.isVisible = true;
-E3D_addEntity(ground);
+var groundIndex = E3D_addEntity(ground);
+BODIES[groundIndex] = new E3D_body();
 
 
 // base entity to move around and show the different methods
@@ -69,6 +70,7 @@ CB_tick = function() {
 
 // Direct Animation
     if (animMode == "direct") {
+        directEntity.isVisible = true;
 
         // Position and rotation
         v3_rotateY_mod(directEntity.position, -TIMER.delta); // move around Y
@@ -93,5 +95,32 @@ CB_tick = function() {
 
         directEntity.dataContentChanged = true; // update GPU memory
     } // direct anim mode
+
+// Transform Animator
+    if (animMode == "transform") {
+        directEntity.isVisible = false;
+
+        singlePassAnimator(1);
+    }
+
+// Physics Animator
+    if (animMode == "physics") {
+        directEntity.isVisible = false;
+
+        // multiple sph thrown toward middle
+
+        collisionDetectionAnimator(2);
+    }
+
+// Particules Animator
+    if (animMode == "particules") {
+        directEntity.isVisible = true;
+
+        // copy pos of directEntity;
+        // particule gerb
+
+        // rain particules
+        singlePassAnimator(3);
+    }
 
 }

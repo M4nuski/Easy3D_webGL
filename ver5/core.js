@@ -101,7 +101,7 @@ function E3D_InitContext(element) {
         if (element == undefined) {
             log("No target element found", false);
             element = document.createElement("div");
-            element.id = "E3D_mainDiv"; // TODO set class to E3D_fullscreenDiv ?
+            element.id = "E3D_mainDiv";
             element.style.position = "absolute";
             element.style.width = "100%";
             element.style.height = "100%";
@@ -241,7 +241,7 @@ function log(text, silent = true) {
 
 
 // Add a new entity to the current scene and setup the GPU buffers
-function E3D_addEntity(ent) {
+function E3D_addEntity(ent, animation = false, body = false) {
     if (E3D_getEntityIndexFromId(ent.id) != -1) { 
         log("Duplicate entity ID: " + ent.id);
         return -1;
@@ -271,11 +271,13 @@ function E3D_addEntity(ent) {
 
     ent.updateMatrix();
 
+    // update lists
     ENTITIES.push(ent);
-    ANIMATIONS.push(null);
-    BODIES.push(null);
+    ANIMATIONS.push(animation ? new E3D_animation() : null);
+    BODIES.push(body ? new E3D_body() : null);
 
-    return ENTITIES.length - 1; // return new entity's index in the list
+    // return new entity's index in the lists
+    return ENTITIES.length - 1; 
 }
 
 function E3D_getEntityIndexFromId(id) {
