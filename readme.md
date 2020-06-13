@@ -4,6 +4,8 @@ Yet another JS 3D/game engine test
 
 Trying out webGL, transfering most of my old Delphi and C# OpenGL game engine structure in webGL
 
+Current project is available for testing [here](https://m4nusky.com/projects/easy3d_webgl/) updated every 24h.
+
 * /ver5: current WIP
 * ver5demo1.html basic test page, no html, auto-setup
 * ver5demo2.html test page with dedicated div, auto-setup
