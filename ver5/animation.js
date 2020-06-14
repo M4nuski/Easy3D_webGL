@@ -31,27 +31,33 @@ class E3D_animation {
         this.endFunction = null; // function(entityIndex) to call when TTL reaches 0 (handle .endState)
 
         // Custom data
-        this.initial_position = v3_new();
+        this.initial_position = v3_new(); // for RESET
         this.initial_rotation = v3_new();
-        this.last_position = v3_new();
+        this.last_position = v3_new(); // for body interpolation
         this.last_rotation = v3_new();
         this.gravity = 1.0; // factor to tweak how much global gravity affect animation
         this.frameGravity = 0.0; // calculated gravity for this frame
         
         // Tranforms
-        this.trans_initial_pos_spd = v3_new();
+        this.trans_initial_pos_spd = v3_new(); // for RESET
         this.trans_initial_rot_spd = v3_new();
-        this.trans_pos_spd = v3_new();
+        this.trans_pos_spd = v3_new(); // can be modified by gravity and collisions with other bodies
         this.trans_rot_spd = v3_new();
 
         // Particules
         this.part_nb = 1;
-        this.part_active = [];
-        this.part_last_pos = [];
-        this.part_pos = [];
-        this.part_dir = []; // normalized direction vectors
-        this.part_spd = []; // direction vertors lengths
+
+        this.part_last_pos = []; // of v3 
+
+        this.part_pos = []; // of v3
+        this.part_dir = []; // of v3: normalized direction vectors
+        this.part_spd = []; // of float: direction vertors lengths
+        this.part_ttl = []; // of float for each particules
+        this.part_scale = []; // of float
+        this.part_alpha = []; // of float
+
         this.part_CD = false; // register and process particules CD as Point
+        this.part_updateFunction = null;
     }
 
     reset() {
@@ -94,7 +100,7 @@ function singlePassAnimator(animGroup = 0) {
                     if (ANIMATIONS[i].ttl > 0.0) {
                         ANIMATIONS[i].animFunction(i);
                     } else {
-                        if (ANIMATIONS[i].endFunct != null) ANIMATIONS[i].endFunct();
+                        if (ANIMATIONS[i].endFunct != null) ANIMATIONS[i].endFunct(i);
                     }
                 }
 
@@ -170,6 +176,16 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
     }
 
     E3D_DEBUG_CD_NB_PASSES = maxCDIterations - numIter;
+
+    for (let i = 0; i < ENTITIES.length; ++i) 
+        if ( ENTITIES[i].isAnimaed && 
+            (ANIMATIONS[i].group == animGroup) &&
+            (ANIMATIONS[i].animFunction != null) ) {
+                if (ANIMATIONS[i].ttl != -1) { 
+                    ANIMATIONS[i].ttl -= TIMER.delta;
+                    if ((ANIMATIONS[i].ttl < 0.0) && (ANIMATIONS[i].endFunct != null)) ANIMATIONS[i].endFunct(i);
+                }
+            }
 }
 
 
@@ -199,13 +215,16 @@ function resolverPass(i) {
 }
 
 
+
 // Animation factories
-// TODO fix for new flat engine structure
 
+function addTransformAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
 
-function newTransformAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
+    var idx = E3D_getEntityIndexFromId(entity.id);
+    var anim =  new E3D_animation(group);
+    ANIMATIONS[idx] = anim;
 
-    var anim = new E3D_animation(group);
+    entity.isAnimaed = true;
 
     v3_copy(anim.trans_pos_spd, pos_speed);
     v3_copy(anim.trans_rot_spd, rot_speed);
@@ -213,7 +232,7 @@ function newTransformAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gr
     v3_copy(anim.trans_initial_rot_spd, rot_speed);
 
     anim.animFunction = animFunction_transform;
-    anim.endFunction = (ttl > 0.0) ? endFunction_TTL : null;
+    anim.endFunction = (ttl > 0.0) ? endFunction_setState : null;
     anim.endState = endState;
     anim.ttl = ttl;
     anim.gravity = gravity;
@@ -226,7 +245,7 @@ function newTransformAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gr
     return anim;
 }
 
-function newTransformAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
+function addTransformAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
 
     var newPosSpeed = CAMERA.adjustToCamera_new(pos_speed);
     var newRotSpeed = CAMERA.adjustToCamera_new(rot_speed);
@@ -239,18 +258,19 @@ function newTransformAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, gr
     return newTransformAnim(entity, newPosSpeed, newRotSpeed, group, gravity, ttl, endState);
 }
 
-function newPhysicsAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
+function addPhysicsAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
 
     var anim = newTransformAnim(entity, pos_speed, rot_speed, group, gravity, ttl, endState);
 
     anim.sourceColResolver = collisionResult_asSource_slide;
     anim.targetColResolver = collisionResult_asTarget_bounce;
+    anim.endFunction = (ttl > 0.0) ? endFunction_setState_Hide : null;
 
     return anim;
 }    
 
 
-function newPhysicsAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
+function addPhysicsAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
 
     var newPosSpeed = CAMERA.adjustToCamera_new(pos_speed);
     var newRotSpeed = CAMERA.adjustToCamera_new(rot_speed);
@@ -263,42 +283,50 @@ function newPhysicsAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, grou
     return newPhysicsAnim(entity, newPosSpeed, newRotSpeed, group, gravity, ttl, endState);
 }    
 
-
-function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = 0, ttl = -1, CD = false, endState = E3D_DONE) {
-    var SrepassFunct = (CD) ? collisionResult_asSource_mark : null;
-    //var TrepassFunct = (CD) ? collisionResult_asTarget_mark : null;
-    var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
-
-    var anim = new E3D_animation("", entity, anim_Part_firstPass, SrepassFunct, null, endFunct, 0);
-
-    v3_copy(anim.pspd, pos_speed);
-    v3_copy(anim.rspd, rot_speed);
-
-    anim.endState = endState;
-    anim.ttl = ttl;
-    anim.gravity = gravity;
-    anim.pCD = CD;
-
-    anim.pNum = nbPart;
-    anim.pActive = Array(nbPart);
-    anim.pLastPos = Array(nbPart);
-    anim.pPos = Array(nbPart);
-    anim.pSpd = Array(nbPart);
-    anim.pSpdLength = Array(nbPart);
-
-    // clone elements to make the number of particules
-    anim.target.setSize(anim.target.srcNumElements * anim.pNum);
-
-    // gen starting positions
-    for (let i = 0; i < anim.pNum; ++i) {
-        //new pellet
-        anim.target.copySource(anim.target.srcNumElements * i);
-        anim.pActive[i] = true;
-        anim.pLastPos[i] = ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new());
-    }
+// entity has to be a E3D_entity_dynamicCopy
+// basic pos and rot transform for entity
+// each particules is a copy of mesh from source entity data.
+// spawn function(i, anim) : set initial pos, dir, scale, ttl and alpha per particules
+// update function(i, anim) : update dir, scale and alpha (then pos is += dir, ttl -= TIMER.delta) each frame 
+// if CD the anim function will register center of each particules as the target body's point CD data
+// the functions receive index and anim as parameters
+function addParticuleAnim(entity, pos_speed, rot_speed, nbPart, spawnFunction, updateFunction, gravity = 0, ttl = -1, endState = E3D_DONE, CD = false) {
+     
+    var anim = newTransformAnim(entity, pos_speed, rot_speed, group, gravity, ttl, endState); // base transform anim for whole entity
     
+    anim.endFunct = (ttl > 0.0) ? endFunction_setState_Hide : endFunction_setState;
+
+    anim.part_nb = nbPart;    
+
+    anim.part_last_pos = v3a_new(nbPart); // of v3
+
+    anim.part_pos = v3a_new(nbPart); // of v3
+    anim.part_dir = v3a_new(nbPart); // of v3: normalized direction vectors
+    anim.part_spd = Array(nbPart); // of float: direction vertors lengths
+    anim.part_ttl = Array(nbPart); // of float: ttl of individual particules
+    anim.part_scale = Array(nbPart); // of float: scale
+    anim.part_alpha = Array(nbPart); // of float: alpha
+
+    anim.part_CD = CD;
+    anim.part_updateFunction = updateFunction;
+    
+    // clone elements to make the number of particules
+    entity.setSize(entity.srcNumElements * anim.part_nb);
+
+    var idx = E3D_getEntityIndexFromId(entity.id);    
+    if ((CD) && (BODIES[idx] == null)) BODIES[idx] = new E3D_body();
+
+    // using spawnFunction
+    // gen starting state
+    for (let i = 0; i < anim.part_nb; ++i) {
+        entity.copySource(entity.srcNumElements * i);
+        if (spawnFunction != undefined) spawnFunction(i, anim); 
+        v3_copy(anim.part_last_pos, anim.part_pos);
+        if (CD) BODIES[idx].pushCD_point(anim.part_pos[i]);
+    }
+    /*
     // gen particules direction
-    for (let i = 0; i < anim.pNum; ++i) {
+    for (let i = 0; i < anim.part_nb; ++i) {
         anim.pSpd[i] = ((partDirFunc != null) ? partPosFunc(anim.pPos[i], i, nbPart) : v3_new());
         anim.pSpdLength[i] = v3_length(anim.pSpd[i]);        
         anim.pPos[i] = v3_clone(anim.pLastPos[i]);
@@ -312,19 +340,15 @@ function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, par
 
         if (CD) anim.target.pushCD_point(anim.pPos[i]);
     }
-
-    entity.isCollisionSource = CD;
-
-    anim.state = E3D_PLAY;
-    anim.target.visible = true;
-    anim.target.updateMatrix();
-    anim.last_position = v3_clone(anim.target.position);
-
+*/
     return anim;
 }    
 
 
-function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = 0, ttl = -1, CD = false, endState = E3D_DONE) {
+function addParticuleAnim_fromCamera(entity, camera, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = 0, ttl = -1, CD = false, endState = E3D_DONE) {
+ // TODO overload addParticulesAnim
+ 
+    /*
     var SrepassFunct = (CD) ? collisionResult_asSource_mark : null;
     //var TrepassFunct = (CD) ? collisionResult_asTarget_mark : null;
     var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
@@ -343,8 +367,8 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
     anim.gravity = gravity;
     anim.pCD = CD;
 
-    anim.pNum = nbPart;
-    anim.pActive = Array(nbPart);
+    anim.part_nb = nbPart;
+    anim.part_ttl = Array(nbPart);
     anim.pLastPos = Array(nbPart);
     anim.pPos = Array(nbPart);
     anim.pSpd = Array(nbPart);
@@ -386,7 +410,7 @@ function newParticuleAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed,
     anim.target.updateMatrix();
     anim.last_position = v3_clone(anim.target.position);
 
-    return anim;
+    return anim;*/
 }    
 
 
@@ -578,50 +602,50 @@ function collisionResult_asTarget_mark(){
 
 
 
-function anim_Base_firstPass(){
+function anim_Base_firstPass(i){
     if (this.state == E3D_PLAY) {
 
-        v3_copy(this.last_position, this.target.position);
-        v3_scale_res(this.delta, this.pspd, timer.delta);  
+        v3_copy(this.last_position, ENTITIES[i].position);
+        v3_scale_res(this.delta, this.trans_pos_spd, timer.delta);  
 
-        this.frameG = TIMER.g * this.gravity;
-        this.pspd[1] -= this.frameG;
+        this.frameGravity = TIMER.g * this.gravity;
+        this.pspd[1] -= this.frameGravity;
 
-        v3_add_mod(this.target.position, this.delta);
+        v3_add_mod(ENTITIES[i].position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
-        this.target.updateMatrix();
+        ENTITIES[i].updateMatrix();
+        this.lastHitMarker = ""; //????
+    } //TODO handle all states except DONE (reset play pause etc)
+}
+
+function anim_Transform_firstPass(i) {
+    if (this.state == E3D_PLAY) {
+
+        v3_copy(this.last_position,ENTITIES[i].position);
+
+        v3_scale_res(this.delta, this.pspd, timer.delta);  
+        v3_add_mod(ENTITIES[i].position, this.delta);
+        this.deltaLength = v3_length(this.delta);
+
+        v3_addscaled_mod(ENTITIES[i].rotation, this.rspd, timer.delta);
+
+        ENTITIES[i].updateMatrix();
         this.lastHitMarker = ""; 
     }
 }
 
-function anim_Transform_firstPass() {
-    if (this.state == E3D_PLAY) {
-
-        v3_copy(this.last_position, this.target.position);
-
-        v3_scale_res(this.delta, this.pspd, timer.delta);  
-        v3_add_mod(this.target.position, this.delta);
-        this.deltaLength = v3_length(this.delta);
-
-        v3_addscaled_mod(this.target.rotation, this.rspd, timer.delta);
-
-        this.target.updateMatrix();
-        this.lastHitMarker = ""; 
-    }
-}
-
-function anim_Part_firstPass() {
+function anim_Part_firstPass(i) {
     if (this.state == E3D_PLAY) {
 
         // Transform
-        v3_copy(this.last_position, this.target.position);
+        v3_copy(this.last_position, ENTITIES[i].position);
         v3_scale_res(this.delta, this.pspd, timer.delta);  
 
         this.frameG = TIMER.g * this.gravity;
         this.pspd[1] -= this.frameG;
 
-        v3_add_mod(this.target.position, this.delta);
+        v3_add_mod(ENTITIES[i].position, this.delta);
         this.deltaLength = v3_length(this.delta);
 
         // Remove deactivated particules
@@ -677,38 +701,21 @@ function anim_Part_firstPass() {
 
 
 
-// End pass basic functions
+// End of TTL functions
 
-function endFunction_() {
+function endFunction_setState() {
     this.state = this.endState;
-    this.isVisible = false;
 }
 
-function endFunction_hide() {
+function endFunction_setState_Hide() {
     this.state = this.endState;
     this.isVisible = false;
-}
-
-function endFunction_delete(i) {
-    this.state = this.endState;
-    this.isVisible = false;
-    if (this.state == E3D_DONE) E3D_removeEntity(ENTITIES[i].id);
 }
 
 
 // Helper functions
-
-
-
 function cleanupDoneAnimations() {
-    //var someremoved = false;
-    for (let i = ENTITIES.length-1; i >= 0; --i) if ( (ENTITIES[i].isAnimaed) && (ANIMATIONS[i].state == E3D_DONE) ) {
-
-        SCENE.removeEntity(ENTITIES[i].id, false);
-
-      //  someremoved = true;
-    }
-    // Recalc indices until animations are merged with entities
-    //if (someremoved) for (let i = 0; i < animations.length; ++i) animations[i].target.animIndex = i;
+    for (let i = ENTITIES.length-1; i >= 0; --i) 
+        if ( (ENTITIES[i].isAnimaed) && (ANIMATIONS[i].state == E3D_DONE) ) SCENE.removeEntity(ENTITIES[i].id, false);
 }
 

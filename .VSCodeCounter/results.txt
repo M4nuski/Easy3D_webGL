@@ -1,0 +1,55 @@
+Date : 2020-06-13 19:14:03
+Directory : d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5
+Total : 28 files,  8360 codes, 1008 comments, 2392 blanks, all 11760 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JavaScript |         21 |      8,138 |        978 |      2,366 |     11,482 |
+| HTML       |          6 |        164 |         21 |         21 |        206 |
+| CSS        |          1 |         58 |          9 |          5 |         72 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                          | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                             |         28 |      8,360 |      1,008 |      2,392 |     11,760 |
+| ..                                                            |         13 |        867 |        136 |        304 |      1,307 |
++---------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                      | language   | code       | comment    | blank      | total      |
++---------------------------------------------------------------+------------+------------+------------+------------+------------+
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5.css              | CSS        |         58 |          9 |          5 |         72 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5.js               | JavaScript |        387 |         25 |        122 |        534 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\E3D_Engine.js    | JavaScript |         73 |          5 |         14 |         92 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\animation.js     | JavaScript |        471 |         61 |        183 |        715 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\camera.js        | JavaScript |        240 |         24 |         82 |        346 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\collision.js     | JavaScript |      1,584 |        276 |        529 |      2,389 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\core.js          | JavaScript |        285 |         38 |         78 |        401 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\debug.js         | JavaScript |        133 |         30 |         32 |        195 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\entity.js        | JavaScript |        542 |         85 |        201 |        828 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\input.js         | JavaScript |        824 |         98 |        226 |      1,148 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\math.js          | JavaScript |      1,727 |        120 |        307 |      2,154 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\mesh.js          | JavaScript |        641 |         71 |        217 |        929 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\resource.js      | JavaScript |        156 |          4 |         29 |        189 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\scene.js         | JavaScript |        271 |         30 |        104 |        405 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\shader.js        | JavaScript |        437 |         21 |         50 |        508 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\timing.js        | JavaScript |         59 |          3 |         24 |         86 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5\utility.js       | JavaScript |         50 |          6 |         12 |         68 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demo.js           | JavaScript |         15 |         10 |         12 |         37 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demo1.html        | HTML       |         10 |          2 |          0 |         12 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demo2.html        | HTML       |         20 |          3 |          1 |         24 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demo3.html        | HTML       |         27 |          4 |          4 |         35 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demo4.html        | HTML       |         28 |          4 |          6 |         38 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demo5.html        | HTML       |         27 |          4 |          6 |         37 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demo6.html        | HTML       |         52 |          4 |          4 |         60 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demoAnim.js       | JavaScript |         61 |         27 |         40 |        128 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demoFail.js       | JavaScript |         10 |          4 |          3 |         17 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demoPrimitives.js | JavaScript |        112 |         17 |         63 |        192 |
+| d:\OneDrive\Prog\Web\WebGL\Easy3D_WebGL\ver5demoShader.js     | JavaScript |         60 |         23 |         38 |        121 |
+| Total                                                         |            |      8,360 |      1,008 |      2,392 |     11,760 |
++---------------------------------------------------------------+------------+------------+------------+------------+------------+

@@ -808,7 +808,12 @@ function v3a_clone(a) {
 function v3a_copy(res, a) {
     for (var i = 0; i < a.length; ++i) res[i] = [ a[i][0],  a[i][1],  a[i][2] ];
 }
-
+// Create new array of empty v3
+function v3a_new(n) {
+    var res = new Array(n);
+    for (var i = 0; i < n; ++i) res[i] = v3_new();
+    return res;
+}
 
 
 // v3 and m4
