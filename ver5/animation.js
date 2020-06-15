@@ -22,6 +22,7 @@ class E3D_animation {
         this.group = group; // animation can use different animators that only process specific groups
 
         this.ttl = -1; // time to live in seconds, -1 to disable
+        this.initial_ttl  = -1;
         this.state = E3D_RESET;
         this.endState = E3D_DONE; // state to set after ttl reaches 0
 
@@ -92,19 +93,7 @@ function singlePassAnimator(animGroup = 0) {
     for (let i = 0; i < ENTITIES.length; ++i) 
         if ( ENTITIES[i].isAnimaed && 
             (ANIMATIONS[i].group == animGroup) &&
-            (ANIMATIONS[i].animFunction != null) ) {
-                if (ANIMATIONS[i].ttl == -1) { 
-                    ANIMATIONS[i].animFunction(i);
-                } else {
-                    ANIMATIONS[i].ttl -= TIMER.delta;
-                    if (ANIMATIONS[i].ttl > 0.0) {
-                        ANIMATIONS[i].animFunction(i);
-                    } else {
-                        if (ANIMATIONS[i].endFunct != null) ANIMATIONS[i].endFunct(i);
-                    }
-                }
-
-            }
+            (ANIMATIONS[i].animFunction != null) ) ANIMATIONS[i].animFunction(i);
 }
 
 
@@ -176,16 +165,6 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
     }
 
     E3D_DEBUG_CD_NB_PASSES = maxCDIterations - numIter;
-
-    for (let i = 0; i < ENTITIES.length; ++i) 
-        if ( ENTITIES[i].isAnimaed && 
-            (ANIMATIONS[i].group == animGroup) &&
-            (ANIMATIONS[i].animFunction != null) ) {
-                if (ANIMATIONS[i].ttl != -1) { 
-                    ANIMATIONS[i].ttl -= TIMER.delta;
-                    if ((ANIMATIONS[i].ttl < 0.0) && (ANIMATIONS[i].endFunct != null)) ANIMATIONS[i].endFunct(i);
-                }
-            }
 }
 
 
@@ -226,19 +205,15 @@ function addTransformAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gr
 
     entity.isAnimaed = true;
 
-    v3_copy(anim.trans_pos_spd, pos_speed);
-    v3_copy(anim.trans_rot_spd, rot_speed);
     v3_copy(anim.trans_initial_pos_spd, pos_speed);
     v3_copy(anim.trans_initial_rot_spd, rot_speed);
 
     anim.animFunction = animFunction_transform;
     anim.endFunction = (ttl > 0.0) ? endFunction_setState : null;
     anim.endState = endState;
-    anim.ttl = ttl;
+    anim.initial_ttl = ttl;
     anim.gravity = gravity;
 
-    v3_copy(anim.last_position, entity.position);
-    v3_copy(anim.last_rotation, entity.rotation);
     v3_copy(anim.initial_position, entity.position);
     v3_copy(anim.initial_rotation, entity.rotation);
 
@@ -294,6 +269,7 @@ function addParticuleAnim(entity, pos_speed, rot_speed, nbPart, spawnFunction, u
      
     var anim = newTransformAnim(entity, pos_speed, rot_speed, group, gravity, ttl, endState); // base transform anim for whole entity
     
+    anim.animFunction = animFunction_particule;
     anim.endFunct = (ttl > 0.0) ? endFunction_setState_Hide : endFunction_setState;
 
     anim.part_nb = nbPart;    
@@ -314,103 +290,45 @@ function addParticuleAnim(entity, pos_speed, rot_speed, nbPart, spawnFunction, u
     entity.setSize(entity.srcNumElements * anim.part_nb);
 
     var idx = E3D_getEntityIndexFromId(entity.id);    
-    if ((CD) && (BODIES[idx] == null)) BODIES[idx] = new E3D_body();
+    if (CD && (BODIES[idx] == null)) BODIES[idx] = new E3D_body();
 
     // using spawnFunction
     // gen starting state
     for (let i = 0; i < anim.part_nb; ++i) {
-        entity.copySource(entity.srcNumElements * i);
+        // gen data for this particule
         if (spawnFunction != undefined) spawnFunction(i, anim); 
         v3_copy(anim.part_last_pos, anim.part_pos);
         if (CD) BODIES[idx].pushCD_point(anim.part_pos[i]);
-    }
-    /*
-    // gen particules direction
-    for (let i = 0; i < anim.part_nb; ++i) {
-        anim.pSpd[i] = ((partDirFunc != null) ? partPosFunc(anim.pPos[i], i, nbPart) : v3_new());
-        anim.pSpdLength[i] = v3_length(anim.pSpd[i]);        
-        anim.pPos[i] = v3_clone(anim.pLastPos[i]);
+        
+        // copy source 
+        entity.copySource(entity.srcNumElements * i);
 
-        //offset pelets vertex by new origin
-        for (var j = 0; j < anim.target.srcNumElements; ++j ) {
-            var idx = ( i * anim.target.srcNumElements) + j;
-            var b = anim.target.getVertex3f(idx);
-            v3_add_mod(b, anim.pPos[i])
-        }
-
-        if (CD) anim.target.pushCD_point(anim.pPos[i]);
+        // offset particule vertex by new position
+        for (var j = 0; j < entity.srcNumElements; ++j ) v3_add_mod(entity.getVertex3f(( i * entity.srcNumElements) + j ), anim.part_pos[i]);
     }
-*/
     return anim;
 }    
 
 
-function addParticuleAnim_fromCamera(entity, camera, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = 0, ttl = -1, CD = false, endState = E3D_DONE) {
- // TODO overload addParticulesAnim
- 
-    /*
-    var SrepassFunct = (CD) ? collisionResult_asSource_mark : null;
-    //var TrepassFunct = (CD) ? collisionResult_asTarget_mark : null;
-    var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
+function addParticuleAnim_fromCamera(entity, pos_speed, rot_speed, nbPart, spawnFunction, updateFunction, gravity = 0, ttl = -1, endState = E3D_DONE, CD = false) {
+    var newPosSpeed = CAMERA.adjustToCamera_new(pos_speed);
+    var newRotSpeed = CAMERA.adjustToCamera_new(rot_speed);
 
-    var anim = new E3D_animation("", entity, anim_Part_firstPass, SrepassFunct, null, endFunct, 0);
+    v3_add_mod(entity.position, CAMERA.position);
+    v3_add_mod(entity.rotation, CAMERA.rotation);
 
+    entity.updateMatrix();
+
+    return addParticuleAnim(entity, newPosSpeed, newRotSpeed, nbPart, spawnFunction, updateFunction, gravity, ttl, endState, CD);
+
+/*
     var offset = camera.adjustToCamera(anim.target.position);
     v3_copy(anim.target.position, camera.position);
     v3_add_mod(anim.target.position, offset);
 
     anim.pspd = camera.adjustToCamera(pos_speed);
     anim.rspd = camera.adjustToCamera(rot_speed);
-
-    anim.endState = endState;
-    anim.ttl = ttl;
-    anim.gravity = gravity;
-    anim.pCD = CD;
-
-    anim.part_nb = nbPart;
-    anim.part_ttl = Array(nbPart);
-    anim.pLastPos = Array(nbPart);
-    anim.pPos = Array(nbPart);
-    anim.pSpd = Array(nbPart);
-    anim.pSpdLength = Array(nbPart);
-
-    // clone elements to make the number of particules
-    anim.target.setSize(anim.target.srcNumElements * anim.pNum);
-
-    // gen starting positions
-    for (let i = 0; i < anim.pNum; ++i) {
-        //new pellet
-        anim.target.copySource(anim.target.srcNumElements * i);
-        anim.pActive[i] = true;
-        anim.pLastPos[i] = ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new());
-    }
-    
-    // gen particules direction
-    for (let i = 0; i < anim.pNum; ++i) {
-        anim.pSpd[i] = camera.adjustToCamera( ((partDirFunc != null) ? partPosFunc(anim.pPos[i], i, nbPart) : v3_new()) );
-        anim.pSpdLength[i] = v3_length(anim.pSpd[i]);        
-
-        anim.pLastPos[i] = camera.adjustToCamera(anim.pLastPos[i]);
-        anim.pPos[i] = v3_clone(anim.pLastPos[i]);
-
-        //offset pelets vertex by new origin
-        for (var j = 0; j < anim.target.srcNumElements; ++j ) {
-            var idx = ( i * anim.target.srcNumElements) + j;
-            var b = anim.target.getVertex3f(idx);
-            v3_add_mod(b, anim.pPos[i])
-        }
-
-        if (CD) anim.target.pushCD_point(anim.pPos[i]);
-    }
-
-    entity.isCollisionSource = CD;
-
-    anim.state = E3D_PLAY;
-    anim.target.visible = true;
-    anim.target.updateMatrix();
-    anim.last_position = v3_clone(anim.target.position);
-
-    return anim;*/
+*/
 }    
 
 
@@ -598,110 +516,134 @@ function collisionResult_asTarget_mark(){
 
 
 
-// First pass basic methods
+// Animation functions
 
 
 
-function anim_Base_firstPass(i){
-    if (this.state == E3D_PLAY) {
+// Basic linear transform for position and rotation
+var _animFunction_transform_dp = v3_new();
+var _animFunction_transform_dr = v3_new();
+function animFunction_transform(i) {
+    switch (this.state) {
+        case E3D_RESET:
+            this.ttl = this.initial_ttl;
+            v3_copy(this.trans_pos_spd, this.trans_initial_pos_spd);
+            v3_copy(this.trans_rot_spd, this.trans_initial_rot_spd);
+            v3_copy(ENTITIES[i].position, this.initial_position);
+            v3_copy(ENTITIES[i].rotation, this.initial_rotation);
+        break;
+        case E3D_PLAY:
 
-        v3_copy(this.last_position, ENTITIES[i].position);
-        v3_scale_res(this.delta, this.trans_pos_spd, timer.delta);  
+            // gravity
+            this.frameGravity = this.gravity * TIMER.g;
+            this.trans_pos_spd[1] -= this.frameGravity;            
 
-        this.frameGravity = TIMER.g * this.gravity;
-        this.pspd[1] -= this.frameGravity;
+            // transform
+            v3_scale_res(_animFunction_transform_dp, this.trans_pos_spd, TIMER.delta);
+            v3_scale_res(_animFunction_transform_dr, this.trans_rot_spd, TIMER.delta);
 
-        v3_add_mod(ENTITIES[i].position, this.delta);
-        this.deltaLength = v3_length(this.delta);
+            // body data
+            if (BODIES[i] != null) { // TODO keep in animation ?
+                v3_copy(BODIES[i].delta, _animFunction_transform_dp);
+                BODIES[i].deltaLength = v3_length(_animFunction_transform_dp);
+            }
 
-        ENTITIES[i].updateMatrix();
-        this.lastHitMarker = ""; //????
-    } //TODO handle all states except DONE (reset play pause etc)
+            v3_copy(this.last_position, ENTITIES[i].position);
+            v3_copy(this.last_rotation, ENTITIES[i].rotation);
+
+            v3_add_mod(ENTITIES[i].position, _animFunction_transform_dp);
+            v3_add_mod(ENTITIES[i].rotation, _animFunction_transform_dr);
+            ENTITIES[i].updateMatrix();
+
+            // ttl
+            if (this.ttl == -1) {
+                this.ttl -= TIMER.delta;
+                if (this.ttl < 0.0) this.state = E3D_DONE;
+            }
+        break;
+        case E3D_PAUSE:
+            // do nothing   
+        break;
+        case E3D_RESTART:
+            this.ttl = this.initial_ttl;
+            v3_copy(this.trans_pos_spd, this.trans_initial_pos_spd);
+            v3_copy(this.trans_rot_spd, this.trans_initial_rot_spd);
+            v3_copy(ENTITIES[i].position, this.initial_position);
+            v3_copy(ENTITIES[i].rotation, this.initial_rotation);
+
+            this.state = E3D_PLAY;
+        break;
+        case E3D_DONE:
+            if (this.endFunct != null) this.endFunct(i);
+        break;
+      }
 }
 
-function anim_Transform_firstPass(i) {
-    if (this.state == E3D_PLAY) {
+// Transform function with particules handing
+function animFunction_particule(i) {
+    // transform
+    animFunction_transform(i);
 
-        v3_copy(this.last_position,ENTITIES[i].position);
+    // particules
 
-        v3_scale_res(this.delta, this.pspd, timer.delta);  
-        v3_add_mod(ENTITIES[i].position, this.delta);
-        this.deltaLength = v3_length(this.delta);
-
-        v3_addscaled_mod(ENTITIES[i].rotation, this.rspd, timer.delta);
-
-        ENTITIES[i].updateMatrix();
-        this.lastHitMarker = ""; 
-    }
-}
-
-function anim_Part_firstPass(i) {
-    if (this.state == E3D_PLAY) {
-
-        // Transform
-        v3_copy(this.last_position, ENTITIES[i].position);
-        v3_scale_res(this.delta, this.pspd, timer.delta);  
-
-        this.frameG = TIMER.g * this.gravity;
-        this.pspd[1] -= this.frameG;
-
-        v3_add_mod(ENTITIES[i].position, this.delta);
-        this.deltaLength = v3_length(this.delta);
-
-        // Remove deactivated particules
-        for (let i = this.pNum-1; i >= 0; --i) if (!this.pActive[i]) {
-            this.pNum--;
-            this.pActive.splice(i, 1);
-            this.pLastPos.splice(i, 1);
-            this.pPos.splice(i, 1);
-            this.pSpd.splice(i, 1);
-            this.pSpdLength.splice(i, 1);
-
-            for (var k = i+1; k < this.pNum; ++k) { // bubble up the remeaining vertex
-                for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                    var nextIndex = ( k * this.target.srcNumElements) + j;
-                    var prevIndex = ( (k-1) * this.target.srcNumElements) + j;
-                    this.target.setVertex3f(prevIndex, this.target.getVertex3f(nextIndex));
+    /*
+      
+    // Remove deactivated particules
+            for (let i = this.pNum-1; i >= 0; --i) if (!this.pActive[i]) {
+                this.pNum--;
+                this.pActive.splice(i, 1);
+                this.pLastPos.splice(i, 1);
+                this.pPos.splice(i, 1);
+                this.pSpd.splice(i, 1);
+                this.pSpdLength.splice(i, 1);
+    
+                for (var k = i+1; k < this.pNum; ++k) { // bubble up the remeaining vertex
+                    for (var j = 0; j < this.target.srcNumElements; ++j ) {
+                        var nextIndex = ( k * this.target.srcNumElements) + j;
+                        var prevIndex = ( (k-1) * this.target.srcNumElements) + j;
+                        this.target.setVertex3f(prevIndex, this.target.getVertex3f(nextIndex));
+                    }
                 }
+                this.target.numElements -= this.target.srcNumElements;
+                if (this.pCD) {
+                    this.target.CD_point--;
+                    this.target.CD_point_p0.splice(i, 1);
+                    this.target.CD_point_p.splice(i, 1);
+                }
+    
             }
-            this.target.numElements -= this.target.srcNumElements;
-            if (this.pCD) {
-                this.target.CD_point--;
-                this.target.CD_point_p0.splice(i, 1);
-                this.target.CD_point_p.splice(i, 1);
+    
+            var max = v3_new();
+            // Animate particules
+            for (let i = 0; i < this.pNum; ++i) { 
+    
+                v3_copy(this.pLastPos[i], this.pPos[i]);
+                v3_addscaled_mod(this.pPos[i], this.pSpd[i], timer.delta);
+    
+                // translate pellet entity elements
+                for (var j = 0; j < this.target.srcNumElements; ++j ) {
+                    var b = this.target.getVertex3f( ( i * this.target.srcNumElements ) + j); // b is a view in float32array
+                    v3_addscaled_mod(b, this.pSpd[i], timer.delta);
+                    if (Math.abs(b[0]) > max[0]) max[0] = Math.abs(b[0]);
+                    if (Math.abs(b[1]) > max[1]) max[1] = Math.abs(b[1]);
+                    if (Math.abs(b[2]) > max[2]) max[2] = Math.abs(b[2]);
+                }
+    
+                if (this.pCD) v3_copy(this.target.CD_point_p0[i], this.pPos[i]); 
             }
 
-        }
+            */
 
-        var max = v3_new();
-        // Animate particules
-        for (let i = 0; i < this.pNum; ++i) { 
 
-            v3_copy(this.pLastPos[i], this.pPos[i]);
-            v3_addscaled_mod(this.pPos[i], this.pSpd[i], timer.delta);
-
-            // translate pellet entity elements
-            for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                var b = this.target.getVertex3f( ( i * this.target.srcNumElements ) + j); // b is a view in float32array
-                v3_addscaled_mod(b, this.pSpd[i], timer.delta);
-                if (Math.abs(b[0]) > max[0]) max[0] = Math.abs(b[0]);
-                if (Math.abs(b[1]) > max[1]) max[1] = Math.abs(b[1]);
-                if (Math.abs(b[2]) > max[2]) max[2] = Math.abs(b[2]);
-            }
-
-            if (this.pCD) v3_copy(this.target.CD_point_p0[i], this.pPos[i]); 
-        }
-
-        this.target.visibilityDistance = v3_length(max);
-        this.target.dataContentChanged = true;
-        this.target.updateMatrix();
-        this.lastHitMarker = ""; 
-    }
+    if (ENTITIES[i].isVisibiltyCullable) ENTITIES[i].visibilityDistance = v3_length(max);
+    ENTITIES[i].dataContentChanged = true;
 }
 
 
 
 // End of TTL functions
+
+
 
 function endFunction_setState() {
     this.state = this.endState;
@@ -713,7 +655,11 @@ function endFunction_setState_Hide() {
 }
 
 
+
 // Helper functions
+
+
+
 function cleanupDoneAnimations() {
     for (let i = ENTITIES.length-1; i >= 0; --i) 
         if ( (ENTITIES[i].isAnimaed) && (ANIMATIONS[i].state == E3D_DONE) ) SCENE.removeEntity(ENTITIES[i].id, false);
