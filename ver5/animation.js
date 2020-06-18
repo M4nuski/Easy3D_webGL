@@ -49,10 +49,8 @@ class E3D_animation {
         this.part_nb = 1;
 
         this.part_last_pos = []; // of v3 
-
         this.part_pos = []; // of v3
         this.part_dir = []; // of v3: normalized direction vectors
-        this.part_spd = []; // of float: direction vertors lengths
         this.part_ttl = []; // of float for each particules
         this.part_scale = []; // of float
         this.part_alpha = []; // of float
@@ -168,25 +166,25 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
 }
 
 
-function resolverPass(i) {
-    var anim = ANIMATIONS[i];
-    var body = BODIES[i];
+function resolverPass(index) {
+    var anim = ANIMATIONS[index];
+    var body = BODIES[index];
     if ((body.nbSourceCollision > 0) && (body.nbTargetCollision > 0)) { // both source and target
         if (anim.sourceColResolver && anim.targetColResolver) { // resolver for both source and target
             if (body.closestCollision.t0 < body.otherCollision.t0) { // closest event
-                anim.sourceColResolver(i);
+                anim.sourceColResolver(index);
             } else {
-                anim.targetColResolver(i);
+                anim.targetColResolver(index);
             }
         } else if (anim.sourceColResolver) { // source resolver only
-            anim.sourceColResolver(i);
+            anim.sourceColResolver(index);
         } else if (anim.targetColResolver) { // target resolver only
-            anim.targetColResolver(i);
+            anim.targetColResolver(index);
         }
     } else if ((BODIES[i].nbSourceCollision > 0) && anim.sourceColResolver) { // only a source with a source resolver
-        anim.sourceColResolver(i);
+        anim.sourceColResolver(index);
     } else if ((BODIES[i].nbTargetCollision > 0) && anim.targetColResolver) { // only a target with a target resolver
-        anim.targetColResolver(i);
+        anim.targetColResolver(index);
     }
     
     body.nbSourceCollision = 0;
@@ -262,7 +260,7 @@ function addPhysicsAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, grou
 // basic pos and rot transform for entity
 // each particules is a copy of mesh from source entity data.
 // spawn function(i, anim) : set initial pos, dir, scale, ttl and alpha per particules
-// update function(i, anim) : update dir, scale and alpha (then pos is += dir, ttl -= TIMER.delta) each frame 
+// update function(i, anim) : update dir, scale and alpha (then pos is += dir, ttl -= TIMER.delta done in animator) each frame 
 // if CD the anim function will register center of each particules as the target body's point CD data
 // the functions receive index and anim as parameters
 function addParticuleAnim(entity, pos_speed, rot_speed, nbPart, spawnFunction, updateFunction, gravity = 0, ttl = -1, endState = E3D_DONE, CD = false) {
@@ -277,8 +275,7 @@ function addParticuleAnim(entity, pos_speed, rot_speed, nbPart, spawnFunction, u
     anim.part_last_pos = v3a_new(nbPart); // of v3
 
     anim.part_pos = v3a_new(nbPart); // of v3
-    anim.part_dir = v3a_new(nbPart); // of v3: normalized direction vectors
-    anim.part_spd = Array(nbPart); // of float: direction vertors lengths
+    anim.part_dir = v3a_new(nbPart); // of v3: direction vectors
     anim.part_ttl = Array(nbPart); // of float: ttl of individual particules
     anim.part_scale = Array(nbPart); // of float: scale
     anim.part_alpha = Array(nbPart); // of float: alpha
@@ -523,14 +520,14 @@ function collisionResult_asTarget_mark(){
 // Basic linear transform for position and rotation
 var _animFunction_transform_dp = v3_new();
 var _animFunction_transform_dr = v3_new();
-function animFunction_transform(i) {
+function animFunction_transform(index) {
     switch (this.state) {
         case E3D_RESET:
             this.ttl = this.initial_ttl;
             v3_copy(this.trans_pos_spd, this.trans_initial_pos_spd);
             v3_copy(this.trans_rot_spd, this.trans_initial_rot_spd);
-            v3_copy(ENTITIES[i].position, this.initial_position);
-            v3_copy(ENTITIES[i].rotation, this.initial_rotation);
+            v3_copy(ENTITIES[index].position, this.initial_position);
+            v3_copy(ENTITIES[index].rotation, this.initial_rotation);
         break;
         case E3D_PLAY:
 
@@ -548,12 +545,12 @@ function animFunction_transform(i) {
                 BODIES[i].deltaLength = v3_length(_animFunction_transform_dp);
             }
 
-            v3_copy(this.last_position, ENTITIES[i].position);
-            v3_copy(this.last_rotation, ENTITIES[i].rotation);
+            v3_copy(this.last_position, ENTITIES[index].position);
+            v3_copy(this.last_rotation, ENTITIES[index].rotation);
 
-            v3_add_mod(ENTITIES[i].position, _animFunction_transform_dp);
-            v3_add_mod(ENTITIES[i].rotation, _animFunction_transform_dr);
-            ENTITIES[i].updateMatrix();
+            v3_add_mod(ENTITIES[index].position, _animFunction_transform_dp);
+            v3_add_mod(ENTITIES[index].rotation, _animFunction_transform_dr);
+            ENTITIES[index].updateMatrix();
 
             // ttl
             if (this.ttl == -1) {
@@ -568,8 +565,8 @@ function animFunction_transform(i) {
             this.ttl = this.initial_ttl;
             v3_copy(this.trans_pos_spd, this.trans_initial_pos_spd);
             v3_copy(this.trans_rot_spd, this.trans_initial_rot_spd);
-            v3_copy(ENTITIES[i].position, this.initial_position);
-            v3_copy(ENTITIES[i].rotation, this.initial_rotation);
+            v3_copy(ENTITIES[index].position, this.initial_position);
+            v3_copy(ENTITIES[index].rotation, this.initial_rotation);
 
             this.state = E3D_PLAY;
         break;
@@ -580,63 +577,78 @@ function animFunction_transform(i) {
 }
 
 // Transform function with particules handing
-function animFunction_particule(i) {
+function animFunction_particule(index) {
     // transform
-    animFunction_transform(i);
+    animFunction_transform(index);
 
     // particules
+    if (this.state == E3D_PLAY) {
+        // ttl 
+        if (this.ttl != -1) {
+            // apply ttl and remove dead particules 
+            for (let i = this.part_nb - 1; i >= 0; --i) {
+                this.part_ttl[i] -= TIMER.delta;
+                if (this.part_ttl[i] < 0.0) {
 
-    /*
-      
-    // Remove deactivated particules
-            for (let i = this.pNum-1; i >= 0; --i) if (!this.pActive[i]) {
-                this.pNum--;
-                this.pActive.splice(i, 1);
-                this.pLastPos.splice(i, 1);
-                this.pPos.splice(i, 1);
-                this.pSpd.splice(i, 1);
-                this.pSpdLength.splice(i, 1);
-    
-                for (var k = i+1; k < this.pNum; ++k) { // bubble up the remeaining vertex
-                    for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                        var nextIndex = ( k * this.target.srcNumElements) + j;
-                        var prevIndex = ( (k-1) * this.target.srcNumElements) + j;
-                        this.target.setVertex3f(prevIndex, this.target.getVertex3f(nextIndex));
+                    this.part_nb--;
+
+                    this.part_last_pos.splice(i, 1);
+                    this.part_pos.splice(i, 1);
+                    this.part_dir.splice(i, 1);
+                    this.part_spd.splice(i, 1);
+                    this.part_ttl.splice(i, 1);
+                    this.part_scale.splice(i, 1);
+                    this.part_alpha.splice(i, 1);
+
+                    // bubble up the remeaining vertex
+                    for (var k = i + 1; k < this.part_nb; ++k) { 
+                        for (var j = 0; j < ENTITIES[index].srcNumElements; ++j ) {
+                            var nextIndex = ( k * ENTITIES[index].srcNumElements) + j;
+                            var prevIndex = ( (k-1) * ENTITIES[index].srcNumElements) + j;
+                            ENTITIES[index].setVertex3f(prevIndex, ENTITIES[index].getVertex3f(nextIndex));
+                        }
+                    }
+                    ENTITIES[index].numElements -= ENTITIES[index].srcNumElements;
+                    if (this.part_CD) {
+                        ENTITIES[index].CD_point--; // TODO remCD_point in E3D_body
+                        ENTITIES[index].CD_point_p0.splice(i, 1);
+                        ENTITIES[index].CD_point_p.splice(i, 1);
                     }
                 }
-                this.target.numElements -= this.target.srcNumElements;
-                if (this.pCD) {
-                    this.target.CD_point--;
-                    this.target.CD_point_p0.splice(i, 1);
-                    this.target.CD_point_p.splice(i, 1);
-                }
+            } 
+        } // tll != -1
+
+        // Animate particules
+        var max = v3_new();
+
+        for (let i = 0; i < this.part_nb; ++i) { 
+
+            if (this.part_updateFunction) this.part_updateFunction(i, this);
     
-            }
-    
-            var max = v3_new();
-            // Animate particules
-            for (let i = 0; i < this.pNum; ++i) { 
-    
-                v3_copy(this.pLastPos[i], this.pPos[i]);
-                v3_addscaled_mod(this.pPos[i], this.pSpd[i], timer.delta);
-    
-                // translate pellet entity elements
-                for (var j = 0; j < this.target.srcNumElements; ++j ) {
-                    var b = this.target.getVertex3f( ( i * this.target.srcNumElements ) + j); // b is a view in float32array
-                    v3_addscaled_mod(b, this.pSpd[i], timer.delta);
+            v3_copy(this.part_last_pos[i], this.part_pos[i]);
+            v3_addscaled_mod(this.part_pos[i], this.part_dir[i], TIMER.delta);
+
+            // translate pellet entity elements
+            for (var j = 0; j < ENTITIES[index].srcNumElements; ++j ) {
+                var b = ENTITIES[index].getVertex3f( ( i * this.target.srcNumElements ) + j); // b is a view in float32array
+                v3_addscaled_mod(b, this.part_dir[i], TIMER.delta);
+                if (ENTITIES[index].isVisibiltyCullable) {
                     if (Math.abs(b[0]) > max[0]) max[0] = Math.abs(b[0]);
                     if (Math.abs(b[1]) > max[1]) max[1] = Math.abs(b[1]);
                     if (Math.abs(b[2]) > max[2]) max[2] = Math.abs(b[2]);
                 }
-    
-                if (this.pCD) v3_copy(this.target.CD_point_p0[i], this.pPos[i]); 
             }
 
-            */
+            if (this.part_CD) v3_copy(BODIES[index].CD_point_p0[i], this.part_pos[i]); 
+        }
 
 
-    if (ENTITIES[i].isVisibiltyCullable) ENTITIES[i].visibilityDistance = v3_length(max);
-    ENTITIES[i].dataContentChanged = true;
+
+
+    } // E3D_PLAY
+
+    if (ENTITIES[index].isVisibiltyCullable) ENTITIES[index].visibilityDistance = v3_length(max);
+    ENTITIES[index].dataContentChanged = true;
 }
 
 
