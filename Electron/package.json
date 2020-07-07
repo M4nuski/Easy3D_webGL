@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/M4nuski/Easy3D_webGL#readme",
   "devDependencies": {
-    "electron": "^1.8.8"
+    "electron": "^9.1.0"
   }
 }
