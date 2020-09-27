@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Layout tests for PC VS Mobile - Over</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }        
+        input {
+            font-size: initial;
+        }
+        
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+        .E3D_flexVertical {
+            display: flex;
+            flex-direction: column;
+        }
+        .E3D_flexHorizontal {
+            display: flex;
+            flex-direction: row;
+        }
+        .E3D_flexContent {
+            overflow: hidden;
+            flex: 1 1 auto;
+        }
+        .E3D_flexVerticalContentFixed {
+            width: 100%;
+            height: fit-content;
+        }
+        .E3D_flexHorizontalContentFixed {
+            width: fit-content;
+            height: 100%;
+        }
+
+
+        .menuTopLeft {
+            position: absolute;
+            display: block;
+            left : 0px;
+            top : 0px;
+            border-radius: 0px 0px 10px 0px;
+            z-index: 10;
+            overflow: hidden;
+            padding: 0.2em;
+            padding-right: 0.3em;
+            border-right: solid 2px black;
+            border-bottom: solid 2px black;
+        }        
+
+        .hoverSize {
+            max-width: 50px;
+            max-height: 50px;
+            background-color: rgba(255, 255, 255, 0.25);
+
+            transition: all 0.1s linear;
+        }      
+        .hoverSize:hover{
+            max-width: 200px;
+            max-height:  200px; /* should be equal to max-width to avoid transition overshoot */
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .c1 {
+            background-color: #FFAAAA;
+        }
+        .c2 {
+            background-color: #AAFFAA;
+        }
+        .c3 {
+            background-color: #AAAAFF;
+        }
+        .c4 {
+            background-color: #FFAAFF;
+        }
+
+
+
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+        function log(text) {
+            document.getElementById("logDiv").innerText += text + "\n";
+        }
+
+
+navigator.connection.addEventListener('change', logNetworkInfo);
+
+function logNetworkInfo() {
+  // Network type that browser uses
+  log('         type: ' + navigator.connection.type);
+
+  // Effective bandwidth estimate
+  log('     downlink: ' + navigator.connection.downlink + 'Mb/s');
+
+  // Effective round-trip time estimate
+  log('          rtt: ' + navigator.connection.rtt + 'ms');
+
+  // Upper bound on the downlink speed of the first network hop
+  log('  downlinkMax: ' + navigator.connection.downlinkMax + 'Mb/s');
+
+  // Effective connection type determined using a combination of recently
+  // observed rtt and downlink values: ' +
+  log('effectiveType: ' + navigator.connection.effectiveType);
+  
+  // True if the user has requested a reduced data usage mode from the user
+  // agent.
+  log('     saveData: ' + navigator.connection.saveData);
+
+
+  var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+var type = connection.effectiveType;
+
+log("Connection type changed from " + type + " to " + connection.effectiveType);
+  type = connection.effectiveType;
+
+}
+
+function ass() {
+    var a = document.getElementById("audoo");
+    log("auto " + a.autoplay);
+    log("c time " + a.currentTime);
+    log("dis rem pb " + a.disableRemotePlayback);
+    log("duration " + a.duration);
+    log("loop " + a.loop);
+    log("muted " + a.muted);
+    log("preload " + a.preload);
+}
+ass();
+myRange1 = document.getElementById("myRange1");
+myRange1.addEventListener("change", changeSeek);
+function changeSeek(event) {
+    var a = document.getElementById("audoo");
+    a.currentTime = myRange1.value * a.duration / 1000;
+    ass();
+}
+
+logNetworkInfo();
+
+        } );
+    </script>
+</head>
+
+<body>
+
+        <div id="tl" style="position: absolute; top:0px; left:0px; background-color: blue;">TL</div>
+        <div style="position: absolute; top:0px; right:0px; background-color: red;">TR</div>
+        <div style="position: absolute; bottom:0px; left:0px; background-color: green;">BL <input type="text"/></div>
+        <div id="br" style="position: absolute; bottom:0px; right:0px; background-color: yellow;">BR</div>
+
+        <div class="E3D_fullscreenContainer E3D_flexVertical c1">
+            
+            <div  class="menuTopLeft hoverSize">Menu content</div>
+        <div class="E3D_flexContent c3"><div id = "logDiv"></div>`
+    <div id="audioContent">
+        <audio id="audoo" src="/../media/1h.mp3" controls = "true" type="audio/mpeg"></audio><br />
+        <input type="range" min="0" max="1000" value="0" class="slider" id="myRange1" title="seek" /><br />
+    </div> 
+
+</div>
+        <div class="E3D_flexVerticalContentFixed c4">Lorem ipsum dolor sit amet consectetur adipisicing elit. Praesentium ipsam qui voluptas corporis esse eius incidunt sit et? Deleniti eius aliquid minus! Mollitia nesciunt voluptatibus quod unde, totam nulla dolore?</div>
+    </div>
+</body>
+
+</html>

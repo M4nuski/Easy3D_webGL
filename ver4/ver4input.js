@@ -663,7 +663,7 @@ class E3D_input {
 
     touchStart(event) {
 
-        if (event.preventDefault) { event.preventDefault(); };
+        if (event.preventDefault && event.cancelable) { event.preventDefault(); };
 
         for (var i = 0; i < event.changedTouches.length; i++) // append changed touches to the map
             this.ongoingTouches.set(event.changedTouches[i].identifier, this.copyTouch(event.changedTouches[i]));
@@ -788,8 +788,8 @@ class E3D_input {
             // pinch panning
             secondTouch.button = this.touchMap.get("touch_double");
 
-            this.mouseMove( { pageX: (firstTouch.pageX + secondTouch) / 2,
-                              pageY: (firstTouch.pageY + secondTouch) / 2,
+            this.mouseMove( { pageX: (firstTouch.pageX + secondTouch.pageX) / 2,
+                              pageY: (firstTouch.pageY + secondTouch.pageY) / 2,
                               button: secondTouch.button } );
 
             if (Math.abs(this.touchDist - newTouchDist) > this._pinchHysteresis) {

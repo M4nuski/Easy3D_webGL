@@ -101,7 +101,9 @@ CB_tick = function() {
 // Transform Animator
     if (animMode == "transform") {
         directEntity.isVisible = false;
-
+        // translate
+        // rotate
+        // both
         singlePassAnimator(1);
     }
 
