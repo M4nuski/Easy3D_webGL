@@ -78,6 +78,7 @@ function E3D_DEBUG_SHOW_CD() {
 //E3D_DEBUG_VERBOSE is in main script loader "E3D_Engine.js"
 var E3D_DEBUG_LOG_INPUT_STATES = false; // log mouse/touch enter/leave/click etc
 var E3D_DEBUG_LOG_INPUT_MOVES = false; // log mouse/touch moves
+var E3D_DEBUG_LOG_INPUT_MODE = false; // log fullscreen, mouse lock
 
 
 // Stats

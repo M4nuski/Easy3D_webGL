@@ -318,6 +318,7 @@ function fullscreenActive() {
 }
 
 function _fullscreenChange() {
+    if (E3D_DEBUG_LOG_INPUT_MODE) log("FullScreen Changed.");
     if (fullscreenChangeCallback) fullscreenChangeCallback(fullscreenActive(), fullscreenlastelement);  
 }
 
@@ -335,11 +336,12 @@ function fullscreenToggle(elem) {
 function fullscreenEnable(elem) {
     fullscreenlastelement = elem;
     elem.requestFullscreen = elem.webkitRequestFullScreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
-
+    if (E3D_DEBUG_LOG_INPUT_MODE) log("Requesting FullScreen.");
     if (!fullscreenActive())  elem.requestFullscreen();
 }
 
 function fullscreenDisable() {
     fullscreenlastelement = undefined;
+    if (E3D_DEBUG_LOG_INPUT_MODE) log("Exiting FullScreen.");
     document.exitFullscreen();
 }

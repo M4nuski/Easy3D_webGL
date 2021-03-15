@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Physic 2D Test 2</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+    </style>
+    <script type="text/javascript" src = "..\ver5\math.js"></script>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+            var width = 1600;
+            var height = 900;
+
+            var viewportOffsetX = 1.0;
+            var viewportOffsetY = 1.0;
+            var viewportScale = 1.0;
+
+            window.addEventListener("resize", resizeViewport);
+            c.addEventListener("mousedown", canvasMouseDown);
+            c.addEventListener("mousemove", canvasMouseMove);
+            c.addEventListener("mouseup", canvasMouseUp);
+            var currentI = 0;
+            var currentX = 0;
+            var currentY = 0;
+            var currentT = 0;
+            var lastX = 0;
+            var lastY = 0;
+            mouseDn0 = false;
+            mouseDn1 = false;
+            mouseDn2 = false;
+            mouseDg0 = false;
+            mouseDg1 = false;
+            mouseDg2 = false;
+            mouseUp0 = false;
+            mouseUp1 = false;
+            mouseUp2 = false;
+
+            function canvasMouseDown(event) {
+                if (event.button == 0) mouseDn0 = true;
+                if (event.button == 1) mouseDn1 = true;
+                if (event.button == 2) mouseDn2 = true;
+            }
+
+            function canvasMouseMove(event) {
+                currentX = (event.pageX - viewportOffsetX) / viewportScale;
+                currentY = (event.pageY - viewportOffsetY) / viewportScale;                
+            }
+
+            function canvasMouseUp(event) {
+                if (event.button == 0) mouseUp0 = true;
+                if (event.button == 1) mouseUp1 = true;
+                if (event.button == 2) mouseUp2 = true;
+            }
+
+            function resizeViewport() {
+                width = c.offsetWidth;
+                height = c.offsetHeight;
+
+                c.width = width;
+                c.height = height;
+
+                // "view matrix"
+                // largest size is +/- 1.0
+                // other is AR proportionnal
+                var ar = width / height;
+
+                if (ar > 1.0) {
+                    var s = width / 2.0;
+                    viewportScale = width / 2.0;
+                    viewportOffsetX = viewportScale;
+                    viewportOffsetY = viewportScale / ar;
+                } else {
+                    viewportScale = height / 2.0;
+                    viewportOffsetX = viewportScale * ar;
+                    viewportOffsetY = viewportScale;
+                }
+            }
+
+            class obj {
+                constructor() {
+                    this.pos = v3_new();
+                    this.pSpeed = v3_new();
+
+                    this.pDelta = v3_new();
+                    this.deltaLength = 0.0;
+
+                    this.pLast = v3_new();
+                    this.aLast = v3_new();
+
+                    this.ang = v3_new();
+                    this.aSpeed = v3_new();
+
+                    this.rad = 0.2;
+                }
+            }
+
+            class stat {
+                constructor() {
+                    this.p = v3_new();
+                    this.n = v3_new();
+                    this.l = 1.0;
+
+                    this.p2 = v3_new(); // p + x*l
+                }
+            }
+
+            var strList = new Map();
+            var objList = [];
+            var hitLst = [];
+            var statList = [];
+
+            var time = 0;
+            var timeLast = 0;
+            var timeDelta = 0;
+            var timeScale = 0.1;
+            var frame = 0;
+            var frameInterval = 1; // update scene every "frameInterval" frames
+
+            resizeViewport();
+            window.requestAnimationFrame((startTime) => { timeLast = startTime; window.requestAnimationFrame(gameLoop); } );
+
+            function gameLoop(t) {
+                frame++;
+                if ((frame % frameInterval) == 0) {
+                    timeKeeping(t);
+
+                    updateInputs();
+
+                    updateScene();
+
+                    drawScene();
+
+                    saveLastState();
+                }
+                window.requestAnimationFrame(gameLoop);
+            }
+
+            function timeKeeping(newTime) {
+                timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
+                time += timeDelta;
+                timeLast = newTime;
+            }
+
+            function updateInputs() {
+                // handle mouse down
+                if (mouseDn0) {
+                    mouseDn0 = false;
+                    mouseDg0 = true;
+
+                    currentI = objList.push(new obj()) - 1;
+
+                    objList[currentI].pos[0] = currentX;
+                    objList[currentI].pos[1] = currentY;
+
+                    objList[currentI].ang[2] = Math.random() * Math.PI * 2.0;
+                    objList[currentI].aSpeed[2] = Math.random() * 63 - 31.5;
+
+                    objList[currentI].rad = 0.01 + (Math.random() * 0.1);
+                }
+                if (mouseDn1) {
+                    mouseDn1 = false;
+                    mouseDg1 = true;
+                }
+                if (mouseDn2) {
+                    mouseDn2 = false;
+                    mouseDg2 = true;
+                }
+
+                // handle mouse up
+                if (mouseUp0) {
+                    mouseDg0 = false;
+                    mouseUp0 = false;
+
+                    if (currentI != -1) {
+                        var td = time - lastT;
+                        //if (abs(td) < 0.0001) td = timeDelta;
+                        objList[currentI].pSpeed[0] = (currentX - lastX) / td / 2.0;
+                        objList[currentI].pSpeed[1] = (currentY - lastY) / td / 2.0;
+                        currentI = -1;
+                    }
+                }                
+                if (mouseUp1) {
+                    mouseUp1 = false;
+                }                
+                if (mouseUp2) {
+                    mouseUp2 = false;
+                }
+
+                // handle mouse drag
+                if (mouseDg0) {
+
+                    if (currentI != -1) {
+                        objList[currentI].pos[0] = currentX;
+                        objList[currentI].pos[1] = currentY;
+                        objList[currentI].pSpeed = v3_new();
+                    }
+                }                
+                if (mouseDg1) {
+                    //
+                }                
+                if (mouseDg2) {
+                    //
+                }
+            }
+
+            function updateScene() {            
+                    // remove out of frame object
+                    if (currentI == -1) for (var i = objList.length - 1; i >= 0; --i) {
+                        if (v3_length(objList[i].pos) > 5) objList.splice(i, 1);
+                    }
+
+                    // stats and shit
+                    strList.set("time", time.toFixed(2));
+                    strList.set("nb Obj", objList.length);
+                    strList.set("current i", currentI);
+
+                    // update position
+                    for (var i = 0; i < objList.length; ++i) if (i != currentI) {
+                        v3_addscaled_mod(objList[i].pos, objList[i].pSpeed, timeDelta); 
+                        v3_addscaled_mod(objList[i].ang, objList[i].aSpeed, timeDelta);
+                        objList[i].pSpeed[1] += 32 * timeDelta;
+                    }
+
+                    // detect collisions
+
+                    // resolve collisions
+            }
+
+            function drawScene(){
+                
+                // clear
+               // ctx.fillStyle = 'white';
+                ctx.clearRect(0, 0, width, height);
+                
+                // text
+                ctx.fillStyle = 'black';
+                ctx.font = "24px Arial";
+                let yo = 24;
+                strList.forEach((a, b) => {
+                    ctx.fillText(b + ": " + a, 10, yo);  
+                    yo += 24;
+                } );
+                
+                ctx.setLineDash([1]);
+                ctx.strokeStyle = "#888";
+                ctx.beginPath();
+                for (var i = -10; i <= 10; ++i) {
+                    line((i/10), -1.0, (i/10), 1.0);
+                    line(-1.0, (i/10), 1.0, (i/10));
+                }
+                ctx.stroke();
+
+                ctx.strokeStyle = "#000";
+                // origin
+                ctx.setLineDash([20, 3, 3, 3]);
+                ctx.beginPath();
+                line( 0.0, -1.0, 0.0, 1.0);
+                line(-1.0,  0.0, 1.0, 0.0);
+                ctx.stroke();
+
+                // draw objects
+                ctx.setLineDash([1]);
+                ctx.lineWidth = 2.0;
+                ctx.strokeStyle = "#080";
+                for (var i = 0; i < objList.length; ++i) {
+                    ctx.beginPath();
+
+                    circle(objList[i].pos[0], objList[i].pos[1], objList[i].rad); 
+
+                    moveTo(objList[i].pos[0], objList[i].pos[1]);
+                    var p = v3_val_new(0, -objList[i].rad, 0);
+                    v3_rotateZ_mod(p, objList[i].ang[2]);
+                    v3_add_mod(p, objList[i].pos);
+                    lineTo(p[0], p[1]);
+
+                    ctx.stroke();
+                }
+                ctx.lineWidth = 1.0;
+            }
+
+            function saveLastState(){
+                lastX = currentX;
+                lastY = currentY;
+                lastT = time;
+            }
+
+
+
+
+
+
+
+
+
+
+            
+            function moveTo(x, y) {
+                ctx.moveTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
+            }
+            function lineTo(x, y) {
+                ctx.lineTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
+            }
+            function line(x1, y1, x2, y2) {
+                ctx.moveTo(x1 * viewportScale + viewportOffsetX, y1 * viewportScale + viewportOffsetY);
+                ctx.lineTo(x2 * viewportScale + viewportOffsetX, y2 * viewportScale + viewportOffsetY);
+            }
+            function circle(x, y, r) {
+                ctx.arc(x * viewportScale + viewportOffsetX,
+                        y * viewportScale + viewportOffsetY,
+                        r * viewportScale, 0, Math.PI * 2.0);
+            }
+
+        } );
+    </script>
+</head>
+
+<body>
+    <div class="E3D_fullscreenContainer">
+        <canvas id="canvas" width="1600" height="900">Canvas</canvas>
+
+    </div>
+</body>
+
+</html>

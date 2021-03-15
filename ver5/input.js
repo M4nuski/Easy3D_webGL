@@ -618,12 +618,14 @@ class E3D_input {
     }
     
     mouseMove(event) {
-        this.mx += (event.pageX - this.pinx) * this._mouseSpeed * this.elemScaleX;
-        this.my += (event.pageY - this.piny) * this._mouseSpeed * this.elemScaleY;
+        if (!pLockActive()) {
+            this.mx += (event.pageX - this.pinx) * this._mouseSpeed * this.elemScaleX;
+            this.my += (event.pageY - this.piny) * this._mouseSpeed * this.elemScaleY;
 
-        this.pinx = event.pageX;
-        this.piny = event.pageY;
-        if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseMove");
+            this.pinx = event.pageX;
+            this.piny = event.pageY;
+            if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseMove");
+        }
     }
     
     mouseLockedMove(x, y) {
@@ -1069,16 +1071,17 @@ function getTotalPageOffset(element) {
 var pLockSupported = 'pointerLockElement' in document ||  'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
 var pLockRequested = false;
 var pLockElement; // element that captured the pointer
-const _pLockJitterLimit = 300; // max delta per event to avoid warp-around when browser place the cursor back into the center after exiting the client area
+const _pLockDeltaLimit = 300; // max delta per event to avoid warp-around when browser place the cursor back into the center after exiting the client area
 
 function pLockRequest(element) {
     pLockElement = element;    
     if (pLockSupported) {
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock; 
         pLockRequested = true;
+        if (E3D_DEBUG_LOG_INPUT_MODE) log("Requesting pLock.");
         element.requestPointerLock(); 
         if (CB_pointerlockEvent) CB_pointerlockEvent("request");
-    } 
+    } else if (E3D_DEBUG_LOG_INPUT_MODE) log("pLockRequest: pLock not supported.");
 }
 
 function pLockActive() {
@@ -1090,6 +1093,7 @@ function pLockExit() {
     document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
     pLockRequested = false;
     //pLockElement = undefined;
+    if (E3D_DEBUG_LOG_INPUT_MODE) log("Exiting pLock.");
     document.exitPointerLock();
 }
 
@@ -1115,9 +1119,11 @@ if (pLockSupported) {
     document.addEventListener('webkitpointerlockerror', pLockErrorCallback, false);
 }
 function pLockChangeCallback() {
+    if (E3D_DEBUG_LOG_INPUT_MODE) log("pLock Callback");
     if (pLockActive()) {
         // Lock successful, add event
         pLockElement.addEventListener("mousemove", pLockInternalCallback, false);
+        if (E3D_DEBUG_LOG_INPUT_MODE) log("pLock Active.");
         if (CB_pointerlockEvent) CB_pointerlockEvent("lock");
     } else {
 
@@ -1125,6 +1131,7 @@ function pLockChangeCallback() {
         pLockElement.removeEventListener("mousemove", pLockInternalCallback, false);
         pLockElement = undefined;
         // pLockExit();
+        if (E3D_DEBUG_LOG_INPUT_MODE) log("pLock Inactive.");
         if (CB_pointerlockEvent) CB_pointerlockEvent("unlock");
     }
 }
@@ -1132,6 +1139,7 @@ function pLockChangeCallback() {
 function pLockErrorCallback() {
     pLockElement.removeEventListener("mousemove", pLockInternalCallback, false);
     pLockElement = undefined;
+    if (E3D_DEBUG_LOG_INPUT_MODE) log("pLock Error.");
     if (CB_pointerlockEvent) CB_pointerlockEvent("error");
     //pLockExit();
 }
@@ -1140,8 +1148,9 @@ function pLockInternalCallback(event) {
     var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
     if (CB_pointerlockMove) {
-        if ((movementX < _pLockJitterLimit) && (movementX > -_pLockJitterLimit) && 
-            (movementY < _pLockJitterLimit) && (movementY > -_pLockJitterLimit)) {
+        if ((movementX < _pLockDeltaLimit) && (movementX > -_pLockDeltaLimit) && 
+            (movementY < _pLockDeltaLimit) && (movementY > -_pLockDeltaLimit)) {
+            if (E3D_DEBUG_LOG_INPUT_MOVES) log("x: " + movementX + ", y: " + movementY);
             CB_pointerlockMove(movementX, movementY);
         }
     }

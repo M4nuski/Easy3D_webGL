@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Physic 2D Test 1</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+            var width = 1600;
+            var height = 900;
+
+            var viewportOffsetX = 1.0;
+            var viewportOffsetY = 1.0;
+            var viewportScale = 1.0;
+
+            window.addEventListener("resize", resizeViewport);
+
+            function resizeViewport() {
+                width = c.offsetWidth;
+                height = c.offsetHeight;
+
+                c.width = width;
+                c.height = height;
+
+                // "view matrix"
+                // largest size is +/- 1.0
+                // other is AR proportionnal
+                var ar = width / height;
+
+                if (ar > 1.0) {
+                    var s = width / 2.0;
+                    viewportScale = width / 2.0;
+                    viewportOffsetX = viewportScale;
+                    viewportOffsetY = viewportScale / ar;
+                } else {
+                    viewportScale = height / 2.0;
+                    viewportOffsetX = viewportScale * ar;
+                    viewportOffsetY = viewportScale;
+                }
+            }
+
+
+        //    var obj = [ {t:"c", x: 0, y:0, sx:0 , sy:0, r:200},
+         //   {t:"l", x: 0, y:0, sx:0 , sy:0, lx:800, ly:0}];
+
+            var time = 0;
+            var timeLast = 0;
+            var timeDelta = 0;
+            var timeScale = 0.1;
+            var frame = 0;
+            var frameInterval = 1; // update scene every "frameInterval" frames
+
+            resizeViewport();
+            window.requestAnimationFrame((startTime) => { timeLast = startTime; window.requestAnimationFrame(updateScene); } );
+
+            function updateScene(newTime) {
+                // update scene
+                frame++;
+                if ((frame % frameInterval) == 0) {
+
+                    // timekeeping
+                    timeDelta = (newTime - timeLast) * timeScale;
+                    time += timeDelta / 1000.0;
+                    timeLast = newTime;
+                    
+                    // update
+
+
+
+                    // render and loopback
+                    drawScene();
+                }
+                window.requestAnimationFrame(updateScene);
+            }
+
+            function drawScene(){
+                
+                // clear
+               // ctx.fillStyle = 'white';
+                ctx.clearRect(0, 0, width, height);
+                
+                // text
+                ctx.fillStyle = 'black';
+                ctx.font = "24px Arial";
+                ctx.fillText(time.toFixed(2), 10, 24);  
+                
+                ctx.setLineDash([1]);
+                ctx.strokeStyle = "#888";
+                ctx.beginPath();
+                for (var i = -10; i <= 10; ++i) {
+                    ctx.moveTo( (i/10) * viewportScale + viewportOffsetX,-1.0 * viewportScale + viewportOffsetY);
+                    ctx.lineTo( (i/10) * viewportScale + viewportOffsetX, 1.0 * viewportScale + viewportOffsetY);
+                    //ctx.moveTo( (i/10) ,-1.0);
+                    //ctx.lineTo( (i/10) , 1.0);
+                }
+                ctx.stroke();
+                ctx.beginPath();
+                for (var i = -10; i <= 10; ++i) {
+                    ctx.moveTo(-1.0 * viewportScale + viewportOffsetX, (i/10) * viewportScale + viewportOffsetY);
+                    ctx.lineTo( 1.0 * viewportScale + viewportOffsetX, (i/10) * viewportScale + viewportOffsetY);
+                 //   ctx.moveTo(-1.0, (i/10));
+                 //   ctx.lineTo( 1.0, (i/10));
+                }
+                ctx.stroke();
+
+                ctx.strokeStyle = "#000";
+                // origin
+                ctx.setLineDash([20, 3, 3, 3]);
+                ctx.beginPath();
+                ctx.moveTo( 0.0 * viewportScale + viewportOffsetX,-1.0 * viewportScale + viewportOffsetY);
+                ctx.lineTo( 0.0 * viewportScale + viewportOffsetX, 1.0 * viewportScale + viewportOffsetY);
+
+                ctx.moveTo(-1.0 * viewportScale + viewportOffsetX, 0.0 * viewportScale + viewportOffsetY);
+                ctx.lineTo( 1.0 * viewportScale + viewportOffsetX, 0.0 * viewportScale + viewportOffsetY);
+                ctx.stroke();
+
+                // TODO data and tracking
+            }
+
+        } );
+    </script>
+</head>
+
+<body>
+    <div class="E3D_fullscreenContainer">
+        <canvas id="canvas" width="1600" height="900">Canvas</canvas>
+
+    </div>
+</body>
+
+</html>
