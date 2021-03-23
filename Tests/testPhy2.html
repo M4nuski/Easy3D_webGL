@@ -12,8 +12,8 @@
         canvas {
             width: 100%;
             height: 100%;
+            z-index: 0;
         }
-
         .E3D_fullscreenContainer {
             position:fixed;
             top:0px;
@@ -21,7 +21,15 @@
             right:0px;
             left:0px;
         }
-
+        #log {
+            background-color: transparent;
+            font-size: 24px;
+            font-family: Arial, Helvetica, sans-serif;
+            z-index: 10;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
     </style>
     <script type="text/javascript" src = "..\ver5\math.js"></script>
     <script type="text/javascript">
@@ -40,6 +48,7 @@
             c.addEventListener("mousedown", canvasMouseDown);
             c.addEventListener("mousemove", canvasMouseMove);
             c.addEventListener("mouseup", canvasMouseUp);
+            document.addEventListener("keydown", canvasKeyDown);
             var currentI = 0;
             var currentX = 0;
             var currentY = 0;
@@ -71,6 +80,17 @@
                 if (event.button == 0) mouseUp0 = true;
                 if (event.button == 1) mouseUp1 = true;
                 if (event.button == 2) mouseUp2 = true;
+            }
+
+            function canvasKeyDown(event) {
+                if (event.key == "c") clear = true;
+                if (event.key == " ") run = !run;
+                if (event.key == "x") {
+                    objList = [];
+                    ctx.clearRect(0, 0, width, height);
+                    currentI = -1;
+                    strList.clear();
+                }
             }
 
             function resizeViewport() {
@@ -110,8 +130,15 @@
 
                     this.ang = v3_new();
                     this.aSpeed = v3_new();
+                    this.aDelta = v3_new();
 
                     this.rad = 0.2;
+
+                    this.potentialHit = false;
+                    this.hit = false;
+                    this.hit_t = 0.0;
+                    this.hit_n = [0, -1, 0];
+                    this.hit_p = [0, 0, 0];
                 }
             }
 
@@ -135,7 +162,7 @@
             var timeDelta = 0;
             var timeScale = 0.1;
             var frame = 0;
-            var frameInterval = 1; // update scene every "frameInterval" frames
+            var frameInterval = 10; // update scene every "frameInterval" frames
 
             resizeViewport();
             window.requestAnimationFrame((startTime) => { timeLast = startTime; window.requestAnimationFrame(gameLoop); } );
@@ -146,19 +173,18 @@
                     timeKeeping(t);
 
                     updateInputs();
-
-                    updateScene();
-
-                    drawScene();
-
-                    saveLastState();
+                    if (run) {
+                        updateScene();
+                        drawScene();
+                        saveLastState();
+                    }
                 }
                 window.requestAnimationFrame(gameLoop);
             }
 
             function timeKeeping(newTime) {
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
-                time += timeDelta;
+                if (run) time += timeDelta;
                 timeLast = newTime;
             }
 
@@ -176,7 +202,7 @@
                     objList[currentI].ang[2] = Math.random() * Math.PI * 2.0;
                     objList[currentI].aSpeed[2] = Math.random() * 63 - 31.5;
 
-                    objList[currentI].rad = 0.01 + (Math.random() * 0.1);
+                    objList[currentI].rad = 0.02 + (Math.random() * 0.1);
                 }
                 if (mouseDn1) {
                     mouseDn1 = false;
@@ -213,6 +239,7 @@
                     if (currentI != -1) {
                         objList[currentI].pos[0] = currentX;
                         objList[currentI].pos[1] = currentY;
+                        v3_copy(objList[currentI].pLast, objList[currentI].pos);
                         objList[currentI].pSpeed = v3_new();
                     }
                 }                
@@ -227,6 +254,7 @@
             function updateScene() {            
                     // remove out of frame object
                     if (currentI == -1) for (var i = objList.length - 1; i >= 0; --i) {
+                        objList[i].potentialHit = false;
                         if (v3_length(objList[i].pos) > 5) objList.splice(i, 1);
                     }
 
@@ -237,30 +265,69 @@
 
                     // update position
                     for (var i = 0; i < objList.length; ++i) if (i != currentI) {
-                        v3_addscaled_mod(objList[i].pos, objList[i].pSpeed, timeDelta); 
-                        v3_addscaled_mod(objList[i].ang, objList[i].aSpeed, timeDelta);
+
+
                         objList[i].pSpeed[1] += 32 * timeDelta;
+
+                        v3_copy(objList[i].pLast, objList[i].pos);
+                        v3_copy(objList[i].aLast, objList[i].ang);
+
+                        v3_scale_res(objList[i].pDelta, objList[i].pSpeed, timeDelta);
+                        v3_scale_res(objList[i].aDelta, objList[i].aSpeed, timeDelta);
+
+                        v3_add_mod(objList[i].pos, objList[i].pDelta); 
+                        v3_add_mod(objList[i].ang, objList[i].aDelta);
+
+                        objList[i].deltaLength = v3_length(objList[i].pDelta);
+
+                        // is this the correct place ?
+                 //       objList[i].pSpeed[1] += 32 * timeDelta;
+                        // at the start it inhibit all move that are smaller than gravity
+                        // at the end it can mess up the CD calculations as the speed changed
+                        //  between the pos calc and the CD calc
                     }
 
                     // detect collisions
 
+                    // line at y==0.25
+
+                    for (var i = 0; i < objList.length; ++i) /*if (i != currentI)*/ {
+                        var detRadius = objList[i].deltaLength + objList[i].rad;
+                        // convert position to local obstacle space
+                        var offsetPLast = v3_sub_new(objList[i].pLast, [0, 0.25, 0]);
+                        var dot_res = v3_dot([0, -1, 0], offsetPLast);
+                        var dir_dot = v3_dot([0, -1, 0],  objList[i].pDelta);
+                        strList.set("dot[" + i + "]", dot_res);
+                     //   strList.set("rad", objList[i].rad);
+                        strList.set("detRad[" + i + "]", detRadius);
+                        objList[i].potentialHit = (dot_res > 0.0) && (dot_res <= detRadius) && (dir_dot <= 0.0);
+                        // Direction DOT < 0.0
+                        // AdjustedPosition DOT > 0.0
+                        // APDOT <= detRadius
+                        // then check for t of collision
+                        // (t <= 1.0) && (t >= 0.0)
+
+                        strList.set("hit[" + i + "]", objList[i].potentialHit);
+                        // pLast dot n
+                        // if > deltaLength^2 no collision
+
+                    }
+
                     // resolve collisions
             }
 
+            var clear = true;
+            var run = true;
             function drawScene(){
                 
                 // clear
                // ctx.fillStyle = 'white';
-                ctx.clearRect(0, 0, width, height);
-                
+                if (clear) ctx.clearRect(0, 0, width, height);
+                clear = false;
+
                 // text
-                ctx.fillStyle = 'black';
-                ctx.font = "24px Arial";
-                let yo = 24;
-                strList.forEach((a, b) => {
-                    ctx.fillText(b + ": " + a, 10, yo);  
-                    yo += 24;
-                } );
+                log.innerText = "";
+                strList.forEach((a, b) => { log.innerText += (b + ": " + a) + "\n"; } );
                 
                 ctx.setLineDash([1]);
                 ctx.strokeStyle = "#888";
@@ -279,22 +346,40 @@
                 line(-1.0,  0.0, 1.0, 0.0);
                 ctx.stroke();
 
+                ctx.setLineDash([1]);
+                ctx.lineWidth = 3.0;
+                ctx.strokeStyle = "#800";
+                ctx.beginPath();
+                line(-1.0, 0.25, 1.0, 0.25);
+                ctx.stroke();
+
                 // draw objects
                 ctx.setLineDash([1]);
                 ctx.lineWidth = 2.0;
-                ctx.strokeStyle = "#080";
+
                 for (var i = 0; i < objList.length; ++i) {
+
+                    ctx.strokeStyle = objList[i].potentialHit ? "#800" : "#080";
+
                     ctx.beginPath();
-
                     circle(objList[i].pos[0], objList[i].pos[1], objList[i].rad); 
-
-                    moveTo(objList[i].pos[0], objList[i].pos[1]);
-                    var p = v3_val_new(0, -objList[i].rad, 0);
-                    v3_rotateZ_mod(p, objList[i].ang[2]);
-                    v3_add_mod(p, objList[i].pos);
-                    lineTo(p[0], p[1]);
-
                     ctx.stroke();
+
+                    if (objList[i].potentialHit) {
+                        ctx.beginPath();
+                        line(objList[i].pos[0], objList[i].pos[1], objList[i].pLast[0], objList[i].pLast[1]);
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        circle(objList[i].pLast[0], objList[i].pLast[1], objList[i].rad - 0.001); 
+                        ctx.stroke();
+                    }
+                 //   moveTo(objList[i].pos[0], objList[i].pos[1]);
+                  //  var p = v3_val_new(0, -objList[i].rad, 0);
+                  //  v3_rotateZ_mod(p, objList[i].ang[2]);
+                  //  v3_add_mod(p, objList[i].pos);
+                  //  lineTo(p[0], p[1]);
+
                 }
                 ctx.lineWidth = 1.0;
             }
@@ -338,7 +423,7 @@
 <body>
     <div class="E3D_fullscreenContainer">
         <canvas id="canvas" width="1600" height="900">Canvas</canvas>
-
+        <div id="log"></div>
     </div>
 </body>
 
