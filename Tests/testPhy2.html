@@ -13,6 +13,9 @@
             width: 100%;
             height: 100%;
             z-index: 0;
+            position: absolute;
+            top: 0px;
+            left: 0px;
         }
         .E3D_fullscreenContainer {
             position:fixed;
@@ -37,17 +40,23 @@
 
             var c = document.getElementById("canvas");
             var ctx = c.getContext("2d");
-            var width = 1600;
-            var height = 900;
+            var width = 1920;
+            var height = 1080;
 
-            var viewportOffsetX = 1.0;
-            var viewportOffsetY = 1.0;
             var viewportScale = 1.0;
+            var viewportOffsetX = 0;
+            var viewportOffsetY = 0;
+
+            var canvasZoom = 1.0;
+            var canvasOffsetX = 0;
+            var canvasOffsetY = 0;
 
             window.addEventListener("resize", resizeViewport);
             c.addEventListener("mousedown", canvasMouseDown);
             c.addEventListener("mousemove", canvasMouseMove);
             c.addEventListener("mouseup", canvasMouseUp);
+            c.addEventListener("wheel", canvasMouseWheel);
+            c.addEventListener("mouseleave", canvasMouseLeave);
             document.addEventListener("keydown", canvasKeyDown);
             var currentI = 0;
             var currentX = 0;
@@ -55,6 +64,10 @@
             var currentT = 0;
             var lastX = 0;
             var lastY = 0;
+            var cX = 0;
+            var cY = 0;
+            var lX = 0;
+            var lY = 0;
             mouseDn0 = false;
             mouseDn1 = false;
             mouseDn2 = false;
@@ -64,22 +77,48 @@
             mouseUp0 = false;
             mouseUp1 = false;
             mouseUp2 = false;
+            mouseW = 0;
 
             function canvasMouseDown(event) {
                 if (event.button == 0) mouseDn0 = true;
                 if (event.button == 1) mouseDn1 = true;
                 if (event.button == 2) mouseDn2 = true;
+
+                if (event.preventDefault) { event.preventDefault(); };
+                 return false;
             }
 
             function canvasMouseMove(event) {
-                currentX = (event.pageX - viewportOffsetX) / viewportScale;
-                currentY = (event.pageY - viewportOffsetY) / viewportScale;                
+                currentX = (((event.pageX - c.offsetLeft) / canvasZoom) - viewportOffsetX) / viewportScale;
+                currentY = (((event.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / viewportScale;  
+                cX = event.pageX;
+                cY = event.pageY;
             }
 
             function canvasMouseUp(event) {
                 if (event.button == 0) mouseUp0 = true;
                 if (event.button == 1) mouseUp1 = true;
                 if (event.button == 2) mouseUp2 = true;
+
+                if (event.preventDefault) { event.preventDefault(); };
+                return false;
+            }
+            function canvasMouseWheel(event) {   
+                mouseW = (event.deltaY > 0) ? 1 : -1;
+            }
+            function canvasMouseLeave() {
+                var lX = 0;
+                var lY = 0;
+                mouseDn0 = false;
+                mouseDn1 = false;
+                mouseDn2 = false;
+                mouseDg0 = false;
+                mouseDg1 = false;
+                mouseDg2 = false;
+                mouseUp0 = false;
+                mouseUp1 = false;
+                mouseUp2 = false;
+                mouseW = 0;
             }
 
             function canvasKeyDown(event) {
@@ -115,6 +154,16 @@
                     viewportOffsetX = viewportScale * ar;
                     viewportOffsetY = viewportScale;
                 }
+
+                resizeCanvas();
+            }
+
+            function resizeCanvas(f) {
+                c.style.width =  (canvasZoom * 100) + "%";
+                c.style.height = (canvasZoom * 100) + "%";
+
+                c.style.top =  (canvasOffsetY - (c.offsetHeight - c.height) / 2 ) + "px"; 
+                c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px"; 
             }
 
             class obj {
@@ -212,6 +261,8 @@
                 if (mouseDn1) {
                     mouseDn1 = false;
                     mouseDg1 = true;
+                    lX = cX;
+                    lY = cY;
                 }
                 if (mouseDn2) {
                     mouseDn2 = false;
@@ -220,8 +271,8 @@
 
                 // handle mouse up
                 if (mouseUp0) {
-                    mouseDg0 = false;
                     mouseUp0 = false;
+                    mouseDg0 = false;
 
                     if (currentI != -1) {
                         var td = time - lastT;
@@ -233,14 +284,15 @@
                 }                
                 if (mouseUp1) {
                     mouseUp1 = false;
+                    mouseDg1 = false;
                 }                
                 if (mouseUp2) {
                     mouseUp2 = false;
+                    mouseDg2 = false;
                 }
 
                 // handle mouse drag
                 if (mouseDg0) {
-
                     if (currentI != -1) {
                         objList[currentI].pos[0] = currentX;
                         objList[currentI].pos[1] = currentY;
@@ -251,10 +303,25 @@
                     }
                 }                
                 if (mouseDg1) {
-                    //
+                    canvasOffsetX += cX - lX;
+                    canvasOffsetY += cY - lY;
+                    lX = cX;
+                    lY = cY;
+                    resizeCanvas();
                 }                
                 if (mouseDg2) {
                     //
+                }
+
+                if (mouseW < 0) {
+                    canvasZoom = canvasZoom * 1.25;
+                    mouseW = 0;
+                    resizeCanvas();
+                }
+                if (mouseW > 0) {
+                    canvasZoom = canvasZoom / 1.25;
+                    mouseW = 0;
+                    resizeCanvas();
                 }
             }
 
@@ -467,7 +534,7 @@
 
 <body>
     <div class="E3D_fullscreenContainer">
-        <canvas id="canvas" width="1600" height="900">Canvas</canvas>
+        <canvas id="canvas" width="1920" height="1080">Canvas</canvas>
         <div id="log"></div>
     </div>
 </body>
