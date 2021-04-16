@@ -139,6 +139,11 @@
                     this.hit_t = 0.0;
                     this.hit_n = [0, -1, 0];
                     this.hit_p = [0, 0, 0];
+
+                    //this.mass = 1.0;
+                    //this.cg = [0, 0, 0]; // center of mass, relative to entity origin
+                    //this.cp = [0, 0, 0]; // aerodynamic center
+                    //this.area = [0.577, 0.577, 0.577]; // aerodynamic area in 3 axis
                 }
             }
 
@@ -239,6 +244,8 @@
                     if (currentI != -1) {
                         objList[currentI].pos[0] = currentX;
                         objList[currentI].pos[1] = currentY;
+                        v3_sub_res(objList[currentI].pDelta, objList[currentI].pos, objList[currentI].pLast);
+                        objList[currentI].deltaLength = v3_length(objList[currentI].pDelta);
                         v3_copy(objList[currentI].pLast, objList[currentI].pos);
                         objList[currentI].pSpeed = v3_new();
                     }
@@ -266,7 +273,6 @@
                     // update position
                     for (var i = 0; i < objList.length; ++i) if (i != currentI) {
 
-
                         objList[i].pSpeed[1] += 32 * timeDelta;
 
                         v3_copy(objList[i].pLast, objList[i].pos);
@@ -289,28 +295,52 @@
 
                     // detect collisions
 
-                    // line at y==0.25
+                    var h_pos = [0, 0.25, 0];
+                    var h_norm = [0, -1, 0];
 
                     for (var i = 0; i < objList.length; ++i) /*if (i != currentI)*/ {
-                        var detRadius = objList[i].deltaLength + objList[i].rad;
-                        // convert position to local obstacle space
-                        var offsetPLast = v3_sub_new(objList[i].pLast, [0, 0.25, 0]);
-                        var dot_res = v3_dot([0, -1, 0], offsetPLast);
-                        var dir_dot = v3_dot([0, -1, 0],  objList[i].pDelta);
-                        strList.set("dot[" + i + "]", dot_res);
-                     //   strList.set("rad", objList[i].rad);
-                        strList.set("detRad[" + i + "]", detRadius);
-                        objList[i].potentialHit = (dot_res > 0.0) && (dot_res <= detRadius) && (dir_dot <= 0.0);
-                        // Direction DOT < 0.0
+
+                        // Direction DOT < 0.0 ( == 0 is at 90deg )
                         // AdjustedPosition DOT > 0.0
                         // APDOT <= detRadius
                         // then check for t of collision
                         // (t <= 1.0) && (t >= 0.0)
 
-                        strList.set("hit[" + i + "]", objList[i].potentialHit);
-                        // pLast dot n
-                        // if > deltaLength^2 no collision
+                        strList.set("potentialHit[" + i + "]", "level 0");
+                        var dir_dot = v3_dot(h_norm, objList[i].pDelta);
 
+                        if (dir_dot < 0.0) {
+
+                            strList.set("potentialHit[" + i + "]", "level 1");
+                            var detRadius = objList[i].deltaLength + objList[i].rad;
+
+                            var relative_pLast = v3_sub_new(objList[i].pLast, h_pos);
+                            var rpl_dot = v3_dot(h_norm, relative_pLast);
+
+                            if ((rpl_dot > 0.0) && (rpl_dot <= detRadius)) {
+                                strList.set("potentialHit[" + i + "]", "level 2");
+
+                                // pLast + dir_dot == 0
+                                objList[i].potentialHit = true;
+                                
+                                var relative_pNext = v3_sub_new(objList[i].pos, h_pos);
+                                var rpn_dot = v3_dot(h_norm, relative_pNext);
+                                var deltaDot = rpl_dot - rpn_dot; // inverted because moving toward plane
+                                
+                                var t = (rpl_dot - objList[i].rad) / deltaDot;
+                                
+                                if ((t >= 0.0) && (t <= 1.0)) {
+                                    objList[i].hit = true;
+                                    objList[i].hitPoint = v3_addscaled_new(objList[i].pLast, objList[i].pDelta, t);
+                                } else {
+                                    objList[i].hitPoint = false;
+                                }
+
+                              //  v3_add_mod(objList[i].hitPoint, objList[i].pLast);
+
+
+                            }
+                        }
                     }
 
                     // resolve collisions
@@ -373,6 +403,21 @@
                         ctx.beginPath();
                         circle(objList[i].pLast[0], objList[i].pLast[1], objList[i].rad - 0.001); 
                         ctx.stroke();
+
+                        if (objList[i].hitPoint) {
+                            ctx.strokeStyle = "#00F";
+                            ctx.beginPath();
+                            circle(objList[i].hitPoint[0], objList[i].hitPoint[1], 0.01); 
+                            ctx.stroke();
+                            run = false;
+
+                            if (objList[i].hit) {
+                                ctx.strokeStyle = "#F00";
+                                ctx.beginPath();
+                                circle(objList[i].hitPoint[0], objList[i].hitPoint[1],  objList[i].rad); 
+                                ctx.stroke();  
+                            }
+                        }
                     }
                  //   moveTo(objList[i].pos[0], objList[i].pos[1]);
                   //  var p = v3_val_new(0, -objList[i].rad, 0);
