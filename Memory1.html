@@ -7,7 +7,8 @@
     <style>
         body {
             margin: 0px;
-            font-size: large;
+            font-size: 24px;
+            font-family: Arial, Helvetica, sans-serif;
         }
         canvas {
             width: 100%;
@@ -26,19 +27,26 @@
         }
         #log {
             background-color: transparent;
-            font-size: 24px;
-            font-family: Arial, Helvetica, sans-serif;
             z-index: 10;
             position: absolute;
             top: 0px;
             left: 0px;
             padding: 5px;
+            border-radius: 5px;
+            border: 2px solid black;
         }
-        #vol {
+        #volDiv {
             position: absolute;
             top: 0px;
             right: 0px;
             z-index: 10;
+            text-align: center;
+            border-radius: 5px;
+            border: 2px solid black;
+        }
+        #volSpan {
+            display: block; 
+            background-color: white;
         }
     </style>
     <!--script type="text/javascript" src = "ver5\math.js"></script-->
@@ -62,24 +70,19 @@
 
             window.addEventListener("resize", resizeViewport);
             c.addEventListener("mousedown", canvasMouseDown);
-            c.addEventListener("touchstart", canvasTouchStart);
+           // c.addEventListener("touchstart", canvasTouchStart);
             c.addEventListener("mousemove", canvasMouseMove);
             c.addEventListener("mouseup", canvasMouseUp);
             c.addEventListener("wheel", canvasMouseWheel);
             c.addEventListener("mouseleave", canvasMouseLeave);
             document.addEventListener("keydown", canvasKeyDown);
             
-           // var currentI = 0;
             var currentX = 0;
             var currentY = 0;
-          //  var currentT = 0;
+
             var lastX = 0;
             var lastY = 0;
-
-           // var currentState = "Idle";
-
-            var newUserInput = 0;
-           
+          
             var cX = 0;
             var cY = 0;
             var lX = 0;
@@ -95,46 +98,50 @@
             mouseUp2 = false;
             mouseW = 0;
 
+            function setAudio() {
+                audioContext = new window.AudioContext();
+                gainNode = audioContext.createGain();
+
+                b0 = getElem("b0");
+                var t0 = audioContext.createMediaElementSource(b0);
+                t0.connect(gainNode).connect(audioContext.destination);
+
+                b1 = getElem("b1");
+                var t1 = audioContext.createMediaElementSource(b1);
+                t1.connect(gainNode).connect(audioContext.destination);
+
+                b2 = getElem("b2");
+                var t2 = audioContext.createMediaElementSource(b2);
+                t2.connect(gainNode).connect(audioContext.destination);
+
+                b3 = getElem("b3");
+                var t3 = audioContext.createMediaElementSource(b3);
+                t3.connect(gainNode).connect(audioContext.destination);
+
+                bfail = getElem("fail");
+                var tfail = audioContext.createMediaElementSource(bfail);
+                tfail.connect(gainNode).connect(audioContext.destination);
+            }
+
             function canvasMouseDown(event) {
                 if (event.button == 0) mouseDn0 = true;
                 if (event.button == 1) mouseDn1 = true;
                 if (event.button == 2) mouseDn2 = true;
-                if (!audioContext) {
-                    audioContext = new window.AudioContext();
-                    gainNode = audioContext.createGain();
 
-                    b0 = getElem("b0");
-                    var t0 = audioContext.createMediaElementSource(b0);
-                    t0.connect(gainNode).connect(audioContext.destination);
-
-                    b1 = getElem("b1");
-                    var t1 = audioContext.createMediaElementSource(b1);
-                    t1.connect(gainNode).connect(audioContext.destination);
-
-                    b2 = getElem("b2");
-                    var t2 = audioContext.createMediaElementSource(b2);
-                    t2.connect(gainNode).connect(audioContext.destination);
-
-                    b3 = getElem("b3");
-                    var t3 = audioContext.createMediaElementSource(b3);
-                    t3.connect(gainNode).connect(audioContext.destination);
-
-                    bfail = getElem("fail");
-                    var tfail = audioContext.createMediaElementSource(bfail);
-                    tfail.connect(gainNode).connect(audioContext.destination);
-                }   
+                if (!audioContext) setAudio();
                 if (event.preventDefault) { event.preventDefault(); };
-                 return false;
+                return false;
             }
 
-            function canvasTouchStart(event) {
+     /*       function canvasTouchStart(event) {
+                if (!audioContext) setAudio();
                 var touch = event.changedTouches[0];
                 currentX = (((touch.pageX - c.offsetLeft) / canvasZoom) - viewportOffsetX) / viewportScale;
                 currentY = (((touch.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / viewportScale;  
                 cX = touch.pageX;
                 cY = touch.pageY;
                 canvasMouseDown({button: 0});
-            }
+            }*/
 
             function canvasMouseMove(event) {
                 currentX = (((event.pageX - c.offsetLeft) / canvasZoom) - viewportOffsetX) / viewportScale;
@@ -209,7 +216,7 @@
                 c.style.height = (canvasZoom * 100) + "%";
 
                 c.style.top =  (canvasOffsetY - (c.offsetHeight - c.height) / 2 ) + "px"; 
-                c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px"; 
+                c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px";
             }
 
             // Seeded RNG based on https://gist.github.com/blixt/f17b47c62508be59987b
@@ -237,13 +244,15 @@
                 return false;
             }
 
+            var newUserInput = 0;
             var strList = new Map();
             strList.set("state", "Idle");
-            strList.set("level", 0);
-            strList.set("step", 0);
+
             // Idle
             // Teach show sequence
             // Recall wait for user sequence
+            // Failed
+            // Success
 
             var time = 0;
             var timeLast = 0;
@@ -251,6 +260,7 @@
             var timeScale = 1.0;
             var frame = 0;
             var frameInterval = 5; // update scene every "frameInterval" frames
+            var run = true;
 
             // Audio Stuff
             var audioContext, gainNode;
@@ -265,6 +275,15 @@
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
             var lastHitStartAngle = 0;
+
+            const teachDelayBase = 0.5;
+            const teachDelayMin = 0.15;
+            const teachDelayDecrements = 0.02;
+
+            var currentLevel = 0;
+            var currentStep = 0;
+            var seq = [];
+            var rng = new Random(666);
 
             getElem("vol").addEventListener("input", function (event) { if (gainNode) gainNode.gain.value = this.value; });
 
@@ -299,7 +318,6 @@
                     mouseDg0 = true;
 
                     checkHitRegion(currentX, currentY);
-
                 }
                 if (mouseDn1) {
                     mouseDn1 = false;
@@ -354,57 +372,79 @@
             }
 
             function checkHitRegion(x, y) {
-                strList.set("X", x.toFixed(3));
-                strList.set("Y", y.toFixed(3));
-                strList.set("region", "out");
+                //strList.set("X", x.toFixed(3));
+                //strList.set("Y", y.toFixed(3));
+                //strList.set("region", "out");
                 var d = Math.sqrt((x * x) + (y * y));
                 if ((d > 0.05) && (d < 0.40)) {
                     if ((x > 0.05) && (y > 0.05)) {
-                        strList.set("region", "red");
+                        //strList.set("region", "red");
                         newUserInput = 1;
                     }
                     if ((x < -0.05) && (y > 0.05)) {
-                        strList.set("region", "green");
+                        //strList.set("region", "green");
                         newUserInput = 2;
                     }
                     if ((x < -0.05) && (y < -0.05)) {
-                        strList.set("region", "blue");
+                        //strList.set("region", "blue");
                         newUserInput = 3;
                     }
                     if ((x > 0.05) && (y < -0.05)) {
-                        strList.set("region", "yellow");
+                        //strList.set("region", "yellow");
                         newUserInput = 4;
                     }
                 }
-                if ((x > -0.40) && (x < 0.40) && (y > -0.05) && (y < 0.05)) strList.set("region", "new");
-
+                if ((x > -0.40) && (x < 0.40) && (y > -0.05) && (y < 0.05)) {
+                    //strList.set("region", "new");
+                    newUserInput = 5;
+                }
                 
+            }
+
+            function playColor(index) {
+                switch (index) {
+                    case 1: b0.play(); break;
+                    case 2: b1.play(); break;
+                    case 3: b2.play(); break;
+                    case 4: b3.play(); break;
+                }
+            }
+
+            function fail() {
+                strList.set("state", "Failed");
+                //strList.set("region", "out");
+                bfail.play();
+                lastHitStartAngle = 0;
             }
 
             function updateScene() {            
                 // stats and shit
-                //strList.set("time", time.toFixed(2));                
+                //strList.set("time", time.toFixed(2));   
+                strList.set("level", currentLevel);
+                strList.set("step", currentStep);             
 
-                if (audioContext && newUserInput != 0) {
-                    var newHit = false;
+                if (audioContext && newUserInput != 0 && (strList.get("state") == "Recall")) {
+
+                    var newHit = (newUserInput > 0 && (newUserInput < 5));
+/*
                     if (strList.get("region") == "red") {
-                        b0.play();
                         newHit = true;
                     }    
                     else if (strList.get("region") == "green") {
-                        b1.play();
+
                         newHit = true;
                     }    
                     else if (strList.get("region") == "blue") {
-                        b2.play();
+
                         newHit = true;
                     }    
                     else if (strList.get("region") == "yellow") {
-                        b3.play();
+
                         newHit = true;
                     }   
-                    
+                    */
                     if (newHit) {
+                        playColor(newUserInput);
                         lastHitStartAngle += (360 * timeSinceLastHit / maxTimeBetweenHit);
                         if (lastHitStartAngle > 360) lastHitStartAngle -= 360;
                         timeSinceLastHit = 0;
@@ -425,29 +465,62 @@
                 if (strList.get("state") == "Recall") {
 
                     if (timeSinceLastHit > maxTimeBetweenHit) {
-                        strList.set("state", "Failed");
-                        strList.set("region", "out");
-                        bfail.play();
-                        lastHitStartAngle = 0;
+                        fail();
+                    } else if (newUserInput != 0) {
+                        if (newUserInput == seq[currentStep] + 1) {
+                            currentStep++;
+                            if (currentStep > currentLevel) strList.set("state", "Success");
+                        } else fail();
                     }
-
+ 
                 }
                 if ((strList.get("state") == "Idle") || (strList.get("state") == "Failed")) {
-                    if (strList.get("region") == "new") {
+                    if (newUserInput == 5) {
 
-                        strList.set("state", "Recall");
-                        timeSinceLastHit = 0;
+                        seq = [];
+                        seq.push(rng.nextInt(4));
+                        strList.set("state", "Teach");
+                        currentLevel = 0;
+                        currentStep = 0;
+                        stepDelayRemaining = teachDelayBase;
+
                     } 
                 }
+                if (strList.get("state") == "Teach") {
+                    stepDelayRemaining -= timeDelta;
+                    if (stepDelayRemaining <= 0) {
+
+                        if (currentStep > (currentLevel + 1)) {
+                            strList.set("state", "Recall");
+                            timeSinceLastHit = 0;
+                            currentStep = 0;
+                        } else {
+                            newUserInput = seq[currentStep - 1] + 1;
+                            playColor(newUserInput);
+                            currentStep++;
+                        } 
+
+                        //reset delay
+                        stepDelayRemaining = teachDelayBase - teachDelayDecrements * currentLevel;
+                        if (stepDelayRemaining < teachDelayMin) stepDelayRemaining = teachDelayMin;
+
+                    } // delay reached
+                }// state teach
+
+                if (strList.get("state") == "Success") {
+
+                    currentStep = 0;
+                    seq.push(rng.nextInt(4));
+                    currentLevel++;
+                    strList.set("state", "Teach");
+                    stepDelayRemaining = teachDelayBase;
+                }
+
             }
 
-            var clear = true;
-            var run = true;
-            function drawScene(){
-                
+            function drawScene(){                
                 // clear
-               // ctx.fillStyle = 'white';
-                if (clear) ctx.clearRect(0, 0, width, height);
+                ctx.clearRect(0, 0, width, height);
                 clear = false;
 
                 // text
@@ -472,16 +545,6 @@
                 line( 0.0, -1.0, 0.0, 1.0);
                 line(-1.0,  0.0, 1.0, 0.0);
                 ctx.stroke();
-
-               /*
-                // "floor" 
-                ctx.setLineDash([]);
-                ctx.lineWidth = 3.0;
-                ctx.strokeStyle = "#800";
-                ctx.beginPath();
-                line(-1.0, 0.25, 1.0, 0.25);
-                ctx.stroke();
-                */
 
                 // draw objects
                 ctx.setLineDash([]);
@@ -567,8 +630,7 @@
 
 
 
-
-            
+            // Context drawing methods
             function moveTo(x, y) {
                 ctx.moveTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
             }
@@ -606,8 +668,6 @@
                 ctx.arc(x * viewportScale + viewportOffsetX,
                         y * viewportScale + viewportOffsetY,
                         r * viewportScale, startAngle * DegToRad, endAngle * DegToRad);
-             //   ctx.lineTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);   
-
                 ctx.stroke();
             }
 
@@ -619,7 +679,10 @@
     <div class="E3D_fullscreenContainer">
         <canvas id="canvas" width="1920" height="1080">Canvas</canvas>
         <div id="log"></div>
-        <input id="vol" type="range" min="0" max="2" value="1" step="0.1" />
+        <div id="volDiv">
+            <span id="volSpan">Volume:</span>
+            <input id="vol" type="range" min="0" max="2" value="1" step="0.1" />
+        </div>
     </div>
     <audio id="b0" src="media/Beep0.wav"></audio>
     <audio id="b1" src="media/Beep1.wav"></audio>
