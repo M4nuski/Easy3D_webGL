@@ -443,7 +443,7 @@
             function updateScene() {            
                 // stats and shit
                 //strList.set("time", time.toFixed(2));   
-                strList.set("level", currentLevel);
+                strList.set("level", currentLevel + 1);
                 strList.set("step", currentStep);             
 
                 // inputs
@@ -459,7 +459,7 @@
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
                     } else if ((newUserInput > 0) && (newUserInput < 5)) {
-                        if (newUserInput == seq[currentStep] + 1) {
+                        if (newUserInput == seq[currentStep]) {
                             currentStep++;
                             if (currentStep > currentLevel) strList.set("state", "Success");
                         } else fail();
@@ -469,7 +469,7 @@
                 if ((strList.get("state") == "Idle") || (strList.get("state") == "Failed")) {
                     if (newUserInput == 5) {
                         seq = [];
-                        seq.push(rng.nextInt(4));
+                        seq.push(rng.nextInt(4) + 1);
                         strList.set("state", "Teach");
                         currentLevel = 0;
                         currentStep = 0;
@@ -480,12 +480,12 @@
                     stepDelayRemaining -= timeDelta;
                     if (stepDelayRemaining <= 0) {
 
-                        if (currentStep > (currentLevel + 1)) {
+                        if (currentStep > currentLevel) {
                             strList.set("state", "Recall");
                             timeSinceLastHit = 0;
                             currentStep = 0;
                         } else {
-                            newUserInput = seq[currentStep - 1] + 1;
+                            newUserInput = seq[currentStep];
                             playColor(newUserInput);
                             currentStep++;
                         } 
@@ -499,7 +499,7 @@
 
                 if (strList.get("state") == "Success") {
                     currentStep = 0;
-                    seq.push(rng.nextInt(4));
+                    seq.push(rng.nextInt(4) + 1);
                     currentLevel++;
                     strList.set("state", "Teach");
                     stepDelayRemaining = teachDelayBase;
