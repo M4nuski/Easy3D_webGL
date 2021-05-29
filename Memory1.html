@@ -49,7 +49,7 @@
             background-color: white;
         }
     </style>
-    <!--script type="text/javascript" src = "ver5\math.js"></script-->
+
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() { 
 
@@ -285,21 +285,40 @@
             var seq = [];
             var rng = new Random(666);
 
-            getElem("vol").addEventListener("input", function (event) { if (gainNode) gainNode.gain.value = this.value; });
+            // volume slider
+            var volSlider = getElem("vol");
+            if (window.localStorage) {
+                var v = window.localStorage.getItem("m1.vol");
+                if (v != undefined) {
+                    volSlider.value = v;
+                }
+            }
+            volSlider.addEventListener("input", function (event) { 
+                if (gainNode) gainNode.gain.value = this.value; 
+                if (window.localStorage) window.localStorage.setItem("m1.vol", this.value);
+            });
+
+
 
             resizeViewport();
-            window.requestAnimationFrame((startTime) => { timeLast = startTime; window.requestAnimationFrame(gameLoop); } );
+            startLoop();
+
+            function startLoop() {
+                window.requestAnimationFrame((startTime) => { 
+                    timeLast = startTime; 
+                    window.requestAnimationFrame(gameLoop); 
+                } );
+            }
 
             function gameLoop(t) {
                 frame++;
                 if ((frame % frameInterval) == 0) {
                     timeKeeping(t);
-
                     updateInputs();
                     if (run) {
                         updateScene();
                         drawScene();
-                        saveLastState();
+                        cleanupScene();
                     }
                 }
                 window.requestAnimationFrame(gameLoop);
@@ -375,34 +394,35 @@
                 //strList.set("X", x.toFixed(3));
                 //strList.set("Y", y.toFixed(3));
                 //strList.set("region", "out");
-                var d = Math.sqrt((x * x) + (y * y));
-                if ((d > 0.05) && (d < 0.40)) {
-                    if ((x > 0.05) && (y > 0.05)) {
-                        //strList.set("region", "red");
-                        newUserInput = 1;
+                if (strList.get("state") != "Teach") {
+                    var d = Math.sqrt((x * x) + (y * y));
+                    if ((d > 0.05) && (d < 0.40)) {
+                        if ((x > 0.05) && (y > 0.05)) {
+                            //strList.set("region", "red");
+                            newUserInput = 1;
+                        }
+                        if ((x < -0.05) && (y > 0.05)) {
+                            //strList.set("region", "green");
+                            newUserInput = 2;
+                        }
+                        if ((x < -0.05) && (y < -0.05)) {
+                            //strList.set("region", "blue");
+                            newUserInput = 3;
+                        }
+                        if ((x > 0.05) && (y < -0.05)) {
+                            //strList.set("region", "yellow");
+                            newUserInput = 4;
+                        }
                     }
-                    if ((x < -0.05) && (y > 0.05)) {
-                        //strList.set("region", "green");
-                        newUserInput = 2;
-                    }
-                    if ((x < -0.05) && (y < -0.05)) {
-                        //strList.set("region", "blue");
-                        newUserInput = 3;
-                    }
-                    if ((x > 0.05) && (y < -0.05)) {
-                        //strList.set("region", "yellow");
-                        newUserInput = 4;
+                    if ((x > -0.40) && (x < 0.40) && (y > -0.05) && (y < 0.05)) {
+                        //strList.set("region", "new");
+                        newUserInput = 5;
                     }
                 }
-                if ((x > -0.40) && (x < 0.40) && (y > -0.05) && (y < 0.05)) {
-                    //strList.set("region", "new");
-                    newUserInput = 5;
-                }
-                
             }
 
             function playColor(index) {
-                switch (index) {
+                if (audioContext) switch (index) {
                     case 1: b0.play(); break;
                     case 2: b1.play(); break;
                     case 3: b2.play(); break;
@@ -423,50 +443,19 @@
                 strList.set("level", currentLevel);
                 strList.set("step", currentStep);             
 
-                if (audioContext && newUserInput != 0 && (strList.get("state") == "Recall")) {
-
-                    var newHit = (newUserInput > 0 && (newUserInput < 5));
-/*
-                    if (strList.get("region") == "red") {
-                        newHit = true;
-                    }    
-                    else if (strList.get("region") == "green") {
-
-                        newHit = true;
-                    }    
-                    else if (strList.get("region") == "blue") {
-
-                        newHit = true;
-                    }    
-                    else if (strList.get("region") == "yellow") {
-
-                        newHit = true;
-                    }   
-                    */
-                    if (newHit) {
-                        playColor(newUserInput);
-                        lastHitStartAngle += (360 * timeSinceLastHit / maxTimeBetweenHit);
-                        if (lastHitStartAngle > 360) lastHitStartAngle -= 360;
-                        timeSinceLastHit = 0;
-                    }
-                    
+                // inputs
+                if (newUserInput > 0 && (newUserInput < 5)) {
+                    playColor(newUserInput);
+                    lastHitStartAngle += (360 * timeSinceLastHit / maxTimeBetweenHit);
+                    if (lastHitStartAngle > 360) lastHitStartAngle -= 360;
+                    timeSinceLastHit = 0;
                 }
-
-                // Teach
-                // wait 1 sec
-                // show each steps
-                // right after last State is Recall
-                // max 1.5 sec between hit
-                // start delay is 0.5sec between steps
-                // max delay is 0.15sec between steps
-                // number of steps increase by 1 every level
-                // delay decrease by 0.05 every level
-
+                    
+                // state 
                 if (strList.get("state") == "Recall") {
-
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
-                    } else if (newUserInput != 0) {
+                    } else if ((newUserInput > 0) && (newUserInput < 5)) {
                         if (newUserInput == seq[currentStep] + 1) {
                             currentStep++;
                             if (currentStep > currentLevel) strList.set("state", "Success");
@@ -476,14 +465,12 @@
                 }
                 if ((strList.get("state") == "Idle") || (strList.get("state") == "Failed")) {
                     if (newUserInput == 5) {
-
                         seq = [];
                         seq.push(rng.nextInt(4));
                         strList.set("state", "Teach");
                         currentLevel = 0;
                         currentStep = 0;
                         stepDelayRemaining = teachDelayBase;
-
                     } 
                 }
                 if (strList.get("state") == "Teach") {
@@ -508,7 +495,6 @@
                 }// state teach
 
                 if (strList.get("state") == "Success") {
-
                     currentStep = 0;
                     seq.push(rng.nextInt(4));
                     currentLevel++;
@@ -579,25 +565,22 @@
                     ctx.fillText('Start Game', viewportOffsetX, viewportOffsetY);
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(-0.3 * viewportScale + viewportOffsetX, -0.04 * viewportScale + viewportOffsetY, 0.6 * viewportScale, 0.08 * viewportScale);
-                }             
-
-                if (strList.get("state") == "Teach") {
+                
+                } else if (strList.get("state") == "Teach") {
                     ctx.fillStyle = "yellow";
                     ctx.beginPath();
                     circle(0, 0, 0.05);
                     ctx.fill();
-
-                }
-                if (strList.get("state") == "Recall") {
+                    
+                } else if (strList.get("state") == "Recall") {
                     var baseColor = 255 - (240 * (maxTimeBetweenHit - timeSinceLastHit) / maxTimeBetweenHit);
                     baseColor = Math.round(baseColor).toString(16).padStart(2, "0");
                     ctx.strokeStyle = "#" + baseColor + "" + baseColor + "" + baseColor;
                     ctx.lineWidth = 15.0 * globalViewScale;
-
                     arcStroke(0, 0, 0.425, (360 * timeSinceLastHit / maxTimeBetweenHit) - 90 + lastHitStartAngle, 270 + lastHitStartAngle);
                     ctx.lineWidth = 1.0;
-                }
-                if (strList.get("state") == "Failed") {
+
+                } else if (strList.get("state") == "Failed") {
                     ctx.fillStyle = "red";
                     ctx.beginPath();
                     circle(0, 0, 0.05);
@@ -614,7 +597,7 @@
 
             }
 
-            function saveLastState(){
+            function cleanupScene(){
                 lastX = currentX;
                 lastY = currentY;
                 lastT = time;
