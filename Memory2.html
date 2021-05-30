@@ -277,7 +277,7 @@
 
             const shuffleResetState = [0, 1, 2, 3];
             var shuffle = shuffleResetState.slice();
-          //  var revShuffle = shuffleResetState.slice();
+
             var shuffleMode = "BeforeTeach";
             // None
             // BeforeTeach
@@ -407,31 +407,16 @@
             function checkHitRegion(x, y) {
                 //strList.set("X", x.toFixed(3));
                 //strList.set("Y", y.toFixed(3));
-                //strList.set("region", "out");
+
                 if (strList.get("state") != "Teach") {
                     var d = Math.sqrt((x * x) + (y * y));
                     if ((d > 0.05) && (d < 0.40)) {
-                        if ((x > 0.05) && (y > 0.05)) {
-                            //strList.set("region", "red");
-                            newUserInput = shuffle[0] + 1;
-                        }
-                        if ((x < -0.05) && (y > 0.05)) {
-                            //strList.set("region", "green");
-                            newUserInput = shuffle[1] + 1;
-                        }
-                        if ((x < -0.05) && (y < -0.05)) {
-                            //strList.set("region", "blue");
-                            newUserInput = shuffle[2] + 1;
-                        }
-                        if ((x > 0.05) && (y < -0.05)) {
-                            //strList.set("region", "yellow");
-                            newUserInput = shuffle[3] + 1;
-                        }
+                        if ((x > 0.05) && (y > 0.05)) newUserInput = shuffle[0] + 1;
+                        if ((x < -0.05) && (y > 0.05)) newUserInput = shuffle[1] + 1;
+                        if ((x < -0.05) && (y < -0.05)) newUserInput = shuffle[2] + 1;
+                        if ((x > 0.05) && (y < -0.05)) newUserInput = shuffle[3] + 1;
                     }
-                    if ((x > -0.40) && (x < 0.40) && (y > -0.05) && (y < 0.05)) {
-                        //strList.set("region", "new");
-                        newUserInput = 5;
-                    }
+                    if ((x > -0.40) && (x < 0.40) && (y > -0.05) && (y < 0.05)) newUserInput = 5;
                 }
             }
 
@@ -446,7 +431,6 @@
 
             function fail() {
                 strList.set("state", "Failed");
-                //strList.set("region", "out");
                 bfail.play();
                 lastHitStartAngle = 0;
             }
@@ -463,19 +447,11 @@
                     var b = shuffle[s]; 
                     shuffle[s] = shuffle[d];
                     shuffle[d] = b;
-
-                   /// b = RevShuffle[d];
-                   // RevShuffle[d] = RevShuffle[s];
-                   // RevShuffle[s] = b;
-
-                    // shuffle    [ 1, 0, 2, 3]
-                    // revShuffle [ 1, 0, 2, 3]  
                 }
             }
 
             function updateScene() {            
                 // stats and shit
-                //strList.set("time", time.toFixed(2));
                 strList.set("shuffle", shuffleMode);
                 strList.set("shuffle x", shuffleItterations);    
                 strList.set("level", currentLevel + 1);
@@ -487,7 +463,7 @@
                     lastHitStartAngle += (360 * timeSinceLastHit / maxTimeBetweenHit);
                     if (lastHitStartAngle > 360) lastHitStartAngle -= 360;
                     timeSinceLastHit = 0;
-                    console.log("input: " + newUserInput);
+                    //console.log("input: " + newUserInput);
                 }
                     
                 // state 
@@ -495,7 +471,7 @@
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
                     } else if ((newUserInput > 0) && (newUserInput < 5)) {
-                        console.log("recalled: " + newUserInput);
+                        //console.log("recalled: " + newUserInput);
                         if (newUserInput == seq[currentStep]) {
                             currentStep++;
                             if (currentStep > currentLevel) strList.set("state", "Success");
@@ -524,7 +500,7 @@
                             currentStep = 0;
                         } else {
                             newUserInput = seq[currentStep];
-                            console.log("teach: " + newUserInput);
+                            //console.log("teach: " + newUserInput);
                             playColor(newUserInput);
                             currentStep++;
                         } 
