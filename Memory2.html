@@ -7,7 +7,7 @@
     <style>
         body {
             margin: 0px;
-            font-size: 24px;
+            font-size: 18px;
             font-family: Arial, Helvetica, sans-serif;
         }
         canvas {
@@ -490,7 +490,7 @@
 
             function updateScene() {            
                 // stats and shit
-                strList.set("shuffle", shuffleMode);
+                strList.set("shuffle", "\n" + shuffleMode);
                 strList.set("shuffle x", shuffleItterations);    
                 strList.set("level", currentLevel + 1);
                 strList.set("step", currentStep);
