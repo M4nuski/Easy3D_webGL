@@ -184,6 +184,7 @@
                 if (event.key == "f") strList.set("state", "Failed");
                 if (event.key == "t") strList.set("state", "Teach");
                 if (event.key == "r") strList.set("state", "Recall");
+                if (event.key == "s") performShuffle();
                 timeSinceLastHit = 0;
             }
 
@@ -450,28 +451,6 @@
                 lastHitStartAngle = 0;
             }
 
-            function checkShuffle(step) {
-                // step BT AT BR AR
-                switch (shuffleMode) {
-                    case "None": 
-                    shuffle = shuffleResetState.slice(); 
-              //      RevShuffle = shuffleResetState.slice(); 
-                    break;
-                    case "BeforeTeach": 
-                    if (step == "BT") performShuffle(); 
-                    break;
-                    case "AfterTeach": 
-                    /* */ ; 
-                    break;
-                    case "BeforeEachRecalls": 
-                    /* */ ; 
-                    break;
-                    case "AfterEachRecalls": 
-                    /* */ ; 
-                    break;
-                }
-            }
-
             function performShuffle() {
                 for (var i = 0; i < shuffleItterations; ++i) {
 
@@ -498,16 +477,17 @@
                 // stats and shit
                 //strList.set("time", time.toFixed(2));
                 strList.set("shuffle", shuffleMode);
-                strList.set("shuffle n", shuffleItterations);    
+                strList.set("shuffle x", shuffleItterations);    
                 strList.set("level", currentLevel + 1);
                 strList.set("step", currentStep);
 
                 // inputs
-                if (newUserInput > 0 && (newUserInput < 5)) {
+                if ((newUserInput > 0) && (newUserInput < 5)) {
                     playColor(newUserInput);
                     lastHitStartAngle += (360 * timeSinceLastHit / maxTimeBetweenHit);
                     if (lastHitStartAngle > 360) lastHitStartAngle -= 360;
                     timeSinceLastHit = 0;
+                    console.log("input: " + newUserInput);
                 }
                     
                 // state 
@@ -515,6 +495,7 @@
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
                     } else if ((newUserInput > 0) && (newUserInput < 5)) {
+                        console.log("recalled: " + newUserInput);
                         if (newUserInput == seq[currentStep]) {
                             currentStep++;
                             if (currentStep > currentLevel) strList.set("state", "Success");
@@ -543,6 +524,7 @@
                             currentStep = 0;
                         } else {
                             newUserInput = seq[currentStep];
+                            console.log("teach: " + newUserInput);
                             playColor(newUserInput);
                             currentStep++;
                         } 
@@ -602,13 +584,13 @@
                 arc(0, 0, 0.45, 0, 360);
 
                 // buttons
-                ctx.fillStyle = fillStyles[newUserInput == 1 ? 1 : 0][shuffle[0]];
+                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[0] ? 1 : 0][shuffle[0]];
                 arc(0.0, 0.0, 0.4, 0, 90);
-                ctx.fillStyle = fillStyles[newUserInput == 2 ? 1 : 0][shuffle[1]];
+                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[1] ? 1 : 0][shuffle[1]];
                 arc(0.0, 0.0, 0.4, 90, 180);
-                ctx.fillStyle = fillStyles[newUserInput == 3 ? 1 : 0][shuffle[2]];
+                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[2] ? 1 : 0][shuffle[2]];
                 arc(0.0, 0.0, 0.4, 180, 270);
-                ctx.fillStyle = fillStyles[newUserInput == 4 ? 1 : 0][shuffle[3]];
+                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[3] ? 1 : 0][shuffle[3]];
                 arc(0.0, 0.0, 0.4, 270, 0);
 
                 ctx.fillStyle = "black";
