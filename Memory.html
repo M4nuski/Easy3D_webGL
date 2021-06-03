@@ -79,6 +79,7 @@
 
             const DegToRad = (Math.PI / 180.0);
 
+            // Render
             var viewportScale = 1.0;
             var viewportOffsetX = 0;
             var viewportOffsetY = 0;
@@ -87,6 +88,7 @@
             var canvasOffsetX = 0;
             var canvasOffsetY = 0;
 
+            // Events
             window.addEventListener("resize", resizeViewport);
             c.addEventListener("mousedown", canvasMouseDown);
            // c.addEventListener("touchstart", canvasTouchStart);
@@ -96,6 +98,9 @@
             c.addEventListener("mouseleave", canvasMouseLeave);
             document.addEventListener("keydown", canvasKeyDown);
             
+            // Inputs
+            var newUserInput = 0;
+
             var currentX = 0;
             var currentY = 0;
 
@@ -106,6 +111,7 @@
             var cY = 0;
             var lX = 0;
             var lY = 0;
+
             mouseDn0 = false;
             mouseDn1 = false;
             mouseDn2 = false;
@@ -196,10 +202,11 @@
             }
 
             function canvasKeyDown(event) {
-                if (event.key == "i") strList.set("state", "Idle");
-                if (event.key == "f") strList.set("state", "Failed");
-                if (event.key == "t") strList.set("state", "Teach");
-                if (event.key == "r") strList.set("state", "Recall");
+                // Debug state override
+                if (event.key == "i") state = GS_Idle;
+                if (event.key == "f") state = GS_Failed;
+                if (event.key == "t") state = GS_Teach;
+                if (event.key == "r") state = GS_Recall;
                 if (event.key == "s") performShuffle();
                 timeSinceLastHit = 0;
             }
@@ -263,16 +270,10 @@
                 if (elem) return elem;
                 return false;
             }
+            // Debug data
+            var strList = new Map();     
 
-            var newUserInput = 0;
-            var strList = new Map();
-            strList.set("state", "Idle");
-            // Idle
-            // Teach show sequence
-            // Recall wait for user sequence
-            // Failed
-            // Success
-
+            // Timing
             var time = 0;
             var timeLast = 0;
             var timeDelta = 0;
@@ -286,19 +287,27 @@
             var b0, b1, b2, b3, bfail;
             var t0, t1, t2, t3, tfail;
 
+            // Colors
             var fillStyles = [
-                ["red", "green", "blue", "yellow"],
-                ["#FF8080", "#80FF80", "#8080FF", "#FFFFA0"]
+                ["red", "green", "blue", "yellow"], // "off"
+                ["#FF8080", "#80FF80", "#8080FF", "#FFFFA0"] // "on"
             ];
 
-            const shuffleResetState = [0, 1, 2, 3];
-            var shuffle = shuffleResetState.slice();
+            // Game States
+            const GS_Idle = 0;
+            const GS_Teach = 1;
+            const GS_Recall = 2;
+            const GS_Failed = 3;
+            const GS_Success = 4;    
+            const GS_Max = 4;   
+            const GS_Strings = ["Idle", "Teach", "Recall", "Failed", "Success"];     
+            var state = GS_Idle;
 
-            var modeList = ["None", "BeforeTeach", "AfterTeach", "AfterEachRecalls", "BeforeEachRecalls"];
-            var shuffleModeIndex = 1;
-            var shuffleMode = modeList[shuffleModeIndex];
-
-            var shuffleItterations = 1;
+            var currentLevel = 0;
+            var currentStep = 0;
+            var seq = [];
+            var RNG_Sequence = new Random(666);
+            var RNG_ColorShuffle = new Random(1337);
 
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
@@ -308,11 +317,24 @@
             const teachDelayMin = 0.15;
             const teachDelayDecrements = 0.02;
 
-            var currentLevel = 0;
-            var currentStep = 0;
-            var seq = [];
-            var rng = new Random(666);
-            var rng2 = new Random(1337);
+            // Shuffle
+            const shuffleResetState = [0, 1, 2, 3];
+            var shuffle = shuffleResetState.slice();
+
+            // Color Shuffle Modes
+            const CSM_None = 0;
+            const CSM_BeforeTeach = 1;
+            const CSM_AfterTeach = 2;
+            const CSM_AfterEachRecalls = 3;
+            const CSM_BeforeEachRecalls = 4;
+            const CSM_Max = 4;
+            const CSM_Strings = ["None", "BeforeTeach", "AfterTeach", "AfterEachRecalls", "BeforeEachRecalls"];
+            var colorShuffleMode = CSM_None;
+            var shuffleQty = 2;
+
+            // Sound shuffle
+            // TODO sound shuffle modes None BeforeTeach AfterTeach
+
             // volume slider
             var volSlider = getElem("vol");
             if (window.localStorage) {
@@ -326,35 +348,44 @@
                 if (window.localStorage) window.localStorage.setItem("m1.vol", this.value);
             });
 
+            // shuffle mode button
             getElem("shuffleModeButton").addEventListener("click", function (event) {
-                shuffleModeIndex++;
-                if (shuffleModeIndex > modeList.length - 1) shuffleModeIndex = 0;
-                shuffleMode = modeList[shuffleModeIndex];
-                if (window.localStorage) window.localStorage.setItem("m2.mode", shuffleModeIndex);
+                colorShuffleMode++;
+                if (colorShuffleMode > CSM_Max) colorShuffleMode = 0;
+                if (window.localStorage) window.localStorage.setItem("m2.mode", colorShuffleMode);
             });
             if (window.localStorage) {
                 var m = window.localStorage.getItem("m2.mode");
                 if (m != undefined) {
-                    shuffleModeIndex = m;
-                    shuffleMode = modeList[shuffleModeIndex];
+                    colorShuffleMode = m;
                 }
             }  
 
-            getElem("shuffleTimesButton").addEventListener("click", function (event) {
-                shuffleItterations++;
-                if (shuffleItterations > 4) shuffleItterations = 1;
-                if (window.localStorage) window.localStorage.setItem("m2.itt", shuffleItterations);
+            // shuffle times button
+            getElem("shuffleQtyButton").addEventListener("click", function (event) {
+                shuffleQty++;
+                if (shuffleQty > 4) shuffleQty = 2;
+                if (window.localStorage) window.localStorage.setItem("m2.itt", shuffleQty);
             });   
             if (window.localStorage) {
                 var i = window.localStorage.getItem("m2.itt");
                 if (i != undefined) {
-                    shuffleItterations = i;
+                    shuffleQty = i;
+                    if (shuffleQty < 2) shuffleQty = 2;
+                    if (shuffleQty > 4) shuffleQty = 4;
                 }
             }   
 
+
+
+
+
+
+            // Init
             resizeViewport();
             startLoop();
 
+            // Loop
             function startLoop() {
                 window.requestAnimationFrame((startTime) => { 
                     timeLast = startTime; 
@@ -376,12 +407,14 @@
                 window.requestAnimationFrame(gameLoop);
             }
 
+            // Timing
             function timeKeeping(newTime) {
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
                 if (run) time += timeDelta;
                 timeLast = newTime;
             }
 
+            // Inputs
             function updateInputs() {
                 // handle mouse down
                 if (mouseDn0) {
@@ -446,18 +479,19 @@
                 //strList.set("X", x.toFixed(3));
                 //strList.set("Y", y.toFixed(3));
 
-                if (strList.get("state") != "Teach") {
+                if (state != GS_Teach) {
                     var d = Math.sqrt((x * x) + (y * y));
                     if ((d > 0.05) && (d < 0.40)) {
-                        if ((x > 0.05) && (y > 0.05)) newUserInput = shuffle[0] + 1;
-                        if ((x < -0.05) && (y > 0.05)) newUserInput = shuffle[1] + 1;
+                        if ((x >  0.05) && (y >  0.05)) newUserInput = shuffle[0] + 1;
+                        if ((x < -0.05) && (y >  0.05)) newUserInput = shuffle[1] + 1;
                         if ((x < -0.05) && (y < -0.05)) newUserInput = shuffle[2] + 1;
-                        if ((x > 0.05) && (y < -0.05)) newUserInput = shuffle[3] + 1;
+                        if ((x >  0.05) && (y < -0.05)) newUserInput = shuffle[3] + 1;
                     }
                     if ((x > -0.40) && (x < 0.40) && (y > -0.05) && (y < 0.05)) newUserInput = 5;
                 }
             }
 
+            // Methods
             function playColor(index) {
                 if (audioContext) switch (index) {
                     case 1: b0.play(); break;
@@ -468,32 +502,38 @@
             }
 
             function fail() {
-                strList.set("state", "Failed");
+                state = GS_Failed;
                 bfail.play();
                 lastHitStartAngle = 0;
             }
 
             function performShuffle() {
-                for (var i = 0; i < shuffleItterations; ++i) {
+                // prep array
+                var newPos = [];
+                var possiblePos = [0, 1, 2, 3];                
+                for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1)); 
+                //console.log(newPos);
 
-                    //random unequal source and destination
-                    var s = rng2.nextInt(4);
-                    var d = rng2.nextInt(4);
-                    while (s == d) d = rng2.nextInt(4); 
-
-                    //swap
-                    var b = shuffle[s]; 
-                    shuffle[s] = shuffle[d];
-                    shuffle[d] = b;
-                }
+                // variable length swap
+                var b = shuffle[newPos[0]];
+                for (var i = 0; i < shuffleQty - 1; ++i) shuffle[newPos[i]] = shuffle[newPos[i+1]];
+                shuffle[newPos[shuffleQty - 1]] = b;
             }
 
+
+
+
+
+            // Scene
             function updateScene() {            
                 // stats and shit
-                strList.set("shuffle", "\n" + shuffleMode);
-                strList.set("shuffle x", shuffleItterations);    
+                strList.set("state", GS_Strings[state]);
+                //strList.set("s", "[" + shuffle[0] + "," + shuffle[1] + "," + shuffle[2] + "," + shuffle[3] + "]");
+                strList.set("shuffle", "\n" + CSM_Strings[colorShuffleMode]);
+                strList.set("shuffle x", shuffleQty);    
                 strList.set("level", currentLevel + 1);
                 strList.set("step", currentStep);
+
 
                 // inputs
                 if ((newUserInput > 0) && (newUserInput < 5)) {
@@ -505,39 +545,39 @@
                 }
                     
                 // state 
-                if (strList.get("state") == "Recall") {
+                if (state == GS_Recall) {
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
                     } else if ((newUserInput > 0) && (newUserInput < 5)) {
                         //console.log("recalled: " + newUserInput);
                         if (newUserInput == seq[currentStep]) {
                             currentStep++;
-                            if (currentStep > currentLevel) strList.set("state", "Success");
-                            if (shuffleMode == "AfterEachRecalls") performShuffle();
-                            if (shuffleMode == "BeforeEachRecalls") performShuffle();
+                            if (currentStep > currentLevel) state = GS_Success;
+                            if (colorShuffleMode == CSM_AfterEachRecalls) performShuffle();
+                            if (colorShuffleMode == CSM_BeforeEachRecalls) performShuffle();
                         } else fail();
                     }
  
                 }
-                if ((strList.get("state") == "Idle") || (strList.get("state") == "Failed")) {
+                if ((state == GS_Idle) || (state == GS_Failed)) {
                     if (newUserInput == 5) {
                         seq = [];
-                        seq.push(rng.nextInt(4) + 1);
-                        if (shuffleMode == "BeforeTeach") performShuffle();
-                        strList.set("state", "Teach");
+                        seq.push(RNG_Sequence.nextInt(4) + 1);
+                        if (colorShuffleMode == CSM_BeforeTeach) performShuffle();
+                        state =  GS_Teach;
                         currentLevel = 0;
                         currentStep = 0;
                         stepDelayRemaining = teachDelayBase;
                     } 
                 }
-                if (strList.get("state") == "Teach") {
+                if (state == GS_Teach) {
                     stepDelayRemaining -= timeDelta;
                     if (stepDelayRemaining <= 0) {
 
                         if (currentStep > currentLevel) {
-                            if (shuffleMode == "AfterTeach") performShuffle();
-                            if (shuffleMode == "BeforeEachRecalls") performShuffle();
-                            strList.set("state", "Recall");
+                            if (colorShuffleMode == CSM_AfterTeach) performShuffle();
+                            if (colorShuffleMode == CSM_BeforeEachRecalls) performShuffle();
+                            state = GS_Recall;
                             timeSinceLastHit = 0;
                             currentStep = 0;
                         } else {
@@ -548,18 +588,18 @@
                         } 
 
                         //reset delay
-                        stepDelayRemaining = teachDelayBase - teachDelayDecrements * currentLevel;
+                        stepDelayRemaining = teachDelayBase - (teachDelayDecrements * currentLevel);
                         if (stepDelayRemaining < teachDelayMin) stepDelayRemaining = teachDelayMin;
 
                     } // delay reached
                 }// state teach
 
-                if (strList.get("state") == "Success") {
+                if (state == GS_Success) {
                     currentStep = 0;
-                    seq.push(rng.nextInt(4) + 1);
+                    seq.push(RNG_Sequence.nextInt(4) + 1);
                     currentLevel++;
-                    if (shuffleMode == "BeforeTeach") performShuffle();
-                    strList.set("state", "Teach");
+                    if (colorShuffleMode == CSM_BeforeTeach) performShuffle();
+                    state = GS_Teach;
                     stepDelayRemaining = teachDelayBase;
                 }
 
@@ -618,7 +658,7 @@
                 ctx.lineWidth = 1.0;
                 ctx.fillStyle = "white";
 
-                if (strList.get("state") == "Idle") {
+                if (state == GS_Idle) {
                     var fs = 80 * globalViewScale;
                     ctx.font = fs + "px Lucida Console";
                     ctx.textAlign = "center";
@@ -627,13 +667,13 @@
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(-0.3 * viewportScale + viewportOffsetX, -0.04 * viewportScale + viewportOffsetY, 0.6 * viewportScale, 0.08 * viewportScale);
                 
-                } else if (strList.get("state") == "Teach") {
+                } else if (state == GS_Teach) {
                     ctx.fillStyle = "yellow";
                     ctx.beginPath();
                     circle(0, 0, 0.05);
                     ctx.fill();
                     
-                } else if (strList.get("state") == "Recall") {
+                } else if (state == GS_Recall) {
                     var baseColor = 255 - (240 * (maxTimeBetweenHit - timeSinceLastHit) / maxTimeBetweenHit);
                     baseColor = Math.round(baseColor).toString(16).padStart(2, "0");
                     ctx.strokeStyle = "#" + baseColor + "" + baseColor + "" + baseColor;
@@ -641,7 +681,7 @@
                     arcStroke(0, 0, 0.425, (360 * timeSinceLastHit / maxTimeBetweenHit) - 90 + lastHitStartAngle, 270 + lastHitStartAngle);
                     ctx.lineWidth = 1.0;
 
-                } else if (strList.get("state") == "Failed") {
+                } else if (state == GS_Failed) {
                     ctx.fillStyle = "red";
                     ctx.beginPath();
                     circle(0, 0, 0.05);
@@ -727,7 +767,8 @@
             <span id="volSpan">Volume:</span>
             <input id="vol" type="range" min="0" max="2" value="1" step="0.1" />
             <div id="shuffleModeButton" class="E3D_fakeButton">Shuffle Mode</div>
-            <div id="shuffleTimesButton" class="E3D_fakeButton">Shuffle Times</div>
+            <div id="shuffleQtyButton" class="E3D_fakeButton">Shuffle Qty.</div>
+            <div id="shuffleSoundButton" class="E3D_fakeButton">Sound Shuffle</div>
         </div>
     </div>
     <audio id="b0" src="media/Beep0.wav"></audio>
