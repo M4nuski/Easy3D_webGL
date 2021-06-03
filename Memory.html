@@ -123,31 +123,6 @@
             mouseUp2 = false;
             mouseW = 0;
 
-            function setAudio() {
-                audioContext = new window.AudioContext();
-                gainNode = audioContext.createGain();
-
-                b0 = getElem("b0");
-                var t0 = audioContext.createMediaElementSource(b0);
-                t0.connect(gainNode).connect(audioContext.destination);
-
-                b1 = getElem("b1");
-                var t1 = audioContext.createMediaElementSource(b1);
-                t1.connect(gainNode).connect(audioContext.destination);
-
-                b2 = getElem("b2");
-                var t2 = audioContext.createMediaElementSource(b2);
-                t2.connect(gainNode).connect(audioContext.destination);
-
-                b3 = getElem("b3");
-                var t3 = audioContext.createMediaElementSource(b3);
-                t3.connect(gainNode).connect(audioContext.destination);
-
-                bfail = getElem("fail");
-                var tfail = audioContext.createMediaElementSource(bfail);
-                tfail.connect(gainNode).connect(audioContext.destination);
-            }
-
             function canvasMouseDown(event) {
                 if (event.button == 0) mouseDn0 = true;
                 if (event.button == 1) mouseDn1 = true;
@@ -246,6 +221,11 @@
                 c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px";
             }
 
+
+
+
+            // Helper Methods
+
             // Seeded RNG based on https://gist.github.com/blixt/f17b47c62508be59987b
             class Random {
                 constructor(seed) {
@@ -270,6 +250,11 @@
                 if (elem) return elem;
                 return false;
             }
+
+
+
+
+
             // Debug data
             var strList = new Map();     
 
@@ -330,10 +315,23 @@
             const CSM_Max = 4;
             const CSM_Strings = ["None", "BeforeTeach", "AfterTeach", "AfterEachRecalls", "BeforeEachRecalls"];
             var colorShuffleMode = CSM_None;
-            var shuffleQty = 2;
+            var shuffleQty = 2; // 2, 3 or 4
 
-            // Sound shuffle
-            // TODO sound shuffle modes None BeforeTeach AfterTeach
+            // Sound Shuffle Modes
+            const SSM_None = 0;
+            const SSM_EachLevel = 1;
+            const SSM_AfterTeach = 2;
+            const SSM_Max = 2;
+            const SSM_Strings = ["No Shuffle", "EachLevel", "AfterTeach"];
+            var soundSuffleMode = SSM_None;
+            var soundShuffle = shuffleResetState.slice();
+
+
+
+
+
+
+            // UI event handlers
 
             // volume slider
             var volSlider = getElem("vol");
@@ -361,7 +359,7 @@
                 }
             }  
 
-            // shuffle times button
+            // shuffle qty button
             getElem("shuffleQtyButton").addEventListener("click", function (event) {
                 shuffleQty++;
                 if (shuffleQty > 4) shuffleQty = 2;
@@ -373,6 +371,19 @@
                     shuffleQty = i;
                     if (shuffleQty < 2) shuffleQty = 2;
                     if (shuffleQty > 4) shuffleQty = 4;
+                }
+            }
+
+            // shuffle sound button
+            getElem("shuffleSoundButton").addEventListener("click", function (event) {
+                soundSuffleMode++;
+                if (soundSuffleMode > SSM_Max) soundSuffleMode = 0;
+                if (window.localStorage) window.localStorage.setItem("m2.ssm", soundSuffleMode);
+            });   
+            if (window.localStorage) {
+                var s = window.localStorage.getItem("m2.ssm");
+                if (s != undefined) {
+                    soundSuffleMode = s;
                 }
             }   
 
@@ -414,7 +425,7 @@
                 timeLast = newTime;
             }
 
-            // Inputs
+            // Inputs processing
             function updateInputs() {
                 // handle mouse down
                 if (mouseDn0) {
@@ -491,13 +502,43 @@
                 }
             }
 
+
+
+
+
             // Methods
+            
+            function setAudio() {
+                audioContext = new window.AudioContext();
+                gainNode = audioContext.createGain();
+
+                b0 = getElem("b0");
+                var t0 = audioContext.createMediaElementSource(b0);
+                t0.connect(gainNode).connect(audioContext.destination);
+
+                b1 = getElem("b1");
+                var t1 = audioContext.createMediaElementSource(b1);
+                t1.connect(gainNode).connect(audioContext.destination);
+
+                b2 = getElem("b2");
+                var t2 = audioContext.createMediaElementSource(b2);
+                t2.connect(gainNode).connect(audioContext.destination);
+
+                b3 = getElem("b3");
+                var t3 = audioContext.createMediaElementSource(b3);
+                t3.connect(gainNode).connect(audioContext.destination);
+
+                bfail = getElem("fail");
+                var tfail = audioContext.createMediaElementSource(bfail);
+                tfail.connect(gainNode).connect(audioContext.destination);
+            }
             function playColor(index) {
-                if (audioContext) switch (index) {
-                    case 1: b0.play(); break;
-                    case 2: b1.play(); break;
-                    case 3: b2.play(); break;
-                    case 4: b3.play(); break;
+                var i = soundShuffle[index - 1];
+                if (audioContext) switch (i) {
+                    case 0: b0.play(); break;
+                    case 1: b1.play(); break;
+                    case 2: b2.play(); break;
+                    case 3: b3.play(); break;
                 }
             }
 
@@ -521,6 +562,19 @@
             }
 
 
+            function performSoundShuffle() {
+                // prep array
+                var newPos = [];
+                var possiblePos = [0, 1, 2, 3];                
+                for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1)); 
+                //console.log(newPos);
+
+                // variable length swap
+                var b = soundShuffle[newPos[0]];
+                for (var i = 0; i < shuffleQty - 1; ++i) soundShuffle[newPos[i]] = soundShuffle[newPos[i+1]];
+                soundShuffle[newPos[shuffleQty - 1]] = b;
+            }
+
 
 
 
@@ -530,7 +584,8 @@
                 strList.set("state", GS_Strings[state]);
                 //strList.set("s", "[" + shuffle[0] + "," + shuffle[1] + "," + shuffle[2] + "," + shuffle[3] + "]");
                 strList.set("shuffle", "\n" + CSM_Strings[colorShuffleMode]);
-                strList.set("shuffle x", shuffleQty);    
+                strList.set("shuffle n", shuffleQty);
+                strList.set("sound", "\n" + SSM_Strings[soundSuffleMode]);
                 strList.set("level", currentLevel + 1);
                 strList.set("step", currentStep);
 
@@ -543,8 +598,10 @@
                     timeSinceLastHit = 0;
                     //console.log("input: " + newUserInput);
                 }
-                    
-                // state 
+
+
+
+                // Game Logic 
                 if (state == GS_Recall) {
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
@@ -577,6 +634,7 @@
                         if (currentStep > currentLevel) {
                             if (colorShuffleMode == CSM_AfterTeach) performShuffle();
                             if (colorShuffleMode == CSM_BeforeEachRecalls) performShuffle();
+                            if (soundSuffleMode == SSM_AfterTeach) performSoundShuffle();
                             state = GS_Recall;
                             timeSinceLastHit = 0;
                             currentStep = 0;
@@ -599,6 +657,7 @@
                     seq.push(RNG_Sequence.nextInt(4) + 1);
                     currentLevel++;
                     if (colorShuffleMode == CSM_BeforeTeach) performShuffle();
+                    if (soundSuffleMode == SSM_EachLevel) performSoundShuffle();
                     state = GS_Teach;
                     stepDelayRemaining = teachDelayBase;
                 }
