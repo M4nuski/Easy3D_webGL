@@ -347,6 +347,7 @@
             });
 
             // shuffle mode button
+            // TODO prevent mode changes while game is active
             getElem("shuffleModeButton").addEventListener("click", function (event) {
                 colorShuffleMode++;
                 if (colorShuffleMode > CSM_Max) colorShuffleMode = 0;
@@ -733,7 +734,8 @@
                     ctx.fill();
                     
                 } else if (state == GS_Recall) {
-                    var baseColor = 255 - (240 * (maxTimeBetweenHit - timeSinceLastHit) / maxTimeBetweenHit);
+                    var t = (maxTimeBetweenHit - timeSinceLastHit) / maxTimeBetweenHit;
+                    var baseColor = 255 - (255 * t * t);
                     baseColor = Math.round(baseColor).toString(16).padStart(2, "0");
                     ctx.strokeStyle = "#" + baseColor + "" + baseColor + "" + baseColor;
                     ctx.lineWidth = 15.0 * globalViewScale;
@@ -754,6 +756,7 @@
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(0.06 * viewportScale + viewportOffsetX, -0.04 * viewportScale + viewportOffsetY, 0.32 * viewportScale, 0.08 * viewportScale);
                 }
+                // TODO add state == GS_success with green mark before next level
 
             }
 
@@ -774,6 +777,7 @@
 
 
             // Context drawing methods
+            // TODO use canvas transform matrix
             function moveTo(x, y) {
                 ctx.moveTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
             }
@@ -815,6 +819,11 @@
             }
 
         } );
+        // TODO local scoreboard
+        // TODO global leaderboard
+        // TODO header bar with level/step/status/csm/ssm
+        // TODO help tab with descriptions of modes
+
     </script>
 </head>
 
