@@ -74,6 +74,7 @@
 
             var c = document.getElementById("canvas");
             var ctx = c.getContext("2d");
+            ctx.save();
             var width = 1920;
             var height = 1080;
 
@@ -210,6 +211,11 @@
                 }
                 globalViewScale = viewportScale / 1080;
 
+                ctx.restore();
+                ctx.translate(viewportOffsetX, viewportOffsetY);
+                ctx.scale(viewportScale, viewportScale);
+                ctx.save();
+
                 resizeCanvas();
             }
 
@@ -274,8 +280,8 @@
 
             // Colors
             var fillStyles = [
-                ["red", "green", "blue", "yellow"], // "off"
-                ["#FF8080", "#80FF80", "#8080FF", "#FFFFA0"] // "on"
+                ["#800000", "#008012", "#1E0080", "#788000"], // "off"
+                ["#FF8080", "#80FF24", "#0080FF", "#FFFF00"]  // "on"
             ];
 
             // Game States
@@ -391,11 +397,53 @@
 
 
 
+            // Create rendered text from canvas to avoid canvas scale issues with font sizes
+            var textImage1 = document.createElement('img');
+            var textImage2 = document.createElement('img');
+
+            function convertText(text, image) {
+                var textCanvas = document.createElement("canvas");
+                textCanvas.width = 512;
+                textCanvas.height = 48;
+                var textContext = textCanvas.getContext("2d");
+                textContext.font = "48px Lucida Console";
+                textContext.textAlign = "center";
+                textContext.textBaseline = "middle";
+                textContext.fillStyle = "white";
+                var textSize = textContext.measureText(text); 
+
+                textCanvas.width = textSize.width*1.1;
+
+                textContext.font = "48px Lucida Console";
+                textContext.textAlign = "center";
+                textContext.textBaseline = "middle";
+                textContext.fillStyle = "white";
+
+                textContext.fillText(text, textCanvas.width / 2, textCanvas.height / 2);
+
+                textCanvas.toBlob(function(blob) {
+                    //image = document.createElement('img');
+                    url = URL.createObjectURL(blob);
+                    image.onload = function() {
+                        URL.revokeObjectURL(url);
+                    };
+                    image.src = url;
+                });
+            }
+
+            // Generate colors with same luminance
+            function getLum(R, G, B) {
+                return (0.2126 * R) + (0.7152 * G) + (0.722 * B);
+            }
+
+        
 
 
             // Init
             resizeViewport();
             startLoop();
+            convertText("Start Game", textImage1);
+            convertText("New Game", textImage2);
 
             // Loop
             function startLoop() {
@@ -667,7 +715,7 @@
 
             function drawScene(){                
                 // clear
-                ctx.clearRect(0, 0, width, height);
+                ctx.clearRect(-1, -1, 2, 2);
                 clear = false;
 
                 // text
@@ -686,8 +734,8 @@
 
                 // origin
                 ctx.strokeStyle = "#000";
-                ctx.lineWidth = 3.0;
-                ctx.setLineDash([20, 3, 3, 3]);
+                ctx.lineWidth = 3.0 / viewportScale;
+                ctx.setLineDash([20 / viewportScale, 3 / viewportScale, 3 / viewportScale, 3 / viewportScale]);
                 ctx.beginPath();
                 line( 0.0, -1.0, 0.0, 1.0);
                 line(-1.0,  0.0, 1.0, 0.0);
@@ -695,66 +743,54 @@
 
                 // draw objects
                 ctx.setLineDash([]);
-                ctx.lineWidth = 2.0;
+                ctx.lineWidth = 2.0 / viewportScale;
 
                 // frame
                 ctx.fillStyle = "black";
-                arc(0, 0, 0.45, 0, 360);
+                arcFill(0, 0, 0.45, 0, 360);
 
+                // TODO add display delay to avoid being dependant on animation frame interval
                 // buttons
                 ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[0] ? 1 : 0][shuffle[0]];
-                arc(0.0, 0.0, 0.4, 0, 90);
+                arcFill(0.0, 0.0, 0.4, 0, 90);
                 ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[1] ? 1 : 0][shuffle[1]];
-                arc(0.0, 0.0, 0.4, 90, 180);
+                arcFill(0.0, 0.0, 0.4, 90, 180);
                 ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[2] ? 1 : 0][shuffle[2]];
-                arc(0.0, 0.0, 0.4, 180, 270);
+                arcFill(0.0, 0.0, 0.4, 180, 270);
                 ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[3] ? 1 : 0][shuffle[3]];
-                arc(0.0, 0.0, 0.4, 270, 0);
+                arcFill(0.0, 0.0, 0.4, 270, 0);
 
                 ctx.fillStyle = "black";
-                rect(-0.42, -0.05, 0.84, 0.1);
-                rect(-0.05, -0.42, 0.1, 0.84);
+                ctx.fillRect(-0.42, -0.05, 0.84, 0.1);
+                ctx.fillRect(-0.05, -0.42, 0.1, 0.84);
 
-                ctx.lineWidth = 1.0;
+                ctx.lineWidth = 1.0 / viewportScale;
                 ctx.fillStyle = "white";
 
                 if (state == GS_Idle) {
-                    var fs = 80 * globalViewScale;
-                    ctx.font = fs + "px Lucida Console";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText('Start Game', viewportOffsetX, viewportOffsetY);
                     ctx.strokeStyle = "white";
-                    ctx.strokeRect(-0.3 * viewportScale + viewportOffsetX, -0.04 * viewportScale + viewportOffsetY, 0.6 * viewportScale, 0.08 * viewportScale);
+                    ctx.strokeRect(-0.3, -0.04, 0.6, 0.08);
+                    drawImageScaledCentered(textImage1, 0.0, 0.0, 2.0);
                 
                 } else if (state == GS_Teach) {
                     ctx.fillStyle = "yellow";
-                    ctx.beginPath();
-                    circle(0, 0, 0.05);
-                    ctx.fill();
+                    circleFill(0, 0, 0.05);
                     
                 } else if (state == GS_Recall) {
                     var t = (maxTimeBetweenHit - timeSinceLastHit) / maxTimeBetweenHit;
                     var baseColor = 255 - (255 * t * t);
                     baseColor = Math.round(baseColor).toString(16).padStart(2, "0");
                     ctx.strokeStyle = "#" + baseColor + "" + baseColor + "" + baseColor;
-                    ctx.lineWidth = 15.0 * globalViewScale;
+                    ctx.lineWidth = 5.0 / viewportScale;
                     arcStroke(0, 0, 0.425, (360 * timeSinceLastHit / maxTimeBetweenHit) - 90 + lastHitStartAngle, 270 + lastHitStartAngle);
-                    ctx.lineWidth = 1.0;
+                    ctx.lineWidth = 1.0 / viewportScale;
 
                 } else if (state == GS_Failed) {
                     ctx.fillStyle = "red";
-                    ctx.beginPath();
-                    circle(0, 0, 0.05);
-                    ctx.fill();
-                    ctx.fillStyle = "white";
-                    var fs = 80 * globalViewScale;
-                    ctx.font = fs + "px Lucida Console";
-                    ctx.textAlign = "start";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText('Restart', 0.06 * viewportScale + viewportOffsetX, viewportOffsetY);
+                    circleFill(0, 0, 0.05);
                     ctx.strokeStyle = "white";
-                    ctx.strokeRect(0.06 * viewportScale + viewportOffsetX, -0.04 * viewportScale + viewportOffsetY, 0.32 * viewportScale, 0.08 * viewportScale);
+                    ctx.strokeRect(0.06, -0.04, 0.34, 0.08);
+                    drawImageScaledCentered(textImage2, 0.23, 0.0, 1.4);
                 }
                 // TODO add state == GS_success with green mark before next level
 
@@ -778,49 +814,62 @@
 
             // Context drawing methods
             // TODO use canvas transform matrix
-            function moveTo(x, y) {
-                ctx.moveTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
-            }
-            function lineTo(x, y) {
-                ctx.lineTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
-            }
-            function line(x1, y1, x2, y2) {
-                ctx.moveTo(x1 * viewportScale + viewportOffsetX, y1 * viewportScale + viewportOffsetY);
-                ctx.lineTo(x2 * viewportScale + viewportOffsetX, y2 * viewportScale + viewportOffsetY);
-            }
-            function circle(x, y, r) {
-                ctx.arc(x * viewportScale + viewportOffsetX,
-                        y * viewportScale + viewportOffsetY,
-                        r * viewportScale, 0, Math.PI * 2.0);
-            }
-            function arc(x, y, r, startAngle, endAngle) {
-                ctx.beginPath();
-                ctx.moveTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
-                ctx.arc(x * viewportScale + viewportOffsetX,
-                        y * viewportScale + viewportOffsetY,
-                        r * viewportScale, startAngle * DegToRad, endAngle * DegToRad);
-                ctx.lineTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);   
 
+            function line(x1, y1, x2, y2) {
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+            }
+            function circleFill(x, y, r) {
+                ctx.beginPath();
+                ctx.arc(x,
+                        y,
+                        r,
+                        0,
+                        Math.PI * 2.0);
                 ctx.fill();
             }
-            function rect(x, y, w, h) {
-                ctx.fillRect(x * viewportScale + viewportOffsetX,
-                             y * viewportScale + viewportOffsetY,
-                             w * viewportScale,
-                             h * viewportScale)
-            }
-            function arcStroke(x, y, r, startAngle, endAngle) {
-                ctx.moveTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
+            function circleStroke(x, y, r) {
                 ctx.beginPath();
-                ctx.arc(x * viewportScale + viewportOffsetX,
-                        y * viewportScale + viewportOffsetY,
-                        r * viewportScale, startAngle * DegToRad, endAngle * DegToRad);
+                ctx.arc(x,
+                        y,
+                        r,
+                        0,
+                        Math.PI * 2.0);
                 ctx.stroke();
+            }
+            function arcFill(x, y, r, startAngle, endAngle) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.arc(x,
+                        y,
+                        r, 
+                        startAngle * DegToRad, 
+                        endAngle * DegToRad);
+                ctx.lineTo(x, y);
+                ctx.fill();
+            }
+
+            function arcStroke(x, y, r, startAngle, endAngle) {
+                ctx.moveTo(x, y);
+                ctx.beginPath();
+                ctx.arc(x,
+                        y,
+                        r,
+                        startAngle * DegToRad,
+                        endAngle * DegToRad);
+                ctx.stroke();
+            }
+            function drawImageScaledCentered(img, x, y, scale = 1.0) {
+                var w = img.width * scale;
+                var h = img.height * scale;
+                w = w / viewportScale;
+                h = h / viewportScale;
+                ctx.drawImage(img, x - (w / 2), y - (h / 2), w, h);
             }
 
         } );
         // TODO local scoreboard
-        // TODO global leaderboard
+        // TODO global leaderboard - tab for total, tabs for each mode 
         // TODO header bar with level/step/status/csm/ssm
         // TODO help tab with descriptions of modes
 
