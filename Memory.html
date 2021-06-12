@@ -15,14 +15,9 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            position: absolute;
-            top: 0px;
-            left: 0px;
+            position: relative;
         }
-        img {
-            display: none;            
-        }
-        audio {
+        #hiddenMedia {
             display: none;
         }
         .E3D_fullscreenContainer {
@@ -48,32 +43,74 @@
         .E3D_fakeButton:hover {
             background-color: #a0a0a0;
         }
+        .E3D_flexContent {
+            overflow: hidden;
+            flex: 1 1 auto;
+        }
+        .E3D_flexVertical {
+            display: flex;
+            flex-direction: column;
+        }
+        .E3D_flexVerticalContentFit {
+            width: 100%;
+            height: fit-content;
+        }
+        .E3D_monospaceText {
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+        }
         #log {
+           z-index: 10;
+            position: absolute;
+            display: inline-block;
+            padding: 5px;
+            border-radius: 5px;
+            border: 2px solid black;
+            margin: 2px;
             background-color: white;
+        }
+        #helpDiv {
             z-index: 10;
             position: absolute;
-            top: 0px;
+            bottom: 0px;
             left: 0px;
             padding: 5px;
             border-radius: 5px;
             border: 2px solid black;
             margin: 2px;
+            overflow: hidden;
+            background-color: white;
         }
         #volDiv {
-            position: absolute;
-            top: 0px;
-            right: 0px;
             z-index: 10;
+            position: absolute;
+            display: inline-block;
+            right: 0px;
             text-align: center;
             border-radius: 5px;
             border: 2px solid black;
-            background-color: white;
             margin: 2px;
+            background-color: white;
         }
         #volSpan {
-            display: block; 
-            
+            display: block;             
         }
+        .hoverSize {
+            max-width: 50px;
+            max-height: 50px;
+            background-color: rgba(255, 255, 255, 0.25);
+
+            transition: all 0.1s linear;
+        }      
+        .hoverSize:hover{
+            max-width: 500px;
+            max-height: 500px; /* should be equal to max-width to avoid transition overshoot */
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+        #statusDiv {
+            z-index: 10;
+        }
+
     </style>
 
     <script type="text/javascript">
@@ -198,10 +235,10 @@
             }
 
             function resizeViewport() {
-                width = c.offsetWidth;
+                width  = c.offsetWidth;
                 height = c.offsetHeight;
 
-                c.width = width;
+                c.width  = width;
                 c.height = height;
 
                 // "view matrix"
@@ -233,8 +270,8 @@
                 c.style.width =  (canvasZoom * 100) + "%";
                 c.style.height = (canvasZoom * 100) + "%";
 
-                c.style.top =  (canvasOffsetY - (c.offsetHeight - c.height) / 2 ) + "px"; 
-                c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px";
+                c.style.top  = (canvasOffsetY - (c.parentElement.offsetHeight - c.height) / 2 ) + "px"; 
+                c.style.left = (canvasOffsetX - (c.parentElement.offsetWidth  - c.width)  / 2 ) + "px";
             }
 
 
@@ -534,11 +571,11 @@
                     //
                 }                
                 if (mouseDg1) {
-                    canvasOffsetX += cX - lX;
-                    canvasOffsetY += cY - lY;
-                    lX = cX;
-                    lY = cY;
-                    resizeCanvas();
+                  //  canvasOffsetX += cX - lX;
+                   // canvasOffsetY += cY - lY;
+                   // lX = cX;
+                   // lY = cY;
+                   // resizeCanvas();
                 }                
                 if (mouseDg2) {
                     //
@@ -824,6 +861,21 @@
                     drawImageScaledCentered(checkImage, 0.0, 0.0, 0.4);
                 }
 
+                var w = c.offsetWidth;
+                var h = c.offsetHeight;
+                ctx.strokeStyle = "#F00";
+                ctx.lineWidth = 1.0;
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w, h);
+                ctx.moveTo(0, h);
+                ctx.lineTo(w, 0);
+                ctx.stroke();
+                ctx.restore();
+                ctx.lineWidth = 1.0 / viewportScale;
+
             }
 
             function cleanupScene(){
@@ -901,31 +953,60 @@
         // TODO local scoreboard
         // TODO global leaderboard - tab for total, tabs for each mode 
         // TODO header bar with level/step/status/csm/ssm
-        // TODO help tab with descriptions of modes
-
     </script>
 </head>
 
 <body>
-    <div class="E3D_fullscreenContainer">
-        <canvas id="canvas" width="1920" height="1080">Canvas</canvas>
-        <div id="log"></div>
-        <div id="volDiv">
-            <span id="volSpan">Volume:</span>
-            <input id="vol" type="range" min="0" max="2" value="1" step="0.1" />
-            <div id="shuffleModeButton" class="E3D_fakeButton">Shuffle Mode</div>
-            <div id="shuffleQtyButton" class="E3D_fakeButton">Shuffle Qty.</div>
-            <div id="shuffleSoundButton" class="E3D_fakeButton">Sound Shuffle</div>
+    <div class="E3D_fullscreenContainer E3D_flexVertical">
+
+        <div id="statusDiv" class="E3D_flexVerticalContentFit" style="background-color: yellowgreen;">
+            <span id="statusSpan" class="E3D_monospaceText">Color Shuffle:$mode, Sound Suflle:$sound, Stage:$state, Level:$level, Step: $step</span>
+        </div>     
+
+        <div class="E3D_flexContent">
+            <div id="log"></div>
+
+            <canvas id="canvas" width="192" height="108">Canvas</canvas>
+
+            <div id="volDiv">
+                <span id="volSpan">Volume:</span>
+                <input id="vol" type="range" min="0" max="2" value="1" step="0.1" />
+                <div id="shuffleModeButton" class="E3D_fakeButton">Shuffle Mode</div>
+                <div id="shuffleQtyButton" class="E3D_fakeButton">Shuffle Qty.</div>
+                <div id="shuffleSoundButton" class="E3D_fakeButton">Sound Shuffle</div>
+            </div>
         </div>
+
+        <div id="helpDiv" class="hoverSize">
+            <img id="help" src="media/Help.svg" width="50" height="50" /></img><br />
+            EN: <br />
+            Learn the color pattern and repeat to advance to the next level <hr />
+            Shuffle Modes: <br />
+            N: Colors stay at the same place <br />
+            L: Colors shuffle at the begining of the level <br />
+            M: Colors shuffle after the memorization stage <br />
+            P: Colors shuffle after each player input in the recall stage <br />
+            R: Colors shuffle after each color ligts up in the memorization stage <br />
+            E: Colors shuffle everytime before they light up. <hr />
+            Shuffle QTY:<br />
+            Number of colors that get shuffled.<hr />
+            Sound Suffle:<br />
+            Association of sounds and colors also get shuffled.<br />            
+        </div>
+
     </div>
-    <audio id="b0" src="media/Beep0.wav"></audio>
-    <audio id="b1" src="media/Beep1.wav"></audio>
-    <audio id="b2" src="media/Beep2.wav"></audio>
-    <audio id="b3" src="media/Beep3.wav"></audio>
-    <audio id="fail" src="media/Fail.wav"></audio>
-    <img id="check" src="media/Check.svg"></img>
-    <img id="cross" src="media/Cross.svg"></img>
-    <img id="eye" src="media/Eye.svg"></img>
+
+    <div id="hiddenMedia">
+        <audio id="b0" src="media/Beep0.wav"></audio>
+        <audio id="b1" src="media/Beep1.wav"></audio>
+        <audio id="b2" src="media/Beep2.wav"></audio>
+        <audio id="b3" src="media/Beep3.wav"></audio>
+        <audio id="fail" src="media/Fail.wav"></audio>
+        <img id="check" src="media/Check.svg"></img>
+        <img id="cross" src="media/Cross.svg"></img>
+        <img id="eye" src="media/Eye.svg"></img>
+    </div>
+    
 </body>
 
 </html>
