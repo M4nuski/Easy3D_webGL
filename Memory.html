@@ -107,6 +107,7 @@
             
             // Inputs
             var newUserInput = 0;
+            var userInput = 0;
 
             var currentX = 0;
             var currentY = 0;
@@ -278,7 +279,7 @@
             var timeDelta = 0;
             var timeScale = 1.0;
             var frame = 0;
-            var frameInterval = 5; // update scene every "frameInterval" frames
+            var frameInterval = 1; // update scene every "frameInterval" frames
             var run = true;
 
             // Audio Stuff
@@ -286,10 +287,10 @@
             var b0, b1, b2, b3, bfail;
             var t0, t1, t2, t3, tfail;
 
-            // Colors
+            // Colors  240 120 60 0
             var fillStyles = [
-                ["#800000", "#008012", "#1E0080", "#788000"], // "off"
-                ["#FF8080", "#80FF24", "#0080FF", "#FFFF00"]  // "on"
+                ["hsl(0, 100%, 40%)", "hsl(60, 100%, 40%)", "hsl(120, 100%, 40%)", "hsl(240, 100%, 40%)"], // "off"
+                ["hsl(0, 100%, 80%)", "hsl(60, 100%, 80%)", "hsl(120, 100%, 80%)", "hsl(240, 100%, 80%)"]  // "on"
             ];
 
             // Images
@@ -320,10 +321,13 @@
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
             var lastHitStartAngle = 0;
+            var userInputDelay = 0;
 
             const teachDelayBase = 0.5;
             const teachDelayMin = 0.15;
             const teachDelayDecrements = 0.02;
+            const successDelay = 1.25;
+            const flashDelay = 0.1;
 
             // Shuffle
             const shuffleResetState = [0, 1, 2, 3];
@@ -663,6 +667,8 @@
                     if (lastHitStartAngle > 360) lastHitStartAngle -= 360;
                     timeSinceLastHit = 0;
                     //console.log("input: " + newUserInput);
+                    userInput = newUserInput;
+                    userInputDelay = flashDelay;
                 }
 
 
@@ -677,7 +683,7 @@
                             currentStep++;
                             if (currentStep > currentLevel) {
                                 state = GS_Success;
-                                stepDelayRemaining = 1.5;
+                                stepDelayRemaining = successDelay;
                             }
                             if (colorShuffleMode == CSM_AfterEachRecalls) performShuffle();
                             if (colorShuffleMode == CSM_BeforeEachRecalls) performShuffle();
@@ -708,9 +714,10 @@
                             timeSinceLastHit = 0;
                             currentStep = 0;
                         } else {
-                            newUserInput = seq[currentStep];
+                            userInput = seq[currentStep];
+                            userInputDelay = flashDelay;
                             //console.log("teach: " + newUserInput);
-                            playColor(newUserInput);
+                            playColor(userInput);
                             currentStep++;
                         } 
 
@@ -772,15 +779,15 @@
                 ctx.fillStyle = "black";
                 arcFill(0, 0, 0.45, 0, 360);
 
-                // TODO add display delay to avoid being dependant on animation frame interval
                 // buttons
-                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[0] ? 1 : 0][shuffle[0]];
+                var flashIndex = (userInputDelay > 0) ? userInput : -1;
+                ctx.fillStyle = fillStyles[flashIndex - 1 == shuffle[0] ? 1 : 0][shuffle[0]];
                 arcFill(0.0, 0.0, 0.4, 0, 90);
-                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[1] ? 1 : 0][shuffle[1]];
+                ctx.fillStyle = fillStyles[flashIndex - 1 == shuffle[1] ? 1 : 0][shuffle[1]];
                 arcFill(0.0, 0.0, 0.4, 90, 180);
-                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[2] ? 1 : 0][shuffle[2]];
+                ctx.fillStyle = fillStyles[flashIndex - 1 == shuffle[2] ? 1 : 0][shuffle[2]];
                 arcFill(0.0, 0.0, 0.4, 180, 270);
-                ctx.fillStyle = fillStyles[newUserInput - 1 == shuffle[3] ? 1 : 0][shuffle[3]];
+                ctx.fillStyle = fillStyles[flashIndex - 1 == shuffle[3] ? 1 : 0][shuffle[3]];
                 arcFill(0.0, 0.0, 0.4, 270, 0);
 
                 ctx.fillStyle = "black";
@@ -824,6 +831,7 @@
                 lastT = time;
                 newUserInput = 0;
                 timeSinceLastHit += timeDelta;
+                userInputDelay -= timeDelta;
             }
 
 
@@ -883,8 +891,8 @@
             function drawImageScaledCentered(img, x, y, scale = 1.0) {
                 var w = img.width * scale;
                 var h = img.height * scale;
-                w = w / viewportScale;
-                h = h / viewportScale;
+                w = w / viewportScale * globalViewScale;
+                h = h / viewportScale * globalViewScale;
                 ctx.drawImage(img, x - (w / 2), y - (h / 2), w, h);
             }
 
