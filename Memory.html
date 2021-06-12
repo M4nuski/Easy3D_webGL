@@ -9,7 +9,7 @@
             margin: 0px;
             font-size: 18px;
             font-family: Arial, Helvetica, sans-serif;
-        }
+        }        
         canvas {
             width: 100%;
             height: 100%;
@@ -17,6 +17,12 @@
             position: absolute;
             top: 0px;
             left: 0px;
+        }
+        img {
+            display: none;            
+        }
+        audio {
+            display: none;
         }
         .E3D_fullscreenContainer {
             position:fixed;
@@ -183,8 +189,10 @@
                 if (event.key == "f") state = GS_Failed;
                 if (event.key == "t") state = GS_Teach;
                 if (event.key == "r") state = GS_Recall;
-                if (event.key == "s") performShuffle();
+                if (event.key == "s") state = GS_Success;
+                if (event.key == "x") performShuffle();
                 timeSinceLastHit = 0;
+                stepDelayRemaining = 1.0;
             }
 
             function resizeViewport() {
@@ -283,6 +291,13 @@
                 ["#800000", "#008012", "#1E0080", "#788000"], // "off"
                 ["#FF8080", "#80FF24", "#0080FF", "#FFFF00"]  // "on"
             ];
+
+            // Images
+            var checkImage = getElem("check");
+            var crossImage = getElem("cross");
+            var eyeImage = getElem("eye");
+            var startImage = document.createElement('img');
+            var newImage = document.createElement('img');
 
             // Game States
             const GS_Idle = 0;
@@ -402,9 +417,6 @@
 
 
             // Create rendered text from canvas to avoid canvas scale issues with font sizes
-            var textImage1 = document.createElement('img');
-            var textImage2 = document.createElement('img');
-
             function convertText(text, image) {
                 var textCanvas = document.createElement("canvas");
                 textCanvas.width = 512;
@@ -446,8 +458,8 @@
             // Init
             resizeViewport();
             startLoop();
-            convertText("Start Game", textImage1);
-            convertText("New Game", textImage2);
+            convertText("Start Game", startImage);
+            convertText("New Game", newImage);
 
             // Loop
             function startLoop() {
@@ -665,7 +677,7 @@
                             currentStep++;
                             if (currentStep > currentLevel) {
                                 state = GS_Success;
-                                stepDelayRemaining = teachDelayBase;
+                                stepDelayRemaining = 1.5;
                             }
                             if (colorShuffleMode == CSM_AfterEachRecalls) performShuffle();
                             if (colorShuffleMode == CSM_BeforeEachRecalls) performShuffle();
@@ -781,11 +793,10 @@
                 if (state == GS_Idle) {
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(-0.3, -0.04, 0.6, 0.08);
-                    drawImageScaledCentered(textImage1, 0.0, 0.0, 2.0);
+                    drawImageScaledCentered(startImage, 0.0, 0.0, 2.0);
                 
                 } else if (state == GS_Teach) {
-                    ctx.fillStyle = "yellow";
-                    circleFill(0, 0, 0.05);
+                    drawImageScaledCentered(eyeImage, 0.0, 0.0, 0.6);
                     
                 } else if (state == GS_Recall) {
                     var t = (maxTimeBetweenHit - timeSinceLastHit) / maxTimeBetweenHit;
@@ -797,15 +808,12 @@
                     ctx.lineWidth = 1.0 / viewportScale;
 
                 } else if (state == GS_Failed) {
-                    ctx.fillStyle = "red";
-                    circleFill(0, 0, 0.05);
+                    drawImageScaledCentered(crossImage, 0.0, 0.0, 0.4);
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(0.06, -0.04, 0.34, 0.08);
-                    drawImageScaledCentered(textImage2, 0.23, 0.0, 1.4);
+                    drawImageScaledCentered(newImage, 0.23, 0.0, 1.4);
                 } else if (state == GS_Success) {
-                    // TODO add state == GS_success with green mark before next level
-                    ctx.fillStyle = "lime";
-                    circleFill(0, 0, 0.05);
+                    drawImageScaledCentered(checkImage, 0.0, 0.0, 0.4);
                 }
 
             }
@@ -906,6 +914,9 @@
     <audio id="b2" src="media/Beep2.wav"></audio>
     <audio id="b3" src="media/Beep3.wav"></audio>
     <audio id="fail" src="media/Fail.wav"></audio>
+    <img id="check" src="media/Check.svg"></img>
+    <img id="cross" src="media/Cross.svg"></img>
+    <img id="eye" src="media/Eye.svg"></img>
 </body>
 
 </html>
