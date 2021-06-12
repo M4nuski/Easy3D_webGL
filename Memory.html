@@ -294,6 +294,8 @@
             const GS_Strings = ["Idle", "Teach", "Recall", "Failed", "Success"];     
             var state = GS_Idle;
 
+            function isGameActive() { return ((state == GS_Teach) || (state == GS_Recall)); }
+
             var currentLevel = 0;
             var currentStep = 0;
             var seq = [];
@@ -353,8 +355,8 @@
             });
 
             // shuffle mode button
-            // TODO prevent mode changes while game is active
             getElem("shuffleModeButton").addEventListener("click", function (event) {
+                if (isGameActive()) return;
                 colorShuffleMode++;
                 if (colorShuffleMode > CSM_Max) colorShuffleMode = 0;
                 if (window.localStorage) window.localStorage.setItem("m2.mode", colorShuffleMode);
@@ -368,6 +370,7 @@
 
             // shuffle qty button
             getElem("shuffleQtyButton").addEventListener("click", function (event) {
+                if (isGameActive()) return;
                 shuffleQty++;
                 if (shuffleQty > 4) shuffleQty = 2;
                 if (window.localStorage) window.localStorage.setItem("m2.itt", shuffleQty);
@@ -383,6 +386,7 @@
 
             // shuffle sound button
             getElem("shuffleSoundButton").addEventListener("click", function (event) {
+                if (isGameActive()) return;
                 soundSuffleMode++;
                 if (soundSuffleMode > SSM_Max) soundSuffleMode = 0;
                 if (window.localStorage) window.localStorage.setItem("m2.ssm", soundSuffleMode);
@@ -637,6 +641,7 @@
                 strList.set("sound", "\n" + SSM_Strings[soundSuffleMode]);
                 strList.set("level", currentLevel + 1);
                 strList.set("step", currentStep);
+                //strList.set("stepDelay", teachDelayBase - (teachDelayDecrements * currentLevel));
 
 
                 // inputs
@@ -658,7 +663,10 @@
                         //console.log("recalled: " + newUserInput);
                         if (newUserInput == seq[currentStep]) {
                             currentStep++;
-                            if (currentStep > currentLevel) state = GS_Success;
+                            if (currentStep > currentLevel) {
+                                state = GS_Success;
+                                stepDelayRemaining = teachDelayBase;
+                            }
                             if (colorShuffleMode == CSM_AfterEachRecalls) performShuffle();
                             if (colorShuffleMode == CSM_BeforeEachRecalls) performShuffle();
                         } else fail();
@@ -702,13 +710,16 @@
                 }// state teach
 
                 if (state == GS_Success) {
-                    currentStep = 0;
-                    seq.push(RNG_Sequence.nextInt(4) + 1);
-                    currentLevel++;
-                    if (colorShuffleMode == CSM_BeforeTeach) performShuffle();
-                    if (soundSuffleMode == SSM_EachLevel) performSoundShuffle();
-                    state = GS_Teach;
-                    stepDelayRemaining = teachDelayBase;
+                    stepDelayRemaining -= timeDelta;
+                    if (stepDelayRemaining <= 0) {
+                        currentStep = 0;
+                        seq.push(RNG_Sequence.nextInt(4) + 1);
+                        currentLevel++;
+                        if (colorShuffleMode == CSM_BeforeTeach) performShuffle();
+                        if (soundSuffleMode == SSM_EachLevel) performSoundShuffle();
+                        state = GS_Teach;
+                        stepDelayRemaining = teachDelayBase;
+                    }
                 }
 
             }
@@ -791,8 +802,11 @@
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(0.06, -0.04, 0.34, 0.08);
                     drawImageScaledCentered(textImage2, 0.23, 0.0, 1.4);
+                } else if (state == GS_Success) {
+                    // TODO add state == GS_success with green mark before next level
+                    ctx.fillStyle = "lime";
+                    circleFill(0, 0, 0.05);
                 }
-                // TODO add state == GS_success with green mark before next level
 
             }
 
@@ -813,7 +827,6 @@
 
 
             // Context drawing methods
-            // TODO use canvas transform matrix
 
             function line(x1, y1, x2, y2) {
                 ctx.moveTo(x1, y1);
