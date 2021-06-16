@@ -94,6 +94,21 @@
             var gamCheckbox = document.getElementById("gam");
             gamCheckbox.addEventListener("input", (x) => recolor(lumSlider.value) );
 
+            var dispCheckbox = document.getElementById("disp");
+            dispCheckbox.addEventListener("input", (x) => recolor(lumSlider.value) );
+
+            can.addEventListener("mousemove", canMouseMove);
+
+            var a_coord = document.getElementById("a");
+            var b_coord = document.getElementById("b");
+            var rgb1 = document.getElementById("rgb1");
+            var rgb255 = document.getElementById("rgb255");
+            var rgbH = document.getElementById("rgbH");
+
+            var button = false;
+            can.addEventListener("mousedown", (e) => button = true);
+            can.addEventListener("mouseup",  (e) => button = false);
+            can.addEventListener("mouseleave", (e) => button = false);
 
             var LAB = { l: 1.0, a : 0.0, b: 0.0 };
             var RGB = { r: 1.0, g : 1.0, b: 1.0 };
@@ -116,6 +131,7 @@
                 var w = can.offsetWidth;
                 var h = can.offsetHeight;
                 ctx.clearRect(0, 0, w, h);
+                lumVal.innerText = l;
 
 
              /*   for (var x = -0.5; x <= 0.5; x+=0.01) for (var y = -0.5; y <= 0.5; y+=0.01) {
@@ -127,8 +143,11 @@
                     //console.log(ctx.fillStyle);
                     ctx.fillRect((x * 100.0) + (w / 2), (y * 100.0) + (h / 2), 10, 10);
                 }*/
+
+                //var st = performance.now();
+                if (dispCheckbox.checked) {
                 for (var a = 0; a < (2.0*Math.PI); a+=(2.0*Math.PI) / 200) for (var d = 0.0; d <= 0.5; d+=0.01) {
-                    lumVal.innerText = l;
+
 
                     var x = Math.sin(a) * d;
                     var y = Math.cos(a) * d;
@@ -150,6 +169,39 @@
                     //console.log(ctx.fillStyle);
                     ctx.fillRect((py * 800.0) + (w / 2) - 5, (h / 2) - (px * 800.0) -5, 10, 10);
                 }
+            } 
+                //250 150 98 88
+            else {
+
+                for (var px = -450; px <= 450; px+=10) for (var py = -450; py <= 450; py+=10) {
+                    var dist = Math.sqrt((px * px) + (py * py));
+                    if ((dist >= 50) && (dist <= 455)) {
+                        var rad = (dist - 50) / 800;
+                        var ang = Math.atan2(py, px);
+                        var x = Math.sin(ang) * rad;
+                        var y = Math.cos(ang) * rad;
+
+                        var col = oklab_to_linear_srgb( {L:Number(l), a: x, b: y });
+                        if (gamCheckbox.checked) {
+                            col.r = gamma(col.r) * 255.0;
+                            col.g = gamma(col.g) * 255.0;
+                            col.b = gamma(col.b) * 255.0;
+                        }
+                        else {
+                            col.r = col.r * 255.0;
+                            col.g = col.g * 255.0;
+                            col.b = col.b * 255.0;
+                        }
+
+                        ctx.fillStyle = "rgb(" + col.r + "," + col.g + "," + col.b + ")";
+                        ctx.fillRect(px + (w / 2) - 5, (h / 2) - py -5, 10, 10);
+                    }
+
+                }
+            }
+                // 75 50 45
+                //var et = performance.now();
+                //console.log(et - st);
 
                 ctx.strokeStyle="black";
                 ctx.beginPath();
@@ -168,6 +220,87 @@
                 ctx.arc(w/2, h/2, 450, 0, 2 * Math.PI);
                 ctx.stroke();
 
+                for (var i = 0; i <= Math.PI * 2; i+= Math.PI * 2 / 24) {
+                    ctx.beginPath();
+                    ctx.moveTo(w/2 + 50 * Math.sin(i), h/2 + 50 * Math.cos(i));
+                    ctx.lineTo(w/2 + 450 * Math.sin(i), h/2 + 450 * Math.cos(i));
+                    ctx.stroke();
+                }
+
+            }
+
+            function canMouseMove(event) {
+                if (!button) return; 
+                var w = can.offsetWidth;
+                var h = can.offsetHeight;
+                var px = event.offsetX - (w/2);
+                var py = (h/2) - event.offsetY;
+
+                var dist = Math.sqrt((px * px) + (py * py));
+                    if ((dist >= 50) && (dist <= 455)) {
+                        var rad = (dist - 50) / 800;
+                        var ang = Math.atan2(py, px);
+                        var x = Math.sin(ang) * rad;
+                        var y = Math.cos(ang) * rad;
+
+                        a_coord.innerText = x.toFixed(3);
+                        b_coord.innerText = y.toFixed(3);
+
+
+                        var col = oklab_to_linear_srgb( {L:Number(lumSlider.value), a: x, b: y });
+
+                        col.r = clamp01(col.r);
+                        col.g = clamp01(col.g);
+                        col.b = clamp01(col.b);
+
+                        var rgb1_text = col.r.toFixed(3) + ", " + col.g.toFixed(3) + ", " + col.b.toFixed(3);
+
+                        if (gamCheckbox.checked) {
+                            col.r = gamma(col.r) * 255.0;
+                            col.g = gamma(col.g) * 255.0;
+                            col.b = gamma(col.b) * 255.0;
+                        }
+                        else {
+                            col.r = col.r * 255.0;
+                            col.g = col.g * 255.0;
+                            col.b = col.b * 255.0;
+                        }
+                        
+                        var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
+                        rgb1.innerText = rgb1_text;
+                        rgb255.innerText = rgb255_text;
+                        rgbH.innerText = rgb255ToHEX(col);
+
+                        ctx.fillStyle = "rgb(" + rgb255_text + ")";
+                        ctx.fillRect((w/2) + 550 - 25, (h / 2) - 25, 50, 50);
+
+                        // L steps 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+                        for (var i = 0.0; i <= 1.0; i += 0.1) {
+
+                            col = oklab_to_linear_srgb( {L: i, a: x, b: y });
+
+                            col.r = clamp01(col.r);
+                            col.g = clamp01(col.g);
+                            col.b = clamp01(col.b);
+
+                            if (gamCheckbox.checked) {
+                                col.r = gamma(col.r) * 255.0;
+                                col.g = gamma(col.g) * 255.0;
+                                col.b = gamma(col.b) * 255.0;
+                            }
+                            else {
+                                col.r = col.r * 255.0;
+                                col.g = col.g * 255.0;
+                                col.b = col.b * 255.0;
+                            }
+
+                            var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
+
+                            ctx.fillStyle = "rgb(" + rgb255_text + ")";
+                            ctx.fillRect((w/2) + 600 - 25, (h / 2) - 25 - (i-0.5) * 500, 50, 50);
+                        }
+                    }
             }
 
             resize();
@@ -251,6 +384,17 @@ function oklab_to_linear_srgb(c) {
 function gamma(x) {
     return (x >= 0.0031308) ? 1.055 * Math.pow(x, 1 / 2.4) - 0.055 : (12.92 * x);
 }
+function clamp01(val) {
+    if (val < 0.0) return 0.0;
+    if (val > 1.0) return 1.0;
+    return val;
+}
+function rgb255ToHEX(rgb) {
+    var r = Math.round(rgb.r).toString(16).padStart(2, "0");
+    var g = Math.round(rgb.g).toString(16).padStart(2, "0");
+    var b = Math.round(rgb.b).toString(16).padStart(2, "0");
+    return ("#" + r + g + b).toUpperCase(); 
+}
 
 
         } );
@@ -260,8 +404,14 @@ function gamma(x) {
 <body>
     <div class="E3D_fullscreenContainer E3D_flexVertical">            
         <div class="menuTopLeft hoverSize">Params<br/>
-            L<input id="lum" type="range" min="0.0" max="1.0" value="0.5" step="0.025" /><span id="lval"></span><br/>
-            Gamma<input id="gam" type="checkbox" checked="true" />
+            L:<input id="lum" type="range" min="0.0" max="1.0" value="0.5" step="0.025" /><span id="lval"></span><br/>
+            Gamma<input id="gam" type="checkbox" checked="true" /><br/>
+            a:<span id="a">0.0</span><br/>
+            b:<span id="b">0.0</span><br/>
+            RGB 0-1:<span id="rgb1">0.0, 0.0, 0.0</span><br/>
+            RGB 0-255:<span id="rgb255">0, 0, 0</span><br/>
+            RGB HEX:<span id="rgbH">#000000</span><br/>
+            Polar Display<input id="disp" type="checkbox"  /><br/>
         </div>
         <div class="E3D_flexContent">
             <canvas id="canvas" width="320" height="240">Canvas</canvas>
