@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Perceptual Color Space Test - Oklab</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }        
+        input {
+            font-size: initial;
+        }
+        
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+        .E3D_flexVertical {
+            display: flex;
+            flex-direction: column;
+        }
+        .E3D_flexHorizontal {
+            display: flex;
+            flex-direction: row;
+        }
+        .E3D_flexContent {
+            overflow: hidden;
+            flex: 1 1 auto;
+        }
+        .E3D_flexVerticalContentFixed {
+            width: 100%;
+            height: fit-content;
+        }
+        .E3D_flexHorizontalContentFixed {
+            width: fit-content;
+            height: 100%;
+        }
+
+
+        .menuTopLeft {
+            position: absolute;
+            display: block;
+            left : 0px;
+            top : 0px;
+            border-radius: 0px 0px 10px 0px;
+            z-index: 10;
+            overflow: hidden;
+            padding: 0.2em;
+            padding-right: 0.3em;
+            border-right: solid 2px black;
+            border-bottom: solid 2px black;
+        }        
+/*
+        .hoverSize {
+            max-width: 50px;
+            max-height: 50px;
+            background-color: rgba(255, 255, 255, 0.25);
+
+            transition: all 0.1s linear;
+        }      
+        .hoverSize:hover{
+            max-width: 200px;
+            max-height:  200px; /* should be equal to max-width to avoid transition overshoot 
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+*/
+
+
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var can = document.getElementById("canvas");
+            var ctx = can.getContext("2d");
+            window.addEventListener("resize", resize);
+           // can.addEventListener("click", resize);
+           var lumSlider = document.getElementById("lum");
+            lumSlider.addEventListener("input", function (event) { 
+               // console.log(lumSlider.value);
+                recolor(lumSlider.value);
+            });
+            var lumVal = document.getElementById("lval");
+            var gamCheckbox = document.getElementById("gam");
+            gamCheckbox.addEventListener("input", (x) => recolor(lumSlider.value) );
+
+
+            var LAB = { l: 1.0, a : 0.0, b: 0.0 };
+            var RGB = { r: 1.0, g : 1.0, b: 1.0 };
+
+            function resize() {
+                var w = can.offsetWidth;
+                var h = can.offsetHeight;
+
+                can.width = w;
+                can.height = h;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w, h);
+                ctx.moveTo(0, h);
+                ctx.lineTo(w, 0);
+                ctx.stroke();
+            }
+
+            function recolor(l) {
+                var w = can.offsetWidth;
+                var h = can.offsetHeight;
+                ctx.clearRect(0, 0, w, h);
+
+
+             /*   for (var x = -0.5; x <= 0.5; x+=0.01) for (var y = -0.5; y <= 0.5; y+=0.01) {
+                    var col = oklab_to_linear_srgb( {L:Number(l), a: x, b: y });
+                    col.r = col.r * 255.0;
+                    col.g = col.g * 255.0;
+                    col.b = col.b * 255.0;
+                    ctx.fillStyle = "rgb(" + col.r + "," + col.g + "," + col.b + ")";
+                    //console.log(ctx.fillStyle);
+                    ctx.fillRect((x * 100.0) + (w / 2), (y * 100.0) + (h / 2), 10, 10);
+                }*/
+                for (var a = 0; a < (2.0*Math.PI); a+=(2.0*Math.PI) / 200) for (var d = 0.0; d <= 0.5; d+=0.01) {
+                    lumVal.innerText = l;
+
+                    var x = Math.sin(a) * d;
+                    var y = Math.cos(a) * d;
+                    var px = Math.sin(a) * (d + 0.0625);
+                    var py = Math.cos(a) * (d + 0.0625);
+
+                    var col = oklab_to_linear_srgb( {L:Number(l), a: x, b: y });
+                    if (gamCheckbox.checked) {
+                        col.r = gamma(col.r) * 255.0;
+                        col.g = gamma(col.g) * 255.0;
+                        col.b = gamma(col.b) * 255.0;
+                    }
+                    else {
+                        col.r = col.r * 255.0;
+                        col.g = col.g * 255.0;
+                        col.b = col.b * 255.0;
+                    }
+                    ctx.fillStyle = "rgb(" + col.r + "," + col.g + "," + col.b + ")";
+                    //console.log(ctx.fillStyle);
+                    ctx.fillRect((py * 800.0) + (w / 2) - 5, (h / 2) - (px * 800.0) -5, 10, 10);
+                }
+
+                ctx.strokeStyle="black";
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, 50, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, 150, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, 250, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, 350, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, 450, 0, 2 * Math.PI);
+                ctx.stroke();
+
+            }
+
+            resize();
+            recolor(0.5);
+
+                        // Oklab color space
+            // Converter from https://bottosson.github.io/posts/oklab/
+/*
+struct Lab {float L; float a; float b;};
+struct RGB {float r; float g; float b;};
+*/
+
+/*
+Lab linear_srgb_to_oklab(RGB c) 
+{
+    float l = 0.4122214708f * c.r + 0.5363325363f * c.g + 0.0514459929f * c.b;
+	float m = 0.2119034982f * c.r + 0.6806995451f * c.g + 0.1073969566f * c.b;
+	float s = 0.0883024619f * c.r + 0.2817188376f * c.g + 0.6299787005f * c.b;
+
+    float l_ = cbrtf(l);
+    float m_ = cbrtf(m);
+    float s_ = cbrtf(s);
+
+    return {
+        0.2104542553f*l_ + 0.7936177850f*m_ - 0.0040720468f*s_,
+        1.9779984951f*l_ - 2.4285922050f*m_ + 0.4505937099f*s_,
+        0.0259040371f*l_ + 0.7827717662f*m_ - 0.8086757660f*s_,
+    };
+}
+*/
+function linear_srgb_to_oklab(c) 
+{
+    var l = 0.4122214708 * c.r + 0.5363325363 * c.g + 0.0514459929 * c.b;
+	var m = 0.2119034982 * c.r + 0.6806995451 * c.g + 0.1073969566 * c.b;
+	var s = 0.0883024619 * c.r + 0.2817188376 * c.g + 0.6299787005 * c.b;
+
+    var l_ = Math.cbrt(l);
+    var m_ = Math.cbrt(m);
+    var s_ = Math.cbrt(s);
+
+    return {
+        l: 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
+        a: 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
+        b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_,
+    };
+}
+
+/*
+RGB oklab_to_linear_srgb(Lab c) 
+{
+    float l_ = c.L + 0.3963377774f * c.a + 0.2158037573f * c.b;
+    float m_ = c.L - 0.1055613458f * c.a - 0.0638541728f * c.b;
+    float s_ = c.L - 0.0894841775f * c.a - 1.2914855480f * c.b;
+
+    float l = l_*l_*l_;
+    float m = m_*m_*m_;
+    float s = s_*s_*s_;
+
+    return {
+		+4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s,
+		-1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s,
+		-0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s,
+    };
+}
+*/
+function oklab_to_linear_srgb(c) {
+    var l_ = c.L + 0.3963377774 * c.a + 0.2158037573 * c.b;
+    var m_ = c.L - 0.1055613458 * c.a - 0.0638541728 * c.b;
+    var s_ = c.L - 0.0894841775 * c.a - 1.2914855480 * c.b;
+
+    var l = l_*l_*l_;
+    var m = m_*m_*m_;
+    var s = s_*s_*s_;
+
+    return {
+		r:  4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+		g: -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+		b: -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+    };
+}
+function gamma(x) {
+    return (x >= 0.0031308) ? 1.055 * Math.pow(x, 1 / 2.4) - 0.055 : (12.92 * x);
+}
+
+
+        } );
+    </script>
+</head>
+
+<body>
+    <div class="E3D_fullscreenContainer E3D_flexVertical">            
+        <div class="menuTopLeft hoverSize">Params<br/>
+            L<input id="lum" type="range" min="0.0" max="1.0" value="0.5" step="0.025" /><span id="lval"></span><br/>
+            Gamma<input id="gam" type="checkbox" checked="true" />
+        </div>
+        <div class="E3D_flexContent">
+            <canvas id="canvas" width="320" height="240">Canvas</canvas>
+        </div>
+        <div class="E3D_flexVerticalContentFixed">Footer</div>
+    </div>
+</body>
+
+</html>
