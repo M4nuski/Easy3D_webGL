@@ -229,6 +229,12 @@
                 if (event.key == "x") performShuffle();
                 timeSinceLastHit = 0;
                 stepDelayRemaining = 1.0;
+                if (event.key == "d") {
+                    localHighScore = 0;
+                    if (window.localStorage) {
+                        window.localStorage.setItem("m3.hs", 0);
+                    }
+                }
             }
 
             function resizeViewport() {
@@ -243,15 +249,14 @@
                 // other is AR proportionnal
                 var ar = width / height;
 
-                if (ar > 1.0) {
-                    var s = width / 2.0;
-                    viewportScale = width / 2.0;
-                    viewportOffsetX = viewportScale;
-                    viewportOffsetY = viewportScale / ar;
+                if (ar < 1.0) {
+                    viewportScale = width;// / 2.0;
+                    viewportOffsetX = viewportScale / 2.0;
+                    viewportOffsetY = viewportScale / 2.0 / ar;
                 } else {
-                    viewportScale = height / 2.0;
-                    viewportOffsetX = viewportScale * ar;
-                    viewportOffsetY = viewportScale;
+                    viewportScale = height;// / 2.0;
+                    viewportOffsetX = viewportScale / 2.0 * ar;
+                    viewportOffsetY = viewportScale / 2.0;
                 }
                 globalViewScale = viewportScale / 1080;
 
@@ -353,6 +358,7 @@
             var eyeImage = getElem("eye");
             var startImage = document.createElement('img');
             var newImage = document.createElement('img');
+            var newHSImage = document.createElement('img');
 
             // Game States
             const GS_Idle = 0;
@@ -379,7 +385,31 @@
                 if (hs != undefined) {
                     localHighScore = hs;
                 }
-            }  
+            } 
+
+            var newHS = false;
+            const version = "3";
+            class scoreObject {
+                constructor(n) {
+                    this.version = version;
+                    this.name = n;
+                    this.date = Date.now();
+                    this.CSM = colorShuffleMode;
+                    this.qty = shuffleQty;
+                    this.SSM = soundSuffleMode;
+                    this.level = currentLevel + 1;
+                    this.step = currentStep;
+                    this.score = currentScore;
+                }
+            }
+            // TODO local list of scores
+            // TODO panel with local list
+            // TODO user name input
+            // TODO upload highscore
+            // TODO panel with global list, tab for global, selector for "regroup per mode/qty"
+            // lambda + dynamodb
+            // postScore: validate, append to list, trim out lower scores if qty-per-mode > max(10), send status + scoresList
+            // getScores: send back scoresList
 
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
@@ -417,7 +447,6 @@
             */
 
             var shuffleQty = 2; // 2, 3 or 4
-
 
             // Sound Shuffle Modes
             const SSM_None = 0;
@@ -498,23 +527,23 @@
 
 
             // Create rendered text from canvas to avoid canvas scale issues with font sizes
-            function convertText(text, image) {
+            function convertText(text, image, size = 48, color = "white") {
                 var textCanvas = document.createElement("canvas");
                 textCanvas.width = 512;
-                textCanvas.height = 48;
+                textCanvas.height = size;
                 var textContext = textCanvas.getContext("2d");
-                textContext.font = "48px Lucida Console";
+                textContext.font = size + "px Lucida Console";
                 textContext.textAlign = "center";
                 textContext.textBaseline = "middle";
-                textContext.fillStyle = "white";
+                textContext.fillStyle = color;
                 var textSize = textContext.measureText(text); 
 
                 textCanvas.width = textSize.width*1.1;
 
-                textContext.font = "48px Lucida Console";
+                textContext.font = size + "px Lucida Console";
                 textContext.textAlign = "center";
                 textContext.textBaseline = "middle";
-                textContext.fillStyle = "white";
+                textContext.fillStyle = color;
 
                 textContext.fillText(text, textCanvas.width / 2, textCanvas.height / 2);
 
@@ -533,6 +562,7 @@
             startLoop();
             convertText("Start Game", startImage);
             convertText("New Game", newImage);
+            convertText("New High Score!", newHSImage, 36, "lime");
 
             // Loop
             function startLoop() {
@@ -686,10 +716,12 @@
                 lastHitStartAngle = 0;
                 if (currentScore > localHighScore)  {
                     localHighScore = currentScore;
-                    // TODO display "new high score"
+                    newHS = true;
                     if (window.localStorage) {
                         window.localStorage.setItem("m3.hs", localHighScore);
                     }
+                    var nhs = new scoreObject("currentUser");
+                    console.log(JSON.stringify(nhs, null, 2));
                 }
             }
 
@@ -779,6 +811,7 @@
                         currentLevel = 0;
                         currentStep = 0;
                         currentScore = 0;
+                        newHS = false;
                         stepDelayRemaining = teachDelayBase;
                     } 
                 }
@@ -832,7 +865,7 @@
 
             function drawScene(){                
                 // clear
-                ctx.clearRect(-1, -1, 2, 2);
+                ctx.clearRect(-2, -2, 4, 4);
                 clear = false;
 
                 // text
@@ -854,9 +887,9 @@
                 ctx.setLineDash([]);
                 ctx.strokeStyle = "#888";
                 ctx.beginPath();
-                for (var i = -10; i <= 10; ++i) {
-                    line((i/10), -1.0, (i/10), 1.0);
-                    line(-1.0, (i/10), 1.0, (i/10));
+                for (var i = -15; i <= 15; ++i) {
+                    line((i/10), -1.5, (i/10), 1.5);
+                    line(-1.5, (i/10), 1.5, (i/10));
                 }
                 ctx.stroke();
 
@@ -865,8 +898,8 @@
                 ctx.lineWidth = 3.0 / viewportScale;
                 ctx.setLineDash([20 / viewportScale, 3 / viewportScale, 3 / viewportScale, 3 / viewportScale]);
                 ctx.beginPath();
-                line( 0.0, -1.0, 0.0, 1.0);
-                line(-1.0,  0.0, 1.0, 0.0);
+                line( 0.0, -1.5, 0.0, 1.5);
+                line(-1.5,  0.0, 1.5, 0.0);
                 ctx.stroke();
 
                 // draw objects
@@ -917,6 +950,7 @@
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(0.06, -0.04, 0.34, 0.08);
                     drawImageScaledCentered(newImage, 0.23, 0.0, 1.4);
+                    if (newHS) drawImageScaledCentered(newHSImage, -0.23, 0.0, 1.25);
                 } else if (state == GS_Success) {
                     drawImageScaledCentered(checkImage, 0.0, 0.0, 0.4);
                 }
@@ -1014,7 +1048,6 @@
 
         } );
 
-        // TODO global leaderboard - tab for total, tabs for each mode 
     </script>
 </head>
 
