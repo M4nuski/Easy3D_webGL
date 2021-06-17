@@ -99,6 +99,7 @@
 
             var a_coord = document.getElementById("a");
             var b_coord = document.getElementById("b");
+            var d_coord = document.getElementById("d");
             var rgb1 = document.getElementById("rgb1");
             var rgb255 = document.getElementById("rgb255");
             var rgbH = document.getElementById("rgbH");
@@ -119,6 +120,7 @@
             var l_2 = document.getElementById("l2");
             var a_2 = document.getElementById("a2");
             var b_2 = document.getElementById("b2");
+            var d_2 = document.getElementById("d2");
             var sq = document.getElementById("sqColor");
             var can2 = document.createElement("canvas");
             can2.width = 3;
@@ -146,7 +148,7 @@
                 var w = can.offsetWidth;
                 var h = can.offsetHeight;
                 ctx.clearRect(0, 0, w, h);
-                lumVal.innerText = Number(lumSlider.value);
+                lumVal.innerText = Number(lumSlider.value).toFixed(5);
 
 
              /*   for (var x = -0.5; x <= 0.5; x+=0.01) for (var y = -0.5; y <= 0.5; y+=0.01) {
@@ -260,15 +262,15 @@
                     var x = Math.sin(ang) * rad;
                     var y = Math.cos(ang) * rad;
 
-                    a_coord.innerText = x.toFixed(3);
+                    a_coord.innerText = x.toFixed(5);
                     last_a = x;
-                    b_coord.innerText = y.toFixed(3);
+                    b_coord.innerText = y.toFixed(5);
                     last_b = y;
+                    d_coord.innerText = Math.sqrt(x * x + y * y).toFixed(5);
 
                     if (pix) ctx.putImageData(pix, lpx - 5, lpy - 5);
                     lpx = event.offsetX;
                     lpy = event.offsetY;
-
                     
                     reside();
                 }
@@ -277,6 +279,8 @@
             function reside() {
                 var w = can.offsetWidth;
                 var h = can.offsetHeight;
+                ctx.clearRect((w / 2) + 500, 0, 200, h);
+
                 var col = oklab_to_linear_srgb( {L:Number(lumSlider.value), a: last_a, b: last_b });
 
                 col.r = clamp01(col.r);
@@ -297,9 +301,9 @@
                 }
 
                 var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
-                rgb1.innerText = rgb1_text;
-                rgb255.innerText = rgb255_text;
-                rgbH.innerText = rgb255ToHEX(col);
+                rgb1.innerText = " " + rgb1_text;
+                rgb255.innerText = " " + rgb255_text;
+                rgbH.innerText = " " + rgb255ToHEX(col);
 
                 ctx.fillStyle = "black";
                 ctx.fillRect((w/2) + 550 - 26, (h / 2) - 276, 102, 552);
@@ -308,6 +312,10 @@
                 ctx.fillRect((w/2) + 550 - 25, (h / 2) - 275, 50, 550);
 
                 // L steps 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+                ctx.font = "16px Lucida Console";
+                ctx.textAlign = "left";
+                ctx.textBaseline = "middle"; 
 
                 for (var i = 0.0; i <= 1.0; i += 0.1) {
 
@@ -332,6 +340,9 @@
 
                     ctx.fillStyle = "rgb(" + rgb255_text + ")";
                     ctx.fillRect((w/2) + 600 - 25, (h / 2) - 25 - (i-0.5) * 500, 50, 50);
+
+                    ctx.fillStyle = "black";
+                    ctx.fillText("L: " + i.toFixed(1), (w/2) + 600 + 30, (h / 2) - (i-0.5) * 500);
                 }
 
                 pix = ctx.getImageData(lpx - 5, lpy - 5, 11, 11);
@@ -339,6 +350,8 @@
             }
 
             resize();
+            lpx = can.width / 2;
+            lpy = can.height / 2;
             recolor();
             reside();
 
@@ -420,6 +433,9 @@ function oklab_to_linear_srgb(c) {
 function gamma(x) {
     return (x >= 0.0031308) ? 1.055 * Math.pow(x, 1 / 2.4) - 0.055 : (12.92 * x);
 }
+function gamma_inv(x) {
+    return (x >= 0.04045) ? Math.pow((x + 0.055) / (1 + 0.055), 2.4) : x / 12.92;
+}
 function clamp01(val) {
     if (val < 0.0) return 0.0;
     if (val > 1.0) return 1.0;
@@ -479,11 +495,44 @@ function inputColor(event) {
     sq.style.color = this.value;
     ctx2.fillStyle = this.value;
     ctx2.fillRect(0, 0, 3, 3);
-    var p = ctx2.getImageData(4, 4, 1, 1);
-    console.log(p);
+    var p = ctx2.getImageData(1, 1, 1, 1);
+
+    var rgb_c = { r: p.data[0] / 255.0, g: p.data[1] / 255.0, b: p.data[2] / 255.0 };
+
+    if (gamCheckbox.checked) {
+        rgb_c.r = gamma_inv(rgb_c.r);
+        rgb_c.g = gamma_inv(rgb_c.g);
+        rgb_c.b = gamma_inv(rgb_c.b);
+    }
+
+    var lab_c = linear_srgb_to_oklab(rgb_c);
+    console.log(rgb_c, " -> ", lab_c);
+
+    l_2.innerText = lab_c.l.toFixed(5);
+    a_2.innerText = lab_c.a.toFixed(5);
+    b_2.innerText = lab_c.b.toFixed(5);
+    d_2.innerText = Math.sqrt(lab_c.a * lab_c.a + lab_c.b * lab_c.b).toFixed(5);
+
+
 }
 function showColor(event) {
 
+    lumSlider.value = l_2.innerText;
+    last_a = a_2.innerText;
+    last_b = b_2.innerText;
+
+    var rad = Math.sqrt(last_a * last_a + last_b * last_b);
+
+    var ang = Math.atan2(last_b, last_a);
+    var x = Math.sin(ang) * ((rad * 800) + 50);
+    var y = Math.cos(ang) * ((rad * 800) + 50);
+
+    x = x + (can.offsetWidth / 2);
+    y = (can.offsetHeight / 2) - y;
+    button = true;
+    canMouseMove( { offsetX: x, offsetY: y } );
+    button = false;
+    recolor();
 }
 
 
@@ -493,11 +542,13 @@ function showColor(event) {
 
 <body>
     <div class="E3D_fullscreenContainer E3D_flexVertical">            
-        <div class="menuTopLeft">Params<br/>
-            L:<input id="lum" type="range" min="0.0" max="1.0" value="0.5" step="0.025" /><span id="lval"></span><br/>
-            Gamma<input id="gam" type="checkbox" checked="true" /><br/>
+        <div class="menuTopLeft">Parameters (can be set by clicking the wheel)<br/>
+            <input id="lum" type="range" min="0.0" max="1.0" value="0.5" step="0.00001" /><br />
+            L:<span id="lval"></span><br/>
             a:<span id="a">0.0</span><br/>
             b:<span id="b">0.0</span><br/>
+            (d:<span id="d">0.0</span>)<hr/>
+            Gamma<input id="gam" type="checkbox" checked="true" />(uncheck for linear)<br/>
             RGB 0-1:<span id="rgb1">0.0, 0.0, 0.0</span><br/>
             RGB 0-255:<span id="rgb255">0, 0, 0</span><br/>
             RGB HEX:<span id="rgbH">#000000</span><br/>
@@ -506,12 +557,12 @@ function showColor(event) {
         <div class="E3D_flexContent">
             <canvas id="canvas" width="320" height="240">Canvas</canvas>
         </div>
-        <div class="menuBottomLeft hoverSize">Color (CSS)<br/>
-            Undo Gamma<input id="gam2" type="checkbox" checked="true" /><br/>
+        <div class="menuBottomLeft hoverSize">Convert Color (any valid CSS):<br/>
             <input type="text" id="inColor" /><span id="sqColor" class="E3D_monospaceText">&#9724;</span><br/>
             L:<span id="l2">1.0</span><br/>
             a:<span id="a2">0.0</span><br/>
             b:<span id="b2">0.0</span><br/>
+            (d:<span id="d2">0.0</span>)<br/>
             <input type="button" id="showColor" value="Show on graph" />
         </div>
     </div>
