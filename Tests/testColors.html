@@ -80,6 +80,9 @@
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() { 
 
+            const DegToRad = (Math.PI / 180.0);  
+            const RadToDeg = (180.0 / Math.PI);  
+
             var can = document.getElementById("canvas");
             var ctx = can.getContext("2d");
             window.addEventListener("resize", resize);
@@ -100,6 +103,7 @@
             var a_coord = document.getElementById("a");
             var b_coord = document.getElementById("b");
             var d_coord = document.getElementById("d");
+            var t_coord = document.getElementById("t");
             var rgb1 = document.getElementById("rgb1");
             var rgb255 = document.getElementById("rgb255");
             var rgbH = document.getElementById("rgbH");
@@ -116,11 +120,18 @@
 
             var inColor = document.getElementById("inColor");
             inColor.addEventListener("input", inputColor);
+            var inAngle = document.getElementById("inAngle");
+            inAngle.addEventListener("input", inputAD);
+            var inDistance = document.getElementById("inDistance");
+            inDistance.addEventListener("input", inputAD);
+            var inLuminance = document.getElementById("inLuminance");
+            inLuminance.addEventListener("input", inputAD);
             document.getElementById("showColor").addEventListener("click", showColor);
             var l_2 = document.getElementById("l2");
             var a_2 = document.getElementById("a2");
             var b_2 = document.getElementById("b2");
             var d_2 = document.getElementById("d2");
+            var t_2 = document.getElementById("t2");
             var sq = document.getElementById("sqColor");
             var can2 = document.createElement("canvas");
             can2.width = 3;
@@ -267,6 +278,7 @@
                     b_coord.innerText = y.toFixed(5);
                     last_b = y;
                     d_coord.innerText = Math.sqrt(x * x + y * y).toFixed(5);
+                    t_coord.innerText = (RadToDeg * Math.atan2(y, x)).toFixed(5);
 
                     if (pix) ctx.putImageData(pix, lpx - 5, lpy - 5);
                     lpx = event.offsetX;
@@ -512,6 +524,8 @@ function inputColor(event) {
     a_2.innerText = lab_c.a.toFixed(5);
     b_2.innerText = lab_c.b.toFixed(5);
     d_2.innerText = Math.sqrt(lab_c.a * lab_c.a + lab_c.b * lab_c.b).toFixed(5);
+    t_2.innerText = (RadToDeg * Math.atan2(lab_c.b, lab_c.a)).toFixed(5);
+
 
 
 }
@@ -535,6 +549,21 @@ function showColor(event) {
     recolor();
 }
 
+function inputAD(event) {
+    var ang = Number(inAngle.value) * DegToRad;
+    var dist = Number(inDistance.value);
+    var l = Number(inLuminance.value);
+
+    var y = Math.sin(ang) * dist;
+    var x = Math.cos(ang) * dist;
+
+    l_2.innerText = l.toFixed(5);
+    a_2.innerText = x.toFixed(5);
+    b_2.innerText = y.toFixed(5);
+    d_2.innerText = dist.toFixed(5);
+    t_2.innerText = (RadToDeg * ang).toFixed(5);
+
+}
 
         } );
     </script>
@@ -547,8 +576,9 @@ function showColor(event) {
             L:<span id="lval"></span><br/>
             a:<span id="a">0.0</span><br/>
             b:<span id="b">0.0</span><br/>
-            (d:<span id="d">0.0</span>)<hr/>
-            Gamma<input id="gam" type="checkbox" checked="true" />(uncheck for linear)<br/>
+            (d:<span id="d">0.0</span>)<br/>
+            (&#120579;:<span id="t">0.0</span>)<hr/>
+            Gamma<input id="gam" type="checkbox" checked="true" />(uncheck for linear)<hr/>
             RGB 0-1:<span id="rgb1">0.0, 0.0, 0.0</span><br/>
             RGB 0-255:<span id="rgb255">0, 0, 0</span><br/>
             RGB HEX:<span id="rgbH">#000000</span><br/>
@@ -557,12 +587,17 @@ function showColor(event) {
         <div class="E3D_flexContent">
             <canvas id="canvas" width="320" height="240">Canvas</canvas>
         </div>
-        <div class="menuBottomLeft hoverSize">Convert Color (any valid CSS):<br/>
-            <input type="text" id="inColor" /><span id="sqColor" class="E3D_monospaceText">&#9724;</span><br/>
+        <div class="menuBottomLeft hoverSize">Convert Color from CSS color:<br/>
+            <input type="text" id="inColor" /><span id="sqColor" class="E3D_monospaceText">&#9724;</span><hr/>
+            From Angle and Distance:<br />
+            <input type="text" id="inAngle" />&#120579<br />
+            <input type="text" id="inDistance" />d<br />
+            <input type="text" id="inLuminance" value="1.0"/>L<hr />
             L:<span id="l2">1.0</span><br/>
             a:<span id="a2">0.0</span><br/>
             b:<span id="b2">0.0</span><br/>
             (d:<span id="d2">0.0</span>)<br/>
+            (&#120579;:<span id="t2">0.0</span>)<hr/>
             <input type="button" id="showColor" value="Show on graph" />
         </div>
     </div>
