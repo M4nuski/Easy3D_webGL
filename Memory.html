@@ -235,6 +235,7 @@
                         window.localStorage.setItem("m3.hs", 0);
                     }
                 }
+                if (event.key == "n") newHS = true;
             }
 
             function resizeViewport() {
@@ -328,9 +329,10 @@
             var t0, t1, t2, t3, tfail;
 
             // Colors  240 120 60 0
-            var fillStyles = [ // r y g b
-                ["#E70100", "#D08100", "#00A700", "#1005FF"], // "off"
-                ["#FF8800", "#FFFF00", "#00FF14", "#5EB3FF"]  // "on"
+            var fillStyles = [ 
+                // red        yellow     green      blue
+                ["#E70100", "#D08100", "#00A700", "#1005FF"], // off
+                ["#FF8800", "#FFFF00", "#00FF14", "#5EB3FF"]  // on
             ];
           /*  var fillStyles = [
                 ["hsl(0, 100%, 40%)", "hsl(60, 100%, 40%)", "hsl(120, 100%, 40%)", "hsl(240, 100%, 40%)"], // "off"

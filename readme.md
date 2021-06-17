@@ -30,7 +30,12 @@ Current project state is available for testing [here](https://m4nusky.com/projec
 - /Electron: content specific for Electron app (STL viewer, like MS Photo or Image Viewer but for 3D stl files)
 - /Images: icons / sprites / images resources
 - /Models: Mesh and object data
-- /Tests: [performance test](https://m4nusky.com/projects/Easy3D_webGL/tests/test1.html) for JS, [JS gl-matrix vs WebGL sahders](https://m4nusky.com/projects/Easy3D_webGL/tests/testMat.html) and [WebGL](https://m4nusky.com/projects/Easy3D_webGL/Tests/testMatShader.html)
+- /Tests: 
+    - [performance test](https://m4nusky.com/projects/Easy3D_webGL/tests/test1.html) for JS
+    - [JS gl-matrix vs WebGL sahders](https://m4nusky.com/projects/Easy3D_webGL/tests/testMat.html)
+    - [WebGL](https://m4nusky.com/projects/Easy3D_webGL/Tests/testMatShader.html)
+    - [CSS fullscreen flex layout](https://m4nusky.com/projects/Easy3D_webGL/Tests/testLayout3.html)
+    - [Oklab Color Space](https://m4nusky.com/projects/Easy3D_webGL/Tests/testColors.html)
 - /ver0: WebGL [tutorial](https://m4nusky.com/projects/Easy3D_webGL/ver0/tuto1.html) transcript and tests, controls abstraction and [demo](https://m4nusky.com/projects/Easy3D_webGL/ver0/tuto2.html)
 - /[ver3](https://m4nusky.com/projects/Easy3D_webGL/ver3/ver3.html): basic engine contorls, model loading
 

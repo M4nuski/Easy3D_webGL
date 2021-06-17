@@ -60,21 +60,20 @@
             padding-right: 0.3em;
             border-right: solid 2px black;
             border-bottom: solid 2px black;
-        }        
-/*
-        .hoverSize {
-            max-width: 50px;
-            max-height: 50px;
-            background-color: rgba(255, 255, 255, 0.25);
-
-            transition: all 0.1s linear;
-        }      
-        .hoverSize:hover{
-            max-width: 200px;
-            max-height:  200px; /* should be equal to max-width to avoid transition overshoot 
-            background-color: rgba(255, 255, 255, 0.95);
-        }
-*/
+        }       
+        .menuBottomLeft {           
+            position: absolute;
+            display: block;
+            left : 0px;
+            bottom : 0px;
+            border-radius: 0px 10px 0px 0px;
+            z-index: 10;
+            overflow: hidden;
+            padding: 0.2em;
+            padding-right: 0.3em;
+            border-right: solid 2px black;
+            border-top: solid 2px black;
+        }       
 
 
     </style>
@@ -84,14 +83,17 @@
             var can = document.getElementById("canvas");
             var ctx = can.getContext("2d");
             window.addEventListener("resize", resize);
-           // can.addEventListener("click", resize);
+
            var lumSlider = document.getElementById("lum");
-            lumSlider.addEventListener("input", () => { l = lumSlider.value; recolor(); } );
+            lumSlider.addEventListener("input", recolor);
+
             var lumVal = document.getElementById("lval");
+
             var gamCheckbox = document.getElementById("gam");
-            gamCheckbox.addEventListener("input", () => { l = lumSlider.value; recolor(); } );
+            gamCheckbox.addEventListener("input", recolor);
+
             var dispCheckbox = document.getElementById("disp");
-            dispCheckbox.addEventListener("input", () => { l = lumSlider.value; recolor(); } );
+            dispCheckbox.addEventListener("input",  recolor);
 
             can.addEventListener("mousemove", canMouseMove);
 
@@ -109,11 +111,19 @@
             var last_b = 0.0;
             var lpx = 0;
             var lpy = 0;
-            var l = 0.5;
             var pix; 
 
-            var LAB = { l: 1.0, a : 0.0, b: 0.0 };
-            var RGB = { r: 1.0, g : 1.0, b: 1.0 };
+            var inColor = document.getElementById("inColor");
+            inColor.addEventListener("input", inputColor);
+            document.getElementById("showColor").addEventListener("click", showColor);
+            var l_2 = document.getElementById("l2");
+            var a_2 = document.getElementById("a2");
+            var b_2 = document.getElementById("b2");
+            var sq = document.getElementById("sqColor");
+            var can2 = document.createElement("canvas");
+            can2.width = 3;
+            can2.height = 3;
+            var ctx2 = can2.getContext("2d");
 
             function resize() {
                 var w = can.offsetWidth;
@@ -136,7 +146,7 @@
                 var w = can.offsetWidth;
                 var h = can.offsetHeight;
                 ctx.clearRect(0, 0, w, h);
-                lumVal.innerText = l;
+                lumVal.innerText = Number(lumSlider.value);
 
 
              /*   for (var x = -0.5; x <= 0.5; x+=0.01) for (var y = -0.5; y <= 0.5; y+=0.01) {
@@ -159,7 +169,7 @@
                     var px = Math.sin(a) * (d + 0.0625);
                     var py = Math.cos(a) * (d + 0.0625);
 
-                    var col = oklab_to_linear_srgb( {L:Number(l), a: x, b: y });
+                    var col = oklab_to_linear_srgb( {L:Number(lumSlider.value), a: x, b: y });
                     if (gamCheckbox.checked) {
                         col.r = gamma(col.r) * 255.0;
                         col.g = gamma(col.g) * 255.0;
@@ -186,7 +196,7 @@
                         var x = Math.sin(ang) * rad;
                         var y = Math.cos(ang) * rad;
 
-                        var col = oklab_to_linear_srgb( {L:Number(l), a: x, b: y });
+                        var col = oklab_to_linear_srgb( {L:Number(lumSlider.value), a: x, b: y });
                         if (gamCheckbox.checked) {
                             col.r = gamma(col.r) * 255.0;
                             col.g = gamma(col.g) * 255.0;
@@ -267,7 +277,7 @@
             function reside() {
                 var w = can.offsetWidth;
                 var h = can.offsetHeight;
-                var col = oklab_to_linear_srgb( {L:Number(l), a: last_a, b: last_b });
+                var col = oklab_to_linear_srgb( {L:Number(lumSlider.value), a: last_a, b: last_b });
 
                 col.r = clamp01(col.r);
                 col.g = clamp01(col.g);
@@ -421,7 +431,7 @@ function rgb255ToHEX(rgb) {
     var b = Math.round(rgb.b).toString(16).padStart(2, "0");
     return ("#" + r + g + b).toUpperCase(); 
 }
-
+/*
 function getRGB(_l, _a, _b, _g, _d) {
     var cl = "";
     if (_d != undefined) {
@@ -454,15 +464,27 @@ function getRGB(_l, _a, _b, _g, _d) {
     console.log("[" + _l.toFixed(3) + " " + _a.toFixed(3) + " " + _b.toFixed(3) + " gamma:" + _g + cl + "] (" + rgb1_text + ") (" + rgb255_text + ") " + rgb255ToHEX(col) + " (d=" + (Math.sqrt(_a * _a + _b * _b)).toFixed(3) + ")");
 }
 
-getRGB(0.7,  0.100,  0.361, false, 0.375);
-getRGB(0.7, -0.322,  0.185, false, 0.375);
-getRGB(0.7,  0.000, -0.250, false, 0.375);
-getRGB(0.7, -0.064,  0.241, false, 0.375);
+getRGB(0.7,  0.100,  0.361, true, 0.375);
+getRGB(0.7, -0.322,  0.185, true, 0.375);
+getRGB(0.7,  0.000, -0.250, true, 0.375);
+getRGB(0.7, -0.064,  0.241, true, 0.375);
 
-getRGB(1.0,  0.100,  0.361, false, 0.375);
-getRGB(1.0, -0.322,  0.185, false, 0.375);
-getRGB(1.0,  0.000, -0.250, false, 0.375);
-getRGB(1.0, -0.064,  0.241, false, 0.375);
+getRGB(1.0,  0.100,  0.361, true, 0.375);
+getRGB(1.0, -0.322,  0.185, true, 0.375);
+getRGB(1.0,  0.000, -0.250, true, 0.375);
+getRGB(1.0, -0.064,  0.241, true, 0.375);*/
+
+
+function inputColor(event) {
+    sq.style.color = this.value;
+    ctx2.fillStyle = this.value;
+    ctx2.fillRect(0, 0, 3, 3);
+    var p = ctx2.getImageData(4, 4, 1, 1);
+    console.log(p);
+}
+function showColor(event) {
+
+}
 
 
         } );
@@ -471,7 +493,7 @@ getRGB(1.0, -0.064,  0.241, false, 0.375);
 
 <body>
     <div class="E3D_fullscreenContainer E3D_flexVertical">            
-        <div class="menuTopLeft hoverSize">Params<br/>
+        <div class="menuTopLeft">Params<br/>
             L:<input id="lum" type="range" min="0.0" max="1.0" value="0.5" step="0.025" /><span id="lval"></span><br/>
             Gamma<input id="gam" type="checkbox" checked="true" /><br/>
             a:<span id="a">0.0</span><br/>
@@ -484,7 +506,14 @@ getRGB(1.0, -0.064,  0.241, false, 0.375);
         <div class="E3D_flexContent">
             <canvas id="canvas" width="320" height="240">Canvas</canvas>
         </div>
-        <div class="E3D_flexVerticalContentFixed">Footer</div>
+        <div class="menuBottomLeft hoverSize">Color (CSS)<br/>
+            Undo Gamma<input id="gam2" type="checkbox" checked="true" /><br/>
+            <input type="text" id="inColor" /><span id="sqColor" class="E3D_monospaceText">&#9724;</span><br/>
+            L:<span id="l2">1.0</span><br/>
+            a:<span id="a2">0.0</span><br/>
+            b:<span id="b2">0.0</span><br/>
+            <input type="button" id="showColor" value="Show on graph" />
+        </div>
     </div>
 </body>
 
