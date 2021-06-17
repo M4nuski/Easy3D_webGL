@@ -86,16 +86,12 @@
             window.addEventListener("resize", resize);
            // can.addEventListener("click", resize);
            var lumSlider = document.getElementById("lum");
-            lumSlider.addEventListener("input", function (event) { 
-               // console.log(lumSlider.value);
-                recolor(lumSlider.value);
-            });
+            lumSlider.addEventListener("input", () => { l = lumSlider.value; recolor(); } );
             var lumVal = document.getElementById("lval");
             var gamCheckbox = document.getElementById("gam");
-            gamCheckbox.addEventListener("input", (x) => recolor(lumSlider.value) );
-
+            gamCheckbox.addEventListener("input", () => { l = lumSlider.value; recolor(); } );
             var dispCheckbox = document.getElementById("disp");
-            dispCheckbox.addEventListener("input", (x) => recolor(lumSlider.value) );
+            dispCheckbox.addEventListener("input", () => { l = lumSlider.value; recolor(); } );
 
             can.addEventListener("mousemove", canMouseMove);
 
@@ -106,9 +102,15 @@
             var rgbH = document.getElementById("rgbH");
 
             var button = false;
-            can.addEventListener("mousedown", (e) => button = true);
-            can.addEventListener("mouseup",  (e) => button = false);
-            can.addEventListener("mouseleave", (e) => button = false);
+            can.addEventListener("mousedown", (e) => { button = true; canMouseMove(e);} );
+            can.addEventListener("mouseup",  () => button = false);
+            can.addEventListener("mouseleave", () => button = false);
+            var last_a = 0.0;
+            var last_b = 0.0;
+            var lpx = 0;
+            var lpy = 0;
+            var l = 0.5;
+            var pix; 
 
             var LAB = { l: 1.0, a : 0.0, b: 0.0 };
             var RGB = { r: 1.0, g : 1.0, b: 1.0 };
@@ -125,9 +127,12 @@
                 ctx.moveTo(0, h);
                 ctx.lineTo(w, 0);
                 ctx.stroke();
+
+                recolor();
+                reside();
             }
 
-            function recolor(l) {
+            function recolor() {
                 var w = can.offsetWidth;
                 var h = can.offsetHeight;
                 ctx.clearRect(0, 0, w, h);
@@ -227,6 +232,8 @@
                     ctx.stroke();
                 }
 
+                reside();
+
             }
 
             function canMouseMove(event) {
@@ -237,74 +244,93 @@
                 var py = (h/2) - event.offsetY;
 
                 var dist = Math.sqrt((px * px) + (py * py));
-                    if ((dist >= 50) && (dist <= 455)) {
-                        var rad = (dist - 50) / 800;
-                        var ang = Math.atan2(py, px);
-                        var x = Math.sin(ang) * rad;
-                        var y = Math.cos(ang) * rad;
+                if ((dist >= 50) && (dist <= 455)) {
+                    var rad = (dist - 50) / 800;
+                    var ang = Math.atan2(py, px);
+                    var x = Math.sin(ang) * rad;
+                    var y = Math.cos(ang) * rad;
 
-                        a_coord.innerText = x.toFixed(3);
-                        b_coord.innerText = y.toFixed(3);
+                    a_coord.innerText = x.toFixed(3);
+                    last_a = x;
+                    b_coord.innerText = y.toFixed(3);
+                    last_b = y;
 
+                    if (pix) ctx.putImageData(pix, lpx - 5, lpy - 5);
+                    lpx = event.offsetX;
+                    lpy = event.offsetY;
 
-                        var col = oklab_to_linear_srgb( {L:Number(lumSlider.value), a: x, b: y });
+                    
+                    reside();
+                }
+            }
 
-                        col.r = clamp01(col.r);
-                        col.g = clamp01(col.g);
-                        col.b = clamp01(col.b);
+            function reside() {
+                var w = can.offsetWidth;
+                var h = can.offsetHeight;
+                var col = oklab_to_linear_srgb( {L:Number(l), a: last_a, b: last_b });
 
-                        var rgb1_text = col.r.toFixed(3) + ", " + col.g.toFixed(3) + ", " + col.b.toFixed(3);
+                col.r = clamp01(col.r);
+                col.g = clamp01(col.g);
+                col.b = clamp01(col.b);
 
-                        if (gamCheckbox.checked) {
-                            col.r = gamma(col.r) * 255.0;
-                            col.g = gamma(col.g) * 255.0;
-                            col.b = gamma(col.b) * 255.0;
-                        }
-                        else {
-                            col.r = col.r * 255.0;
-                            col.g = col.g * 255.0;
-                            col.b = col.b * 255.0;
-                        }
-                        
-                        var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
-                        rgb1.innerText = rgb1_text;
-                        rgb255.innerText = rgb255_text;
-                        rgbH.innerText = rgb255ToHEX(col);
+                var rgb1_text = col.r.toFixed(3) + ", " + col.g.toFixed(3) + ", " + col.b.toFixed(3);
 
-                        ctx.fillStyle = "rgb(" + rgb255_text + ")";
-                        ctx.fillRect((w/2) + 550 - 25, (h / 2) - 25, 50, 50);
+                if (gamCheckbox.checked) {
+                    col.r = gamma(col.r) * 255.0;
+                    col.g = gamma(col.g) * 255.0;
+                    col.b = gamma(col.b) * 255.0;
+                }
+                else {
+                    col.r = col.r * 255.0;
+                    col.g = col.g * 255.0;
+                    col.b = col.b * 255.0;
+                }
 
-                        // L steps 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+                var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
+                rgb1.innerText = rgb1_text;
+                rgb255.innerText = rgb255_text;
+                rgbH.innerText = rgb255ToHEX(col);
 
-                        for (var i = 0.0; i <= 1.0; i += 0.1) {
+                ctx.fillStyle = "black";
+                ctx.fillRect((w/2) + 550 - 26, (h / 2) - 276, 102, 552);
 
-                            col = oklab_to_linear_srgb( {L: i, a: x, b: y });
+                ctx.fillStyle = "rgb(" + rgb255_text + ")";
+                ctx.fillRect((w/2) + 550 - 25, (h / 2) - 275, 50, 550);
 
-                            col.r = clamp01(col.r);
-                            col.g = clamp01(col.g);
-                            col.b = clamp01(col.b);
+                // L steps 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
 
-                            if (gamCheckbox.checked) {
-                                col.r = gamma(col.r) * 255.0;
-                                col.g = gamma(col.g) * 255.0;
-                                col.b = gamma(col.b) * 255.0;
-                            }
-                            else {
-                                col.r = col.r * 255.0;
-                                col.g = col.g * 255.0;
-                                col.b = col.b * 255.0;
-                            }
+                for (var i = 0.0; i <= 1.0; i += 0.1) {
 
-                            var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
+                    col = oklab_to_linear_srgb( {L: i, a: last_a, b: last_b });
 
-                            ctx.fillStyle = "rgb(" + rgb255_text + ")";
-                            ctx.fillRect((w/2) + 600 - 25, (h / 2) - 25 - (i-0.5) * 500, 50, 50);
-                        }
+                    col.r = clamp01(col.r);
+                    col.g = clamp01(col.g);
+                    col.b = clamp01(col.b);
+
+                    if (gamCheckbox.checked) {
+                        col.r = gamma(col.r) * 255.0;
+                        col.g = gamma(col.g) * 255.0;
+                        col.b = gamma(col.b) * 255.0;
                     }
+                    else {
+                        col.r = col.r * 255.0;
+                        col.g = col.g * 255.0;
+                        col.b = col.b * 255.0;
+                    }
+
+                    var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
+
+                    ctx.fillStyle = "rgb(" + rgb255_text + ")";
+                    ctx.fillRect((w/2) + 600 - 25, (h / 2) - 25 - (i-0.5) * 500, 50, 50);
+                }
+
+                pix = ctx.getImageData(lpx - 5, lpy - 5, 11, 11);
+                ctx.strokeRect(lpx - 3, lpy - 3, 7, 7);
             }
 
             resize();
-            recolor(0.5);
+            recolor();
+            reside();
 
                         // Oklab color space
             // Converter from https://bottosson.github.io/posts/oklab/
@@ -395,6 +421,48 @@ function rgb255ToHEX(rgb) {
     var b = Math.round(rgb.b).toString(16).padStart(2, "0");
     return ("#" + r + g + b).toUpperCase(); 
 }
+
+function getRGB(_l, _a, _b, _g, _d) {
+    var cl = "";
+    if (_d != undefined) {
+        var d = Math.sqrt(_a * _a + _b * _b);
+        _a = _a / d * _d; 
+        _b = _b / d * _d;
+        cl = " clamp:" + _d.toFixed(3);
+    }
+    var col = oklab_to_linear_srgb( {L: _l, a: _a, b: _b });
+
+    col.r = clamp01(col.r);
+    col.g = clamp01(col.g);
+    col.b = clamp01(col.b);
+
+    var rgb1_text = col.r.toFixed(3) + ", " + col.g.toFixed(3) + ", " + col.b.toFixed(3);
+
+    if (_g) {
+        col.r = gamma(col.r) * 255.0;
+        col.g = gamma(col.g) * 255.0;
+        col.b = gamma(col.b) * 255.0;
+    }
+    else {
+        col.r = col.r * 255.0;
+        col.g = col.g * 255.0;
+        col.b = col.b * 255.0;
+    }
+
+    var rgb255_text = Math.round(col.r) + ", " + Math.round(col.g) + ", " +Math.round(col.b);
+
+    console.log("[" + _l.toFixed(3) + " " + _a.toFixed(3) + " " + _b.toFixed(3) + " gamma:" + _g + cl + "] (" + rgb1_text + ") (" + rgb255_text + ") " + rgb255ToHEX(col) + " (d=" + (Math.sqrt(_a * _a + _b * _b)).toFixed(3) + ")");
+}
+
+getRGB(0.7,  0.100,  0.361, false, 0.375);
+getRGB(0.7, -0.322,  0.185, false, 0.375);
+getRGB(0.7,  0.000, -0.250, false, 0.375);
+getRGB(0.7, -0.064,  0.241, false, 0.375);
+
+getRGB(1.0,  0.100,  0.361, false, 0.375);
+getRGB(1.0, -0.322,  0.185, false, 0.375);
+getRGB(1.0,  0.000, -0.250, false, 0.375);
+getRGB(1.0, -0.064,  0.241, false, 0.375);
 
 
         } );
