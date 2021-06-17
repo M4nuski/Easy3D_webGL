@@ -77,6 +77,7 @@
             margin: 2px;
             overflow: hidden;
             background-color: white;
+            font-size: 16px;
         }
         #volDiv {
             z-index: 10;
@@ -762,6 +763,7 @@
                             }
                             currentScore += CSM_ScoreMultipliers[colorShuffleMode];
                             currentScore += SSM_ScoreMultipliers[soundSuffleMode];
+                            currentScore += (shuffleQty - 2) * 2; // 2 3 4 -> 0 2 4
                             if (colorShuffleMode == CSM_AfterEachRecalls) performShuffle();
                             if (colorShuffleMode == CSM_Always) performShuffle();
                         } else fail();
@@ -1039,8 +1041,8 @@ Score: $score, HighScore: $lhs</span>
 
         <div id="helpDiv" class="hoverSize">
             <img id="help" src="media/Help.svg" width="50" height="50" /></img><br />
-            EN: <br />
-            Learn the color pattern and repeat to advance to the next level <hr />
+            [EN]: <br />
+            Learn the color pattern and repeat it to advance to the next level <hr />
             Shuffle Modes: <br />
             None: Colors stay at the same place <br />
             Level: Shuffle at the begining of the level <br />
