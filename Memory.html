@@ -371,6 +371,15 @@
             var RNG_Sequence = new Random(666);
             var RNG_ColorShuffle = new Random(1337);
 
+            var currentScore = 0;
+            var localHighScore = 0;
+            if (window.localStorage) {
+                var hs = window.localStorage.getItem("m3.hs");
+                if (hs != undefined) {
+                    localHighScore = hs;
+                }
+            }  
+
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
             var lastHitStartAngle = 0;
@@ -394,7 +403,8 @@
             const CSM_AfterEachTeach = 4;
             const CSM_Always = 5;
             const CSM_Max = 5;
-            const CSM_Strings = ["N", "L", "R", "P", "T", "E"]; //  ["None", "BeforeTeach", "AfterTeach", "AfterEachRecalls", "BeforeEachRecalls"];
+            const CSM_Strings = ["None", "Level", "Recall", "Input", "Teach", "Always"]; //  ["None", "BeforeTeach", "AfterTeach", "AfterEachRecalls", "BeforeEachRecalls"];
+            const CSM_ScoreMultipliers = [5, 10, 15, 20, 25, 30];
             var colorShuffleMode = CSM_None;
             var CSM_AfterEachTeach_Done = true;
             /*
@@ -404,6 +414,7 @@
             T: Colors shuffle after each color ligts up in the teaching stage <br /> CSM_AfterEachTeach
             E: Colors shuffle everytime after they light up. <hr /> CSM_Always
             */
+
             var shuffleQty = 2; // 2, 3 or 4
 
 
@@ -412,7 +423,8 @@
             const SSM_EachLevel = 1;
             const SSM_AfterTeach = 2;
             const SSM_Max = 2;
-            const SSM_Strings = ["N", "L", "R"]; //  ["No Shuffle", "EachLevel", "AfterTeach"];
+            const SSM_Strings = ["None", "Level", "Recall"]; //  ["No Shuffle", "EachLevel", "AfterTeach"];
+            const SSM_ScoreMultipliers = [5, 10, 15];
             var soundSuffleMode = SSM_None;
             var soundShuffle = shuffleResetState.slice();
 
@@ -671,6 +683,13 @@
                 state = GS_Failed;
                 bfail.play();
                 lastHitStartAngle = 0;
+                if (currentScore > localHighScore)  {
+                    localHighScore = currentScore;
+                    // TODO display "new high score"
+                    if (window.localStorage) {
+                        window.localStorage.setItem("m3.hs", localHighScore);
+                    }
+                }
             }
 
             function performShuffle() {
@@ -741,6 +760,8 @@
                                 state = GS_Success;
                                 stepDelayRemaining = successDelay;
                             }
+                            currentScore += CSM_ScoreMultipliers[colorShuffleMode];
+                            currentScore += SSM_ScoreMultipliers[soundSuffleMode];
                             if (colorShuffleMode == CSM_AfterEachRecalls) performShuffle();
                             if (colorShuffleMode == CSM_Always) performShuffle();
                         } else fail();
@@ -755,6 +776,7 @@
                         state =  GS_Teach;
                         currentLevel = 0;
                         currentStep = 0;
+                        currentScore = 0;
                         stepDelayRemaining = teachDelayBase;
                     } 
                 }
@@ -819,6 +841,8 @@
                 txt = txt.replace("$state", GS_Strings[state]);
                 txt = txt.replace("$level", currentLevel + 1);
                 txt = txt.replace("$step", currentStep);
+                txt = txt.replace("$score", currentScore);
+                txt = txt.replace("$lhs", localHighScore);
                 status.innerText = txt;
 
                 //log.innerText = "";
@@ -987,7 +1011,7 @@
             }
 
         } );
-        // TODO local scoreboard
+
         // TODO global leaderboard - tab for total, tabs for each mode 
     </script>
 </head>
@@ -996,7 +1020,9 @@
     <div class="E3D_fullscreenContainer E3D_flexVertical">
 
         <div id="statusDiv" class="E3D_flexVerticalContentFit">
-            <span id="statusSpan" class="E3D_monospaceText">Color Shuffle:$mode, Qty:$qty, Sound Suflle:$sound, Stage:$state, Level:$level, Step: $step</span>
+            <span id="statusSpan" class="E3D_monospaceText">Color Shuffle: $mode, Qty: $qty, Sound Suflle: $sound
+Stage: $state, Level: $level, Step: $step
+Score: $score, HighScore: $lhs</span>
         </div>     
 
         <div class="E3D_flexContent">
@@ -1016,19 +1042,19 @@
             EN: <br />
             Learn the color pattern and repeat to advance to the next level <hr />
             Shuffle Modes: <br />
-            N: Colors stay at the same place <br />
-            L: Colors shuffle at the begining of the level <br />
-            R: Colors shuffle before the recall stage <br />
-            P: Colors shuffle after each player input in the recall stage <br />
-            T: Colors shuffle after each color ligts up in the teaching stage <br />
-            E: Colors shuffle everytime after they light up. <hr />
+            None: Colors stay at the same place <br />
+            Level: Shuffle at the begining of the level <br />
+            Recall: Shuffle before the recall stage <br />
+            Input: Shuffle after each player input in the recall stage <br />
+            Teach: Colors shuffle after each color ligts up in the teaching stage <br />
+            Always: Shuffle everytime after they light up. <hr />
             Shuffle QTY:<br />
             Number of colors that get shuffled.<hr />
             Sound Suffle:<br />
             Association of sounds and colors also get shuffled.<br />    
-            N: Sounds associatin stay the same<br />
-            L: Sounds shuffle at the begining of the level <br />
-            R: Sounds shuffle before the recall stage <br />
+            None: Sounds vs colors stay the same<br />
+            Level: Sounds shuffle at the begining of the level <br />
+            Recall: Sounds shuffle before the recall stage <br />
         </div>
 
     </div>
