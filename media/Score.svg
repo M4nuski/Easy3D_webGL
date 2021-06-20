@@ -1,0 +1,15 @@
+<svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .small { font: bold 48px sans-serif; }
+  </style>
+ <g id="Layer_1" stroke="#000000" stroke-width="2.0">
+  <title>Layer 1</title>
+  <rect id="svg_1" height="120" width="60" y="120" x="40" fill="#FFFFFF"/>
+  <text x="56" y="220" class="small">2</text>
+  <rect id="svg_6" height="160" width="60" y="80" x="100" fill="#FFFFFF"/>
+  <text x="116" y="220" class="small">1</text>
+  <rect sid="svg_7" height="80" width="60" y="160" x="160" fill="#FFFFFF"/>
+  <text x="176" y="220" class="small">3</text>
+  <path id="svg_8" d="m166.13001,38.71934l32.46734,0l10.03266,-33.6131l10.03266,33.6131l32.46733,0l-26.26658,20.7738l10.03318,33.6131l-26.26659,-20.77437l-26.26659,20.77437l10.03318,-33.6131l-26.26659,-20.7738z" fill="#ffff00"/>
+ </g>
+</svg>

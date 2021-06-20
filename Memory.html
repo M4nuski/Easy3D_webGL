@@ -91,7 +91,33 @@
             background-color: white;
         }
         #volSpan {
-            display: block;             
+            display: block;
+        }
+
+        #scoreButtonDiv {
+            z-index: 10;
+            position: absolute;
+            display: inline-block;
+            right: 0px;
+            border-radius: 5px;
+            border: 2px solid black;
+            margin: 2px;
+            background-color: white;
+        }
+        #scoreButtonDiv:hover {
+            background-color: #a0a0a0;
+        }
+        
+        #scoreDiv {
+            /* Score Div is a "modal" panel hiding the game and inhibiting the game loop */ 
+            position: fixed;
+            visibility: hidden;
+            z-index: 50;
+            top: 0px;
+            left:0px;
+            bottom: 0px;
+            right: 0px;
+            background-color: white;
         }
 
         .hoverSize {
@@ -331,8 +357,8 @@
             // Colors  240 120 60 0
             var fillStyles = [ 
                 // red        yellow     green      blue
-                ["#FF0000", "#D2C800", "#00FC00", "#0017FF"], // off
-                ["#FFF3DD", "#FFFFD4", "#E8FFE4", "#DEFFFF"]  // on
+                ["#FF0000", "#FFFF00", "#00FC00", "#0017FF"], // off
+                ["#FFF3DD", "#FFFFD2", "#E8FFE4", "#DEFFFF"]  // on
             ];
 /*
               var fillStyles = [
@@ -352,7 +378,7 @@
             r   45.0 FF0000 FFF3DD
             g  142.5 00FC00 E8FFE4
             b -112.5 0017FF DEFFFF
-            y  112.5 D2C800 FFFFD4
+            y  106.0 D2C800 FFFFD2
 */
 
             // Images
@@ -362,6 +388,10 @@
             var startImage = document.createElement('img');
             var newImage = document.createElement('img');
             var newHSImage = document.createElement('img');
+            var scoreButton = document.getElementById('scoreButtonDiv');
+            scoreButton.addEventListener("click", scoreButtonClick);
+            var scoreDiv = document.getElementById("scoreDiv");
+            document.getElementById("scoreCloseButton").addEventListener("click", closeScore);
 
             // Game States
             const GS_Idle = 0;
@@ -405,7 +435,10 @@
                     this.score = currentScore;
                 }
             }
-            // TODO local list of scores
+            // TODO local list of scores 
+            // 21/06/17 20:53:17 None2None 12345
+            // 20210617 211313 Level4None 12345
+            // 210617 221212 Level3Level 12345
             // TODO panel with local list
             // TODO user name input
             // TODO upload highscore
@@ -783,7 +816,6 @@
                 }
 
 
-
                 // Game Logic 
                 if (state == GS_Recall) {
                     if (timeSinceLastHit > maxTimeBetweenHit) {
@@ -864,6 +896,7 @@
                     }
                 }
 
+                scoreButton.style.backgroundColor = ((newHS) ? "lime" : "");
             }
 
             function drawScene(){                
@@ -1049,6 +1082,26 @@
                 ctx.drawImage(img, x - (w / 2), y - (h / 2), w, h);
             }
 
+
+
+            // ScoreBoard management methods
+            function scoreButtonClick(event) {
+                run = false;
+                scoreDiv.style.visibility = "visible";
+                    // show local tab
+                    // update with current data
+
+            }
+
+            function closeScore(event) {
+                scoreDiv.style.visibility = "hidden";
+                setTimeout(() => run = true, 1000);
+            }
+
+            // tabs
+            //      global fetch data from aws
+            //      parse format and display data
+
         } );
 
     </script>
@@ -1056,10 +1109,13 @@
 
 <body>
     <div class="E3D_fullscreenContainer E3D_flexVertical">
+        <div id="scoreDiv"><div id="scoreCloseButton" class="E3D_fakeButton">Close</div> <br />
+        Name Input <br />
+        Local Score Tab, Global Score Tab</div>
 
         <div id="statusDiv" class="E3D_flexVerticalContentFit">
-            <span id="statusSpan" class="E3D_monospaceText">Color Shuffle: $mode, Qty: $qty, Sound Suflle: $sound
-Stage: $state, Level: $level, Step: $step
+            <span id="statusSpan" class="E3D_monospaceText">Color Shuffle: $mode, Qty: $qty, Sound Suflle: $sound, Stage: $state
+Level: $level, Step: $step
 Score: $score, HighScore: $lhs</span>
         </div>     
 
@@ -1073,12 +1129,16 @@ Score: $score, HighScore: $lhs</span>
                 <div id="shuffleQtyButton" class="E3D_fakeButton">Shuffle Qty.</div>
                 <div id="shuffleSoundButton" class="E3D_fakeButton">Sound Shuffle</div>
             </div>
+
+            <div id="scoreButtonDiv">
+                <img src="media/Score.svg" width="50" height="50" /></img><br />
+            </div>
         </div>
 
         <div id="helpDiv" class="hoverSize">
             <img id="help" src="media/Help.svg" width="50" height="50" /></img><br />
             [EN]: <br />
-            Learn the color pattern and repeat it to advance to the next level <hr />
+            Learn the color pattern and repeat it to advance to the next level. Changing shuffle modes and quantity increase the score reward!<hr />
             Shuffle Modes: <br />
             None: Colors stay at the same place <br />
             Level: Shuffle at the begining of the level <br />
@@ -1089,10 +1149,10 @@ Score: $score, HighScore: $lhs</span>
             Shuffle QTY:<br />
             Number of colors that get shuffled.<hr />
             Sound Suffle:<br />
-            Association of sounds and colors also get shuffled.<br />    
+            Association of sounds and colors<br />    
             None: Sounds vs colors stay the same<br />
-            Level: Sounds shuffle at the begining of the level <br />
-            Recall: Sounds shuffle before the recall stage <br />
+            Level: Shuffle at the begining of the level <br />
+            Recall: Shuffle before the recall stage <br />
         </div>
 
     </div>
@@ -1103,10 +1163,11 @@ Score: $score, HighScore: $lhs</span>
         <audio id="b2" src="media/Beep2.wav"></audio>
         <audio id="b3" src="media/Beep3.wav"></audio>
         <audio id="fail" src="media/Fail.wav"></audio>
+        <!-- SVG made with https://editor.method.ac/ -->
         <img id="check" src="media/Check.svg"></img>
         <img id="cross" src="media/Cross.svg"></img>
         <img id="eye" src="media/Eye.svg"></img>
-        <!-- SVG made with https://editor.method.ac/ -->
+        <img id="score" src="media/Score.svg"></img>
     </div>
     
 </body>
