@@ -60,6 +60,7 @@
             padding-right: 0.3em;
             border-right: solid 2px black;
             border-bottom: solid 2px black;
+            background-color: white;
         }       
         .menuBottomLeft {           
             position: absolute;
@@ -73,6 +74,7 @@
             padding-right: 0.3em;
             border-right: solid 2px black;
             border-top: solid 2px black;
+            background-color: white;
         }       
 
 
@@ -97,6 +99,10 @@
 
             var dispCheckbox = document.getElementById("disp");
             dispCheckbox.addEventListener("input",  recolor);
+
+            var backSlider = document.getElementById("back");
+            backSlider.addEventListener("input", changeBack);
+            var sideTextColor = "black";
 
             can.addEventListener("mousemove", canMouseMove);
 
@@ -353,8 +359,9 @@
                     ctx.fillStyle = "rgb(" + rgb255_text + ")";
                     ctx.fillRect((w/2) + 600 - 25, (h / 2) - 25 - (i-0.5) * 500, 50, 50);
 
-                    ctx.fillStyle = "black";
+                    ctx.fillStyle = sideTextColor;
                     ctx.fillText("L: " + i.toFixed(1), (w/2) + 600 + 30, (h / 2) - (i-0.5) * 500);
+
                 }
 
                 pix = ctx.getImageData(lpx - 5, lpy - 5, 11, 11);
@@ -458,6 +465,10 @@ function rgb255ToHEX(rgb) {
     var g = Math.round(rgb.g).toString(16).padStart(2, "0");
     var b = Math.round(rgb.b).toString(16).padStart(2, "0");
     return ("#" + r + g + b).toUpperCase(); 
+}
+function gray255ToHEX(v) {
+    var V = Math.round(v).toString(16).padStart(2, "0");
+    return ("#" + V + V + V).toUpperCase(); 
 }
 /*
 function getRGB(_l, _a, _b, _g, _d) {
@@ -565,13 +576,20 @@ function inputAD(event) {
 
 }
 
+
+function changeBack(event) {
+    sideTextColor = (Number(this.value) > 128) ? "black" : "white";
+    document.body.style.backgroundColor = gray255ToHEX(this.value);
+    reside();
+}
+
         } );
     </script>
 </head>
 
 <body>
     <div class="E3D_fullscreenContainer E3D_flexVertical">            
-        <div class="menuTopLeft">Parameters (can be set by clicking the wheel)<br/>
+        <div class="menuTopLeft">Luminance: (a and b can be set by clicking the wheel)<br/>
             <input id="lum" type="range" min="0.0" max="1.0" value="0.5" step="0.00001" /><br />
             L:<span id="lval"></span><br/>
             a:<span id="a">0.0</span><br/>
@@ -582,7 +600,8 @@ function inputAD(event) {
             RGB 0-1:<span id="rgb1">0.0, 0.0, 0.0</span><br/>
             RGB 0-255:<span id="rgb255">0, 0, 0</span><br/>
             RGB HEX:<span id="rgbH">#000000</span><br/>
-            Polar Display<input id="disp" type="checkbox"  /><br/>
+            Old Polar Display<input id="disp" type="checkbox"  /><br/>
+            Background: <input id="back" type="range" min="0" max="255" value="255" step="1" />
         </div>
         <div class="E3D_flexContent">
             <canvas id="canvas" width="320" height="240">Canvas</canvas>
