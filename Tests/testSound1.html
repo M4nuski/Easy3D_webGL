@@ -64,7 +64,7 @@
             display: block;
         }
         .noteDiv {
-
+            background-color: white;
             width : 250px;
             height : 30px;
 
@@ -73,6 +73,10 @@
             border-collapse: collapse;
             font-family: 'Courier New', Courier, monospace;
         }
+        .noteDiv:hover {
+            background-color: #a0a0a0;
+        }
+
         .scale {
             margin: 5px;
             display: inline-block;
@@ -80,7 +84,7 @@
         }
 
         .halfDiv {
-
+            background-color: white;
             width : 123px;
             height : 30px;
             display: table-cell;
@@ -89,23 +93,20 @@
             border-collapse: collapse;
             font-family: 'Courier New', Courier, monospace;
         }
-        .whiteNote {
-            background-color: white;
-
-        }
-        .whiteNote:hover {
+        .halfDiv:hover {
             background-color: #a0a0a0;
         }
-        .greenNote {
+
+        .playingNote {
             background-color: #B0FFB0;
         }
-        .greenNote:hover {
+        .playingNote:hover {
             background-color: #80FF80;
         }
-        .blueNote {
+        .selectedNote {
             background-color: #c0c0ff;
         }
-        .blueNote:hover {
+        .selectedNote:hover {
             background-color: #8080FF;
         }
         .refNote {
@@ -160,6 +161,20 @@
                 }
             }
             var currentScale = "";
+            var currentNote = 0;
+            var alt_num = getElem("alt_num");
+            if (window.localStorage) {
+                var v = window.localStorage.getItem("m1.alt");
+                if (v != undefined) {
+                    alt_num.value = v;
+                }
+            }
+            var alt_interval = setInterval(alternateNote, alt_num.value);
+            alt_num.addEventListener("input", function (event) {
+                clearInterval(alt_interval);
+                alt_interval = setInterval(alternateNote, this.value);
+                if (window.localStorage) window.localStorage.setItem("m1.alt", this.value);
+            });
             var playbackList = [];
 
             // volume slider
@@ -212,7 +227,7 @@
                                     128/81, 6561/4096,
                                     27/16, //a
                                     16/9, 59049/32768,
-                                    234/128, //b
+                                    243/128, //b
                                     2/1 //c
                                 ];
             const pyth2_unison = 3;
@@ -273,7 +288,9 @@
 
                 if (newFreq > 0) {
 
-                    if (type != currentScale) { // new scale, erease all
+                    var playType = document.querySelector('input[name="play"]:checked').value;
+
+                 /*   if (type != currentScale) { // new scale, erease all
                         for (var i = 0; i < playbackList.length; ++i) {
                             var elem = document.querySelector('div[data-type="'+ playbackList[i].type +'"][data-offset="' + playbackList[i].offset+'"]');
                             elem.classList.remove("greenNote");
@@ -285,26 +302,60 @@
                         var elem = document.querySelector('div[data-type="'+ oldPB.type + '"][data-offset="' + oldPB.offset+'"]');
                         elem.classList.remove("greenNote");
                     }
+                    */
 
+                    
 
-                    var playType = document.querySelector('input[name="play"]:checked').value;
+                    if (playType == "single") {      
+            
+                        removeAllNotesStyle();
 
-                    if (playType == "single") {                        
-                        for (var i = 0; i < playbackList.length; ++i) {
-                            var elem = document.querySelector('div[data-type="'+ playbackList[i].type +'"][data-offset="' + playbackList[i].offset+'"]');
-                            elem.classList.remove("greenNote");
-                        }
+                        // update state and UI
                         currentScale = type;
-                        var newText = this.innerText + " " + newFreq.toFixed(4);
-                        playbackList = [];
-                        playbackList.push(new playback(offset, newText, newFreq, type));
+                        freq.innerText = this.innerText + " " + newFreq.toFixed(4);
+                        playbackList = [new playback(offset, freq.innerText, newFreq, type)];
+                        addNoteStyle(type, offset);
 
+                        // update sound generator
+                        oscillatorNodes[0].frequency.value = newFreq;
+                        gainNodes[0].gain.value = volSlider.value;
+                        gainNodes[1].gain.value = 0;
+                        gainNodes[2].gain.value = 0;
+
+                    } else if (playType == "alternate") {
+                        var ni = noteInList(type, offset);
+                        if (ni > -1) {
+                            // if in list remove from list
+                            var oldPB = playbackList.splice(ni, 1)[0];
+                            removeNoteStyle(oldPB.type, oldPB.offset);
+                            if (playbackList.length == 0) gainNodes[0].gain.value = 0;
+                        } else {
+                            while (playbackList.length > 2) {
+                                // else remove last if more than 2
+                                var oldPB = playbackList.pop();
+                                removeNoteStyle(oldPB.type, oldPB.offset);
+                            }
+                            //      add to list
+                            currentScale = type;
+                            var newText = this.innerText + " " + newFreq.toFixed(4);
+                            playbackList.push(new playback(offset, newText, newFreq, type));
+                            addNoteStyle(type, offset);
+                        }
+                    } else if (playType == "chord") {
+
+                        // if different type remove all
+                        // if in list remove from list
+                        // else remove last if more than 2
+                        //      add to list
                     }
 
+                } // new Freq
 
 
 
-                    freq.innerText = "";
+
+/*
+
                     for (var i = 0; i < 3; ++i) {
                         if (i+1 <= playbackList.length) {
                             oscillatorNodes[i].frequency.value = playbackList[i].freq;
@@ -317,18 +368,67 @@
                             gainNodes[i].gain.value = 0;
                         }
                     }
-
-                }
-
+*/
              
                 e.preventDefault();
             }
 
+            
+
             function stopNote() {
                 if (!audioCtx) return;
-                // for single note mode
-                for (var i = 0; i < 3; ++i) gainNodes[i].gain.value = 0;
+                var playType = document.querySelector('input[name="play"]:checked').value;
+                if (playType == "single") for (var i = 0; i < 3; ++i) gainNodes[i].gain.value = 0;
             }
+
+            function alternateNote() {
+                var playType = document.querySelector('input[name="play"]:checked').value;
+                if (playType == "alternate") {
+                    currentNote++;
+                    freq.innerText = "";
+                    if (currentNote >= playbackList.length) currentNote = 0;
+                    for (var i = 0; i < playbackList.length; ++i) {
+                        if (i == currentNote) {
+
+                            freq.innerText += "[X]" + playbackList[i].text + " " + playbackList[i].freq.toFixed(4) + ", ";
+
+                            oscillatorNodes[0].frequency.value = playbackList[i].freq;
+                            gainNodes[0].gain.value = volSlider.value;
+                            gainNodes[1].gain.value = 0;
+                            gainNodes[2].gain.value = 0;
+
+                        } else {
+                            freq.innerText += "[ ]" + playbackList[i].text + " " + playbackList[i].freq.toFixed(4) + ", ";
+                        }
+                    }
+
+                }
+            }
+
+            function getElementFromTypeAndOffset(type, offset){
+                return document.querySelector('div[data-type="'+type+'"][data-offset="'+offset+'"]');
+            }
+
+            function removeAllNotesStyle() {
+                for (var i = 0; i < playbackList.length; ++i) removeNoteStyle(playbackList[i].type, playbackList[i].offset);
+            }
+
+            function removeNoteStyle(type, offset) {
+                var elem = getElementFromTypeAndOffset(type, offset);
+                if (elem) elem.classList.remove("greenNote");
+            }
+
+            function addNoteStyle(type, offset) {
+                var elem = getElementFromTypeAndOffset(type, offset);
+                if (elem) elem.classList.add("greenNote");
+            }
+
+            function noteInList(type, offset) {
+                for (var i = 0; i < playbackList.length; ++i) if ((playbackList[i].type == type) && (playbackList[i].offset == offset)) return i;
+                return -1;
+            }
+
+
         } );
     </script>
 </head>
@@ -339,7 +439,7 @@
 <input value="amp" name="eq" type="radio" checked="true"/>Equal Amplitude<br/>
 <input value="energy" name="eq" type="radio" />Equal Energy<br/>
 <input value="single" name="play" type="radio" checked="true"/>Play 1 note<br/>
-<input value="alternate" name="play" type="radio" />Play notes alternatively<br/>
+<input value="alternate" name="play" type="radio" />Play notes alternatively every <input id="alt_num" type="number" min="10" max="10000" value="250" />ms<br/>
 <input value="chord" name="play" type="radio" />Play notes togheter<br/>
 
 <hr />
@@ -349,63 +449,63 @@
     12-TET (western, tempered)<br>
     <sup>12</sup>√2<sup>n</sup><br>
     A=<input id="freq_log" type="number" min="1" max="22000" value="440" />(440)<br />
-    <!--iv data-type="log" data-offset="D" class="noteDiv whiteNote calcNote">12/12 /2 (C4 / 2)</div-->
-    <div data-type="log" data-offset="0" class="noteDiv whiteNote">&nbsp;0/12 C3 do</div>
-    <div data-type="log" data-offset="1" class="noteDiv whiteNote">&nbsp;1/12 C&#9839;</div>
-    <div data-type="log" data-offset="2" class="noteDiv whiteNote">&nbsp;2/12 D ré</div>
-    <div data-type="log" data-offset="3" class="noteDiv whiteNote">&nbsp;3/12 D&#9839;</div>
-    <div data-type="log" data-offset="4" class="noteDiv whiteNote">&nbsp;4/12 E mi</div>
-    <div data-type="log" data-offset="5" class="noteDiv whiteNote">&nbsp;5/12 F fa</div>
-    <div data-type="log" data-offset="6" class="noteDiv whiteNote">&nbsp;6/12 F&#9839;</div>
-    <div data-type="log" data-offset="7" class="noteDiv whiteNote">&nbsp;7/12 G sol</div>
-    <div data-type="log" data-offset="8" class="noteDiv whiteNote">&nbsp;8/12 G&#9839;</div>
-    <div data-type="log" data-offset="9" class="noteDiv whiteNote refNote">&nbsp;9/12 A la</div>
-    <div data-type="log" data-offset="10" class="noteDiv whiteNote">10/12 A&#9839;</div>
-    <div data-type="log" data-offset="11" class="noteDiv whiteNote">11/12 B si</div>
-    <div data-type="log" data-offset="12" class="noteDiv whiteNote">12/12 C4 do</div>
-    <!--div data-type="log" data-offset="X" class="noteDiv whiteNote calcNote">&nbsp;0/12 X2 (C4)</div-->
+    <!--iv data-type="log" data-offset="D" class="noteDiv calcNote">12/12 /2 (C4 / 2)</div-->
+    <div data-type="log" data-offset="0" class="noteDiv">&nbsp;0/12 C3 do</div>
+    <div data-type="log" data-offset="1" class="noteDiv">&nbsp;1/12 C&#9839;</div>
+    <div data-type="log" data-offset="2" class="noteDiv">&nbsp;2/12 D ré</div>
+    <div data-type="log" data-offset="3" class="noteDiv">&nbsp;3/12 D&#9839;</div>
+    <div data-type="log" data-offset="4" class="noteDiv">&nbsp;4/12 E mi</div>
+    <div data-type="log" data-offset="5" class="noteDiv">&nbsp;5/12 F fa</div>
+    <div data-type="log" data-offset="6" class="noteDiv">&nbsp;6/12 F&#9839;</div>
+    <div data-type="log" data-offset="7" class="noteDiv">&nbsp;7/12 G sol</div>
+    <div data-type="log" data-offset="8" class="noteDiv">&nbsp;8/12 G&#9839;</div>
+    <div data-type="log" data-offset="9" class="noteDiv refNote">&nbsp;9/12 A la</div>
+    <div data-type="log" data-offset="10" class="noteDiv">10/12 A&#9839;</div>
+    <div data-type="log" data-offset="11" class="noteDiv">11/12 B si</div>
+    <div data-type="log" data-offset="12" class="noteDiv">12/12 C4 do</div>
+    <!--div data-type="log" data-offset="X" class="noteDiv calcNote">&nbsp;0/12 X2 (C4)</div-->
 </div>
 
 <div id="pythScale" class="scale">
     Pythagorian 12 Tones Perfect 5th<br>
     3<sup>n</sup>/2<sup>n</sup>, 2<sup>n</sup>/3<sup>n</sup><br>
     D=<input id="freq_pyth" type="number" min="1" max="22000" value="293" />(288)<br />
-    <!--div data-type="pyth" data-offset="D" class="noteDiv whiteNote calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
-    <div data-type="pyth" data-offset="0" class="noteDiv whiteNote">&nbsp;0/12 C3 do</div>
-    <div data-type="pyth" data-offset="1" class="noteDiv whiteNote">&nbsp;1/12 C&#9839;</div>
-    <div data-type="pyth" data-offset="2" class="noteDiv whiteNote refNote">&nbsp;2/12 D ré</div>
-    <div data-type="pyth" data-offset="3" class="noteDiv whiteNote">&nbsp;3/12 E&#9837;</div>
-    <div data-type="pyth" data-offset="4" class="noteDiv whiteNote">&nbsp;4/12 E mi</div>
-    <div data-type="pyth" data-offset="5" class="noteDiv whiteNote">&nbsp;5/12 F fa</div>
-    <div data-type="pyth" data-offset="6" class="noteDiv whiteNote">&nbsp;6/12 F&#9839;</div>
-    <div data-type="pyth" data-offset="7" class="noteDiv whiteNote">&nbsp;7/12 G sol</div>
-    <div data-type="pyth" data-offset="8" class="noteDiv whiteNote">&nbsp;8/12 G&#9839;</div>
-    <div data-type="pyth" data-offset="9" class="noteDiv whiteNote">&nbsp;9/12 A la</div>
-    <div data-type="pyth" data-offset="10" class="noteDiv whiteNote">10/12 B&#9837;</div>
-    <div data-type="pyth" data-offset="11" class="noteDiv whiteNote">11/12 B si</div>
-    <div data-type="pyth" data-offset="12" class="noteDiv whiteNote calcNote">12/12 C4 do</div>
-    <!--div data-type="pyth" data-offset="X" class="noteDiv whiteNote calcNote">&nbsp;0/12 X 2</div-->
+    <!--div data-type="pyth" data-offset="D" class="noteDiv calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
+    <div data-type="pyth" data-offset="0" class="noteDiv">&nbsp;0/12 C3 do</div>
+    <div data-type="pyth" data-offset="1" class="noteDiv">&nbsp;1/12 C&#9839;</div>
+    <div data-type="pyth" data-offset="2" class="noteDiv refNote">&nbsp;2/12 D ré</div>
+    <div data-type="pyth" data-offset="3" class="noteDiv">&nbsp;3/12 E&#9837;</div>
+    <div data-type="pyth" data-offset="4" class="noteDiv">&nbsp;4/12 E mi</div>
+    <div data-type="pyth" data-offset="5" class="noteDiv">&nbsp;5/12 F fa</div>
+    <div data-type="pyth" data-offset="6" class="noteDiv">&nbsp;6/12 F&#9839;</div>
+    <div data-type="pyth" data-offset="7" class="noteDiv">&nbsp;7/12 G sol</div>
+    <div data-type="pyth" data-offset="8" class="noteDiv">&nbsp;8/12 G&#9839;</div>
+    <div data-type="pyth" data-offset="9" class="noteDiv">&nbsp;9/12 A la</div>
+    <div data-type="pyth" data-offset="10" class="noteDiv">10/12 B&#9837;</div>
+    <div data-type="pyth" data-offset="11" class="noteDiv">11/12 B si</div>
+    <div data-type="pyth" data-offset="12" class="noteDiv calcNote">12/12 C4 do</div>
+    <!--div data-type="pyth" data-offset="X" class="noteDiv calcNote">&nbsp;0/12 X 2</div-->
 
 </div>
 <div id="pyth2Scale" class="scale">
     Pythagorian Full<br>
     3<sup>n</sup>/2<sup>n</sup>, 2<sup>n</sup>/3<sup>n</sup><br>
     D=<input id="freq_pyth2" type="number" min="1" max="22000" value="288" /><br />
-    <!--div data-type="pyth2" data-offset="D" class="noteDiv whiteNote calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
-    <div data-type="pyth2" data-offset="0" class="noteDiv whiteNote">&nbsp;0/12 C3 do</div>
-    <div data-type="pyth2" data-offset="1" class="halfDiv whiteNote">&nbsp;1/12 C&#9839;</div><div data-type="pyth2" data-offset="2" class="halfDiv whiteNote">&nbsp;1/12 D&#9837;</div>
-    <div data-type="pyth2" data-offset="3" class="noteDiv whiteNote refNote">&nbsp;2/12 D ré</div>
-    <div data-type="pyth2" data-offset="4" class="halfDiv whiteNote">&nbsp;3/12 D&#9839;</div><div data-type="pyth2" data-offset="5" class="halfDiv whiteNote">&nbsp;3/12 E&#9837;</div>
-    <div data-type="pyth2" data-offset="6" class="noteDiv whiteNote">&nbsp;4/12 E mi</div>
-    <div data-type="pyth2" data-offset="7" class="noteDiv whiteNote">&nbsp;5/12 F fa</div>
-    <div data-type="pyth2" data-offset="8" class="halfDiv whiteNote">&nbsp;6/12 F&#9839;</div><div data-type="pyth2" data-offset="9" class="halfDiv whiteNote">&nbsp;6/12 G&#9837;</div>
-    <div data-type="pyth2" data-offset="10" class="noteDiv whiteNote">&nbsp;7/12 G sol</div>
-    <div data-type="pyth2" data-offset="11" class="halfDiv whiteNote">&nbsp;8/12 G&#9839;</div><div data-type="pyth2" data-offset="12" class="halfDiv whiteNote">&nbsp;8/12 A&#9837;</div>
-    <div data-type="pyth2" data-offset="13" class="noteDiv whiteNote">&nbsp;9/12 A la</div>
-    <div data-type="pyth2" data-offset="14" class="halfDiv whiteNote">10/12 A&#9839;</div><div data-type="pyth2" data-offset="15" class="halfDiv whiteNote">10/12 B&#9837;</div>
-    <div data-type="pyth2" data-offset="16" class="noteDiv whiteNote">11/12 B si</div>
-    <div data-type="pyth2" data-offset="17" class="noteDiv whiteNote calcNote">12/12 C4 do</div>
-    <!--div data-type="pyth2" data-offset="X" class="noteDiv whiteNote calcNote">&nbsp;0/12 X 2</div-->
+    <!--div data-type="pyth2" data-offset="D" class="noteDiv calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
+    <div data-type="pyth2" data-offset="0" class="noteDiv">&nbsp;0/12 C3 do</div>
+    <div data-type="pyth2" data-offset="1" class="halfDiv">&nbsp;1/12 C&#9839;</div><div data-type="pyth2" data-offset="2" class="halfDiv">&nbsp;1/12 D&#9837;</div>
+    <div data-type="pyth2" data-offset="3" class="noteDiv refNote">&nbsp;2/12 D ré</div>
+    <div data-type="pyth2" data-offset="4" class="halfDiv">&nbsp;3/12 D&#9839;</div><div data-type="pyth2" data-offset="5" class="halfDiv">&nbsp;3/12 E&#9837;</div>
+    <div data-type="pyth2" data-offset="6" class="noteDiv">&nbsp;4/12 E mi</div>
+    <div data-type="pyth2" data-offset="7" class="noteDiv">&nbsp;5/12 F fa</div>
+    <div data-type="pyth2" data-offset="8" class="halfDiv">&nbsp;6/12 F&#9839;</div><div data-type="pyth2" data-offset="9" class="halfDiv">&nbsp;6/12 G&#9837;</div>
+    <div data-type="pyth2" data-offset="10" class="noteDiv">&nbsp;7/12 G sol</div>
+    <div data-type="pyth2" data-offset="11" class="halfDiv">&nbsp;8/12 G&#9839;</div><div data-type="pyth2" data-offset="12" class="halfDiv">&nbsp;8/12 A&#9837;</div>
+    <div data-type="pyth2" data-offset="13" class="noteDiv">&nbsp;9/12 A la</div>
+    <div data-type="pyth2" data-offset="14" class="halfDiv">10/12 A&#9839;</div><div data-type="pyth2" data-offset="15" class="halfDiv">10/12 B&#9837;</div>
+    <div data-type="pyth2" data-offset="16" class="noteDiv">11/12 B si</div>
+    <div data-type="pyth2" data-offset="17" class="noteDiv calcNote">12/12 C4 do</div>
+    <!--div data-type="pyth2" data-offset="X" class="noteDiv calcNote">&nbsp;0/12 X 2</div-->
 
 </div>
 
