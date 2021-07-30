@@ -59,6 +59,10 @@
             background-color: #a0a0a0;
         }
    
+        #freq {
+            height : 30px;
+            display: block;
+        }
         .noteDiv {
 
             width : 250px;
@@ -93,7 +97,7 @@
             background-color: #a0a0a0;
         }
         .greenNote {
-            background-color: #a0FFa0;
+            background-color: #B0FFB0;
         }
         .greenNote:hover {
             background-color: #80FF80;
@@ -142,10 +146,21 @@
             notes.forEach((e) => onEvent(e, "mousedown", playNote));
             notes.forEach((e) => onEvent(e, "mouseup", stopNote));
             notes.forEach((e) => onEvent(e, "mouseleave", stopNote));
+
             var audioCtx;
-            var oscillatorNode1, oscillatorNode2, oscillatorNode3;
-            var gainNode1, gainNode2, gainNode3;
-            var mixerNode;
+            var oscillatorNodes = []; //1, oscillatorNodes2, oscillatorNodes3;
+            var gainNodes = [];// , gainNodes2, gainNodes3;
+
+            class playback {
+                constructor (offset, text, freq, type) {
+                    this.offset = offset; // note offset in dom
+                    this.text = text; // note text content
+                    this.freq = freq; // calculated note frequency
+                    this.type = type; // note tuning scale type
+                }
+            }
+            var currentScale = "";
+            var playbackList = [];
 
             // volume slider
             var volSlider = getElem("volSlider");
@@ -156,9 +171,7 @@
                 }
             }
             volSlider.addEventListener("input", function (event) { 
-                if (gainNode1) gainNode1.gain.value = this.value; 
-                if (gainNode2) gainNode2.gain.value = this.value; 
-                if (gainNode3) gainNode3.gain.value = this.value; 
+                for (var i = 0; i < playbackList.length; ++i) gainNodes[i].gain.value = this.value;
                 if (window.localStorage) window.localStorage.setItem("m1.vol", this.value);
             });
 
@@ -167,34 +180,16 @@
                 // create web audio api context
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-                // create Oscillator node
-                gainNode1 = audioCtx.createGain();
-                gainNode1.connect(audioCtx.destination);
-                gainNode1.gain.value = 0;
+                // create Gain and Oscillator nodes
+                for (var i = 0; i < 3; ++i) {
+                    gainNodes.push(audioCtx.createGain());
+                    gainNodes[i].connect(audioCtx.destination);
+                    gainNodes[i].gain.value = 0;
 
-                gainNode2 = audioCtx.createGain();
-                gainNode2.connect(audioCtx.destination);
-                gainNode2.gain.value = 0;
-
-                gainNode3 = audioCtx.createGain();
-                gainNode3.connect(audioCtx.destination);
-                gainNode3.gain.value = 0;
-
-                oscillatorNode1 = audioCtx.createOscillator();
-                oscillatorNode1.type = 'sine';
-                oscillatorNode1.connect(gainNode1);
-
-                oscillatorNode2 = audioCtx.createOscillator();
-                oscillatorNode2.type = 'sine';
-                oscillatorNode2.connect(gainNode2);
-
-                oscillatorNode3 = audioCtx.createOscillator();
-                oscillatorNode3.type = 'sine';
-                oscillatorNode3.connect(gainNode3);
-
-                oscillatorNode1.start();
-                oscillatorNode2.start();
-                oscillatorNode3.start();
+                    oscillatorNodes.push(audioCtx.createOscillator());
+                    oscillatorNodes[i].connect(gainNodes[i]);
+                    oscillatorNodes[i].start();
+                };
               //  audioCtx.suspend();
 
             }
@@ -229,25 +224,22 @@
                 var type = this.getAttribute("data-type");            
                 var offset = this.getAttribute("data-offset");
 
+                var newFreq = -1;
+
                 if (type == "log") {
                     var baseFreq = Number(freq_log.value);                    
                     if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 440;
 
                     if (offset == "X") {
-                        var f = baseFreq * Math.pow(log_baseFactor, (log_startOffset - log_unison));
-                        var f = f * 2.0;
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * Math.pow(log_baseFactor, (log_startOffset - log_unison)) * 2.0;
+
                     } else if (offset == "D") {
-                        var f = baseFreq * Math.pow(log_baseFactor, (12 + log_startOffset - log_unison));
-                        var f = f / 2.0;
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * Math.pow(log_baseFactor, (12 + log_startOffset - log_unison)) / 2.0;
+
                     } else {
                         var offset = Number(offset);
-                        var f = baseFreq * Math.pow(log_baseFactor, (offset + log_startOffset - log_unison));
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * Math.pow(log_baseFactor, (offset + log_startOffset - log_unison));
+
                     }
                 } else if (type == "pyth") {
                     var baseFreq = Number(freq_pyth.value);                    
@@ -255,19 +247,13 @@
                     baseFreq = baseFreq / pyth_ratio[pyth_unison];
 
                     if (offset == "X") {
-                        var f = baseFreq * 2;
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * 2.0;
+
                     } else if (offset == "D") {
-                        var f = baseFreq * pyth_ratio[12];
-                        f = f / 2.0;
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * pyth_ratio[12] / 2.0;
                     } else {
                         var offset = Number(offset);                        
-                        var f = baseFreq * pyth_ratio[offset];
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * pyth_ratio[offset];
                     }
                 } else if (type == "pyth2") {
                     var baseFreq = Number(freq_pyth2.value);                    
@@ -275,39 +261,73 @@
                     baseFreq = baseFreq / pyth2_ratio[pyth2_unison];
 
                     if (offset == "X") {
-                        var f = baseFreq * 2;
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * 2.0;
                     } else if (offset == "D") {
-                        var f = baseFreq * pyth2_ratio[17];
-                        f = f / 2.0;
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * pyth2_ratio[17] / 2.0;
                     } else {
                         var offset = Number(offset);                        
-                        var f = baseFreq * pyth2_ratio[offset];
-                        oscillatorNode1.frequency.value = f;
-                        freq.innerText = f.toFixed(4);
+                        newFreq = baseFreq * pyth2_ratio[offset];
                     }
                 }
 
 
+                if (newFreq > 0) {
+
+                    if (type != currentScale) { // new scale, erease all
+                        for (var i = 0; i < playbackList.length; ++i) {
+                            var elem = document.querySelector('div[data-type="'+ playbackList[i].type +'"][data-offset="' + playbackList[i].offset+'"]');
+                            elem.classList.remove("greenNote");
+                        }
+                        playbackList = [];
+
+                    } else while (playbackList.length > 2) {// clamp to 3 max
+                        var oldPB = playbackList.pop(); 
+                        var elem = document.querySelector('div[data-type="'+ oldPB.type + '"][data-offset="' + oldPB.offset+'"]');
+                        elem.classList.remove("greenNote");
+                    }
+
+
+                    var playType = document.querySelector('input[name="play"]:checked').value;
+
+                    if (playType == "single") {                        
+                        for (var i = 0; i < playbackList.length; ++i) {
+                            var elem = document.querySelector('div[data-type="'+ playbackList[i].type +'"][data-offset="' + playbackList[i].offset+'"]');
+                            elem.classList.remove("greenNote");
+                        }
+                        currentScale = type;
+                        var newText = this.innerText + " " + newFreq.toFixed(4);
+                        playbackList = [];
+                        playbackList.push(new playback(offset, newText, newFreq, type));
+
+                    }
 
 
 
 
-                gainNode1.gain.value = volSlider.value;
-                //gainNode2.gain.value = volSlider.value;
-                //gainNode3.gain.value = volSlider.value;
+                    freq.innerText = "";
+                    for (var i = 0; i < 3; ++i) {
+                        if (i+1 <= playbackList.length) {
+                            oscillatorNodes[i].frequency.value = playbackList[i].freq;
+                            gainNodes[i].gain.value = volSlider.value;
+                            freq.innerText += playbackList[i].text + ", ";
+
+                            var elem = document.querySelector('div[data-type="'+ playbackList[i].type + '"][data-offset="' + playbackList[i].offset+'"]');
+                            if (elem) elem.classList.add("greenNote");
+                        } else {
+                            gainNodes[i].gain.value = 0;
+                        }
+                    }
+
+                }
+
              
                 e.preventDefault();
             }
 
             function stopNote() {
                 if (!audioCtx) return;
-                gainNode1.gain.value = 0;
-                gainNode2.gain.value = 0;
-                gainNode3.gain.value = 0;
+                // for single note mode
+                for (var i = 0; i < 3; ++i) gainNodes[i].gain.value = 0;
             }
         } );
     </script>
@@ -317,10 +337,10 @@
 <div id="startButton" class="E3D_fakeButton">Enable</div><br />
 <input id="volSlider" type="range" min="0.0" max="1.0" value="0.5" step="0.01" />Volume<br />
 <input value="amp" name="eq" type="radio" checked="true"/>Equal Amplitude<br/>
-<input value="energy"  name="eq" type="radio" />Equal Energy<br/>
+<input value="energy" name="eq" type="radio" />Equal Energy<br/>
 <input value="single" name="play" type="radio" checked="true"/>Play 1 note<br/>
-<input value="alternate"  name="play" type="radio" />Play notes alternatively<br/>
-<input value="chord"  name="play" type="radio" />Play notes togheter<br/>
+<input value="alternate" name="play" type="radio" />Play notes alternatively<br/>
+<input value="chord" name="play" type="radio" />Play notes togheter<br/>
 
 <hr />
 <span id="freq">440</span>
@@ -331,16 +351,16 @@
     A=<input id="freq_log" type="number" min="1" max="22000" value="440" />(440)<br />
     <!--iv data-type="log" data-offset="D" class="noteDiv whiteNote calcNote">12/12 /2 (C4 / 2)</div-->
     <div data-type="log" data-offset="0" class="noteDiv whiteNote">&nbsp;0/12 C3 do</div>
-    <div data-type="log" data-offset="1" class="noteDiv whiteNote">&nbsp;1/12 C#</div>
+    <div data-type="log" data-offset="1" class="noteDiv whiteNote">&nbsp;1/12 C&#9839;</div>
     <div data-type="log" data-offset="2" class="noteDiv whiteNote">&nbsp;2/12 D ré</div>
-    <div data-type="log" data-offset="3" class="noteDiv whiteNote">&nbsp;3/12 D#</div>
+    <div data-type="log" data-offset="3" class="noteDiv whiteNote">&nbsp;3/12 D&#9839;</div>
     <div data-type="log" data-offset="4" class="noteDiv whiteNote">&nbsp;4/12 E mi</div>
     <div data-type="log" data-offset="5" class="noteDiv whiteNote">&nbsp;5/12 F fa</div>
-    <div data-type="log" data-offset="6" class="noteDiv whiteNote">&nbsp;6/12 F#</div>
+    <div data-type="log" data-offset="6" class="noteDiv whiteNote">&nbsp;6/12 F&#9839;</div>
     <div data-type="log" data-offset="7" class="noteDiv whiteNote">&nbsp;7/12 G sol</div>
-    <div data-type="log" data-offset="8" class="noteDiv whiteNote">&nbsp;8/12 G#</div>
+    <div data-type="log" data-offset="8" class="noteDiv whiteNote">&nbsp;8/12 G&#9839;</div>
     <div data-type="log" data-offset="9" class="noteDiv whiteNote refNote">&nbsp;9/12 A la</div>
-    <div data-type="log" data-offset="10" class="noteDiv whiteNote">10/12 A#</div>
+    <div data-type="log" data-offset="10" class="noteDiv whiteNote">10/12 A&#9839;</div>
     <div data-type="log" data-offset="11" class="noteDiv whiteNote">11/12 B si</div>
     <div data-type="log" data-offset="12" class="noteDiv whiteNote">12/12 C4 do</div>
     <!--div data-type="log" data-offset="X" class="noteDiv whiteNote calcNote">&nbsp;0/12 X2 (C4)</div-->
@@ -352,16 +372,16 @@
     D=<input id="freq_pyth" type="number" min="1" max="22000" value="293" />(288)<br />
     <!--div data-type="pyth" data-offset="D" class="noteDiv whiteNote calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
     <div data-type="pyth" data-offset="0" class="noteDiv whiteNote">&nbsp;0/12 C3 do</div>
-    <div data-type="pyth" data-offset="1" class="noteDiv whiteNote">&nbsp;1/12 C#</div>
+    <div data-type="pyth" data-offset="1" class="noteDiv whiteNote">&nbsp;1/12 C&#9839;</div>
     <div data-type="pyth" data-offset="2" class="noteDiv whiteNote refNote">&nbsp;2/12 D ré</div>
-    <div data-type="pyth" data-offset="3" class="noteDiv whiteNote">&nbsp;3/12 E♭</div>
+    <div data-type="pyth" data-offset="3" class="noteDiv whiteNote">&nbsp;3/12 E&#9837;</div>
     <div data-type="pyth" data-offset="4" class="noteDiv whiteNote">&nbsp;4/12 E mi</div>
     <div data-type="pyth" data-offset="5" class="noteDiv whiteNote">&nbsp;5/12 F fa</div>
-    <div data-type="pyth" data-offset="6" class="noteDiv whiteNote">&nbsp;6/12 F#</div>
+    <div data-type="pyth" data-offset="6" class="noteDiv whiteNote">&nbsp;6/12 F&#9839;</div>
     <div data-type="pyth" data-offset="7" class="noteDiv whiteNote">&nbsp;7/12 G sol</div>
-    <div data-type="pyth" data-offset="8" class="noteDiv whiteNote">&nbsp;8/12 G#</div>
+    <div data-type="pyth" data-offset="8" class="noteDiv whiteNote">&nbsp;8/12 G&#9839;</div>
     <div data-type="pyth" data-offset="9" class="noteDiv whiteNote">&nbsp;9/12 A la</div>
-    <div data-type="pyth" data-offset="10" class="noteDiv whiteNote">10/12 B♭</div>
+    <div data-type="pyth" data-offset="10" class="noteDiv whiteNote">10/12 B&#9837;</div>
     <div data-type="pyth" data-offset="11" class="noteDiv whiteNote">11/12 B si</div>
     <div data-type="pyth" data-offset="12" class="noteDiv whiteNote calcNote">12/12 C4 do</div>
     <!--div data-type="pyth" data-offset="X" class="noteDiv whiteNote calcNote">&nbsp;0/12 X 2</div-->
@@ -373,16 +393,16 @@
     D=<input id="freq_pyth2" type="number" min="1" max="22000" value="288" /><br />
     <!--div data-type="pyth2" data-offset="D" class="noteDiv whiteNote calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
     <div data-type="pyth2" data-offset="0" class="noteDiv whiteNote">&nbsp;0/12 C3 do</div>
-    <div data-type="pyth2" data-offset="1" class="halfDiv whiteNote">&nbsp;1/12 C#</div><div data-type="pyth2" data-offset="2" class="halfDiv whiteNote">&nbsp;1/12 D♭</div>
+    <div data-type="pyth2" data-offset="1" class="halfDiv whiteNote">&nbsp;1/12 C&#9839;</div><div data-type="pyth2" data-offset="2" class="halfDiv whiteNote">&nbsp;1/12 D&#9837;</div>
     <div data-type="pyth2" data-offset="3" class="noteDiv whiteNote refNote">&nbsp;2/12 D ré</div>
-    <div data-type="pyth2" data-offset="4" class="halfDiv whiteNote">&nbsp;3/12 D#</div><div data-type="pyth2" data-offset="5" class="halfDiv whiteNote">&nbsp;3/12 E♭</div>
+    <div data-type="pyth2" data-offset="4" class="halfDiv whiteNote">&nbsp;3/12 D&#9839;</div><div data-type="pyth2" data-offset="5" class="halfDiv whiteNote">&nbsp;3/12 E&#9837;</div>
     <div data-type="pyth2" data-offset="6" class="noteDiv whiteNote">&nbsp;4/12 E mi</div>
     <div data-type="pyth2" data-offset="7" class="noteDiv whiteNote">&nbsp;5/12 F fa</div>
-    <div data-type="pyth2" data-offset="8" class="halfDiv whiteNote">&nbsp;6/12 F#</div><div data-type="pyth2" data-offset="9" class="halfDiv whiteNote">&nbsp;6/12 G♭</div>
+    <div data-type="pyth2" data-offset="8" class="halfDiv whiteNote">&nbsp;6/12 F&#9839;</div><div data-type="pyth2" data-offset="9" class="halfDiv whiteNote">&nbsp;6/12 G&#9837;</div>
     <div data-type="pyth2" data-offset="10" class="noteDiv whiteNote">&nbsp;7/12 G sol</div>
-    <div data-type="pyth2" data-offset="11" class="halfDiv whiteNote">&nbsp;8/12 G#</div><div data-type="pyth2" data-offset="12" class="halfDiv whiteNote">&nbsp;8/12 A♭</div>
+    <div data-type="pyth2" data-offset="11" class="halfDiv whiteNote">&nbsp;8/12 G&#9839;</div><div data-type="pyth2" data-offset="12" class="halfDiv whiteNote">&nbsp;8/12 A&#9837;</div>
     <div data-type="pyth2" data-offset="13" class="noteDiv whiteNote">&nbsp;9/12 A la</div>
-    <div data-type="pyth2" data-offset="14" class="halfDiv whiteNote">10/12 A#</div><div data-type="pyth2" data-offset="15" class="halfDiv whiteNote">10/12 B♭</div>
+    <div data-type="pyth2" data-offset="14" class="halfDiv whiteNote">10/12 A&#9839;</div><div data-type="pyth2" data-offset="15" class="halfDiv whiteNote">10/12 B&#9837;</div>
     <div data-type="pyth2" data-offset="16" class="noteDiv whiteNote">11/12 B si</div>
     <div data-type="pyth2" data-offset="17" class="noteDiv whiteNote calcNote">12/12 C4 do</div>
     <!--div data-type="pyth2" data-offset="X" class="noteDiv whiteNote calcNote">&nbsp;0/12 X 2</div-->
@@ -391,7 +411,7 @@
 
 <div id="pythScale" class="scale">
     Turkish 22 Tones<br>
-    ########<br>
+    &#9839;&#9839;&#9839;&#9839;&#9839;&#9839;&#9839;&#9839;<br>
     D=<input id="freq_tur" type="number" min="1" max="22000" value="293" />(288)<br />
 </div>
 
