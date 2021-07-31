@@ -151,6 +151,7 @@
             var freq_pyth = getElem("freq_pyth");
             var freq_pyth2 = getElem("freq_pyth2");
             var freq_Ptolemy = getElem("freq_Ptolemy");
+            var freq_turk = getElem("freq_turk");
             var freq_pent = getElem("freq_pent");
             var select_pent = getElem("pentSelect");
             onEvent(select_pent, "input", changePent);
@@ -266,6 +267,32 @@
                                     2/1 //c  
             ];
 
+            const turk_unison = 0;
+            const turk_ratio = [1/1, //c
+                                256/243,
+                                16/15,
+                                10/9,
+                                9/8,
+                                32/27,
+                                6/5,
+                                5/4,
+                                81/64,
+                                4/3,
+                                27/20,
+                                45/32,
+                                729/512,
+                                3/2, //g
+                                128/81,
+                                8/5,
+                                5/3,
+                                27/16,
+                                16/9,
+                                9/5,
+                                15/8,
+                                243/128,
+                                2/1
+            ];
+
             var pent_index = 0;
             const pent_unison = [4, 3, 2, 1, 0];
             const pent_ratio =  [   [ 24/24, 27/24, 30/24, 36/24, 40/24, 48/24 ], 
@@ -359,6 +386,13 @@
                     baseFreq = baseFreq / pent_ratio[pent_index][pent_unison[pent_index]];
                     var offset = Number(offset);                        
                     newFreq = baseFreq * pent_ratio[pent_index][offset];
+                } else if (type == "turk") {
+                    var baseFreq = Number(freq_turk.value);                    
+                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261;
+
+                    baseFreq = baseFreq / turk_ratio[turk_unison];
+                    var offset = Number(offset);                        
+                    newFreq = baseFreq * turk_ratio[offset];
                 }
 
 
@@ -601,11 +635,33 @@
 
 </div>
 
-<div id="pythScale" class="scale">
+<div id="turkScale" class="scale">
     Turkish 22 Shruti<br>
     <br>
-    C=<input id="freq_tur" type="number" min="1" max="22000" value="261.6256" />(Chandovatī)<br />
-    <div data-type="Ptolemy" data-offset="6" class="noteDiv">&nbsp;6/19 E mi</div>
+    C=<input id="freq_turk" type="number" min="1" max="22000" value="261.6256" />(Chandovatī)<br />
+    <div data-type="turk" data-offset="0" class="noteDiv">&nbsp;0/22 Chandovatī C</div>
+    <div data-type="turk" data-offset="1" class="noteDiv">&nbsp;1/22 Dayāvatī D&#9837;</div>
+    <div data-type="turk" data-offset="2" class="noteDiv">&nbsp;2/22 Ranjanī D&#9837;</div>
+    <div data-type="turk" data-offset="3" class="noteDiv">&nbsp;3/22 Ratikā D</div>
+    <div data-type="turk" data-offset="4" class="noteDiv">&nbsp;4/22 Raudrī D</div>
+    <div data-type="turk" data-offset="5" class="noteDiv">&nbsp;5/22 Krodhā E&#9837;</div>
+    <div data-type="turk" data-offset="6" class="noteDiv">&nbsp;6/22 Vajrikā E&#9837;</div>
+    <div data-type="turk" data-offset="7" class="noteDiv">&nbsp;7/22 Prasāriṇī E</div>
+    <div data-type="turk" data-offset="8" class="noteDiv">&nbsp;8/22 Prīti E</div>
+    <div data-type="turk" data-offset="9" class="noteDiv">&nbsp;9/22 Mārjanī F</div>
+    <div data-type="turk" data-offset="10" class="noteDiv">10/22 Kṣhiti F</div>
+    <div data-type="turk" data-offset="11" class="noteDiv">11/22 Raktā F&#9839;</div>
+    <div data-type="turk" data-offset="12" class="noteDiv">12/22 Sandīpanī F&#9839;</div>
+    <div data-type="turk" data-offset="13" class="noteDiv">13/22 Ālāpinī G</div>
+    <div data-type="turk" data-offset="14" class="noteDiv">14/22 Madantī A&#9837;</div>
+    <div data-type="turk" data-offset="15" class="noteDiv">15/22 Rohiṇī A&#9837;</div>
+    <div data-type="turk" data-offset="16" class="noteDiv">16/22 Ramyā A</div>
+    <div data-type="turk" data-offset="17" class="noteDiv">17/22 Ugrā A</div>
+    <div data-type="turk" data-offset="18" class="noteDiv">18/22 Kṣobhinī B&#9837;</div>
+    <div data-type="turk" data-offset="19" class="noteDiv">19/22 Tīvrā B&#9837;</div>
+    <div data-type="turk" data-offset="20" class="noteDiv">20/22 Kumudvatī B</div>
+    <div data-type="turk" data-offset="21" class="noteDiv">21/22 Mandā B</div>
+    <div data-type="turk" data-offset="22" class="noteDiv">22/22 Chandovatī C</div>
 </div>
 
 <div id="PtolemyScale" class="scale">
