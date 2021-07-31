@@ -62,6 +62,7 @@
         #freq {
             height : 30px;
             display: block;
+            font-family: 'Courier New', Courier, monospace;
         }
         .noteDiv {
             background-color: white;
@@ -98,10 +99,10 @@
         }
 
         .playingNote {
-            background-color: #B0FFB0;
+            background-color: #B0FFB0 !important;
         }
         .playingNote:hover {
-            background-color: #80FF80;
+            background-color: #80FF80 !important;
         }
         .selectedNote {
             background-color: #c0c0ff;
@@ -314,7 +315,7 @@
                         currentScale = type;
                         freq.innerText = this.innerText + " " + newFreq.toFixed(4);
                         playbackList = [new playback(offset, freq.innerText, newFreq, type)];
-                        addNoteStyle(type, offset);
+                        addNoteStylePlaying(type, offset);
 
                         // update sound generator
                         oscillatorNodes[0].frequency.value = newFreq;
@@ -327,48 +328,59 @@
                         if (ni > -1) {
                             // if in list remove from list
                             var oldPB = playbackList.splice(ni, 1)[0];
-                            removeNoteStyle(oldPB.type, oldPB.offset);
+                            removeNoteStyleAll(oldPB.type, oldPB.offset);
                             if (playbackList.length == 0) gainNodes[0].gain.value = 0;
                         } else {
                             while (playbackList.length > 2) {
                                 // else remove last if more than 2
                                 var oldPB = playbackList.pop();
-                                removeNoteStyle(oldPB.type, oldPB.offset);
+                                removeNoteStyleAll(oldPB.type, oldPB.offset);
                             }
                             //      add to list
                             currentScale = type;
                             var newText = this.innerText + " " + newFreq.toFixed(4);
                             playbackList.push(new playback(offset, newText, newFreq, type));
-                            addNoteStyle(type, offset);
+                            addNoteStyleSelected(type, offset);
                         }
                     } else if (playType == "chord") {
+                        if (type != currentScale) {
+                            removeAllNotesStyle();
+                            playbackList = [];
+                        }
+                        var ni = noteInList(type, offset);
+                        if (ni > -1) {
+                            // if in list remove from list
+                            var oldPB = playbackList.splice(ni, 1)[0];
+                            removeNoteStyleAll(oldPB.type, oldPB.offset);
+                        } else {
+                            while (playbackList.length > 2) {
+                                // else remove last if more than 2
+                                var oldPB = playbackList.pop();
+                                removeNoteStyleAll(oldPB.type, oldPB.offset);
+                            }
+                            //      add to list
+                            currentScale = type;
+                            var newText = this.innerText + " " + newFreq.toFixed(4);
+                            playbackList.push(new playback(offset, newText, newFreq, type));
+                            addNoteStyleSelected(type, offset);
+                        }
+                        //      setup sounds
+                        freq.innerText = "";
+                        for (var i = 0; i < 3; ++i) {        
+                            if (i < playbackList.length) {
+                                freq.innerText += playbackList[i].text + ", ";
+                                oscillatorNodes[i].frequency.value = playbackList[i].freq;
+                                gainNodes[i].gain.value = volSlider.value;
+                                addNoteStylePlaying(playbackList[i].type, playbackList[i].offset);
 
-                        // if different type remove all
-                        // if in list remove from list
-                        // else remove last if more than 2
-                        //      add to list
-                    }
+                            } else {
+                                gainNodes[i].gain.value = 0;                                
+                            }// out of list
+                        } // 3 possible notes
+                    } // chord
 
                 } // new Freq
 
-
-
-
-/*
-
-                    for (var i = 0; i < 3; ++i) {
-                        if (i+1 <= playbackList.length) {
-                            oscillatorNodes[i].frequency.value = playbackList[i].freq;
-                            gainNodes[i].gain.value = volSlider.value;
-                            freq.innerText += playbackList[i].text + ", ";
-
-                            var elem = document.querySelector('div[data-type="'+ playbackList[i].type + '"][data-offset="' + playbackList[i].offset+'"]');
-                            if (elem) elem.classList.add("greenNote");
-                        } else {
-                            gainNodes[i].gain.value = 0;
-                        }
-                    }
-*/
              
                 e.preventDefault();
             }
@@ -378,7 +390,10 @@
             function stopNote() {
                 if (!audioCtx) return;
                 var playType = document.querySelector('input[name="play"]:checked').value;
-                if (playType == "single") for (var i = 0; i < 3; ++i) gainNodes[i].gain.value = 0;
+                if (playType == "single") {
+                    for (var i = 0; i < 3; ++i) gainNodes[i].gain.value = 0;
+                    if (playbackList.length > 0) removeNoteStylePlaying(playbackList[0].type, playbackList[0].offset);
+                } 
             }
 
             function alternateNote() {
@@ -390,15 +405,17 @@
                     for (var i = 0; i < playbackList.length; ++i) {
                         if (i == currentNote) {
 
-                            freq.innerText += "[X]" + playbackList[i].text + " " + playbackList[i].freq.toFixed(4) + ", ";
+                            freq.innerText += "[X]" + playbackList[i].text + ", ";
 
                             oscillatorNodes[0].frequency.value = playbackList[i].freq;
                             gainNodes[0].gain.value = volSlider.value;
                             gainNodes[1].gain.value = 0;
                             gainNodes[2].gain.value = 0;
+                            addNoteStylePlaying(playbackList[i].type, playbackList[i].offset);
 
                         } else {
-                            freq.innerText += "[ ]" + playbackList[i].text + " " + playbackList[i].freq.toFixed(4) + ", ";
+                            freq.innerText += "[ ]" + playbackList[i].text + ", ";
+                            removeNoteStylePlaying(playbackList[i].type, playbackList[i].offset);
                         }
                     }
 
@@ -410,17 +427,33 @@
             }
 
             function removeAllNotesStyle() {
-                for (var i = 0; i < playbackList.length; ++i) removeNoteStyle(playbackList[i].type, playbackList[i].offset);
+                for (var i = 0; i < playbackList.length; ++i) removeNoteStyleAll(playbackList[i].type, playbackList[i].offset);
+            }
+            function removeNoteStyleAll(type, offset) {
+                var elem = getElementFromTypeAndOffset(type, offset);
+                if (elem) {
+                    elem.classList.remove("selectedNote");
+                    elem.classList.remove("playingNote");
+                }
             }
 
-            function removeNoteStyle(type, offset) {
+
+            function removeNoteStyleSelected(type, offset) {
                 var elem = getElementFromTypeAndOffset(type, offset);
-                if (elem) elem.classList.remove("greenNote");
+                if (elem) elem.classList.remove("selectedNote");
+            }
+            function removeNoteStylePlaying(type, offset) {
+                var elem = getElementFromTypeAndOffset(type, offset);
+                if (elem) elem.classList.remove("playingNote");
             }
 
-            function addNoteStyle(type, offset) {
+            function addNoteStyleSelected(type, offset) {
                 var elem = getElementFromTypeAndOffset(type, offset);
-                if (elem) elem.classList.add("greenNote");
+                if (elem) elem.classList.add("selectedNote");
+            }
+            function addNoteStylePlaying(type, offset) {
+                var elem = getElementFromTypeAndOffset(type, offset);
+                if (elem) elem.classList.add("playingNote");
             }
 
             function noteInList(type, offset) {
@@ -511,7 +544,7 @@
 
 <div id="pythScale" class="scale">
     Turkish 22 Tones<br>
-    &#9839;&#9839;&#9839;&#9839;&#9839;&#9839;&#9839;&#9839;<br>
+    (TODO!)<br>
     D=<input id="freq_tur" type="number" min="1" max="22000" value="293" />(288)<br />
 </div>
 
