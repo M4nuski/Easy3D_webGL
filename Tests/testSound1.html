@@ -333,7 +333,7 @@
                         } else {
                             while (playbackList.length > 2) {
                                 // else remove last if more than 2
-                                var oldPB = playbackList.pop();
+                                var oldPB = playbackList.splice(0, 1)[0];
                                 removeNoteStyleAll(oldPB.type, oldPB.offset);
                             }
                             //      add to list
@@ -355,7 +355,7 @@
                         } else {
                             while (playbackList.length > 2) {
                                 // else remove last if more than 2
-                                var oldPB = playbackList.pop();
+                                var oldPB = playbackList.splice(0, 1)[0];
                                 removeNoteStyleAll(oldPB.type, oldPB.offset);
                             }
                             //      add to list
