@@ -58,6 +58,12 @@
         .E3D_fakeButton:hover {
             background-color: #a0a0a0;
         }
+
+        #footer {
+            position: fixed;
+            bottom:0px;
+            right:0px;
+        }
    
         #freq {
             height : 30px;
@@ -82,6 +88,7 @@
             margin: 5px;
             display: inline-block;
             border: 1px solid black;
+            vertical-align: top;
         }
 
         .halfDiv {
@@ -143,6 +150,11 @@
             var freq_log = getElem("freq_log");
             var freq_pyth = getElem("freq_pyth");
             var freq_pyth2 = getElem("freq_pyth2");
+            var freq_Ptolemy = getElem("freq_Ptolemy");
+            var freq_pent = getElem("freq_pent");
+            var select_pent = getElem("pentSelect");
+            onEvent(select_pent, "input", changePent);
+            var pentDiv = getElem("pentDiv");
 
             var notes = document.querySelectorAll(".noteDiv, .halfDiv");
             notes.forEach((e) => onEvent(e, "mousedown", playNote));
@@ -214,8 +226,10 @@
             const log_startOffset = 40;
             const log_unison = 49;
 
+
             const pyth_unison = 2;
             const pyth_ratio = [ 1024/512, 256/243, 128/81, 32/27, 16/9, 4/3, 1/1, 3/2, 9/8, 27/16, 81/64, 243/128, 729/512].sort();
+
 
             const pyth2_ratio = [    1/1, //c
                                     256/243, 2187/2048,
@@ -232,6 +246,53 @@
                                     2/1 //c
                                 ];
             const pyth2_unison = 3;
+
+
+            const Ptolemy_unison = 0;
+            const Ptolemy_ratio = [ 1/1, //c
+                                    25/24, 16/15,
+                                    9/8, //d
+                                    75/64, 6/5, 
+                                    5/4, //e
+                                    32/25, //e#
+                                    4/3, //f
+                                    25/18, 36/25,
+                                    3/2, //g
+                                    25/16, 8/5,
+                                    5/3, //a 
+                                    125/72, 9/5,
+                                    15/8, //b
+                                    48/25,
+                                    2/1 //c  
+            ];
+
+            var pent_index = 0;
+            const pent_unison = [4, 3, 2, 1, 0];
+            const pent_ratio =  [   [ 24/24, 27/24, 30/24, 36/24, 40/24, 48/24 ], 
+                                    [ 24/24, 27/24, 32/24, 36/24, 42/24, 48/24 ], 
+                                    [ 15/15, 18/15, 20/15, 24/15, 27/15, 30/15 ], 
+                                    [ 24/24, 27/24, 32/24, 36/24, 40/24, 48/24 ], 
+                                    [ 30/30, 36/30, 40/30, 45/30, 54/30, 60/30 ] ];
+            const pent_notes =   [ "CDEGAC", "DEGACD", "EGACDE", "GACDEG", "ACDEGA" ];
+            function changePent() {
+                pent_index = select_pent.value;
+                pentDiv.innerHTML = "";
+
+                for (var i = 0; i < 6; ++i) {
+                    var e = document.createElement("div");
+                    e.className = "noteDiv";
+                    e.innerText = i + "/5 " + pent_notes[pent_index][i];
+                    if (i == pent_unison[pent_index]) e.classList.add("refNote");
+                    e.setAttribute("data-type", "pent");
+                    e.setAttribute("data-offset", i);
+                    onEvent(e, "mousedown", playNote);
+                    onEvent(e, "mouseup", stopNote);
+                    onEvent(e, "mouseleave", stopNote);
+
+                    pentDiv.appendChild(e);
+                }
+            }
+            changePent();
 
             function playNote(e) {
                 if (!audioCtx) return;
@@ -284,28 +345,26 @@
                         var offset = Number(offset);                        
                         newFreq = baseFreq * pyth2_ratio[offset];
                     }
+                } else if (type == "Ptolemy") {
+                    var baseFreq = Number(freq_Ptolemy.value);                    
+                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261;
+
+                    baseFreq = baseFreq / Ptolemy_ratio[Ptolemy_unison];
+                    var offset = Number(offset);                        
+                    newFreq = baseFreq * Ptolemy_ratio[offset];
+                } else if (type == "pent") {
+                    var baseFreq = Number(freq_pent.value);                    
+                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 440;
+
+                    baseFreq = baseFreq / pent_ratio[pent_index][pent_unison[pent_index]];
+                    var offset = Number(offset);                        
+                    newFreq = baseFreq * pent_ratio[pent_index][offset];
                 }
 
 
                 if (newFreq > 0) {
 
                     var playType = document.querySelector('input[name="play"]:checked').value;
-
-                 /*   if (type != currentScale) { // new scale, erease all
-                        for (var i = 0; i < playbackList.length; ++i) {
-                            var elem = document.querySelector('div[data-type="'+ playbackList[i].type +'"][data-offset="' + playbackList[i].offset+'"]');
-                            elem.classList.remove("greenNote");
-                        }
-                        playbackList = [];
-
-                    } else while (playbackList.length > 2) {// clamp to 3 max
-                        var oldPB = playbackList.pop(); 
-                        var elem = document.querySelector('div[data-type="'+ oldPB.type + '"][data-offset="' + oldPB.offset+'"]');
-                        elem.classList.remove("greenNote");
-                    }
-                    */
-
-                    
 
                     if (playType == "single") {      
             
@@ -543,11 +602,49 @@
 </div>
 
 <div id="pythScale" class="scale">
-    Turkish 22 Tones<br>
-    (TODO!)<br>
-    D=<input id="freq_tur" type="number" min="1" max="22000" value="293" />(288)<br />
+    Turkish 22 Shruti<br>
+    <br>
+    C=<input id="freq_tur" type="number" min="1" max="22000" value="261.6256" />(Chandovatī)<br />
+    <div data-type="Ptolemy" data-offset="6" class="noteDiv">&nbsp;6/19 E mi</div>
 </div>
 
+<div id="PtolemyScale" class="scale">
+    Ptolemy 19-EDO<br>
+    5-limit just intonation<br>
+    C=<input id="freq_Ptolemy" type="number" min="1" max="22000" value="261.6256" /><br />
+    <div data-type="Ptolemy" data-offset="0" class="noteDiv refNote">&nbsp;0/19 C3 do</div>
+    <div data-type="Ptolemy" data-offset="1" class="halfDiv">&nbsp;1/19 C&#9839;</div><div data-type="Ptolemy" data-offset="2" class="halfDiv">&nbsp;2/19 D&#9837;</div>
+    <div data-type="Ptolemy" data-offset="3" class="noteDiv">&nbsp;3/19 D ré</div>
+    <div data-type="Ptolemy" data-offset="4" class="halfDiv">&nbsp;4/19 D&#9839;</div><div data-type="Ptolemy" data-offset="5" class="halfDiv">&nbsp;5/19 E&#9837;</div>
+    <div data-type="Ptolemy" data-offset="6" class="noteDiv">&nbsp;6/19 E mi</div>
+    <div data-type="Ptolemy" data-offset="7" class="noteDiv">&nbsp;7/19 E&#9839;F&#9837;</div>
+    <div data-type="Ptolemy" data-offset="8" class="noteDiv">&nbsp;8/19 F fa</div>
+    <div data-type="Ptolemy" data-offset="9" class="halfDiv">&nbsp;9/19 F&#9839;</div><div data-type="Ptolemy" data-offset="10" class="halfDiv">10/19 G&#9837;</div>
+    <div data-type="Ptolemy" data-offset="11" class="noteDiv">11/19 G sol</div>
+    <div data-type="Ptolemy" data-offset="12" class="halfDiv">12/19 G&#9839;</div><div data-type="Ptolemy" data-offset="13" class="halfDiv">&nbsp;13/19 A&#9837;</div>
+    <div data-type="Ptolemy" data-offset="14" class="noteDiv">14/19 A la</div>
+    <div data-type="Ptolemy" data-offset="15" class="halfDiv">15/19 A&#9839;</div><div data-type="Ptolemy" data-offset="16" class="halfDiv">16/19 B&#9837;</div>
+    <div data-type="Ptolemy" data-offset="17" class="noteDiv">17/19 B si</div>
+    <div data-type="Ptolemy" data-offset="18" class="noteDiv">18/19 B&#9839;C&#9837;</div>
+    <div data-type="Ptolemy" data-offset="19" class="noteDiv">19/19 C4 do</div>
+</div>
+
+<div id="pentScale" class="scale">
+    Pentatonic<br>
+    <select id="pentSelect">
+        <option value="0">Major</option>
+        <option value="1">Egyptian</option>
+        <option value="2">Blues minor</option>
+        <option value="3">Blues major</option>
+        <option value="4">Minor</option>
+    </select> <br>
+    A=<input id="freq_pent" type="number" min="1" max="22000" value="440" /><br />
+    <div id="pentDiv">
+
+    </div>
+</div>
+
+<div id="footer">Emmanuel Charette Jul-2021</div>
 </body>
 
 </html>
