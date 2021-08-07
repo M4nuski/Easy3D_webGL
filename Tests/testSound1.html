@@ -146,6 +146,7 @@
             }
 
             onClick("startButton", enable);
+            onClick("muteButton", mute);
             var freq = getElem("freq");
             var freq_log = getElem("freq_log");
             var freq_pyth = getElem("freq_pyth");
@@ -199,10 +200,15 @@
                     volSlider.value = v;
                 }
             }
-            volSlider.addEventListener("input", function (event) { 
-                for (var i = 0; i < playbackList.length; ++i) gainNodes[i].gain.value = this.value;
-                if (window.localStorage) window.localStorage.setItem("m1.vol", this.value);
-            });
+            volSlider.addEventListener("input", newVolume);
+            function newVolume(event) { 
+                for (var i = 0; i < playbackList.length; ++i) gainNodes[i].gain.value = getVol(playbackList[i].freq);
+                if (window.localStorage) window.localStorage.setItem("m1.vol", volSlider.value);
+            }
+            var volEq = document.querySelectorAll('input[name="eq"]');
+            volEq.forEach( (e) => e.addEventListener("input", newVolume));
+
+
 
 
             function enable() {
@@ -221,6 +227,17 @@
                 };
               //  audioCtx.suspend();
 
+            }
+
+            var isMuted = false;
+            function mute() {
+                if (audioCtx) gainNodes.forEach( (n) => n.gain.value = 0 );
+                isMuted = !isMuted;
+            }
+
+            function getVol(freq = 440) {
+                var volType = document.querySelector('input[name="eq"]:checked').value;
+                return (volType == "energy") ? volSlider.value * 440 / freq : volSlider.value;
             }
 
             const log_baseFactor = Math.pow(2.0, 1.0/12.0);
@@ -412,7 +429,7 @@
 
                         // update sound generator
                         oscillatorNodes[0].frequency.value = newFreq;
-                        gainNodes[0].gain.value = volSlider.value;
+                        gainNodes[0].gain.value = getVol(newFreq);
                         gainNodes[1].gain.value = 0;
                         gainNodes[2].gain.value = 0;
 
@@ -463,7 +480,7 @@
                             if (i < playbackList.length) {
                                 freq.innerText += playbackList[i].text + ", ";
                                 oscillatorNodes[i].frequency.value = playbackList[i].freq;
-                                gainNodes[i].gain.value = volSlider.value;
+                                gainNodes[i].gain.value = getVol(playbackList[i].freq);
                                 addNoteStylePlaying(playbackList[i].type, playbackList[i].offset);
 
                             } else {
@@ -474,7 +491,7 @@
 
                 } // new Freq
 
-             
+                isMuted = false;
                 e.preventDefault();
             }
 
@@ -484,12 +501,13 @@
                 if (!audioCtx) return;
                 var playType = document.querySelector('input[name="play"]:checked').value;
                 if (playType == "single") {
-                    for (var i = 0; i < 3; ++i) gainNodes[i].gain.value = 0;
+                    gainNodes.forEach( (n) => n.gain.value = 0 );
                     if (playbackList.length > 0) removeNoteStylePlaying(playbackList[0].type, playbackList[0].offset);
                 } 
             }
 
             function alternateNote() {
+                if (isMuted) return;
                 var playType = document.querySelector('input[name="play"]:checked').value;
                 if (playType == "alternate") {
                     currentNote++;
@@ -501,7 +519,7 @@
                             freq.innerText += "[X]" + playbackList[i].text + ", ";
 
                             oscillatorNodes[0].frequency.value = playbackList[i].freq;
-                            gainNodes[0].gain.value = volSlider.value;
+                            gainNodes[0].gain.value = getVol(playbackList[i].freq);
                             gainNodes[1].gain.value = 0;
                             gainNodes[2].gain.value = 0;
                             addNoteStylePlaying(playbackList[i].type, playbackList[i].offset);
@@ -561,15 +579,17 @@
 
 <body>
 <div id="startButton" class="E3D_fakeButton">Enable</div><br />
-<input id="volSlider" type="range" min="0.0" max="1.0" value="0.5" step="0.01" />Volume<br />
-<input value="amp" name="eq" type="radio" checked="true"/>Equal Amplitude<br/>
-<input value="energy" name="eq" type="radio" />Equal Energy<br/>
+<input id="volSlider" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Volume<br />
+<input value="amp" name="eq" type="radio"/>Equal Amplitude<br/>
+<input value="energy" name="eq" type="radio" checked="true"/>Equal Energy<hr/>
+
 <input value="single" name="play" type="radio" checked="true"/>Play 1 note<br/>
 <input value="alternate" name="play" type="radio" />Play notes alternatively every <input id="alt_num" type="number" min="10" max="10000" value="250" />ms<br/>
 <input value="chord" name="play" type="radio" />Play notes togheter<br/>
 
 <hr />
 <span id="freq">440</span>
+<div id="muteButton" class="E3D_fakeButton">Mute</div>
 <hr />
 <div id="logScale" class="scale">
     12-TET (western, tempered)<br>
@@ -639,7 +659,7 @@
     Turkish 22 Shruti<br>
     <br>
     C=<input id="freq_turk" type="number" min="1" max="22000" value="261.6256" />(Chandovatī)<br />
-    <div data-type="turk" data-offset="0" class="noteDiv">&nbsp;0/22 Chandovatī C</div>
+    <div data-type="turk" data-offset="0" class="noteDiv refNote">&nbsp;0/22 Chandovatī C</div>
     <div data-type="turk" data-offset="1" class="noteDiv">&nbsp;1/22 Dayāvatī D&#9837;</div>
     <div data-type="turk" data-offset="2" class="noteDiv">&nbsp;2/22 Ranjanī D&#9837;</div>
     <div data-type="turk" data-offset="3" class="noteDiv">&nbsp;3/22 Ratikā D</div>
