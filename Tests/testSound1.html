@@ -157,6 +157,10 @@
             var select_pent = getElem("pentSelect");
             onEvent(select_pent, "input", changePent);
             var pentDiv = getElem("pentDiv");
+            var customInput = getElem("customInput");
+            onEvent(customInput, "input", changeCustom);
+            var freq_custom = getElem("freq_custom");
+            var customDiv = getElem("customDiv");
 
             var notes = document.querySelectorAll(".noteDiv, .halfDiv");
             notes.forEach((e) => onEvent(e, "mousedown", playNote));
@@ -338,6 +342,27 @@
             }
             changePent();
 
+            var custom_n = 12;
+            function changeCustom() {
+                custom_n = customInput.value;
+                customDiv.innerHTML = "";
+
+                for (var i = 0; i <= custom_n; ++i) {
+                    var e = document.createElement("div");
+                    e.className = "noteDiv";
+                    e.innerText = i + "/"  + custom_n;
+                    if (i == 0) e.classList.add("refNote");
+                    e.setAttribute("data-type", "custom");
+                    e.setAttribute("data-offset", i);
+                    onEvent(e, "mousedown", playNote);
+                    onEvent(e, "mouseup", stopNote);
+                    onEvent(e, "mouseleave", stopNote);
+
+                    customDiv.appendChild(e);
+                }
+            }
+            changeCustom();
+
             function playNote(e) {
                 if (!audioCtx) return;
                 
@@ -391,7 +416,7 @@
                     }
                 } else if (type == "Ptolemy") {
                     var baseFreq = Number(freq_Ptolemy.value);                    
-                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261;
+                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261.6256;
 
                     baseFreq = baseFreq / Ptolemy_ratio[Ptolemy_unison];
                     var offset = Number(offset);                        
@@ -405,11 +430,18 @@
                     newFreq = baseFreq * pent_ratio[pent_index][offset];
                 } else if (type == "turk") {
                     var baseFreq = Number(freq_turk.value);                    
-                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261;
+                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261.6256;
 
                     baseFreq = baseFreq / turk_ratio[turk_unison];
                     var offset = Number(offset);                        
                     newFreq = baseFreq * turk_ratio[offset];
+                } else if (type == "custom") {
+                    var baseFreq = Number(freq_custom.value);                    
+                    if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261.6256;
+
+                    var baseFactor = Math.pow(2.0, 1.0 / custom_n);
+                    var offset = Number(offset);                        
+                    newFreq = baseFreq * Math.pow(baseFactor, offset);
                 }
 
 
@@ -716,6 +748,15 @@
     </select> <br>
     A=<input id="freq_pent" type="number" min="1" max="22000" value="440" /><br />
     <div id="pentDiv">
+
+    </div>
+</div>
+
+<div id="customScale" class="scale">
+    Doiron Tuning<br>
+    <input id="customInput" type="number" min="2" value="12" /> <br>
+    0/12=<input id="freq_custom" type="number" min="1" max="22000" value="261.6256" /><br />
+    <div id="customDiv">
 
     </div>
 </div>
