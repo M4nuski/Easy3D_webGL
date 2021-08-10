@@ -376,63 +376,42 @@
                     var baseFreq = Number(freq_log.value);                    
                     if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 440;
 
-                    if (offset == "X") {
-                        newFreq = baseFreq * Math.pow(log_baseFactor, (log_startOffset - log_unison)) * 2.0;
-
-                    } else if (offset == "D") {
-                        newFreq = baseFreq * Math.pow(log_baseFactor, (12 + log_startOffset - log_unison)) / 2.0;
-
-                    } else {
-                        var offset = Number(offset);
-                        newFreq = baseFreq * Math.pow(log_baseFactor, (offset + log_startOffset - log_unison));
-
-                    }
+                    var offset = Number(offset);                    
+                    newFreq = baseFreq * Math.pow(log_baseFactor, (offset + log_startOffset - log_unison));
                 } else if (type == "pyth") {
                     var baseFreq = Number(freq_pyth.value);                    
                     if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 288;
                     baseFreq = baseFreq / pyth_ratio[pyth_unison];
 
-                    if (offset == "X") {
-                        newFreq = baseFreq * 2.0;
+                    var offset = Number(offset);                        
+                    newFreq = baseFreq * pyth_ratio[offset];
 
-                    } else if (offset == "D") {
-                        newFreq = baseFreq * pyth_ratio[12] / 2.0;
-                    } else {
-                        var offset = Number(offset);                        
-                        newFreq = baseFreq * pyth_ratio[offset];
-                    }
                 } else if (type == "pyth2") {
                     var baseFreq = Number(freq_pyth2.value);                    
                     if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 288;
                     baseFreq = baseFreq / pyth2_ratio[pyth2_unison];
 
-                    if (offset == "X") {
-                        newFreq = baseFreq * 2.0;
-                    } else if (offset == "D") {
-                        newFreq = baseFreq * pyth2_ratio[17] / 2.0;
-                    } else {
-                        var offset = Number(offset);                        
-                        newFreq = baseFreq * pyth2_ratio[offset];
-                    }
+                    var offset = Number(offset);                        
+                    newFreq = baseFreq * pyth2_ratio[offset];
                 } else if (type == "Ptolemy") {
                     var baseFreq = Number(freq_Ptolemy.value);                    
                     if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261.6256;
-
                     baseFreq = baseFreq / Ptolemy_ratio[Ptolemy_unison];
+
                     var offset = Number(offset);                        
                     newFreq = baseFreq * Ptolemy_ratio[offset];
                 } else if (type == "pent") {
                     var baseFreq = Number(freq_pent.value);                    
                     if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 440;
-
                     baseFreq = baseFreq / pent_ratio[pent_index][pent_unison[pent_index]];
+
                     var offset = Number(offset);                        
                     newFreq = baseFreq * pent_ratio[pent_index][offset];
                 } else if (type == "turk") {
                     var baseFreq = Number(freq_turk.value);                    
                     if ((baseFreq == NaN) || (baseFreq <= 0)) baseFreq = 261.6256;
-
                     baseFreq = baseFreq / turk_ratio[turk_unison];
+                    
                     var offset = Number(offset);                        
                     newFreq = baseFreq * turk_ratio[offset];
                 } else if (type == "custom") {
@@ -627,7 +606,7 @@
     12-TET (western, tempered)<br>
     <sup>12</sup>√2<sup>n</sup><br>
     A=<input id="freq_log" type="number" min="1" max="22000" value="440" />(440)<br />
-    <!--iv data-type="log" data-offset="D" class="noteDiv calcNote">12/12 /2 (C4 / 2)</div-->
+
     <div data-type="log" data-offset="0" class="noteDiv">&nbsp;0/12 C3 do</div>
     <div data-type="log" data-offset="1" class="noteDiv">&nbsp;1/12 C&#9839;</div>
     <div data-type="log" data-offset="2" class="noteDiv">&nbsp;2/12 D ré</div>
@@ -641,14 +620,13 @@
     <div data-type="log" data-offset="10" class="noteDiv">10/12 A&#9839;</div>
     <div data-type="log" data-offset="11" class="noteDiv">11/12 B si</div>
     <div data-type="log" data-offset="12" class="noteDiv">12/12 C4 do</div>
-    <!--div data-type="log" data-offset="X" class="noteDiv calcNote">&nbsp;0/12 X2 (C4)</div-->
 </div>
 
 <div id="pythScale" class="scale">
     Pythagorian 12 Tones Perfect 5th<br>
     3<sup>n</sup>/2<sup>n</sup>, 2<sup>n</sup>/3<sup>n</sup><br>
     D=<input id="freq_pyth" type="number" min="1" max="22000" value="293" />(288)<br />
-    <!--div data-type="pyth" data-offset="D" class="noteDiv calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
+
     <div data-type="pyth" data-offset="0" class="noteDiv">&nbsp;0/12 C3 do</div>
     <div data-type="pyth" data-offset="1" class="noteDiv">&nbsp;1/12 C&#9839;</div>
     <div data-type="pyth" data-offset="2" class="noteDiv refNote">&nbsp;2/12 D ré</div>
@@ -662,14 +640,13 @@
     <div data-type="pyth" data-offset="10" class="noteDiv">10/12 B&#9837;</div>
     <div data-type="pyth" data-offset="11" class="noteDiv">11/12 B si</div>
     <div data-type="pyth" data-offset="12" class="noteDiv calcNote">12/12 C4 do</div>
-    <!--div data-type="pyth" data-offset="X" class="noteDiv calcNote">&nbsp;0/12 X 2</div-->
 
 </div>
 <div id="pyth2Scale" class="scale">
     Pythagorian Full<br>
     3<sup>n</sup>/2<sup>n</sup>, 2<sup>n</sup>/3<sup>n</sup><br>
     D=<input id="freq_pyth2" type="number" min="1" max="22000" value="288" /><br />
-    <!--div data-type="pyth2" data-offset="D" class="noteDiv calcNote">&nbsp;12/12 /2 (C4 / 2)</div-->
+
     <div data-type="pyth2" data-offset="0" class="noteDiv">&nbsp;0/12 C3 do</div>
     <div data-type="pyth2" data-offset="1" class="halfDiv">&nbsp;1/12 C&#9839;</div><div data-type="pyth2" data-offset="2" class="halfDiv">&nbsp;1/12 D&#9837;</div>
     <div data-type="pyth2" data-offset="3" class="noteDiv refNote">&nbsp;2/12 D ré</div>
@@ -683,14 +660,13 @@
     <div data-type="pyth2" data-offset="14" class="halfDiv">10/12 A&#9839;</div><div data-type="pyth2" data-offset="15" class="halfDiv">10/12 B&#9837;</div>
     <div data-type="pyth2" data-offset="16" class="noteDiv">11/12 B si</div>
     <div data-type="pyth2" data-offset="17" class="noteDiv calcNote">12/12 C4 do</div>
-    <!--div data-type="pyth2" data-offset="X" class="noteDiv calcNote">&nbsp;0/12 X 2</div-->
-
 </div>
 
 <div id="turkScale" class="scale">
     Turkish 22 Shruti<br>
     <br>
     C=<input id="freq_turk" type="number" min="1" max="22000" value="261.6256" />(Chandovatī)<br />
+
     <div data-type="turk" data-offset="0" class="noteDiv refNote">&nbsp;0/22 Chandovatī C</div>
     <div data-type="turk" data-offset="1" class="noteDiv">&nbsp;1/22 Dayāvatī D&#9837;</div>
     <div data-type="turk" data-offset="2" class="noteDiv">&nbsp;2/22 Ranjanī D&#9837;</div>
@@ -720,6 +696,7 @@
     Ptolemy 19-EDO<br>
     5-limit just intonation<br>
     C=<input id="freq_Ptolemy" type="number" min="1" max="22000" value="261.6256" /><br />
+
     <div data-type="Ptolemy" data-offset="0" class="noteDiv refNote">&nbsp;0/19 C3 do</div>
     <div data-type="Ptolemy" data-offset="1" class="halfDiv">&nbsp;1/19 C&#9839;</div><div data-type="Ptolemy" data-offset="2" class="halfDiv">&nbsp;2/19 D&#9837;</div>
     <div data-type="Ptolemy" data-offset="3" class="noteDiv">&nbsp;3/19 D ré</div>
