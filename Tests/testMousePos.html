@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Pos Capture</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+        #stat {
+            background-color: transparent;
+            font-size: 24px;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: 10;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            white-space: pre-wrap;
+        }
+
+        #log {
+            background-color: transparent;
+            font-size: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: 10;
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            bottom : 0px;
+            width: 200px;
+            overflow-y: scroll;
+            text-align: right;
+            white-space: pre-wrap;
+        }
+
+    </style>
+
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var c = document.getElementById("mainDiv");
+            c.addEventListener("mousedown", canvasMouseDown);
+            c.addEventListener("mousemove", canvasMouseMove);
+            c.addEventListener("mouseup", canvasMouseUp);
+            c.addEventListener("wheel", canvasMouseWheel);
+            c.addEventListener("mouseleave", canvasMouseLeave);
+
+            document.addEventListener("keydown", canvasKeyDown);
+
+            var s = document.getElementById("stat");
+            var l = document.getElementById("log");
+
+            function fmt(x, y, m) {
+                x = x.toString().padStart(8);
+                y = y.toString().padStart(8);
+                log(x + " " + y + ((m) ? m : ""));
+            }
+
+            var x = 0;
+            var y = 0;
+            var w = 0;
+            var dx = -1;
+            var dy = -1;
+            var btn0 = "u";
+            var btn1 = "u";
+            var btn2 = "u";
+
+            function log(t) {
+                s.innerText  = "x:" + x.toString().padStart(7) + "\n";
+                s.innerText += "y:" + y.toString().padStart(7) + "\n";
+                s.innerText += "w:" + w.toString().padStart(7) + "\n";
+                s.innerText += "btn0:" + btn0 + "\n";
+                s.innerText += "btn1:" + btn1 + "\n";
+                s.innerText += "btn2:" + btn2 + "\n";
+
+
+                s.innerText += "\n";
+                s.innerText += "dx:" + (x - dx).toString().padStart(6) + "\n";
+                s.innerText += "dy:" + (y - dy).toString().padStart(6) + "\n";
+
+
+                if (dx != -1) {
+                    var d = new Date();
+                    var t = "[" + d.getMinutes() + ":" + d.getSeconds() + "] " ;
+                    l.innerText = t + (x - dx).toString().padStart(4) + " " + (y - dy).toString().padStart(4) + "\n" + l.innerText;
+
+                    dx = x;
+                    dy = y;
+                }
+
+            }
+
+
+            function canvasMouseDown(event) {
+                if (event.button == 0) btn0 = "d";
+                if (event.button == 1) btn1 = "d";
+                if (event.button == 2) btn2 = "d";
+
+                x = event.pageX;
+                y = event.pageY;
+
+                log();
+            }
+
+            function canvasMouseMove(event) {
+                x = event.pageX;
+                y = event.pageY;
+
+                log();
+            }
+
+            function canvasMouseUp(event) {
+                if (event.button == 0) btn0 = "u";
+                if (event.button == 1) btn1 = "u";
+                if (event.button == 2) btn2 = "u";
+
+                x = event.pageX;
+                y = event.pageY;
+
+                log();
+            }
+            function canvasMouseWheel(event) {   
+                x = event.pageX;
+                y = event.pageY;
+
+                w += event.deltaY;
+                
+                log();
+            }
+
+            function canvasMouseLeave() {
+
+            }
+
+            
+            function canvasKeyDown(event) {
+                if (event.key == " ") {
+                    if (dx == -1) {
+                        dx = x;
+                        dy = y;
+                    } else {
+                        dx = -1;
+                        dy = -1;
+                    }
+                }
+            }
+
+
+        } );
+    </script>
+</head>
+
+<body>
+    <div id="mainDiv" class="E3D_fullscreenContainer">
+        <div id="stat"></div>
+        <div id="log"></div>
+    </div>
+</body>
+
+</html>
