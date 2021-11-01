@@ -283,6 +283,11 @@ function v3_addscaled_res(res, a, b, f) {
     res[2] = a[2] + (b[2] * f);
 }
 
+function v3_addaddscaled_new(a, b, c, f) {
+    return [ a[0] + b[0] + (c[0] * f),
+             a[1] + b[1] + (c[1] * f),
+             a[2] + b[2] + (c[2] * f) ];
+}
 
 // Scale vector
 // = a * f
@@ -859,6 +864,15 @@ function v3_applym4_mod(a, m) {
     a[0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w;
     a[1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w;
     a[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
+}
+
+
+
+// v3 format
+
+
+function v3_string(v) {
+    return ((v[0] >= 0) ? "[ " : "[") + v[0].toFixed(3) + ((v[1] >= 0) ? ", " : ",") + v[1].toFixed(3) + ((v[2] >= 0) ? ", " : ",") + v[2].toFixed(3) + " ]";
 }
 
 

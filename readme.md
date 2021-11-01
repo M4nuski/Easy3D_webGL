@@ -82,9 +82,12 @@ Current work-in-progress and next steps
 - NetCode
 - Improved Entity loading
     - external tool should prepare model data for better load perf
-    - tool to generate solid body data
-    - tool to remove duplicate solid body data, edges in creases
-    - STL, OBJ, MS3D to JSON or other ready-to-use format for mesh data and entities
+        - generate solid body data (primitives), mesh cleanup
+        - remove duplicate solid body data, edges in creases
+        - generate detail levels, sprites, binary (Bake)
+    - STL, OBJ, MS3D to binary or other ready-to-use format
+    - entities property format (JSON/YAML)
+        - detail levels, binary type, solid body data, textures, references, scale, offset position
 - Sounds
 - Some kind of game:
     - Tetris ?

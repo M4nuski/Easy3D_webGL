@@ -27,11 +27,12 @@
         #log {
             background-color: transparent;
             font-size: 24px;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Courier New', Courier, monospace;
             z-index: 10;
             position: absolute;
             top: 0px;
             left: 0px;
+            white-space: pre;
         }
     </style>
     <script type="text/javascript" src = "..\ver5\math.js"></script>
@@ -125,7 +126,7 @@
                 if (event.key == "c") clear = true;
                 if (event.key == " ") run = !run;
                 if (event.key == "x") {
-                    objList = [];
+                    objList = objList.filter( o => o.CD_mode == CD_modes.STATIC );
                     ctx.clearRect(0, 0, width, height);
                     currentI = -1;
                     strList.clear();
@@ -166,12 +167,26 @@
                 c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px"; 
             }
 
+            // Enumerations
+            const CD_types = {
+                NONE:       "none",
+                POINT:      "point",
+                CIRCLE:     "circle",
+                LINE:       "line",
+                CAPSULE:    "capsule"
+            }
+            const CD_modes = {
+                STATIC:     "static",
+                DYNAMIC:    "dynamic",
+                CONTROLLED: "controlled"
+            }
+
             class obj {
                 constructor() {
                     this.pos = v3_new();
                     this.pSpeed = v3_new();
 
-                    this.pDelta = v3_new();
+                    this.pDelta = v3_new(); //pLast to next pos
                     this.deltaLength = 0.0;
 
                     this.pLast = v3_new();
@@ -188,28 +203,74 @@
                     this.hit_t = 0.0;
                     this.hit_n = [0, -1, 0];
                     this.hit_p = [0, 0, 0];
+                    // TODO this.hitList
 
                     //this.mass = 1.0;
                     //this.cg = [0, 0, 0]; // center of mass, relative to entity origin
                     //this.cp = [0, 0, 0]; // aerodynamic center
                     //this.area = [0.577, 0.577, 0.577]; // aerodynamic area in 3 axis
-                }
-            }
 
-            class stat {
-                constructor() {
-                    this.p = v3_new();
-                    this.n = v3_new();
-                    this.l = 1.0;
-
-                    this.p2 = v3_new(); // p + x*l
+                    this.CD_type = CD_types.NONE; 
+                    this.CD_mode = CD_modes.STATIC; 
+                    // TODO point body
+                    this.CD_point_p = [0, 0, 0];
+                    // TODO circle body
+                    this.CD_circle_p = [0, 0, 0];
+                    this.CD_circle_r = 0.5;
+                    // TODO line body
+                    this.CD_line_p = [0, 0, 0];
+                    this.CD_line_n = [1, 0, 0];
+                    this.CD_line_l = 1.0;
+                    // TODO capsule body
+                    this.CD_capsule_p = [0, 0, 0];
+                    this.CD_capsule_n = [1, 0, 0];
+                    this.CD_capsule_l = 1.0;
+                    this.CD_capsule_r = 0.5;
                 }
             }
 
             var strList = new Map();
             var objList = [];
             var hitLst = [];
-            var statList = [];
+
+            objList.push(new obj);
+            objList[0].pos[0] =  0.0;
+            objList[0].pos[1] =  0.4;
+            objList[0].CD_type = CD_types.LINE;
+            objList[0].CD_line_n = [0.0, -1.0, 0.0];
+            objList[0].CD_line_l = 1.0;
+
+            objList.push(new obj);
+            objList[1].pos[0] =  0.9;
+            objList[1].pos[1] =  0.0;
+            objList[1].CD_type = CD_types.LINE;
+            objList[1].CD_line_n = [-0.707, -0.707, 0.0];
+            objList[1].CD_line_l = 1.0;
+
+            objList.push(new obj);
+            objList[2].pos[0] = -0.9;
+            objList[2].pos[1] =  0.0;
+            objList[2].CD_type = CD_types.LINE;
+            objList[2].CD_line_n = [0.707, -0.707, 0.0];
+            objList[2].CD_line_l = 1.0;
+
+            /*
+                var c = Math.cos(ang);// == 0
+                var s = Math.sin(ang); // sin 90 = 1.0 // sin-90 = -1.0
+
+                // 90
+                a[0] = -a[1];
+                a[1] =  a[0];
+                // -90
+                a[0] =  a[1];
+                a[1] = -a[0];
+            */
+            function rot_p90(v) {
+                return [-v[1], v[0], v[2] ];
+            }
+            function rot_m90(v) {
+                return [ v[1],-v[0], v[2] ];
+            }
 
             var time = 0;
             var timeLast = 0;
@@ -240,6 +301,7 @@
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
                 if (run) time += timeDelta;
                 timeLast = newTime;
+                // TODO: add time jitter
             }
 
             function updateInputs() {
@@ -250,6 +312,9 @@
 
                     currentI = objList.push(new obj()) - 1;
 
+                    objList[currentI].CD_mode = CD_modes.DYNAMIC;
+                    objList[currentI].CD_type = CD_types.CIRCLE;
+
                     objList[currentI].pos[0] = currentX;
                     objList[currentI].pos[1] = currentY;
 
@@ -257,6 +322,8 @@
                     objList[currentI].aSpeed[2] = Math.random() * 63 - 31.5;
 
                     objList[currentI].rad = 0.02 + (Math.random() * 0.1);
+                    objList[currentI].CD_circle_r = objList[currentI].rad;
+
                 }
                 if (mouseDn1) {
                     mouseDn1 = false;
@@ -338,7 +405,7 @@
                     strList.set("current i", currentI);
 
                     // update position
-                    for (var i = 0; i < objList.length; ++i) if (i != currentI) {
+                    for (var i = 0; i < objList.length; ++i) if ((i != currentI) && (objList[i].CD_mode == CD_modes.DYNAMIC)) {
 
                         objList[i].pSpeed[1] += 32 * timeDelta;
 
@@ -363,7 +430,8 @@
                     // detect collisions
 
                     var h_pos = [0, 0.25, 0];
-                    var h_norm = [0, -1, 0];
+                    var h_norm = [0.2, -1.0, 0.0];
+                    v3_normalize_mod(h_norm);
 
                     for (var i = 0; i < objList.length; ++i) /*if (i != currentI)*/ {
 
@@ -396,21 +464,77 @@
                                 
                                 var t = (rpl_dot - objList[i].rad) / deltaDot;
                                 
-                                if ((t >= 0.0) && (t <= 1.0)) {
+                                if ((t >= -0.1) && (t <= 1.0)) {
+                                    // TODO: shortest CD resolver (recalc only first hit (smallest t))
                                     objList[i].hit = true;
-                                    objList[i].hitPoint = v3_addscaled_new(objList[i].pLast, objList[i].pDelta, t);
+                                    objList[i].hit_p = v3_addscaled_new(objList[i].pLast, objList[i].pDelta, t);
+                                    objList[i].hit_t = t;
+                                    objList[i].hit_n = v3_clone(h_norm);
+
+                                    // eager CD resolver (recalc trajectory as soon as a collision is detected)
+                                    // move body out
+                                    v3_addscaled_mod(objList[i].pos, objList[i].hit_n, deltaDot);
+
+                                    //objList[i].pDelta[1] -= 32 * timeDelta * timeDelta * (1.0 - t) * (1.0 - t);
+                                    //v3_reflect_mod(objList[i].pDelta, objList[i].hit_n);
+                                    //objList[i].pDelta[1] += 32 * timeDelta * timeDelta * t * t;
+
+                                   // objList[i].pSpeed[1] -= 32 * timeDelta * t ;
+
+                                    v3_reflect_mod(objList[i].pSpeed, [-h_norm[0], -h_norm[1], -h_norm[2]] );
+                                    //objList[i].pSpeed[1] += 32 * timeDelta * (1.0 - t);
+                                    v3_scale_res(objList[i].pDelta, objList[i].pSpeed, timeDelta);
+                                    const x_absorb = 0.01;
+                                    const y_absorb = 0.1;
+
+                                    if (objList[i].pSpeed[0] > x_absorb) {
+                                        objList[i].pSpeed[0] *= (1.0 - x_absorb);
+                                    } else if (objList[i].pSpeed[0] < x_absorb) {
+                                        objList[i].pSpeed[0] *= (1.0 - x_absorb);
+                                    } else objList[i].pSpeed[0] = 0.0;
+
+                                    if (objList[i].pSpeed[1] > y_absorb) {
+                                        objList[i].pSpeed[1] *= (1.0 - y_absorb);
+                                    } else if (objList[i].pSpeed[1] < y_absorb) {
+                                        objList[i].pSpeed[1] *= (1.0 - y_absorb);
+                                    } else objList[i].pSpeed[1] = 0.0;
+
+                                    if (objList[i].pSpeed[2] > x_absorb) {
+                                        objList[i].pSpeed[2] *= (1.0 - x_absorb);
+                                    } else if (objList[i].pSpeed[2] < x_absorb) {
+                                        objList[i].pSpeed[2] *= (1.0 - x_absorb);
+                                    } else objList[i].pSpeed[2] = 0.0;
+
+                                    strList.set("hit[" + i + "].hit_t", objList[i].hit_t);
+                                    strList.set("hit[" + i + "].hit_p", v3_string(objList[i].hit_p));
+                                    strList.set("hit[" + i + "].pSpeed", v3_string(objList[i].pSpeed));
+                                    strList.set("hit[" + i + "] speed", v3_length(objList[i].pSpeed).toFixed(4) );
+
+                                   // v3_addscaled_mod(objList[i].pos, objList[i].pDelta, (1.0 - t));
+
+
+
                                 } else {
-                                    objList[i].hitPoint = false;
+                                    objList[i].hit_p = false;
                                 }
 
-                              //  v3_add_mod(objList[i].hitPoint, objList[i].pLast);
+                              //  v3_add_mod(objList[i].hit_p, objList[i].pLast);
 
 
                             }
                         }
                     }
 
-                    // resolve collisions
+                    // TODO: resolve shortest t, dont recheck CD afterward
+                    // TODO: resolve shortest t, recheck CD until no collisions or maxChecks 
+
+                    // recalc final trajectory
+                    for (var i = 0; i < objList.length; ++i) /*if (i != currentI)*/ {
+                        if (objList[i].hit) {
+
+                        }
+                    }
+
             }
 
             var clear = true;
@@ -443,56 +567,116 @@
                 line(-1.0,  0.0, 1.0, 0.0);
                 ctx.stroke();
 
+
+
+
+
+                // draw static objects
                 ctx.setLineDash([1]);
                 ctx.lineWidth = 3.0;
                 ctx.strokeStyle = "#800";
-                ctx.beginPath();
-                line(-1.0, 0.25, 1.0, 0.25);
-                ctx.stroke();
+                for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.STATIC) {
+                    switch (objList[i].CD_type) {
+                        case CD_types.LINE:
+                            // p0 = obj.pos + obj.line_p + rot_90(obj.CD_line_n) * obj.CD_line_l;
+                            var p = v3_add_new(objList[i].pos, objList[i].CD_line_p);
+                            var p0 = v3_addscaled_new(p, rot_p90(objList[i].CD_line_n), objList[i].CD_line_l);
+                            var p1 = v3_addscaled_new(p, rot_m90(objList[i].CD_line_n), objList[i].CD_line_l);
+                            ctx.beginPath();
+                            moveTo(p);
+                            lineTo(p0[0], p0[1]);
+                            moveTo(p);
+                            lineTo(p1[0], p1[1]);
+                            ctx.stroke();
+                            break;
+                        case CD_types.CIRCLE:
+                            var p = v3_add_new(objList[i].pos, objList[i].CD_circle_p);
+                            ctx.beginPath();
+                            circle(p[0], p[1], objList[i].CD_circle_r); 
+                            ctx.stroke();
+                            break;
+                        case CD_types.POINT:
 
-                // draw objects
+                            break;
+                        case CD_types.CAPSULE:
+
+                            break;
+                    }
+                } 
+                
+                // draw dynamic objects
                 ctx.setLineDash([1]);
                 ctx.lineWidth = 2.0;
+                for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.DYNAMIC) {
+                    switch (objList[i].CD_type) {
+                        case CD_types.LINE:
+                            // p0 = obj.pos + obj.line_p + rot_90(obj.CD_line_n) * obj.CD_line_l;
+                            var p = v3_add_new(objList[i].pos, objList[i].CD_line_p);
+                            var p0 = v3_addscaled_new(p, rot_p90(objList[i].CD_line_n), objList[i].CD_line_l);
+                            var p1 = v3_addscaled_new(p, rot_m90(objList[i].CD_line_n), objList[i].CD_line_l);
+                            ctx.beginPath();
+                            moveTo(p);
+                            lineTo(p0[0], p0[1]);
+                            moveTo(p);
+                            lineTo(p1[0], p1[1]);
+                            ctx.stroke();
+                            break;
+                        case CD_types.CIRCLE:                        
+                            ctx.strokeStyle = objList[i].potentialHit ? "#800" : "#080";
+                            var p = v3_add_new(objList[i].pos, objList[i].CD_circle_p);
+                            ctx.beginPath();
+                            circle(p[0], p[1], objList[i].CD_circle_r); 
+                            ctx.stroke();
 
-                for (var i = 0; i < objList.length; ++i) {
-
-                    ctx.strokeStyle = objList[i].potentialHit ? "#800" : "#080";
-
-                    ctx.beginPath();
-                    circle(objList[i].pos[0], objList[i].pos[1], objList[i].rad); 
-                    ctx.stroke();
-
-                    if (objList[i].potentialHit) {
+                            if (objList[i].potentialHit) {
                         ctx.beginPath();
+                        ctx.strokeStyle = "#00F";
                         line(objList[i].pos[0], objList[i].pos[1], objList[i].pLast[0], objList[i].pLast[1]);
                         ctx.stroke();
 
-                        ctx.beginPath();
-                        circle(objList[i].pLast[0], objList[i].pLast[1], objList[i].rad - 0.001); 
-                        ctx.stroke();
-
-                        if (objList[i].hitPoint) {
+                        if (!objList[i].hit) {
                             ctx.strokeStyle = "#00F";
                             ctx.beginPath();
-                            circle(objList[i].hitPoint[0], objList[i].hitPoint[1], 0.01); 
+                            circle(objList[i].pLast[0], objList[i].pLast[1], objList[i].rad - 0.001); 
                             ctx.stroke();
-                            run = false;
+                        }
+
+                        if (objList[i].hit_p) {
+                            ctx.strokeStyle = "#00F";
+                            ctx.beginPath();
+                            circle(objList[i].hit_p[0], objList[i].hit_p[1], 0.01); 
+                            ctx.stroke();
+                            //run = false;
 
                             if (objList[i].hit) {
                                 ctx.strokeStyle = "#F00";
                                 ctx.beginPath();
-                                circle(objList[i].hitPoint[0], objList[i].hitPoint[1],  objList[i].rad); 
+                                circle(objList[i].hit_p[0], objList[i].hit_p[1],  objList[i].rad); 
                                 ctx.stroke();  
+
+                                ctx.beginPath();
+                                line(objList[i].pLast[0], objList[i].pLast[1], objList[i].hit_p[0], objList[i].hit_p[1]);
+                                ctx.stroke();
+                                ctx.beginPath();
+                                line(objList[i].hit_p[0], objList[i].hit_p[1], objList[i].pos[0], objList[i].pos[1]);
+                                ctx.stroke();
+
                             }
                         }
                     }
-                 //   moveTo(objList[i].pos[0], objList[i].pos[1]);
-                  //  var p = v3_val_new(0, -objList[i].rad, 0);
-                  //  v3_rotateZ_mod(p, objList[i].ang[2]);
-                  //  v3_add_mod(p, objList[i].pos);
-                  //  lineTo(p[0], p[1]);
 
+                    
+                            break;
+                        case CD_types.POINT:
+
+                            break;
+                        case CD_types.CAPSULE:
+
+                            break;
+                    }
                 }
+
+
                 ctx.lineWidth = 1.0;
             }
 
