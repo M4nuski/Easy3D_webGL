@@ -147,7 +147,8 @@ SCENE.strokeColor = _v3_black;
 // Create the entities
 var groundEntity = new E3D_entity_wireframe_canvas("entity0");
 // Large ground plane
-groundEntity.addPlane(_v3_origin, _v3_90x, 2540, 2540, 100, _v3_black);
+groundEntity.addPlane(_v3_origin, _v3_90x, 3048, 3048, 119, _v3_black);
+groundEntity.addPlane([0.0, 0.1, 0.0], _v3_90x, 3048, 3048, 9, _v3_red);
 groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 
@@ -171,13 +172,28 @@ var entity = new E3D_entity("entity1", true); // dynamic entity, GPU data will b
 
 
 // Mesh parameters
-// TODO make adjustable
+
 var baseAng = 2.5 * DegToRad;
 var helixP = 1.73 * 25.4;
 var maxL = 30.0 * 25.4;
 var maxWidth  = 6.5 * 25.4;
 var minL = maxWidth * 0.4;
 var maxHeight = 2.125 * 25.4;
+
+var puffExp = 3;
+var puffCoef = 7;
+var cosExp = 1;
+
+var numSegments = 42;
+var clipTop = true;
+var hubBoreRadius = 1 * 25.4 / 2.0;
+
+var colorModel = 1;
+var showHub = true;
+
+var taperEnd = 12 * 25.4;
+var taperScale = 0.5;
+
 
 function getAngle(dist) {    
     return Math.atan(helixP / dist) + baseAng;
@@ -194,6 +210,11 @@ function getBox(pArray) {
         if (pArray[i][1] < minY) minY = pArray[i][1];
     }
     return { max_X:maxX, min_X:minX, max_Y:maxY, min_Y:minY };
+}
+function getColor(i, j = 0) {
+    if (colorModel == 0) return _v3_white;
+    if (colorModel == 1) return ((i % 2) == 0) ? _v3_white : _v3_black;
+    if (colorModel == 2) return (((i + j) % 2) == 0) ? _v3_white : _v3_black;
 }
 
 
@@ -223,22 +244,24 @@ function genProp(){
         }
     }
 
-    var taperEnd = 12 * 25.4;
-    var taperScale = 0.5;
+
     var taperM = 1.0 / (maxL - taperEnd);
 
     // adjust and clip segment profiles
     for (var j = 0; j < numSegments; ++j) {
+
+        // scale to max width
         var limits = getBox(segmentsProfiles[j]);
         var x_scale = maxWidth / (limits.max_X - limits.min_X);
+
         // taper
-        if (segmentsProfiles[j][0][2] > taperEnd) x_scale = x_scale * (1.0 - (taperScale * ((segmentsProfiles[j][0][2] - taperEnd) *taperM)));
+        if (segmentsProfiles[j][0][2] > taperEnd) x_scale = x_scale * (1.0 - (taperScale * ((segmentsProfiles[j][0][2] - taperEnd) * taperM)));
 
         var scale = [x_scale, x_scale, 1.0];
         for (var i = 0; i < profile.length; ++i) v3_mult_mod(segmentsProfiles[j][i], scale);
 
-        limits = getBox(segmentsProfiles[j]);
-        var offset = [-(limits.min_X) + (maxWidth / 2), -maxHeight+  (limits.max_Y), 0];
+        //limits = getBox(segmentsProfiles[j]);
+        var offset = [(x_scale * limits.min_X) + (maxWidth / 2), -maxHeight +  (x_scale * limits.max_Y), 0];
         //for (var i = 0; i < 112; ++i) v3_sub_mod(segmentsProfiles[j][i], offset);    
 
         // top 0 - 55
@@ -270,6 +293,11 @@ function genProp(){
                 } else {
                     segmentsProfiles[j][i][2] = Math.sqrt( Math.pow(maxWidth / 2, 2) - Math.pow(segmentsProfiles[j][i][0], 2));
                 }
+                if (clipTop && 
+                    (segmentsProfiles[j][(i)][1] < segmentsProfiles[j][(i+1) % 112][1])  &&
+                    (segmentsProfiles[j][(i)][0] < segmentsProfiles[j][(i+1) % 112][0])) {
+                    segmentsProfiles[j][i][1] = maxHeight;
+                }  
             }
         }
 
@@ -277,19 +305,28 @@ function genProp(){
 
     // generate mesh
     for (var j = 0; j < numSegments-1; ++j) {
-
         for (var i = 0; i < profile.length; ++i) {
-        // v3_copy(p0, segmentsProfiles[j][i]);
-            var idx = (i == profile.length-1) ? 0 : i+1;
-        // v3_copy(p1 = segmentsProfiles[j][idx];
-    // j1i ji jidx j1idx
-        meshLoader.pushQuad4p(segmentsProfiles[j+1][idx], segmentsProfiles[j][idx], segmentsProfiles[j][i], segmentsProfiles[j+1][i]);
-    //        meshLoader.pushQuad4p(segmentsProfiles[j+1][i], segmentsProfiles[j+1][idx], segmentsProfiles[j][idx], segmentsProfiles[j][i]);
+            var idx = (i + 1) % profile.length;
+            // j1i ji jidx j1idx
+            meshLoader.pushQuad4p(
+                segmentsProfiles[j+1][idx], 
+                segmentsProfiles[j][idx], 
+                segmentsProfiles[j][i], 
+                segmentsProfiles[j+1][i], 
+                getColor(i, j)
+                );
+            //meshLoader.pushQuad4p(segmentsProfiles[j+1][i], segmentsProfiles[j+1][idx], segmentsProfiles[j][idx], segmentsProfiles[j][i]);
         }
     }
     // end cap
     for (var i = 0; i < 55; ++i) {
-        meshLoader.pushQuad4p(segmentsProfiles[numSegments-1][i+1], segmentsProfiles[numSegments-1][i], segmentsProfiles[numSegments-1][111-i], segmentsProfiles[numSegments-1][110-i]);
+        meshLoader.pushQuad4p(
+            segmentsProfiles[numSegments-1][i+1], 
+            segmentsProfiles[numSegments-1][i], 
+            segmentsProfiles[numSegments-1][111-i], 
+            segmentsProfiles[numSegments-1][110-i],
+            getColor(i)
+        );
     }
 
     // regen normals after all the tweakings
@@ -312,11 +349,7 @@ function genProp(){
     }
     meshLoader.numFloats = meshLoader.positions.length;
 
-
-    meshLoader.pushTube(_v3_null, _v3_null, 0.5 * 25.4, maxWidth / 2, maxHeight, 64, _v3_darkgray, true, true);
-
-    // Change colors
-    //for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+    if (showHub) meshLoader.pushTube(_v3_null, _v3_null, hubBoreRadius, maxWidth / 2, maxHeight, 64, _v3_darkgray, true, true);
 
     // Load data from mesh to entity
     meshLoader.addModelData(entity);
@@ -327,49 +360,208 @@ entity.isVisible = true;
 entity.position = [0, 0, 0];
 E3D_addEntity(entity);
 
+var paramDiv1 = document.getElementById("paramDiv1");
+var paramDiv2 = document.getElementById("paramDiv2");
+var paramDiv3 = document.getElementById("paramDiv3");
+var paramDiv4 = document.getElementById("paramDiv4");
 
-var puffExp = 3;
-var range_puffExp = document.getElementById("range_puffExp");
-range_puffExp.value = puffExp * 10;
-range_puffExp.addEventListener("input", changeParams2);
+const paramTemplate_range = '<span class="E3D_input_caption">$caption</span> <input type="range" id="range_$name" class="E3D_input_range" min="$min" max="$max" step="$step" value="$value" data-scale="$scale"/> <span id="range_$name_value" class="E3D_input_value">$value</span>';
+function replaceAll(text, search, target) { return text.split(search).join(target); }
+function addBreak(element) {
+    var newElem = document.createElement("BR");
+    element.appendChild(newElem);
+}
+function E3D_addInput_range(element, name, caption, min, max, value, callback, step = 1, scale = 1, formatter = null) {
+    var newElem = document.createElement("DIV");
+    newElem.className = "E3D_input_div";
+    var text = replaceAll(paramTemplate_range, "$name", name);
+    text = text.replace("$caption", caption);
+    text = text.replace("$min", min);
+    text = text.replace("$max", max);
+    text = text.replace("$step", step);
+    text = text.replace("$scale", scale);
+    text = replaceAll(text, "$value", value);    
+    newElem.innerHTML += text;
+    element.appendChild(newElem);
+    document.getElementById("range_" + name).addEventListener("input", function(event) {
+        var newValue = event.target.value * scale;
+        if (formatter != null) newValue = formatter(newValue);
+        document.getElementById("range_" + name + "_value").innerText = newValue;
+        callback(event, "range", name, newValue);
+    });
+}
 
-var puffCoef = 8;
-var range_puffCoef = document.getElementById("range_puffCoef");
-range_puffCoef.value = puffCoef;
-range_puffCoef.addEventListener("input", changeParams2);
+var _E3D_lengthOfRange = null;
+var _E3D_lengthOfCheckbox = null;
+var _E3D_lengthOfRadio = null;
+function getLengthOfInputs() {
+    var newElem = document.createElement("INPUT");
+    newElem.setAttribute("type", "range");
+    paramDiv1.appendChild(newElem);
+    _E3D_lengthOfRange = newElem.offsetWidth;
+    paramDiv1.removeChild(newElem);
+    //console.log(_E3D_lengthOfRange);
 
-var cosExp = 1;
-var range_cosExp = document.getElementById("range_cosExp");
-range_cosExp.value = cosExp * 10;
-range_cosExp.addEventListener("input", changeParams2);
+    newElem = document.createElement("INPUT");
+    newElem.setAttribute("type", "checkbox");
+    paramDiv1.appendChild(newElem);
+    _E3D_lengthOfCheckbox = newElem.offsetWidth;
+    paramDiv1.removeChild(newElem);
+    //console.log(_E3D_lengthOfCheckbox);
 
-var numSegments = 48;
-var range_segNum = document.getElementById("range_segNum");
-range_segNum.value = numSegments;
-range_segNum.addEventListener("input", changeParams2);
+    newElem = document.createElement("INPUT");
+    newElem.setAttribute("type", "radio");
+    paramDiv1.appendChild(newElem);
+    _E3D_lengthOfRadio = newElem.offsetWidth;
+    paramDiv1.removeChild(newElem);
+    //console.log(_E3D_lengthOfRadio);
+
+}
+
+const paramTemplate_radio = '<span class="E3D_input_caption">$caption</span> <input type="radio" id="radio_$name" name="$group" class="E3D_input_radio" $checked />';
+function E3D_addInput_radio(element, name, caption, group, checked, callback) {
+    var newElem = document.createElement("DIV");
+    newElem.className = "E3D_input_div";
+    var text = replaceAll(paramTemplate_radio, "$name", name);
+    text = text.replace("$caption", caption);
+    text = text.replace("$group", group);
+    text = text.replace("$checked", (checked) ? 'checked="true"' : '');    
+    newElem.innerHTML += text;
+ //   if (_E3D_lengthOfRadio == null) getLengthOfInputs();
+    element.appendChild(newElem);
+  //  newElem.setAttribute("style", "right:" + (_E3D_lengthOfRange - _E3D_lengthOfRadio) + "px;");
+    document.getElementById("radio_" + name).addEventListener("input", function(event) { callback(event, "radio", name, event.target.checked); });
+}
+
+const paramTemplate_checkbox = '<span class="E3D_input_caption">$caption</span> <input type="checkbox" id="checkbox_$name" class="E3D_input_checkbox" $checked />';
+function E3D_addInput_checkbox(element, name, caption, checked, callback) {
+    var newElem = document.createElement("DIV");
+    newElem.className = "E3D_input_div";
+    var text = replaceAll(paramTemplate_checkbox, "$name", name);
+    text = text.replace("$caption", caption);
+    text = text.replace("$checked", (checked) ? 'checked="true"' : '');    
+    newElem.innerHTML += text;
+   // if (_E3D_lengthOfRadio == null) getLengthOfInputs();
+    element.appendChild(newElem);
+   // newElem.setAttribute("style", "right:" + (_E3D_lengthOfRange - _E3D_lengthOfRadio) + "px;");
+    document.getElementById("checkbox_" + name).addEventListener("input", function(event) { callback(event, "checkbox", name, event.target.checked); });
+}
 
 
-function changeParams2() {
-    numSegments = range_segNum.value;
-    range_segNum.innerHTML = ` ${numSegments}`;
-    puffExp = range_puffExp.value / 10;
-    puffCoef = range_puffCoef.value;
-    cosExp = range_cosExp.value / 10;
-    paramText2.textContent = "segments: " + numSegments + " puff Exp: " + puffExp + " cosine Exp: " + cosExp + " puff coef: " + puffCoef;
+E3D_addInput_range(paramDiv1, "dia", "Diameter", 3, 120, 60, paramDiv1CB, 0.125);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "pitch", "Pitch*", 0, 40, 11, paramDiv1CB, 0.5);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "helix", "Helix Angle*", -45, 45, 0, paramDiv1CB, 0.01);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "p", "Thrust Point height*", 0, 24, 1.73, paramDiv1CB, 0.01);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "alpha", "Base Angle Of Attack", -45, 45, 2.5, paramDiv1CB, 0.25);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "width", "Width", 0.125, 36, 6.5, paramDiv1CB, 0.125);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "height", "Height", 0.125, 12, 2.125, paramDiv1CB, 0.125);addBreak(paramDiv1);
+function paramDiv1CB(event, type, id, value) {
+    switch (id) {
+        case "dia":
+            maxL = value * 25.4 / 2.0;
+            break;
+        case "pitch":
+            // TODO
+            break;
+        case "helix":
+            // TODO
+            break;
+        case "p":
+            // TODO
+            break;
+        case "alpha":
+            baseAng = value * DegToRad;
+            break;
+        case "width":
+            maxWidth = value * 25.4;
+            minL = maxWidth * 0.4;
+            break;
+        case "height":
+            maxHeight = value * 25.4;
+            break;
+    }
+    entity.clear();
+    genProp();
+}
+
+
+E3D_addInput_range(paramDiv2, "numSections", "Number of Sections", 2, 256, 42, paramDiv2CB);addBreak(paramDiv2);
+E3D_addInput_range(paramDiv2, "puffExp", "Root Puff Exponent", 0, 5, 3, paramDiv2CB, 0.1);addBreak(paramDiv2);
+E3D_addInput_range(paramDiv2, "puffCoef", "Root Puff Coefficient", 0, 15, 7, paramDiv2CB);addBreak(paramDiv2);
+E3D_addInput_range(paramDiv2, "puffCosExp", "Root Puff Cosine Exp", 0, 5, 1, paramDiv2CB, 0.1);addBreak(paramDiv2);
+E3D_addInput_range(paramDiv2, "hubDia", "Hub hole diameter", 0, 6, 1, paramDiv2CB, 0.125);addBreak(paramDiv2);
+E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);addBreak(paramDiv2);
+E3D_addInput_checkbox(paramDiv2, "showHub", "Show Hub", true, paramDiv2CB);
+function paramDiv2CB(event, type, id, value) {
+    switch (id) {
+        case "numSections":
+            numSegments = value;
+            break;
+        case "puffExp":
+            puffExp = value;
+            break;
+        case "puffCoef":
+            puffCoef = value;
+            break;
+        case "puffCosExp":
+            cosExp = value;
+            break;
+        case "hubDia":
+            hubBoreRadius = value * 25.4 / 2.0;
+        case "clipTop":
+            clipTop = value;
+            break;
+        case "showHub":
+            showHub = value;
+            break;
+    }
+    entity.clear();
+    genProp();
+}
+
+
+E3D_addInput_range(paramDiv3, "taperL", "Taper Length %", 0, 100, 66, paramDiv3CB);addBreak(paramDiv3);
+E3D_addInput_range(paramDiv3, "taperW", "Taper Width %", 0, 100, 50, paramDiv3CB);addBreak(paramDiv3);
+
+
+function paramDiv3CB(event, type, id, value) {
+    if (id == "taperL") taperEnd = maxL * (100-value) / 100.0;
+    if (id == "taperW") taperScale = value / 100.0;
 
     entity.clear();
     genProp();
 }
 
-changeParams2();
 
 
+E3D_addInput_radio(paramDiv4, "flat", "Color: Flat", "colors", false, paramDiv4CB);
+E3D_addInput_radio(paramDiv4, "striped", "Color: Striped", "colors", true, paramDiv4CB);
+E3D_addInput_radio(paramDiv4, "checkered", "Color: Checkered", "colors", false, paramDiv4CB);
+
+//TODO export model<input type="button">
+
+function paramDiv4CB(event, type, id, value) {
+    switch (id) {
+        case "flat":
+            colorModel = 0;
+            break;
+        case "striped":
+            colorModel = 1;
+            break;
+        case "checkered":
+            colorModel = 2;
+            break;
+
+    }
+    entity.clear();
+    genProp();
+}
+
+genProp();
 
 // use the engine OnTick event callback to change the rotation of the entity
 CB_tick = function() {
-    // rotate around Y
- //   entity.rotation[1] += TIMER.delta * 0.4;
-  //  entity.updateMatrix();
+
 }    
 
 // TODO export to ascii STL
