@@ -357,6 +357,33 @@ class E3D_mesh {
 // Data Processing Utilities
 
 
+    genNormals() {
+        this.normals = [];
+        var v1 = v3_new();
+        var v2 = v3_new();
+        var v3 = v3_new();
+        var newNormal = v3_new();
+        // create face normals
+        for (var i = 0; i < this.numFloats / 9; i++) { // for each face
+            v3_val_res(v1, this.positions[(i * 9)    ], this.positions[(i * 9) + 1], this.positions[(i * 9) + 2] );
+            v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5] );
+            v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8] );
+
+            v3_normal_res(newNormal, v1, v2, v3);
+
+            this.normals.push(newNormal[0]); // flat shading
+            this.normals.push(newNormal[1]); 
+            this.normals.push(newNormal[2]); 
+
+            this.normals.push(newNormal[0]); // flat shading
+            this.normals.push(newNormal[1]); 
+            this.normals.push(newNormal[2]); 
+
+            this.normals.push(newNormal[0]); // flat shading
+            this.normals.push(newNormal[1]); 
+            this.normals.push(newNormal[2]); 
+        }
+    }
 
 
 
@@ -572,6 +599,19 @@ class E3D_mesh {
         }
         var n = v3_normal_new(p1, p2, p3);
         this.pushQuad(p1, p2, p3, p4, n, n, n, n, color, c2, c3, c4);
+    }
+
+    
+    pushDoubleSidedQuad4p(p1, p2, p3, p4, color = _v3_white, c2 = null, c3 = null, c4 = null) {
+        if (c2 == null) {
+            c2 = color;
+            c3 = color;
+            c4 = color;
+        }
+        var n = v3_normal_new(p1, p2, p3);
+        this.pushQuad(p1, p2, p3, p4, n, n, n, n, color, c2, c3, c4);
+        v3_negate_mod(n);
+        this.pushQuad(p4, p3, p2, p1, n, n, n, n, c4, c3, c2, color);
     }
 
 
@@ -918,6 +958,44 @@ class E3D_mesh {
         for (var i = 0; i < faces.length; ++i) this.pushTriangle3p(pts[faces[i][0]], pts[faces[i][1]], pts[faces[i][2]], color);
 
 
+    }
+    
+    
+    pushTube(position, rotation, innerRadius, outerRadius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        // points
+        var pt = [0, height, 0];
+        var ptst = []; // side top
+        var ptsb = []; // side base
+        ptsb[0] = [outerRadius, 0, 0]; 
+        var ptbt = []; // bore top
+        var ptbb = []; // bore base
+        ptbb[0] = [innerRadius, 0, 0]; 
+
+        for (var i = 1; i < nbSides; ++i) {
+            ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides) * i));
+            ptbb.push(v3_rotateY_new(ptbb[0], (PIx2 / nbSides) * i));
+        }
+        for (var i = 0; i < nbSides; ++i) {
+            ptst.push(v3_add_new(ptsb[i], pt));
+            ptbt.push(v3_add_new(ptbb[i], pt));
+        }
+
+        // adjust for position and rotation
+        for (var i = 0; i < ptsb.length; ++i) v3_applym4_mod(ptsb[i], _mesh_prim_mat);
+        for (var i = 0; i < ptst.length; ++i) v3_applym4_mod(ptst[i], _mesh_prim_mat);
+        
+        // faces
+        for (var i = 0; i < nbSides; ++i) {
+
+            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //outer sides 
+            this.pushQuad4p(ptbb[i], ptbt[i], ptbt[(i + 1) % nbSides] , ptbb[(i + 1) % nbSides], color); //inner sides (bore)
+
+            if (closedBase) this.pushQuad4p(ptsb[i], ptbb[i], ptbb[(i + 1) % nbSides], ptsb[(i + 1) % nbSides], color); //base  
+            if (closedTop) this.pushQuad4p(ptst[i], ptst[(i + 1) % nbSides], ptbt[(i + 1) % nbSides], ptbt[i] , color); //top   
+
+        }
 
     }
 

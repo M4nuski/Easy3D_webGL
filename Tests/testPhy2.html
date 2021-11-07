@@ -203,8 +203,16 @@
                     this.hit_t = 0.0;
                     this.hit_n = [0, -1, 0];
                     this.hit_p = [0, 0, 0];
+                    this.hit_o = -1; // other
                     // TODO this.hitList
 
+
+                    // eager : first hit found, indivudial resolved, 1 pass
+                    // first : lowest t, individual resolved, 1 pass
+                    // full  : lowest t both resolved, multi pass until no t <= 1.0 or max number of passes.
+
+                    // analytical : mathematical resolving of t 
+                    // successive approximation : spherical envelope testing then s-approx until threashold
                     //this.mass = 1.0;
                     //this.cg = [0, 0, 0]; // center of mass, relative to entity origin
                     //this.cp = [0, 0, 0]; // aerodynamic center
@@ -428,12 +436,9 @@
                     }
 
                     // detect collisions
-
-                    var h_pos = [0, 0.25, 0];
-                    var h_norm = [0.2, -1.0, 0.0];
-                    v3_normalize_mod(h_norm);
-
-                    for (var i = 0; i < objList.length; ++i) /*if (i != currentI)*/ {
+                    // for now only dynamic objects vs static objects
+                    for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.DYNAMIC) {
+                        var source = objList[i];
 
                         // Direction DOT < 0.0 ( == 0 is at 90deg )
                         // AdjustedPosition DOT > 0.0
@@ -442,6 +447,46 @@
                         // (t <= 1.0) && (t >= 0.0)
 
                         strList.set("potentialHit[" + i + "]", "level 0");
+
+                        for (var j = 0; j < objList.length; ++j) if (objList[j].CD_mode == CD_modes.STATIC) {
+                            var target = objList[j];
+                            switch (source.CD_type) {
+                                case CD_types.POINT:
+                                    switch (target.CD_type) {
+                                        case CD_types.LINE:
+
+
+                                            break;
+                                        case CD_types.CIRCLE:
+
+
+                                            break;
+                                    }
+
+                                    break;
+                                case CD_types.CIRCLE:
+                                    switch (target.CD_type) {
+                                            case CD_types.POINT:
+
+
+                                                break;
+                                            case CD_types.LINE:
+
+
+                                                break;
+                                            case CD_types.CIRCLE:
+
+
+                                                break;
+                                        }
+                                    break;
+                            }
+
+
+
+                        }
+
+
                         var dir_dot = v3_dot(h_norm, objList[i].pDelta);
 
                         if (dir_dot < 0.0) {
@@ -665,7 +710,7 @@
                         }
                     }
 
-                    
+
                             break;
                         case CD_types.POINT:
 

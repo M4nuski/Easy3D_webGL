@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Easy3D Engine webGL version 0.5</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="media/e3d.ico">
+        <link rel="stylesheet" href="ver5.css">
+        <!-- Propeller generator demo for engine -->
+        <!-- Flex page for header and content, target div for engine output is tagged with id="E3D_mainDiv" -->
+        <!-- Default ver5.css style for buttons and flex -->
+        <!-- Specific script load -->
+        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5prop1.js" data-fail="ver5demoFail.js" defer="true"></script>
+        <style>
+            input {
+                float: right;
+            }
+        </style>
+    </head>
+
+
+    <body>
+        <div class="E3D_fullscreenContainer E3D_flexVertical"> 
+
+            <div class="E3D_flexVerticalContentFit E3D_margin" style="display:flex">
+                <div style="width: 25%;">
+                    <span>Diameter</span><input type="range" id="range_dia" min="1" max="256" value="24"></input><br />
+                    <span>Pitch</span><input type="range" id="range_pitch" min="1" max="256" value="24"/><br />
+                    <span>P</span><input type="range" id="range_P" min="1" max="256" value="24"/><br />
+                    <span>Thickness</span><input type="range" id="range_thickness" min="1" max="256" value="24"/><br />
+                    <span>Width</span><input type="range" id="range_width" min="1" max="256" value="24"/><br />
+                    <span>BaseAlpha</span><input type="range" id="range_alpha" min="-450" max="450" value="33"/><br />
+                    <div id="params1">Param List</div>
+                </div> 
+            
+                <div style="width: 25%;">
+                    <span>Num Segments</span><input type="range" id="range_segNum" min="2" max="256" value="24"></input><br />
+                    <span>Root Puff Exp</span><input type="range" id="range_puffExp" min="0" max="50" value="10"/><br />
+                    <span>Root Puff Coef</span><input type="range" id="range_puffCoef" min="0" max="15" value="10"/><br />
+                    <span>Root Cosine Exp</span><input type="range" id="range_cosExp" min="0" max="50" value="10"/><br />
+                    <div id="params2">Param List</div>
+                </div>
+
+                <div style="width: 25%;">
+                    <span>Taper Length</span><input type="range" id="range_taperL" min="1" max="256" value="18"></input><br />
+                    <span>Taper Ratio</span><input type="range" id="range_taperR" min="0" max="100" value="50"/><br />
+                    <div id="params3">Param List</div>
+                </div>
+                
+            </div>
+
+            <div id="E3D_mainDiv" class="E3D_flexContent"></div>      
+                  
+        </div>
+    </body>
+
+</html>
