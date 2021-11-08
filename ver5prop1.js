@@ -152,6 +152,7 @@ groundEntity.addPlane([0.0, 0.1, 0.0], _v3_90x, 3048, 3048, 9, _v3_red);
 groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 
+// tweak engine params for large models
 E3D_NEAR = 1.0;
 E3D_FAR = 4096.0;
 CAMERA = new E3D_camera_model("camera0m");
@@ -217,7 +218,9 @@ function getColor(i, j = 0) {
     if (colorModel == 1) return ((i % 2) == 0) ? _v3_white : _v3_black;
     if (colorModel == 2) return (((i + j) % 2) == 0) ? _v3_white : _v3_black;
 }
-
+function v3_equals_ep(a, b, ep = _v3_epsilon) {
+    return (Math.abs(a[0] - b[0]) < ep) && (Math.abs(a[1] - b[1]) < ep) && (Math.abs(a[2] - b[2]) < ep);
+}
 
 function genProp(){
 
@@ -286,7 +289,7 @@ function genProp(){
             }
         }
 
-        // wrap bottom of last segment closer than the radius
+        // wrap vertex of last segment closer than the radius
         if (segmentsProfiles[j][i][2] <= maxWidth / 2) {
             for (var i = 0; i < 112; ++i) {
                 if (Math.abs(segmentsProfiles[j][i][0]) >= maxWidth / 2) {
@@ -295,10 +298,12 @@ function genProp(){
                 } else {
                     segmentsProfiles[j][i][2] = Math.sqrt( Math.pow(maxWidth / 2, 2) - Math.pow(segmentsProfiles[j][i][0], 2));
                 }
+                var nextI = i+1;
+                if (nextI == 112) nextI = 1; // skip index 0 as it is a duplicate of index 111
                 if (clipTop && 
-                    (segmentsProfiles[j][(i)][1] < segmentsProfiles[j][(i+1) % 112][1])  &&
-                    (segmentsProfiles[j][(i)][0] < segmentsProfiles[j][(i+1) % 112][0])) {
-                    segmentsProfiles[j][i][1] = maxHeight;
+                    (segmentsProfiles[j][i][1] < segmentsProfiles[j][nextI][1])  &&
+                    (segmentsProfiles[j][i][0] < segmentsProfiles[j][nextI][0])) {
+                     segmentsProfiles[j][i][1] = maxHeight;
                 }  
             }
         }
@@ -307,16 +312,32 @@ function genProp(){
 
     // generate mesh
     for (var j = 0; j < numSegments-1; ++j) {
-        for (var i = 0; i < profile.length; ++i) {
-            var idx = (i + 1) % profile.length;
+        for (var i = 0; i < profile.length-1; ++i) {
+
+            if (v3_equals_ep(segmentsProfiles[j+1][i], segmentsProfiles[j+1][i+1], 0.01)) {
+                meshLoader.pushTriangle3p(
+                    segmentsProfiles[j][i], 
+                    segmentsProfiles[j+1][i], 
+                    segmentsProfiles[j][i+1], 
+                    _v3_green// getColor(i, j)
+                    );
+            } else if (v3_equals_ep(segmentsProfiles[j][i], segmentsProfiles[j][i+1], 0.01)) {
+                meshLoader.pushTriangle3p(
+                    segmentsProfiles[j][i], 
+                    segmentsProfiles[j+1][i], 
+                    segmentsProfiles[j+1][i+1], 
+                    _v3_red// getColor(i, j)
+                    );
+                 } else {
             // j1i ji jidx j1idx
             meshLoader.pushQuad4p(
-                segmentsProfiles[j+1][idx], 
-                segmentsProfiles[j][idx], 
+                segmentsProfiles[j+1][i+1], 
+                segmentsProfiles[j][i+1], 
                 segmentsProfiles[j][i], 
                 segmentsProfiles[j+1][i], 
                 getColor(i, j)
                 );
+            }
             //meshLoader.pushQuad4p(segmentsProfiles[j+1][i], segmentsProfiles[j+1][idx], segmentsProfiles[j][idx], segmentsProfiles[j][i]);
         }
     }
@@ -327,6 +348,16 @@ function genProp(){
             segmentsProfiles[numSegments-1][i], 
             segmentsProfiles[numSegments-1][111-i], 
             segmentsProfiles[numSegments-1][110-i],
+            getColor(i)
+        );
+    }
+    // root cap
+    for (var i = 0; i < 55; ++i) {
+        meshLoader.pushQuad4p(
+            segmentsProfiles[0][110-i], 
+            segmentsProfiles[0][111-i], 
+            segmentsProfiles[0][i], 
+            segmentsProfiles[0][i+1],
             getColor(i)
         );
     }
@@ -560,8 +591,6 @@ E3D_addInput_radio(paramDiv4, "flat", "Color: Flat", "colors", false, paramDiv4C
 E3D_addInput_radio(paramDiv4, "striped", "Color: Striped", "colors", true, paramDiv4CB);
 E3D_addInput_radio(paramDiv4, "checkered", "Color: Checkered", "colors", false, paramDiv4CB);
 
-//TODO export model<input type="button"> //  export to ascii STL
-
 function paramDiv4CB(event, type, id, value) {
     switch (id) {
         case "flat":
@@ -585,4 +614,38 @@ genProp();
 CB_tick = function() {
 
 }    
+
+document.getElementById("button_save").addEventListener("click", saveMesh);
+
+function saveMesh() {
+    var data = "solid Propeller1\n"
+    for (var i = 0; i < meshLoader.positions.length / 9; ++i) {
+        data += "\tfacet normal " + meshLoader.normals[i * 9 + 0].toExponential(6) +" "+ meshLoader.normals[i * 9 + 1].toExponential(6) +" "+ meshLoader.normals[i * 9 + 2].toExponential(6) +"\n";
+        data += "\t\touter loop\n";
+        data += "\t\t\tvertex " + meshLoader.positions[i * 9 + 0].toExponential(6) +" "+ meshLoader.positions[i * 9 + 1].toExponential(6) +" "+ meshLoader.positions[i * 9 + 2].toExponential(6) +"\n";
+        data += "\t\t\tvertex " + meshLoader.positions[i * 9 + 3].toExponential(6) +" "+ meshLoader.positions[i * 9 + 4].toExponential(6) +" "+ meshLoader.positions[i * 9 + 5].toExponential(6) +"\n";
+        data += "\t\t\tvertex " + meshLoader.positions[i * 9 + 6].toExponential(6) +" "+ meshLoader.positions[i * 9 + 7].toExponential(6) +" "+ meshLoader.positions[i * 9 + 8].toExponential(6) +"\n";
+        data += "\t\tendloop\n";
+        data += "\tendfacet\n";
+    }
+    data += "endsolid Propeller1";
+
+    save("mesh.stl", data);
+}
+function save(filename, data) {
+    const blob = new Blob([data], {type: 'text/csv'});
+    if(window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+    }
+    else{
+        const elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = filename;        
+        document.body.appendChild(elem);
+        elem.click();        
+        document.body.removeChild(elem);
+        window.URL.revokeObjectURL(blob);
+    }
+}
+
 

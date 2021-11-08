@@ -25,6 +25,7 @@ Current project state is available for testing [here](https://m4nusky.com/projec
 
 ### Random project that uses the testing framework and game loop 
 - [Memory.html](https://m4nusky.com/Memory/Memory.html): Remake of the classic "Simon" memory game. With color position shuffle!
+- [ver5prop1.html](https://m4nusky.com/projects/Easy3D_webGL/ver5prop1.html): Parametric Propeller Generator Tool for aircraft that can export to ASCII STL. Using the Clark-Y profile.
 
 ### Folders 
 - /Electron: content specific for Electron app (STL viewer, like MS Photo or Image Viewer but for 3D stl files)
