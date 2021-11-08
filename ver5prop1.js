@@ -191,8 +191,9 @@ var hubBoreRadius = 1 * 25.4 / 2.0;
 var colorModel = 1;
 var showHub = true;
 
-var taperEnd = 12 * 25.4;
+var taperRatio = 0.6;
 var taperScale = 0.5;
+var minEdgeT = 0.125 * 25.4;
 
 
 function getAngle(dist) {    
@@ -245,6 +246,7 @@ function genProp(){
     }
 
 
+    var taperEnd = maxL * taperRatio;
     var taperM = 1.0 / (maxL - taperEnd);
 
     // adjust and clip segment profiles
@@ -268,8 +270,8 @@ function genProp(){
         var limitX = -1;
         for (var i = 0; i < 56; ++i) { 
             v3_sub_mod(segmentsProfiles[j][i], offset);
-            if (segmentsProfiles[j][i][1] < 4.0) {
-                segmentsProfiles[j][i][1] = 4.0;
+            if (segmentsProfiles[j][i][1] < minEdgeT) {
+                segmentsProfiles[j][i][1] = minEdgeT;
                 segmentsProfiles[j][i][0] = segmentsProfiles[j][i-1][0];
                 limitX = segmentsProfiles[j][i-1][0];
             }
@@ -450,24 +452,43 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
 
 E3D_addInput_range(paramDiv1, "dia", "Diameter", 3, 120, 60, paramDiv1CB, 0.125);addBreak(paramDiv1);
 E3D_addInput_range(paramDiv1, "pitch", "Pitch*", 0, 40, 11, paramDiv1CB, 0.5);addBreak(paramDiv1);
-E3D_addInput_range(paramDiv1, "helix", "Helix Angle*", -45, 45, 0, paramDiv1CB, 0.01);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "helix", "Helix Angle*", 0, 45, 3.33, paramDiv1CB, 0.01);addBreak(paramDiv1);
 E3D_addInput_range(paramDiv1, "p", "Thrust Point height*", 0, 24, 1.73, paramDiv1CB, 0.01);addBreak(paramDiv1);
-E3D_addInput_range(paramDiv1, "alpha", "Base Angle Of Attack", -45, 45, 2.5, paramDiv1CB, 0.25);addBreak(paramDiv1);
+E3D_addInput_range(paramDiv1, "alpha", "Base Angle Of Attack", -10, 45, 2.5, paramDiv1CB, 0.25);addBreak(paramDiv1);
 E3D_addInput_range(paramDiv1, "width", "Width", 0.125, 36, 6.5, paramDiv1CB, 0.125);addBreak(paramDiv1);
 E3D_addInput_range(paramDiv1, "height", "Height", 0.125, 12, 2.125, paramDiv1CB, 0.125);addBreak(paramDiv1);
+var paramLock = false;
 function paramDiv1CB(event, type, id, value) {
     switch (id) {
         case "dia":
             maxL = value * 25.4 / 2.0;
             break;
         case "pitch":
-            // TODO
+            var helix = Math.atan( (value * 25.4) / (maxL * 2.0 * Math.PI) ) * RadToDeg;
+            document.getElementById("range_helix").value = Math.round(helix * 100) / 100;
+            document.getElementById("range_helix_value").innerText = Math.round(helix * 100) / 100;
+            helixP = value / ( 2.0 * Math.PI );
+            document.getElementById("range_p").value = Math.round(helixP * 100) / 100;
+            document.getElementById("range_p_value").innerText = Math.round(helixP * 100) / 100;
+            helixP = helixP * 25.4; 
             break;
         case "helix":
-            // TODO
+            var pitch = Math.tan(value * DegToRad) * (maxL * 2.0 * Math.PI / 25.4);
+            document.getElementById("range_pitch").value = Math.round(pitch * 100) / 100;
+            document.getElementById("range_pitch_value").innerText = Math.round(pitch * 100) / 100;
+            helixP = value / ( 2.0 * Math.PI );
+            document.getElementById("range_p").value = Math.round(helixP * 100) / 100;
+            document.getElementById("range_p_value").innerText = Math.round(helixP * 100) / 100;
+            helixP = helixP * 25.4; 
             break;
         case "p":
-            // TODO
+            var pitch = (2.0 * Math.PI) * value;
+            document.getElementById("range_pitch").value = Math.round(pitch * 2) / 2;
+            document.getElementById("range_pitch_value").innerText = Math.round(pitch * 2) / 2;
+            var helix = Math.atan( (value * 25.4) / (maxL * 2.0 * Math.PI) )
+            document.getElementById("range_helix").value = Math.round(helixP * 100) / 100;
+            document.getElementById("range_helix_value").innerText = Math.round(helixP * 100) / 100;
+            helixP = value * 25.4; 
             break;
         case "alpha":
             baseAng = value * DegToRad;
@@ -486,8 +507,8 @@ function paramDiv1CB(event, type, id, value) {
 
 
 E3D_addInput_range(paramDiv2, "numSections", "Number of Sections", 2, 256, 42, paramDiv2CB);addBreak(paramDiv2);
-E3D_addInput_range(paramDiv2, "puffExp", "Root Puff Exponent", 0, 5, 3, paramDiv2CB, 0.1);addBreak(paramDiv2);
-E3D_addInput_range(paramDiv2, "puffCoef", "Root Puff Coefficient", 0, 15, 7, paramDiv2CB);addBreak(paramDiv2);
+E3D_addInput_range(paramDiv2, "puffExp", "Root Puff Exponent", 1, 5, 3, paramDiv2CB, 0.1);addBreak(paramDiv2);
+E3D_addInput_range(paramDiv2, "puffCoef", "Root Puff Coefficient", 0, 15, 7, paramDiv2CB, 0.1);addBreak(paramDiv2);
 E3D_addInput_range(paramDiv2, "puffCosExp", "Root Puff Cosine Exp", 0, 5, 1, paramDiv2CB, 0.1);addBreak(paramDiv2);
 E3D_addInput_range(paramDiv2, "hubDia", "Hub hole diameter", 0, 6, 1, paramDiv2CB, 0.125);addBreak(paramDiv2);
 E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);addBreak(paramDiv2);
@@ -520,13 +541,14 @@ function paramDiv2CB(event, type, id, value) {
 }
 
 
-E3D_addInput_range(paramDiv3, "taperL", "Taper Length %", 0, 100, 66, paramDiv3CB);addBreak(paramDiv3);
+E3D_addInput_range(paramDiv3, "taperL", "Taper Length %", 0, 100, 60, paramDiv3CB);addBreak(paramDiv3);
 E3D_addInput_range(paramDiv3, "taperW", "Taper Width %", 0, 100, 50, paramDiv3CB);addBreak(paramDiv3);
-
+E3D_addInput_range(paramDiv3, "minEdge", "Minimum edge Thickness", 0.0, 1, 0.125, paramDiv3CB, 0.0625);addBreak(paramDiv3);
 
 function paramDiv3CB(event, type, id, value) {
-    if (id == "taperL") taperEnd = maxL * (100-value) / 100.0;
+    if (id == "taperL") taperRatio = (100-value) / 100.0;
     if (id == "taperW") taperScale = value / 100.0;
+    if (id == "minEdge") minEdgeT = value * 25.4;
 
     entity.clear();
     genProp();
@@ -538,7 +560,7 @@ E3D_addInput_radio(paramDiv4, "flat", "Color: Flat", "colors", false, paramDiv4C
 E3D_addInput_radio(paramDiv4, "striped", "Color: Striped", "colors", true, paramDiv4CB);
 E3D_addInput_radio(paramDiv4, "checkered", "Color: Checkered", "colors", false, paramDiv4CB);
 
-//TODO export model<input type="button">
+//TODO export model<input type="button"> //  export to ascii STL
 
 function paramDiv4CB(event, type, id, value) {
     switch (id) {
@@ -563,7 +585,4 @@ genProp();
 CB_tick = function() {
 
 }    
-
-// TODO export to ascii STL
-
 
