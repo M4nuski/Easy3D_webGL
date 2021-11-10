@@ -507,6 +507,27 @@ function v3_lengthsquared(a) {
     return (a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 }
 
+function v3_lengthXY(a) {
+    return Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+}
+function v3_lengthXYsquared(a) {
+    return (a[0] * a[0] + a[1] * a[1]);
+}
+
+function v3_lengthXZ(a) {
+    return Math.sqrt(a[0] * a[0] + a[2] * a[2]);
+}
+function v3_lengthXZsquared(a) {
+    return (a[0] * a[0] + a[2] * a[2]);
+}
+
+function v3_lengthYZ(a) {
+    return Math.sqrt(a[1] * a[1] + a[2] * a[2]);
+}
+function v3_lengthYZsquared(a) {
+    return (a[1] * a[1] + a[2] * a[2]);
+}
+
 // Vector distance
 function v3_distance(a, b) {
     var dx = a[0] - b[0];
@@ -519,6 +540,39 @@ function v3_distancesquared(a, b) {
     var dy = a[1] - b[1];
     var dz = a[2] - b[2];
     return (dx * dx + dy * dy + dz * dz);
+}
+
+function v3_distanceXY(a, b) {
+    var dx = a[0] - b[0];
+    var dy = a[1] - b[1];
+    return Math.sqrt(dx * dx + dy * dy);
+}
+function v3_distanceXYsquared(a, b) {
+    var dx = a[0] - b[0];
+    var dy = a[1] - b[1];
+    return (dx * dx + dy * dy);
+}
+
+function v3_distanceXZ(a, b) {
+    var dx = a[0] - b[0];
+    var dz = a[2] - b[2];
+    return Math.sqrt(dx * dx + dz * dz);
+}
+function v3_distanceXZsquared(a, b) {
+    var dx = a[0] - b[0];
+    var dz = a[2] - b[2];
+    return (dx * dx + dz * dz);
+}
+
+function v3_distanceYZ(a, b) {
+    var dy = a[1] - b[1];
+    var dz = a[2] - b[2];
+    return Math.sqrt(dy * dy + dz * dz);
+}
+function v3_distanceYZsquared(a, b) {
+    var dy = a[1] - b[1];
+    var dz = a[2] - b[2];
+    return (dy * dy + dz * dz);
 }
 
 
