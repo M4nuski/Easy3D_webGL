@@ -308,13 +308,12 @@ function genProp(){
 
         // round profile
         if (slipRound) for (var i = 0; i < profile.length; ++i) {
-            var actDist = v3_lengthXZ(segmentsProfiles[j][i]);
-            var thDist = Math.sqrt( Math.pow(d, 2) - Math.pow(segmentsProfiles[j][i][0], 2));
-            segmentsProfiles[j][i][2] -= actDist - thDist;//* Math.sign(segmentsProfiles[j][i][0]);
+            var newZdist = Math.sqrt((d*d) - (segmentsProfiles[j][i][0]*segmentsProfiles[j][i][0]));
+            if (!isNaN(newZdist)) segmentsProfiles[j][i][2] -= (d - newZdist);
         }
 
         // wrap vertex of last segment closer than the radius
-        if (segmentsProfiles[j][i][2] <= maxWidth / 2) {
+        if (d <= maxWidth / 2) {
             for (var i = 0; i < 112; ++i) {
                 if (Math.abs(segmentsProfiles[j][i][0]) >= maxWidth / 2) {
                     segmentsProfiles[j][i][2] = 0;
@@ -331,6 +330,7 @@ function genProp(){
                 }  
             }
         }
+
 
     }
 
@@ -417,7 +417,7 @@ function genProp(){
         profileEntity.clear();
         for (var j = 0; j < numSegments; ++j) {
             profileEntity.moveCursorTo(segmentsProfiles[j][0]);
-            for (var i = 1; i < profile.length; ++i) profileEntity.addLineTo(segmentsProfiles[j][i], false, _v3_red);
+            for (var i = 1; i < profile.length; ++i) profileEntity.addLineTo(segmentsProfiles[j][i], false, _v3_orange);
         }
     }
 
@@ -631,8 +631,8 @@ function paramDiv3CB(event, type, id, value) {
 E3D_addInput_radio(paramDiv4, "flat", "Color: Flat", "colors", false, paramDiv4CB);
 E3D_addInput_radio(paramDiv4, "striped", "Color: Striped", "colors", true, paramDiv4CB);
 E3D_addInput_radio(paramDiv4, "checkered", "Color: Checkered", "colors", false, paramDiv4CB);
-E3D_addInput_checkbox(paramDiv4, "model", "Show Model: Checkered", true, paramDiv4CB);
-E3D_addInput_checkbox(paramDiv4, "profile", "Show Profiles: Checkered", false, paramDiv4CB);
+E3D_addInput_checkbox(paramDiv4, "model", "Show Model", true, paramDiv4CB);
+E3D_addInput_checkbox(paramDiv4, "profile", "Show Profiles", false, paramDiv4CB);
 
 function paramDiv4CB(event, type, id, value) {
     switch (id) {
