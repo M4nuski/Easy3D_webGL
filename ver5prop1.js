@@ -6,9 +6,7 @@
 "use strict"
 
 
-var paramText1 = document.getElementById("params1");
-var paramText2 = document.getElementById("params2");
-
+// Clark-Y profile from http://airfoiltools.com/
 var profile = [
     //top
     [0.0000000, 0.0000000, 0.0],
@@ -137,6 +135,130 @@ var profile = [
     [0.0000000, 0.0000000, 0.0]    
 ];
 
+var profileAeroData = [
+ //alpha   CL      CD
+[-12.500, -0.8056, 0.04280],
+[-12.250, -0.8431, 0.03834],
+[-12.000, -0.8624, 0.03532],
+[-11.750, -0.8498, 0.03147],
+[-11.500, -0.8300, 0.02925],
+[-11.250, -0.8037, 0.02830],
+[-11.000, -0.7744, 0.02770],
+[-10.750, -0.7444, 0.02705],
+[-10.500, -0.7194, 0.02620],
+[-10.250, -0.6939, 0.02507],
+[-10.000, -0.6670, 0.02386],
+[-9.750, -0.6427, 0.02281],
+[-9.500, -0.6172, 0.02189],
+[-9.250, -0.5903, 0.02085],
+[-9.000, -0.5677, 0.01980],
+[-8.750, -0.5414, 0.01917],
+[-8.500, -0.5153, 0.01858],
+[-8.250, -0.4904, 0.01796],
+[-8.000, -0.4642, 0.01737],
+[-7.750, -0.4394, 0.01679],
+[-7.500, -0.4136, 0.01616],
+[-7.250, -0.3885, 0.01558],
+[-7.000, -0.3626, 0.01504],
+[-6.750, -0.3370, 0.01456],
+[-6.500, -0.3107, 0.01413],
+[-6.250, -0.2850, 0.01362],
+[-6.000, -0.2597, 0.01300],
+[-5.750, -0.2336, 0.01258],
+[-5.500, -0.2072, 0.01221],
+[-5.250, -0.1807, 0.01188],
+[-5.000, -0.1540, 0.01158],
+[-4.750, -0.1272, 0.01130],
+[-4.500, -0.1002, 0.01105],
+[-4.250, -0.0733, 0.01082],
+[-4.000, -0.0463, 0.01062],
+[-3.750, -0.0194, 0.01044],
+[-3.500, 0.0074, 0.01020],
+[-3.250, 0.0346, 0.01003],
+[-3.000, 0.0617, 0.00989],
+[-2.750, 0.0889, 0.00977],
+[-2.500, 0.1162, 0.00965],
+[-2.250, 0.1433, 0.00952],
+[-2.000, 0.1702, 0.00938],
+[-1.750, 0.1972, 0.00928],
+[-1.500, 0.2242, 0.00917],
+[-1.250, 0.2512, 0.00905],
+[-1.000, 0.2781, 0.00887],
+[-0.750, 0.3050, 0.00875],
+[-0.500, 0.3318, 0.00866],
+[-0.250, 0.3585, 0.00854],
+[0.000, 0.3850, 0.00839],
+[0.250, 0.4113, 0.00825],
+[0.500, 0.4365, 0.00802],
+[0.750, 0.4588, 0.00755],
+[1.000, 0.4792, 0.00724],
+[1.250, 0.5069, 0.00723],
+[1.500, 0.5482, 0.00736],
+[1.750, 0.5852, 0.00750],
+[2.000, 0.6205, 0.00766],
+[2.250, 0.6517, 0.00783],
+[2.500, 0.6752, 0.00800],
+[2.750, 0.6985, 0.00820],
+[3.000, 0.7218, 0.00842],
+[3.250, 0.7451, 0.00865],
+[3.500, 0.7686, 0.00888],
+[3.750, 0.7923, 0.00912],
+[4.000, 0.8161, 0.00937],
+[4.250, 0.8397, 0.00964],
+[4.500, 0.8636, 0.00991],
+[4.750, 0.8876, 0.01017],
+[5.000, 0.9124, 0.01038],
+[5.250, 0.9370, 0.01061],
+[5.500, 0.9618, 0.01082],
+[5.750, 0.9867, 0.01103],
+[6.000, 1.0118, 0.01123],
+[6.250, 1.0362, 0.01147],
+[6.500, 1.0610, 0.01168],
+[6.750, 1.0852, 0.01194],
+[7.000, 1.1087, 0.01224],
+[7.250, 1.1312, 0.01259],
+[7.500, 1.1522, 0.01307],
+[7.750, 1.1711, 0.01368],
+[8.000, 1.1893, 0.01434],
+[8.250, 1.2079, 0.01495],
+[8.500, 1.2263, 0.01555],
+[8.750, 1.2447, 0.01613],
+[9.000, 1.2631, 0.01664],
+[9.250, 1.2801, 0.01718],
+[9.500, 1.2976, 0.01768],
+[9.750, 1.3142, 0.01825],
+[10.000, 1.3292, 0.01893],
+[10.250, 1.3418, 0.01976],
+[10.500, 1.3427, 0.02137],
+[10.750, 1.3533, 0.02238],
+[11.000, 1.3658, 0.02327],
+[11.250, 1.3779, 0.02422],
+[11.500, 1.3886, 0.02530],
+[11.750, 1.3978, 0.02651],
+[12.000, 1.4091, 0.02761],
+[12.250, 1.4190, 0.02884],
+[12.500, 1.4278, 0.03019],
+[12.750, 1.4352, 0.03171],
+[13.000, 1.4405, 0.03347],
+[13.250, 1.4428, 0.03556],
+[13.500, 1.4483, 0.03742],
+[13.750, 1.4528, 0.03945],
+[14.000, 1.4556, 0.04169],
+[14.250, 1.4571, 0.04415],
+[14.500, 1.4575, 0.04682],
+[14.750, 1.4566, 0.04972],
+[15.000, 1.4546, 0.05285],
+[15.250, 1.4516, 0.05626],
+[15.500, 1.4473, 0.05992],
+[15.750, 1.4415, 0.06390],
+[16.000, 1.4342, 0.06821],
+[16.250, 1.4250, 0.07294],
+[16.500, 1.4137, 0.07807],
+[16.750, 1.4010, 0.08355] ];
+
+const Cyl_CD = 1.17; // Sph 0.47;
+const Cyl_CL = 0.00;
+
 log("E3D_userInit");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera
@@ -154,6 +276,7 @@ E3D_addEntity(groundEntity);
 // Profile wireframe
 var profileEntity = new E3D_entity_wireframe_canvas("entity1");
 E3D_addEntity(profileEntity);
+profileEntity.isVisible = true;
 
 
 
@@ -194,9 +317,9 @@ var numSegments = 42;
 var clipTop = true;
 var hubBoreRadius = 1 * 25.4 / 2.0;
 
-var colorModel = 1;
+var colorModel = 2;
 var showHub = true;
-var showProfile = false;
+var showProfile = true;
 
 var taperRatio = 0.5;
 var taperScale = 0.5;
@@ -205,6 +328,13 @@ var minEdgeT = 0.125 * 25.4;
 var slipAngle = 0;
 var slipRound = false;
 var nBlades = 2;
+
+// TODO merge into data object
+var segmentsAngles = [];
+var segmentsScales = [];
+var segmentsLengthsOrig = [];
+var segmentsLengthsFinal = [];
+var segmentsRadius = [];
 
 function getAngle(dist) {    
     return Math.atan(helixP / dist) + baseAng;
@@ -237,27 +367,35 @@ function genProp(){
     var p0 = v3_new();    
     var stepLen = (maxL - minL) / (numSegments-1);
     var segmentsProfiles = [];
+    segmentsAngles = [];
+    segmentsScales = [];
+    segmentsLengthsOrig = [];
+    segmentsLengthsFinal = [];
+    segmentsRadius = [];
 
     // generate tiwsted segment profiles
     for (var j = 0; j < numSegments; ++j) {
 
         segmentsProfiles.push([]);
         var d = (j * stepLen) + minL;
+        segmentsRadius.push(d);
         var twistAngle = getAngle(d);
-       // var maxPuff = 0;
+        segmentsAngles.push(twistAngle * RadToDeg);
+        var maxPuff = 0;
         for (var i = 0; i < profile.length; ++i) {
             v3_copy(p0, profile[i]);
             // puff up upper profile
             if (i < 56){
                 var puff = (1.0 + (Math.pow(twistAngle, puffExp) * puffCoef) * Math.pow(Math.sin(i * Math.PI / 56), cosExp));
                 //console.log(j + ":"+i+" = " +puff);
-         //       if (puff > maxPuff) maxPuff = puff;
+                if (puff > maxPuff) maxPuff = puff;
                 p0[1] = p0[1] * puff;
             }
             v3_rotateZ_mod(p0, -twistAngle);  
             segmentsProfiles[j].push( v3_clone(p0) );
         }
-        console.log(twistAngle * RadToDeg);          
+        segmentsScales.push(maxPuff);
+        //console.log(twistAngle * RadToDeg);          
        // console.log(j + ": " + maxPuff);
        // TODO map CL and CD for profile modified:
         // puff 1 2 5 10
@@ -281,6 +419,7 @@ function genProp(){
         var x_scale = maxWidth / (limits.max_X - limits.min_X);
 
         var d = (j * stepLen) + minL;
+
         // taper
         if (d > taperEnd) x_scale = x_scale * (1.0 - (taperScale * ((d - taperEnd) * taperM)));
 
@@ -291,7 +430,7 @@ function genProp(){
             segmentsProfiles[j][i][2] += d;
         }
 
-        var profLen = v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]);
+        segmentsLengthsOrig.push(v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]));
 
         // offset into position
         var offset = [(x_scale * limits.min_X) + (maxWidth / 2), -maxHeight +  (x_scale * limits.max_Y), 0];
@@ -316,7 +455,8 @@ function genProp(){
                 if (segmentsProfiles[j][i][0] > limitX) segmentsProfiles[j][i][0] = limitX;
             }
         }
-        console.log("orig len: " + profLen + "skewd : "+ v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]));
+        segmentsLengthsFinal.push(v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]));
+
 
         // round profile
         if (slipRound) for (var i = 0; i < profile.length; ++i) {
@@ -420,6 +560,86 @@ function genProp(){
             for (var i = 1; i < profile.length; ++i) profileEntity.addLineTo(segmentsProfiles[j][i], false, _v3_orange);
         }
     }
+
+
+    // Calc aero data
+    calcAero();
+}
+
+function getCoef(ang) {
+    var lastIndex = profileAeroData.length-1;
+    /*
+ //alpha   CL      CD
+[-12.500, -0.8056, 0.04280],
+[-12.250, -0.8431, 0.03834],
+...
+[16.500, 1.4137, 0.07807],
+[16.750, 1.4010, 0.08355] ];
+    */
+   if (ang < profileAeroData[0][0]) {
+        // if ang < first linear int from index 1 trough 0
+        var alphaStep = profileAeroData[0][0] - profileAeroData[1][0];
+        var mCL    =   (profileAeroData[0][1] - profileAeroData[1][1]) / alphaStep;
+        var mCD    =   (profileAeroData[0][2] - profileAeroData[1][2]) / alphaStep;
+        var alpha = ang - profileAeroData[0][0];
+        return [(mCL * alpha) + profileAeroData[0][1], (mCD * alpha) + profileAeroData[0][2]];
+    } else if (ang > profileAeroData[lastIndex][0]) {
+        // if ang > last linear int from n-2 trough n-1
+        var alphaStep = profileAeroData[lastIndex][0] - profileAeroData[lastIndex-1][0];
+        var mCL    =   (profileAeroData[lastIndex][1] - profileAeroData[lastIndex-1][1]) / alphaStep;
+        var mCD    =   (profileAeroData[lastIndex][2] - profileAeroData[lastIndex-1][2]) / alphaStep;
+        var alpha = ang - profileAeroData[lastIndex][0];
+        return [(mCL * alpha) + profileAeroData[lastIndex][1], (mCD * alpha) + profileAeroData[lastIndex][2]];
+    } else {
+        // lerp
+        try {
+            var lIndex = 0;
+            while (profileAeroData[lIndex][0] < ang) lIndex++;
+            lIndex--;
+            var hIndex = lIndex + 1;
+            var alphaStep = profileAeroData[hIndex][0] - profileAeroData[lIndex][0];
+            var dCL = (profileAeroData[hIndex][1] - profileAeroData[lIndex][1]) / alphaStep;
+            var dCD = (profileAeroData[hIndex][2] - profileAeroData[lIndex][2]) / alphaStep;
+            var alpha = ang - profileAeroData[lIndex][0];
+            return [(dCL * alpha) + profileAeroData[lIndex][1], (dCD * alpha) + profileAeroData[lIndex][2]];
+        } catch (ex) {
+            console.log("coef fail at angle: " + ang);
+            return [0, 0];
+        }
+    }
+}
+function calcAero() {
+    // F = CL * 0.5 * rho * V^2 * A
+
+    text_output.innerText = "";
+    var sos = select_air.options[select_air.selectedIndex].getAttribute("data-sos");
+    text_output.innerText = "Tip speed: "+ ((number_rpm.value / 60) * Math.PI * 2.0 * maxL / 1000.0).toFixed(1) + " m/s (max: "+sos+")";
+
+    var segAeroResults = [];
+    // calc forces at segments profile
+    for (var j = 0; j < numSegments; ++j) {
+        var v = (number_rpm.value / 60) * Math.PI * 2.0 * segmentsRadius[j] / 1000.0;
+        var coefs = getCoef(segmentsAngles[j] + 0 /*static*/);
+        var fl = coefs[0] * 0.5 * select_air.value * v * v * segmentsLengthsFinal[j] / 1000.0;
+        var fd = coefs[1] * 0.5 * select_air.value * v * v * segmentsLengthsFinal[j] / 1000.0;
+        segAeroResults.push([fl, fd]);
+    }
+    // calc forces for segment's widths
+    var totalLift = 0;
+    var totalTorque = 0;
+    for (var j = 0; j < numSegments-1; ++j) {
+        var l = (segAeroResults[j][0] + segAeroResults[j + 1][0]) / 2;
+        l = l * (segmentsRadius[j+1] - segmentsRadius[j]) / 1000.0;
+        totalLift += l;
+
+        var d = (segAeroResults[j][1] + segAeroResults[j + 1][1]) / 2;
+        d = d * (segmentsRadius[j+1] - segmentsRadius[j]) / 1000.0;//N
+        var t = d * (segmentsRadius[j+1] + segmentsRadius[j]) / 2000.0;//Nm 
+        totalTorque += t;
+    }
+    totalLift *= nBlades;
+    totalTorque *= nBlades;
+    console.log("L: " + (totalLift * 0.224809) + ", T: " + (totalTorque * 0.7375621493) + ", HP: " + (number_rpm.value * totalTorque * 0.7375621493 / 5252));
 
 }
 
@@ -670,11 +890,11 @@ function paramDiv3CB(event, type, id, value) {
 
 
 E3D_addInput_radio(paramDiv4, "flat", "Color: Flat", "colors", false, paramDiv4CB);
-E3D_addInput_radio(paramDiv4, "striped", "Color: Striped", "colors", true, paramDiv4CB);
-E3D_addInput_radio(paramDiv4, "checkered", "Color: Checkered", "colors", false, paramDiv4CB);
+E3D_addInput_radio(paramDiv4, "striped", "Color: Striped", "colors", false, paramDiv4CB);
+E3D_addInput_radio(paramDiv4, "checkered", "Color: Checkered", "colors", true, paramDiv4CB);
 E3D_addInput_checkbox(paramDiv4, "showHub", "Show Hub", true, paramDiv4CB);
 E3D_addInput_checkbox(paramDiv4, "model", "Show Model", true, paramDiv4CB);
-E3D_addInput_checkbox(paramDiv4, "profile", "Show Profiles", false, paramDiv4CB);
+E3D_addInput_checkbox(paramDiv4, "profile", "Show Profiles", true, paramDiv4CB);
 
 function paramDiv4CB(event, type, id, value) {
     switch (id) {
@@ -703,12 +923,15 @@ function paramDiv4CB(event, type, id, value) {
     genProp();
 }
 
-genProp();
 
-// use the engine OnTick event callback to change the rotation of the entity
 CB_tick = function() {
-
+    // TODO add mesh and render stats
 }    
+var select_air = document.getElementById("select_air");
+select_air.addEventListener("input", calcAero);
+var number_rpm = document.getElementById("number_rpm");
+number_rpm.addEventListener("input", calcAero);
+var text_output = document.getElementById("text_output");
 
 document.getElementById("button_save").addEventListener("click", saveMesh);
 
@@ -742,7 +965,7 @@ function save(filename, data) {
         window.URL.revokeObjectURL(blob);
     }
 }
-
+/*
 document.getElementById("button_get").addEventListener("click", getProf);
 var pa = document.getElementById("text_panel");
 document.getElementById("text_panel_X").addEventListener("click", () => pa.style.display="none" );
@@ -752,8 +975,13 @@ function getProf(){
     pa.style.right="10px";
     pa.style.bottom="10px";
     pa.style.zIndex = "10";
-    pd.innerText = "";
-
+    pd.innerText = "Profile94\n";
+    for (var i = 0; i < profile.length; ++i) {
+        pd.innerText += profile[i][0] + "\t" + profile[i][1] + "\n";
+    }
+    pd.innerText += "\nProfile Clip\n";
 
 }
+*/
 
+genProp();
