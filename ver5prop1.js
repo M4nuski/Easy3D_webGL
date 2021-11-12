@@ -204,7 +204,7 @@ var minEdgeT = 0.125 * 25.4;
 
 var slipAngle = 0;
 var slipRound = false;
-
+var nBlades = 2;
 
 function getAngle(dist) {    
     return Math.atan(helixP / dist) + baseAng;
@@ -244,15 +244,25 @@ function genProp(){
         segmentsProfiles.push([]);
         var d = (j * stepLen) + minL;
         var twistAngle = getAngle(d);
-
+       // var maxPuff = 0;
         for (var i = 0; i < profile.length; ++i) {
             v3_copy(p0, profile[i]);
             // puff up upper profile
-            if (i < 56) p0[1] = p0[1] * (1.0 + (Math.pow(twistAngle, puffExp) * puffCoef) * Math.pow(Math.sin(i * Math.PI / 56), cosExp));
-
-            v3_rotateZ_mod(p0, -twistAngle);            
+            if (i < 56){
+                var puff = (1.0 + (Math.pow(twistAngle, puffExp) * puffCoef) * Math.pow(Math.sin(i * Math.PI / 56), cosExp));
+                //console.log(j + ":"+i+" = " +puff);
+         //       if (puff > maxPuff) maxPuff = puff;
+                p0[1] = p0[1] * puff;
+            }
+            v3_rotateZ_mod(p0, -twistAngle);  
             segmentsProfiles[j].push( v3_clone(p0) );
         }
+        console.log(twistAngle * RadToDeg);          
+       // console.log(j + ": " + maxPuff);
+       // TODO map CL and CD for profile modified:
+        // puff 1 2 5 10
+        // clip 0.00 0.50
+        // alfa -5 -2 -1 0 1 2 3 4 5 7 11 15 20
     }
 
     // slip angle
@@ -281,7 +291,7 @@ function genProp(){
             segmentsProfiles[j][i][2] += d;
         }
 
-
+        var profLen = v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]);
 
         // offset into position
         var offset = [(x_scale * limits.min_X) + (maxWidth / 2), -maxHeight +  (x_scale * limits.max_Y), 0];
@@ -297,6 +307,7 @@ function genProp(){
             }
         }
 
+
         // bottom 56 - 111
         for (var i = 111; i >= 56; --i) {
             v3_sub_mod(segmentsProfiles[j][i], offset);
@@ -305,6 +316,7 @@ function genProp(){
                 if (segmentsProfiles[j][i][0] > limitX) segmentsProfiles[j][i][0] = limitX;
             }
         }
+        console.log("orig len: " + profLen + "skewd : "+ v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]));
 
         // round profile
         if (slipRound) for (var i = 0; i < profile.length; ++i) {
@@ -389,23 +401,11 @@ function genProp(){
 
     // regen normals after all the tweakings
     meshLoader.genNormals();
-
-    // copy and flip
-    for (var i = 0; i < meshLoader.numFloats / 3; ++i) {
-        meshLoader.positions.push(-meshLoader.positions[i * 3]);
-        meshLoader.positions.push( meshLoader.positions[i * 3 + 1]);
-        meshLoader.positions.push(-meshLoader.positions[i * 3 + 2]);
-
-        meshLoader.colors.push(meshLoader.colors[i * 3]);
-        meshLoader.colors.push(meshLoader.colors[i * 3 + 1]);
-        meshLoader.colors.push(meshLoader.colors[i * 3 + 2]);
-
-        meshLoader.normals.push(-meshLoader.normals[i * 3]);
-        meshLoader.normals.push( meshLoader.normals[i * 3 + 1]);
-        meshLoader.normals.push(-meshLoader.normals[i * 3 + 2]);
-
-    }
-    meshLoader.numFloats = meshLoader.positions.length;
+    if (nBlades == 2) CopyMirrorEntity();
+    if (nBlades == 3) CopyRotateEntity([120, 240]);
+    if (nBlades == 4) { CopyRotateEntity([90]); CopyMirrorEntity(); };
+    if (nBlades == 5) CopyRotateEntity([72*1, 72*2, 72*3, 72*4]);
+    if (nBlades == 6) { CopyRotateEntity([120, 240]); CopyMirrorEntity(); };
 
     if (showHub) meshLoader.pushTube(_v3_null, _v3_null, hubBoreRadius, maxWidth / 2, maxHeight, 64, _v3_darkgray, true, true);
 
@@ -423,6 +423,49 @@ function genProp(){
 
 }
 
+
+function CopyMirrorEntity() {
+    for (var i = 0; i < meshLoader.numFloats / 3; ++i) {
+        meshLoader.positions.push(-meshLoader.positions[i * 3]);
+        meshLoader.positions.push( meshLoader.positions[i * 3 + 1]);
+        meshLoader.positions.push(-meshLoader.positions[i * 3 + 2]);
+
+        meshLoader.colors.push(meshLoader.colors[i * 3]);
+        meshLoader.colors.push(meshLoader.colors[i * 3 + 1]);
+        meshLoader.colors.push(meshLoader.colors[i * 3 + 2]);
+
+        meshLoader.normals.push(-meshLoader.normals[i * 3]);
+        meshLoader.normals.push( meshLoader.normals[i * 3 + 1]);
+        meshLoader.normals.push(-meshLoader.normals[i * 3 + 2]);
+    }
+    meshLoader.numFloats = meshLoader.positions.length;
+}
+function CopyRotateEntity(angleList) {
+    var initialNumFloat = meshLoader.numFloats;
+    if (angleList.length < 1) return;
+    for (var a = 0; a < angleList.length; ++a) {
+            var c = Math.cos(angleList[a] * DegToRad);
+            var s = Math.sin(angleList[a] * DegToRad);
+            //x a[2] * s + a[0] * c;
+            //y
+            //z = a[2] * c - a[0] * s;
+
+        for (var i = 0; i < initialNumFloat / 3; ++i) {
+            meshLoader.positions.push((meshLoader.positions[i * 3 + 2] * s) + (meshLoader.positions[i * 3 + 0] * c));
+            meshLoader.positions.push( meshLoader.positions[i * 3 + 1]);
+            meshLoader.positions.push((meshLoader.positions[i * 3 + 2] * c) - (meshLoader.positions[i * 3 + 0] * s));
+
+            meshLoader.colors.push(meshLoader.colors[i * 3]);
+            meshLoader.colors.push(meshLoader.colors[i * 3 + 1]);
+            meshLoader.colors.push(meshLoader.colors[i * 3 + 2]);
+
+            meshLoader.normals.push((meshLoader.normals[i * 3 + 2] * s) + (meshLoader.normals[i * 3 + 0] * c));
+            meshLoader.normals.push( meshLoader.normals[i * 3 + 1]);
+            meshLoader.normals.push((meshLoader.normals[i * 3 + 2] * c) - (meshLoader.normals[i * 3 + 0] * s));
+        }
+    }
+    meshLoader.numFloats = meshLoader.positions.length;
+}
 // Setup entity
 entity.isVisible = true;
 entity.position = [0, 0, 0];
@@ -578,7 +621,7 @@ E3D_addInput_range(paramDiv2, "puffCoef", "Root Puff Coefficient", 0, 15, 6.4, p
 E3D_addInput_range(paramDiv2, "puffCosExp", "Root Puff Cosine Exp", 0, 5, 1.5, paramDiv2CB, 0.1);addBreak(paramDiv2);
 E3D_addInput_range(paramDiv2, "hubDia", "Hub hole diameter", 0, 6, 1, paramDiv2CB, 0.125);addBreak(paramDiv2);
 E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);addBreak(paramDiv2);
-E3D_addInput_checkbox(paramDiv2, "showHub", "Show Hub", true, paramDiv2CB);
+
 function paramDiv2CB(event, type, id, value) {
     switch (id) {
         case "numSections":
@@ -598,15 +641,12 @@ function paramDiv2CB(event, type, id, value) {
         case "clipTop":
             clipTop = value;
             break;
-        case "showHub":
-            showHub = value;
-            break;
     }
     entity.clear();
     genProp();
 }
 
-
+E3D_addInput_range(paramDiv3, "nBlades", "Number of Blades", 2, 6, 2, paramDiv3CB);addBreak(paramDiv3);
 E3D_addInput_range(paramDiv3, "taperL", "Taper Length %", 0, 100, 50, paramDiv3CB);addBreak(paramDiv3);
 E3D_addInput_range(paramDiv3, "taperW", "Taper Width %", 0, 100, 50, paramDiv3CB);addBreak(paramDiv3);
 E3D_addInput_range(paramDiv3, "minEdge", "Minimum edge Thickness", 0.0, 1, 0.125, paramDiv3CB, 0.0625);addBreak(paramDiv3);
@@ -615,6 +655,7 @@ E3D_addInput_range(paramDiv3, "slipAngle", "Profile Slip Angle", -30, 30, 0, par
 E3D_addInput_checkbox(paramDiv3, "slipRound", "Round Profile", false, paramDiv3CB);addBreak(paramDiv3);
 
 function paramDiv3CB(event, type, id, value) {
+    if (id == "nBlades") nBlades = value;
     if (id == "taperL")  taperRatio = (100-value) / 100.0;
     if (id == "taperW")  taperScale = value / 100.0;
     if (id == "minEdge") minEdgeT = value * 25.4;
@@ -631,6 +672,7 @@ function paramDiv3CB(event, type, id, value) {
 E3D_addInput_radio(paramDiv4, "flat", "Color: Flat", "colors", false, paramDiv4CB);
 E3D_addInput_radio(paramDiv4, "striped", "Color: Striped", "colors", true, paramDiv4CB);
 E3D_addInput_radio(paramDiv4, "checkered", "Color: Checkered", "colors", false, paramDiv4CB);
+E3D_addInput_checkbox(paramDiv4, "showHub", "Show Hub", true, paramDiv4CB);
 E3D_addInput_checkbox(paramDiv4, "model", "Show Model", true, paramDiv4CB);
 E3D_addInput_checkbox(paramDiv4, "profile", "Show Profiles", false, paramDiv4CB);
 
@@ -652,6 +694,9 @@ function paramDiv4CB(event, type, id, value) {
         case "profile":
             showProfile = value;
             profileEntity.isVisible = value;
+            break;
+        case "showHub":
+            showHub = value;
             break;
     }
     entity.clear();
@@ -698,4 +743,17 @@ function save(filename, data) {
     }
 }
 
+document.getElementById("button_get").addEventListener("click", getProf);
+var pa = document.getElementById("text_panel");
+document.getElementById("text_panel_X").addEventListener("click", () => pa.style.display="none" );
+var pd = document.getElementById("text_panel_data");
+function getProf(){
+    pa.style.display = "block";
+    pa.style.right="10px";
+    pa.style.bottom="10px";
+    pa.style.zIndex = "10";
+    pd.innerText = "";
+
+
+}
 
