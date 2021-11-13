@@ -13,34 +13,22 @@
         <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5prop1.js" data-fail="ver5demoFail.js" defer="true"></script>
         <style>
 
-            .E3D_input_div {
-                display: inline-block;
-                width: 100%;
-            }
             .E3D_input_caption {
-                text-align: right;
+                text-align: left;
             }
             .E3D_input_value {
-                float: right;
-            }
-            .E3D_input_range {
-                float: right;
-            }
-            .E3D_input_radio {
-                float: right;
-                position: relative;
-                right:113px;
-            }
-            .E3D_input_checkbox {
-                float: right;
-                position: relative;
-                right:113px;
-            }
+                text-align: right;
+            } 
             .paramDiv {
-                width : 20%;
                 padding-left: 0.25em;
                 padding-right: 0.25em;
                 border-right: 1px solid black;
+                display: grid;
+                grid-template-columns: 200px 60px auto;
+                grid-auto-rows: 1.2em;
+            }
+            input[type="range"] {
+                margin-top: -7px;
             }
         </style>
     </head>
@@ -54,10 +42,10 @@
                 <div id="paramDiv2" class="paramDiv"></div>
                 <div id="paramDiv3" class="paramDiv"></div>
                 <div id="paramDiv4" class="paramDiv">                    
-                    <div id="button_save" class="E3D_fakeButton" style="display: inline-block;">Save Mesh</div>
+                    <div id="button_save" class="E3D_fakeButton" style="display: inline-block;">Save Mesh</div><span></span><span></span>
                 </div>
-                <div id="paramDiv5" class="paramDiv">
-                    RPM: <input id="number_rpm" type="number" min="1" max="35000" value="3000" /><br />
+                <div id="paramDiv5" style="padding-left: 0.25em;">
+                    RPM: <input id="number_rpm" type="number" min="1" max="35000" value="3000" />
                     Air Temp: <select id="select_air"><!-- source https://en.wikipedia.org/wiki/Density_of_air -->
                         <option value="1.2041" data-sos="343.21">20 C</option>
                         <option value="1.2250" data-sos="340.27">15 C</option>
