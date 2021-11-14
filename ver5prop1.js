@@ -137,7 +137,6 @@ var profile = [
 
 var profileAeroData = [
  //alpha   CL      CD
- [0.00000, 0.00000, 0.00000],
  [-12.50000, -0.80560, 0.08275],
  [-12.25000, -0.84310, 0.07364],
  [-12.00000, -0.86240, 0.06737],
@@ -278,7 +277,7 @@ E3D_addEntity(groundEntity);
 var profileEntity = new E3D_entity_wireframe_canvas("entity1");
 E3D_addEntity(profileEntity);
 profileEntity.isVisible = true;
-
+ // Thrust Vectors
 
 
 // tweak engine params for large models
@@ -604,6 +603,8 @@ function getCoef(ang) {
         }
     }
 }
+
+var backupTL = [];
 function calcAero() {
     // F = CL * 0.5 * rho * V^2 * A
     /*numSegments = 2;
@@ -624,30 +625,34 @@ function calcAero() {
     // 1 N = 1 Kg / s^2
     // 1Nm = 1 Kgm / s^2
 
-    var aeroData = calcThrustAndTorque(0) // static;
+    //static
+    var aeroData = calcThrustAndTorque(0); 
     var thrust = (aeroData[0] * 0.224337);
     var hp = (number_rpm.value * aeroData[1] * 0.73756 / 5252);
     //console.log("L: " + totalLift + " N, T: " + totalTorque + " Nm, P: " + (number_rpm.value * totalTorque * 0.73756 / 5252) + " hp");
     text_output.innerText += "Static Thrust: " + thrust.toFixed(1) + " Lbf ("+(thrust/hp).toFixed(1)+ "lb/hp)\n";
     text_output.innerText += "Static Power: " + hp.toFixed(1) + " HP (Torque: "+(aeroData[1] * 0.73756).toFixed(1) + " Lbf-ft) \n"
 
+    backupTL = thrustList.splice(0);
+
+    // at max pitch
     var pitch = (2.0 * Math.PI) * helixP;
     var helixAngle = Math.atan( pitch / (maxL * 2.0 * Math.PI) ) * RadToDeg;
     var pSpeed = (pitch / 25.4 * number_rpm.value * 60 / 63360);
     text_output.innerText += "MaxSpeed: " + pSpeed.toFixed(1) + " mph / " + (pSpeed * 1.60934).toFixed(1) + " km/h\n";
-    var aeroData = calcThrustAndTorque(helixAngle); // at max pitch
+    var aeroData = calcThrustAndTorque(helixAngle); 
     thrust = (aeroData[0] * 0.224337);
     hp = (number_rpm.value * aeroData[1] * 0.73756 / 5252);
     //console.log("L: " + totalLift + " N, T: " + totalTorque + " Nm, P: " + (number_rpm.value * totalTorque * 0.73756 / 5252) + " hp");
     text_output.innerText += "MaxSpeed Thrust: " + thrust.toFixed(1) + " Lbf ("+(thrust/hp).toFixed(1)+ "lb/hp)\n";
     text_output.innerText += "MaxSpeed Power: " + hp.toFixed(1) + " HP (Torque: "+(aeroData[1] * 0.73756).toFixed(1) + " Lbf-ft) \n"
-
-
 }
 
+var thrustList = [];
 function calcThrustAndTorque(angle) {
     var stepLen = (maxL - minL) / (numSegments-1) / 1000.0; // mm to m
     var segAeroResults = [];
+    thrustList = [];
     // calc forces at segments profile
     for (var j = 0; j < numSegments; ++j) {
         var v = (number_rpm.value / 60) * Math.PI * 2.0 * segmentsRadius[j] / 1000.0; // t/s * m/t = m/s
@@ -670,12 +675,13 @@ function calcThrustAndTorque(angle) {
     var totalTorque = 0;
     for (var j = 0; j < numSegments-1; ++j) {
         var l = (segAeroResults[j][0] + segAeroResults[j + 1][0]) / 2; // avg between 2 profiles
-        l = l * stepLen; // Kg/s^2 * m = Kgm/s^2 = N
-        totalLift += l; // N
+        var t = l * stepLen; // Kg/s^2 * m = Kgm/s^2 = N
+        thrustList.push([l, t]);
+        totalLift += t; // N
 
-        var d = (segAeroResults[j][1] + segAeroResults[j + 1][1]) / 2; // avg between 2 profiles
-        d = d * stepLen; // Kg/s^2 * m = Kgm/s^2 = N
-        var t = d * (segmentsRadius[j+1] + segmentsRadius[j]) / 2000.0; // N * m = Nm
+        l = (segAeroResults[j][1] + segAeroResults[j + 1][1]) / 2; // avg between 2 profiles
+        t = l * stepLen; // Kg/s^2 * m = Kgm/s^2 = N
+        t = t * (segmentsRadius[j+1] + segmentsRadius[j]) / 2000.0; // N * m = Nm
         totalTorque += t;
     }
     totalLift *= nBlades; // N 
@@ -963,10 +969,14 @@ function paramDiv4CB(event, type, id, value) {
     genProp();
 }
 
-
+var bottomBar = document.getElementById("bottomBar");
 CB_tick = function() {
     // TODO add mesh and render stats
-}    
+    var t = "";
+    for (var i = 0; i < backupTL.length; ++i) t += (backupTL[i][1] * 0.224337).toFixed(1) + " ";
+    bottomBar.innerText = t;
+}
+
 var select_air = document.getElementById("select_air");
 select_air.addEventListener("input", calcAero);
 var number_rpm = document.getElementById("number_rpm");
