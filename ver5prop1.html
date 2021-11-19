@@ -3,7 +3,7 @@
     <head>
         <title>Easy3D Engine webGL version 0.5</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=0.5" />
         <link rel="icon" href="media/e3d.ico">
         <link rel="stylesheet" href="ver5.css">
         <!-- Propeller generator demo for engine -->
@@ -23,12 +23,14 @@
                 padding-left: 0.25em;
                 padding-right: 0.25em;
                 border-right: 1px solid black;
+                display: inline-block;
+                overflow: hidden;
+            }
+            .paramSubGrid {
                 display: grid;
                 grid-template-columns: 200px 60px auto;
                 grid-auto-rows: 1.2em;
-            }
-            input[type="range"] {
-                margin-top: -7px;
+
             }
             .floater {
                 position: relative;                
@@ -40,16 +42,16 @@
 
 
     <body>
-        <div class="E3D_fullscreenContainer E3D_flexVertical">
+        <div class="E3D_fullscreenContainer E3D_flexVertical" style="overflow-x:scroll;">
 
-            <div class="E3D_flexVerticalContentFit E3D_margin" style="display:flex">
-                <div id="paramDiv1" class="paramDiv"></div>             
-                <div id="paramDiv2" class="paramDiv"></div>
-                <div id="paramDiv3" class="paramDiv"></div>
-                <div id="paramDiv4" class="paramDiv">
-                    <div id="button_save" class="E3D_fakeButton" style="display: inline-block;">Save Mesh</div><span></span><span></span>
-                </div>
-                <div id="paramDiv5" style="padding-left: 0.25em;">
+            <div class="E3D_flexVerticalContentFit E3D_margin" style="display:flex; width: fit-content;">
+                <div class="paramDiv"><div id="paramDiv1" class="paramSubGrid"></div></div>
+                <div class="paramDiv"><div id="paramDiv2" class="paramSubGrid"></div></div>
+                <div class="paramDiv"><div id="paramDiv3" class="paramSubGrid"></div></div>
+                <div class="paramDiv"><div id="paramDiv4" class="paramSubGrid">      
+                    <div id="button_clean" class="E3D_fakeButton" style="display: inline-block;">Clean Mesh</div><div id="button_save" class="E3D_fakeButton" style="display: inline-block;">Save</div><span></span>
+                </div></div>
+                <div id="paramDiv5" style="padding-left: 0.25em;  white-space: nowrap;">
                     RPM: <input id="number_rpm" type="number" min="1" max="35000" value="3000" />
                     Air Temp: <select id="select_air"><!-- source https://en.wikipedia.org/wiki/Density_of_air -->
                         <option value="1.2041" data-sos="343.21">20 C</option>
@@ -66,7 +68,7 @@
                 </div>
             </div>
             <div id="E3D_mainDiv" class="E3D_flexContent"></div>
-            <div class="E3D_flexVerticalContentFit E3D_margin">
+            <div class="E3D_margin">
                 <div class="E3D_monospaceText"><span id="bottomBar" style="font-size:smaller;"></span></div>
             </div>
         </div>

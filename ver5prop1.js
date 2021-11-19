@@ -357,9 +357,6 @@ function getColor(i, j = 0) {
     if (colorModel == 1) return ((i % 2) == 0) ? _v3_white : _v3_black;
     if (colorModel == 2) return (((i + j) % 2) == 0) ? _v3_white : _v3_black;
 }
-function v3_equals_ep(a, b, ep = _v3_epsilon) {
-    return (Math.abs(a[0] - b[0]) < ep) && (Math.abs(a[1] - b[1]) < ep) && (Math.abs(a[2] - b[2]) < ep);
-}
 
 function genProp(){
 
@@ -485,14 +482,14 @@ function genProp(){
     for (var j = 0; j < numSegments-1; ++j) {
         for (var i = 0; i < profile.length-1; ++i) {
 
-            if (v3_equals_ep(segmentsProfiles[j+1][i], segmentsProfiles[j+1][i+1], 0.01)) {
+            if (v3_equals(segmentsProfiles[j+1][i], segmentsProfiles[j+1][i+1], 0.01)) {
                 meshLoader.pushTriangle3p(
                     segmentsProfiles[j][i], 
                     segmentsProfiles[j+1][i], 
                     segmentsProfiles[j][i+1], 
                     _v3_green// getColor(i, j)
                     );
-            } else if (v3_equals_ep(segmentsProfiles[j][i], segmentsProfiles[j][i+1], 0.01)) {
+            } else if (v3_equals(segmentsProfiles[j][i], segmentsProfiles[j][i+1], 0.01)) {
                 meshLoader.pushTriangle3p(
                     segmentsProfiles[j][i], 
                     segmentsProfiles[j+1][i], 
@@ -501,13 +498,23 @@ function genProp(){
                     );
                  } else {
             // j1i ji jidx j1idx
-            meshLoader.pushQuad4p(
-                segmentsProfiles[j+1][i+1], 
-                segmentsProfiles[j][i+1], 
-                segmentsProfiles[j][i], 
-                segmentsProfiles[j+1][i], 
-                getColor(i, j)
-                );
+                    if (i < 56) {
+                        meshLoader.pushQuad4p(
+                            segmentsProfiles[j+1][i+1], 
+                            segmentsProfiles[j][i+1], 
+                            segmentsProfiles[j][i], 
+                            segmentsProfiles[j+1][i], 
+                            getColor(i, j)
+                        );
+                    } else {
+                        meshLoader.pushQuad4p(
+                            segmentsProfiles[j+1][i],
+                            segmentsProfiles[j+1][i+1], 
+                            segmentsProfiles[j][i+1], 
+                            segmentsProfiles[j][i],                              
+                            getColor(i, j)
+                        );
+                    }
             }
             //meshLoader.pushQuad4p(segmentsProfiles[j+1][i], segmentsProfiles[j+1][idx], segmentsProfiles[j][idx], segmentsProfiles[j][i]);
         }        
@@ -943,6 +950,7 @@ E3D_addInput_checkbox(paramDiv4, "model", "Show Model", true, paramDiv4CB);
 E3D_addInput_checkbox(paramDiv4, "profile", "Show Profiles", true, paramDiv4CB);
 
 function paramDiv4CB(event, type, id, value) {
+    var regen = true;
     switch (id) {
         case "flat":
             colorModel = 0;
@@ -956,17 +964,21 @@ function paramDiv4CB(event, type, id, value) {
         case "model":
             //showModel = value;
             entity.isVisible = value;
+            regen = false;
             break;
         case "profile":
             showProfile = value;
             profileEntity.isVisible = value;
+            regen = false;
             break;
         case "showHub":
             showHub = value;
             break;
     }
-    entity.clear();
-    genProp();
+    if (regen) {
+        entity.clear();
+        genProp();
+    }
 }
 
 var bottomBar = document.getElementById("bottomBar");
@@ -984,7 +996,7 @@ number_rpm.addEventListener("input", calcAero);
 var text_output = document.getElementById("text_output");
 
 document.getElementById("button_save").addEventListener("click", saveMesh);
-
+document.getElementById("button_clean").addEventListener("click", cleanMesh);
 function saveMesh() {
     var data = "solid Propeller1\n"
     for (var i = 0; i < meshLoader.positions.length / 9; ++i) {
@@ -1014,6 +1026,15 @@ function save(filename, data) {
         document.body.removeChild(elem);
         window.URL.revokeObjectURL(blob);
     }
+}
+
+function cleanMesh() {
+    //var st = performance.now();
+    meshLoader.removeArealessTriangles();
+    //var et = performance.now();
+    //onsole.log("default epsillon: " + (et - st));
+    entity.clear();
+    meshLoader.addModelData(entity);
 }
 
 genProp();

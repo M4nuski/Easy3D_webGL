@@ -387,7 +387,7 @@ class E3D_mesh {
 
 
 
-    genUniqueVertices() {
+    genUniqueVertices(epsilon = _v3_epsilon) {
         let numVert = this.numFloats / 3;
         let curVert = v3_new();
         this.uniques = [];
@@ -398,7 +398,7 @@ class E3D_mesh {
             var unique = true;
             v3_val_res(curVert, this.positions[(i * 3)], this.positions[(i * 3) + 1], this.positions[(i * 3) + 2] );
             for (var j = 0; j < this.uniques.length; ++j) {
-                if (v3_equals(this.uniques[j], curVert)) {
+                if (v3_equals(this.uniques[j], curVert, epsilon)) {
                     unique = false;
                     this.indices[i] = j;
                     break;
@@ -412,8 +412,33 @@ class E3D_mesh {
         }
 
         this.uniquesDone = true;
-        log("unique Vert: " + this.uniques.length);
+        log(this.uniques.length + " uniques out of " + numVert + " raw vertices. ");
     }
+
+    removeArealessTriangles(epsilon = _v3_epsilon) {
+        var v1 = v3_new();
+        var v2 = v3_new();
+        var v3 = v3_new();
+        var count = 0;
+        var NumTriangles = this.numFloats / 9;
+        // create face normals
+        for (var i = NumTriangles-1; i >= 0; --i) { // for each face
+            v3_val_res(v1, this.positions[(i * 9) + 0], this.positions[(i * 9) + 1], this.positions[(i * 9) + 2] );
+            v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5] );
+            v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8] );
+
+            if (v3_equals(v1, v2, epsilon) || v3_equals(v1, v3, epsilon) || v3_equals(v2, v3, epsilon)) {
+                count++;
+                this.positions.splice(i * 9, 9);
+                this.normals.splice(i * 9, 9);
+                this.colors.splice(i * 9, 9);
+                this.numFloats -= 9;
+            }
+        }
+
+        console.log("Discarded " + count + " triangles out of " + NumTriangles);
+    }
+
 
 
 
@@ -565,10 +590,35 @@ class E3D_mesh {
         this.numFloats += 3;
     }
 
+    getVertex(vertex_index) {
+        if ((vertex_index+1) * 3 > this.numFloats) return false;
+        return { p: [this.positions[vertex_index * 3 + 0], this.positions[vertex_index * 3 + 1], this.positions[vertex_index * 3 + 2]],
+                 n: [  this.normals[vertex_index * 3 + 0],   this.normals[vertex_index * 3 + 1],   this.normals[vertex_index * 3 + 2]],
+                 c: [   this.colors[vertex_index * 3 + 0],    this.colors[vertex_index * 3 + 1],    this.colors[vertex_index * 3 + 2]]
+                };
+    }
+
     pushTriangle(p1, p2, p3, n1, n2, n3, c1, c2, c3) {
         this.pushVertex(p1, n1, c1);
         this.pushVertex(p2, n2, c2);
         this.pushVertex(p3, n3, c3);
+    }
+
+    getTriangle(triangle_index) {
+        if ((triangle_index+1) * 9 > this.numFloats) return false;
+        return {
+            p1: this.getVertex(triangle_index * 3 + 0),
+            p2: this.getVertex(triangle_index * 3 + 1),
+            p3: this.getVertex(triangle_index * 3 + 2)
+        }
+    }
+    getUniqueTriangle(triangle_index) {
+        if ((triangle_index+1) * 3 > this.uniques.length) return false;
+        return {
+            p1: this.uniques[this.indices[triangle_index * 3 + 0]],
+            p2: this.uniques[this.indices[triangle_index * 3 + 1]],
+            p3: this.uniques[this.indices[triangle_index * 3 + 2]]
+        }
     }
     
     pushTriangle3p(p1, p2, p3, color = _v3_white, c2 = null, c3 = null) {

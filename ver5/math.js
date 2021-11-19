@@ -151,8 +151,8 @@ function v3_copy(res, a) {
     res[2] = a[2];
 }
 
-function v3_equals(a, b) {
-    return (Math.abs(a[0] - b[0]) < _v3_epsilon) && (Math.abs(a[1] - b[1]) < _v3_epsilon) && (Math.abs(a[2] - b[2]) < _v3_epsilon);
+function v3_equals(a, b, epsilon = _v3_epsilon) {
+    return (Math.abs(a[0] - b[0]) < epsilon) && (Math.abs(a[1] - b[1]) < epsilon) && (Math.abs(a[2] - b[2]) < epsilon);
 }
 
 // Clamp each components to min and max
