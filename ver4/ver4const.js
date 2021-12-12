@@ -753,7 +753,23 @@ function v3_addnoise_res(res, a, range) {
     res[2] = a[2] + rndPM(range);
 }
 
-
+function v3_reverse_new(a) {
+    return [
+        1.0 - a[0],
+        1.0 - a[1],
+        1.0 - a[2]
+    ];
+}
+function v3_reverse_mod(a) {
+    a[0] = 1.0 - a[0];
+    a[1] = 1.0 - a[1];
+    a[2] = 1.0 - a[2];
+}
+function v3_reverse_res(res, a) {
+    res[0] = 1.0 - a[0];
+    res[1] = 1.0 - a[1];
+    res[2] = 1.0 - a[2];
+}
 
 // v3 Arrays
 

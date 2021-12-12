@@ -133,6 +133,7 @@ class E3D_animation {  // TODO merge with entity
 
         this.colNum = 0;
         this.otherColNum = 0;
+        //this.lastHitMarker = "";
     }
 
     pushCollisionSource(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi) {
@@ -490,7 +491,9 @@ function collisionResult_asSource_bounce(){
             
             v3_reflect_mod(this.pspd, firstCol.n);
             v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit
-            
+            /*
+            absorbtion by drag / linear factor
+
             var remainder = 1.0 - firstCol.t0; // remaining fraction
             remainder = remainder - 0.2;
             if (remainder < 0.0) remainder = 0.0;
@@ -499,6 +502,18 @@ function collisionResult_asSource_bounce(){
             v3_scale_mod(this.pspd, drag); // hit speed "drag"
 
             v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
+            */
+
+            /*
+            absorbtion by subtraction
+            */
+           var remainder = 1.0 - firstCol.t0; // remaining fraction
+           if (remainder < 0.0) remainder = 0.0;
+
+           var subvect = v3_reverse_new(firstCol.n);
+           v3_mult_mod(this.pspd, subvect);
+
+            v3_scale_res(this.delta, this.pspd, remainder * timer.delta); // new delta
             this.deltaLength = v3_length(this.delta);
             v3_add_res(this.target.position, this.last_position, this.delta); // new position        
         
@@ -586,15 +601,69 @@ function collisionResult_asSource_slide(){
         } else { // along path
             firstCol.t0 = Math.sqrt(firstCol.t0);
             v3_normalize_mod(firstCol.n);
-            this.pspd[1] += this.frameG;
+           // this.pspd[1] += this.frameG;
             
             if (v3_dot(firstCol.n, this.delta) < 0.0) { // face to face
                 
                 v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit
 
-                
+                /* by using absorbtion
+                var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
+                if (remainder < 0.0) remainder = 0.0;
+
                 v3_reflect_mod(this.pspd, firstCol.n);
-                
+                var nm = v3_scale_new(firstCol.n, 0.8);
+                var subvect = v3_reverse_new(nm);
+                v3_mult_mod(this.pspd, subvect);
+                v3_scale_res(this.delta, this.pspd, remainder * timer.delta * 0.8); 
+                */
+
+                /* by using absorbtion, sideways drag and rebound 
+                */
+
+                var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
+                if (remainder < 0.0) remainder = 0.0;
+
+                v3_reflect_mod(this.pspd, firstCol.n);
+                var pl = v3_length(this.pspd);
+                var npl = pl - (2 / timer.delta);
+                if (npl < 0.0) npl = 0.0;
+
+                v3_scale_mod(this.pspd, npl / pl);
+
+                //var reboundDrag = v3_scale_new(firstCol.n, 0.2 * timer.delta);
+                //var sideDrag = v3_reverse_new(firstCol.n);
+                //v3_scale_mod(sideDrag, 0.1 * timer.delta);
+                /*
+                var steal = 20;
+                if (this.pspd[0] > 0.0) {
+                    this.pspd[0] -= steal;
+                    if (this.pspd[0] < 0.0) this.pspd[0] = 0.0;
+                } else {
+                    this.pspd[0] += steal;
+                    if (this.pspd[0] > 0.0) this.pspd[0] = 0.0;
+                }
+                if (this.pspd[1] > 0.0) {
+                    this.pspd[1] -= steal;
+                    if (this.pspd[1] < 0.0) this.pspd[1] = 0.0;
+                } else {
+                    this.pspd[1] += steal;
+                    if (this.pspd[1] > 0.0) this.pspd[1] = 0.0;
+                }
+                if (this.pspd[2] > 0.0) {
+                    this.pspd[2] -= steal;
+                    if (this.pspd[2] < 0.0) this.pspd[2] = 0.0;
+                } else {
+                    this.pspd[2] += steal;
+                    if (this.pspd[2] > 0.0) this.pspd[2] = 0.0;
+                }
+               //subtract vectors without changing direction
+*/
+                v3_scale_res(this.delta, this.pspd, remainder * timer.delta); 
+
+
+
+                /*
                 var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
                 remainder = remainder - 0.2;
                 if (remainder < 0.0) remainder = 0.0;
@@ -610,13 +679,13 @@ function collisionResult_asSource_slide(){
                 //v3_sub_mod(this.pspd, offset);
                 
             //    v3_addscaled_mod(this.pspd, firstCol.n, v3_length(offset) );
-
+*/
                 this.deltaLength = v3_length(this.delta);
                 v3_add_res(this.target.position, this.last_position, this.delta); // new position        
             
                 this.target.resetMatrix();
             } // face to face  
-            this.pspd[1] -= this.frameG;
+          //  this.pspd[1] -= this.frameG;
         } // t0 < 0
     } // deltalength > 0
 }
