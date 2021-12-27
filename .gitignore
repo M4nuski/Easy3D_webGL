@@ -2,3 +2,5 @@
 node_modules/
 npm-debug.log
 media/1h.mp3
+.vscode/
+.VSCodeCounter/
