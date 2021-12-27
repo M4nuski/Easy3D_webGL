@@ -30,8 +30,13 @@ class E3D_mesh {
         this.edgesDone = false;
         this.edges = [];
 
+        this.bbDone = false;
+        this.bbMin = [0, 0, 0];
+        this.bbMax = [0, 0, 0];
+        this.bbLength = 0.0;
+
         // TODO create struct with v3s for loading and parsing
-        // and convert to array of float only on "add"
+        // and convert to array of float only on mesh "add"
 
         // moved in constructor to avoir error in Edge
         this.sphereBaseType = {
@@ -62,6 +67,11 @@ class E3D_mesh {
 
         this.edgesDone = false;
         this.edges = [];
+
+        this.bbDone = false;
+        this.bbMin = [0, 0, 0];
+        this.bbMax = [0, 0, 0];
+        this.bbLength = 0.0;
     }
 
 // Entity Data Writers
@@ -77,7 +87,13 @@ class E3D_mesh {
         entity.dataSizeChanged = true;
     }
 
-    addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8)  {       
+    addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8)  {    
+        this.addStrokeData_1(entity, addOrphanEdges, cosineLimit);   
+        //this.addStrokeData_2(entity, addOrphanEdges, cosineLimit);   
+
+    }
+
+    addStrokeData_1(entity, addOrphanEdges = false, cosineLimit = 0.8) {
         entity.numStrokeElements = 0;
         entity.drawStrokes = false;
         
@@ -95,6 +111,31 @@ class E3D_mesh {
             entity.numStrokeElements = strokeList.length;
             entity.drawStrokes = true;
         }
+
+        log((strokeList.length / 2) + " strokes");  
+    }
+
+    addStrokeData_2(entity, addOrphanEdges = false, cosineLimit = 0.8) {
+        entity.numStrokeElements = 0;
+        entity.drawStrokes = false;
+        
+        if (!this.edgesDone) this.genEdges();
+        
+        var strokeList = [];
+        for (var i = 0; i < this.edges.length; ++i) if ( (addOrphanEdges && !this.edges[i].done) ||
+            (this.edges[i].done && (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit)) ) {
+            //strokeList.push(this.reverseIndices[this.edges[i].index1]);
+            //strokeList.push(this.reverseIndices[this.edges[i].index2]);
+            strokeList.push(this.edges[i].index1);
+            strokeList.push(this.edges[i].index2);
+        }
+        
+        if (strokeList.length > 0) {
+            entity.strokeIndexArray = new Uint16Array(strokeList);
+            entity.numStrokeElements = strokeList.length;
+            entity.drawStrokes = true;
+        }
+
         log((strokeList.length / 2) + " strokes");  
     }
 
@@ -385,9 +426,15 @@ class E3D_mesh {
         }
     }
 
-
-
     genUniqueVertices(epsilon = _v3_epsilon) {
+        this.genUniqueVertices_1(epsilon);
+        //this.genUniqueVertices_2(epsilon);
+
+        this.uniquesDone = true;
+        log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
+    }
+
+    genUniqueVertices_1(epsilon = _v3_epsilon) {
         let numVert = this.numFloats / 3;
         let curVert = v3_new();
         this.uniques = [];
@@ -410,9 +457,43 @@ class E3D_mesh {
                 this.indices[i] = this.uniques.length-1;
             } 
         }
+    }
 
-        this.uniquesDone = true;
-        log(this.uniques.length + " uniques out of " + numVert + " raw vertices. ");
+    genUniqueVertices_2(epsilon = _v3_epsilon) {
+        let numVert = this.numFloats / 3;
+        let curVert = v3_new();
+        this.uniques = [];
+        this.indices = [];
+        this.reverseIndices = [];
+        this.reverseTriangles = [];
+        // TODO v3:
+        // find bounding box
+        // sort by largest axis
+        // walk along sorted vertices and test/regroup per delta < epsilon
+        // { px py pz dot nx ny nz cr cg cb ti } 
+
+        for (var i = 0; i < numVert; ++i) {
+            var unique = true;
+            var curTri = Math.floor(i / 3);
+
+            v3_val_res(curVert, this.positions[(i * 3)], this.positions[(i * 3) + 1], this.positions[(i * 3) + 2] );
+            for (var j = 0; j < this.uniques.length; ++j) {
+                if (v3_equals(this.uniques[j], curVert, epsilon)) {
+                    unique = false;
+                    this.indices[i] = j;
+                    this.reverseTriangles[j].push(curTri); // append new triangle index
+                    break;
+                }
+            }
+            if (unique) { 
+                this.uniques.push(v3_clone(curVert));
+                this.reverseIndices.push(i);
+                this.indices[i] = this.uniques.length-1;
+                this.reverseTriangles.push([ curTri ] ); // start triangle index array for this unique vertex
+            } 
+        }
+
+
     }
 
     removeArealessTriangles(epsilon = _v3_epsilon) {
@@ -484,12 +565,19 @@ class E3D_mesh {
     }
 
 
-    genEdges() {
 
+    genEdges() {
+        this.genEdges_1();
+        //this.genEdges_2();
+
+        this.edgesDone = true;
+        log("edges: " + this.edges.length);
+    }
+    genEdges_1() {
         if (!this.uniquesDone) this.genUniqueVertices();
 
-        this.edges = []; // of { done, index1, index2, normal1, normal2, index3a, index3b } 
-
+        this.edges = []; // of { done, index1, index2, normal1, normal2 } 
+        
         // foreach face
         for (var i = 0; i < this.indices.length / 3; ++i) { 
 
@@ -569,15 +657,162 @@ class E3D_mesh {
                  }
                 );
             }
-
         }
-
-
-        this.edgesDone = true;
-        log("edges: " + this.edges.length);
     }
 
+    genEdges_2() {
+        if (!this.uniquesDone) this.genUniqueVertices();
 
+        this.edges = []; // of { done, index1, index2, normal1, normal2 } 
+        // for a closed hull theres is (numFaces * 3 / 2 edges), each face has 3 edges, each edges is shared by 2 faces
+
+        //sanity checks
+        var i1count = 0;
+        var i2count = 0;
+        var i3count = 0;
+        var vCount = 0;
+        var eCount = 0;
+        var vSet = new Set();
+        var vMap = new Map();
+
+        // for each unique vertex
+        for (var uIndex = 0; uIndex < this.uniques.length; ++uIndex) {
+            vSet.clear();
+            var origIndex = this.reverseIndices[uIndex];
+
+            // for each triangle attached to this unique vertex
+            for (var tIndex = 0; tIndex < this.reverseTriangles[uIndex].length; ++tIndex) {
+                vCount++;
+                // get the at least 2 edges of the face connected to this unique vertex
+                var baseIndex = this.reverseTriangles[uIndex][tIndex] * 3;
+                var index1 = baseIndex + 0;
+                var index2 = baseIndex + 1;
+                var index3 = baseIndex + 2;
+                // if index != uIndex and index > uIndex
+                if (index1 > origIndex) {
+                    i1count++;
+                    vSet.add(index1);
+                    if (vMap.has(index1)) {
+                        vMap.get(index1).b = baseIndex;
+                    } else vMap.set(index1, {a: baseIndex, b:null});
+                } 
+                if (index2 > origIndex) {
+                    i2count++;
+                    vSet.add(index2);
+                    if (vMap.has(index2)) {
+                        vMap.get(index2).b = baseIndex;
+                    } else vMap.set(index2, {a: baseIndex, b:null});
+                } 
+                if (index3 > origIndex) {
+                    i3count++;
+                    vSet.add(index3);
+                    if (vMap.has(index3)) {
+                        vMap.get(index3).b = baseIndex;
+                    } else vMap.set(index3, {a: baseIndex, b:null});
+                }
+            }
+
+            eCount += vSet.size;
+            vSet.forEach((e) => {
+                var tris = vMap.get(e);
+                if (tris.b == null) {
+                    //orphan edge
+                    var ai = tris.a * 9;
+                    this.edges.push({
+                        done : false,
+                        index1 : origIndex,
+                        index2 : e,
+                        normal1 : v3_val_new(this.normals[ai + 0], this.normals[ai + 1], this.normals[ai + 2]),
+                        normal2 : v3_new()
+                        });
+                } else {
+                    //complete edge
+                    var ai = tris.a * 1;
+                    var bi = tris.b * 1;
+                    this.edges.push({
+                        done : true,
+                        index1 : origIndex,
+                        index2 : e,
+                        normal1 : v3_avg2normalized_new((this.getVertex(ai + 0)).n, this.getVertex(ai + 1).n, this.getVertex(ai + 2).n),
+                        normal2 : v3_avg2normalized_new((this.getVertex(bi + 0)).n, this.getVertex(bi + 1).n, this.getVertex(bi + 2).n)
+                        });
+                    }
+            });
+        }
+
+        // th should be 28314
+        console.log("th " + (this.indices.length / 2) + " e " + eCount + " i1 " + i1count + " i2 " + i2count + " i3 " + i3count + " E " + (i1count + i2count + i3count) + " v " + vCount);
+    }
+
+    genBoundingBox() {
+        this.bbMax = [-Infinity, -Infinity, -Infinity];
+        this.bbMin = [ Infinity,  Infinity,  Infinity];
+        this.bbLength = -1.0;
+        var v = v3_new();
+        for (var i = 0; i < this.positions.length / 3; ++i) {
+            v[0] = this.positions[i * 3 + 0];
+            v[1] = this.positions[i * 3 + 1];
+            v[2] = this.positions[i * 3 + 2];
+
+            var l = v3_lengthsquared(v);
+            if (l > this.bbLength) this.bbLength = l;
+
+            if (v[0] < this.bbMin[0]) this.bbMin[0] = v[0];
+            if (v[1] < this.bbMin[1]) this.bbMin[1] = v[1];
+            if (v[2] < this.bbMin[2]) this.bbMin[2] = v[2];
+
+            if (v[0] > this.bbMax[0]) this.bbMax[0] = v[0];
+            if (v[1] > this.bbMax[1]) this.bbMax[1] = v[1];
+            if (v[2] > this.bbMax[2]) this.bbMax[2] = v[2];
+        }
+        this.bbLength = Math.sqrt(this.bbLength);
+        this.bbDone = true;
+    }
+
+    sortVertices() {
+        // TODO rename as genUniquesBySorting
+        // to optimize unique vertices
+        // track from which triangle the vertex was from
+        // sort
+        // regroup uniques and their triangles
+        var n = v3_normalize_new([1, 1, 1]);
+
+        var a = [];
+        // unpack
+        for (var i = 0; i < this.positions.length / 3; ++i) a.push( [
+                this.positions[i * 3 + 0], 
+                this.positions[i * 3 + 1], 
+                this.positions[i * 3 + 2],
+                0,
+                this.normals[i * 3 + 0],
+                this.normals[i * 3 + 1],
+                this.normals[i * 3 + 2],
+                this.colors[i * 3 + 0],
+                this.colors[i * 3 + 1],
+                this.colors[i * 3 + 2]
+            ]);
+
+        // "pre memoize"
+       for (var i = 0; i < a.length; ++i) a[i][3] = v3_dot(a[i], n);
+
+        a = a.sort( (v1, v2) => (v1[2] - v2[2]) );
+
+        // unpack
+        this.positions = [];
+        this.normals = [];
+        this.colors = [];
+        for (var i = 0; i < a.length; ++i) {
+            this.positions.push(a[i][0]);
+            this.positions.push(a[i][1]);
+            this.positions.push(a[i][2]);
+            this.normals.push(a[i][4]);
+            this.normals.push(a[i][5]);
+            this.normals.push(a[i][6]);
+            this.colors.push(a[i][7]);
+            this.colors.push(a[i][8]);
+            this.colors.push(a[i][9]);
+        }    
+    }
     
 // Mesh creation methods
 

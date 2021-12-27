@@ -43,7 +43,7 @@ Current project state is available for testing [here](https://m4nusky.com/projec
 Current work-in-progress and next steps
 ----------
 ### --ver5:
-- flatten engine to reduce nested calls and object hierarchy walking
+- flatten engine to reduce nested calls and object hierarchy depth
 - extract all "DEV" stuff to a debug class
 - loader for all the required scripts
     - script list

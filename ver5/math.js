@@ -692,6 +692,50 @@ function v3_avg2_res(res, a, b) {
     res[2] = (a[2] + b[2]) / 2.0;
 }
 
+
+// Normalized Average of 2 v3
+function v3_avg2normalized_new(a, b) {
+    var x = (a[0] + b[0]) / 2.0;
+    var y = (a[1] + b[1]) / 2.0;
+    var z = (a[2] + b[2]) / 2.0;
+    var l = x * x + y * y + z * z;
+    if (l > 0.0) {
+        l = Math.sqrt(l);
+        return [ 
+            x / l,
+            y / l,
+            z / l 
+        ];
+    } else return [0, 0, 0];
+}
+
+function v3_avg2normalized_mod(a, b) {
+    a[0] = (a[0] + b[0]) / 2.0;
+    a[1] = (a[1] + b[1]) / 2.0;
+    a[2] = (a[2] + b[2]) / 2.0;
+    var l = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
+    if (l > 0.0) {
+        l = Math.sqrt(l);
+        a[0] /= l;
+        a[1] /= l;
+        a[2] /= l;
+    } else a = [0, 0, 0];
+}
+
+function v3_avg2normalized_res(res, a, b) {
+    res[0] = (a[0] + b[0]) / 2.0;
+    res[1] = (a[1] + b[1]) / 2.0;
+    res[2] = (a[2] + b[2]) / 2.0;
+    var l = res[0] * res[0] + res[1] * res[1] + res[2] * res[2];
+    if (l > 0.0) {
+        l = Math.sqrt(l);
+        res[0] /= l;
+        res[1] /= l;
+        res[2] /= l;
+    } else res = [0, 0, 0];
+}
+
+
 // Average of 3 v3
 function v3_avg3_mod(a, b, c) {
     a[0] = (a[0] + b[0] + c[0]) / 3.0;

@@ -4,6 +4,8 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
+
         {
             "type": "chrome",
             "request": "launch",
@@ -37,6 +39,13 @@
             "request": "launch",
             "name": "Launch ver5demo5",
             "url": "http://localhost:8080/ver5demo5.html",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch prop1",
+            "url": "http://localhost:8080/ver5prop1.html",
             "webRoot": "${workspaceFolder}"
         }
     ]
