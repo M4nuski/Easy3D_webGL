@@ -229,6 +229,9 @@ class E3D_entity {
     clear() {
         this.numElements = 0;
         this.dataContentChanged = true;
+        
+        this.numStrokeElements = 0;
+        this.drawStrokes = false;
 
         this.isCollisionSource = false;
         this.isCollisionTarget = false;

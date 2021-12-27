@@ -427,15 +427,15 @@ class E3D_mesh {
     }
 
     genUniqueVertices(epsilon = _v3_epsilon) {
-        this.genUniqueVertices_1(epsilon);
-        //this.genUniqueVertices_2(epsilon);
+        //this.genUniqueVertices_1(epsilon);
+        this.genUniqueVertices_2(epsilon);
 
         this.uniquesDone = true;
         log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
     }
 
     genUniqueVertices_1(epsilon = _v3_epsilon) {
-        let numVert = this.numFloats / 3;
+        let numVert = Math.floor(this.numFloats / 3);
         let curVert = v3_new();
         this.uniques = [];
         this.indices = [];
@@ -460,40 +460,52 @@ class E3D_mesh {
     }
 
     genUniqueVertices_2(epsilon = _v3_epsilon) {
-        let numVert = this.numFloats / 3;
-        let curVert = v3_new();
         this.uniques = [];
         this.indices = [];
         this.reverseIndices = [];
-        this.reverseTriangles = [];
-        // TODO v3:
-        // find bounding box
-        // sort by largest axis
-        // walk along sorted vertices and test/regroup per delta < epsilon
-        // { px py pz dot nx ny nz cr cg cb ti } 
+      //  this.reverseTriangles = [];
 
-        for (var i = 0; i < numVert; ++i) {
-            var unique = true;
-            var curTri = Math.floor(i / 3);
+        //pack
+        var data = [];        
+        for (var i = 0; i < this.positions.length / 3; ++i) data.push( [
+            this.positions[i * 3 + 0],  //0
+            this.positions[i * 3 + 1], 
+            this.positions[i * 3 + 2],
+            0,                          //3
+            i,                          //4 original vertex indice
+            true,                       //5 isUnique
+            0,                          //6 index to sorted unique
+            0                           //7 index to extracted unique
+        ]);
+            
+        var n = v3_normalize_new([1, 1, 1]);
+        // TODO optimize with bounding box scale
 
-            v3_val_res(curVert, this.positions[(i * 3)], this.positions[(i * 3) + 1], this.positions[(i * 3) + 2] );
-            for (var j = 0; j < this.uniques.length; ++j) {
-                if (v3_equals(this.uniques[j], curVert, epsilon)) {
-                    unique = false;
-                    this.indices[i] = j;
-                    this.reverseTriangles[j].push(curTri); // append new triangle index
-                    break;
+        for (var i = 0; i < data.length; ++i) data[i][3] = v3_dot(data[i], n);
+        data = data.sort( (v1, v2) => (v1[3] - v2[3]) );
+
+        // walk the array and flag vertex that are not unique anymore
+        for (var i = 0; i < data.length-1; ++i) if (data[i][5]) {
+            data[i][6] = i;
+            var j = i + 1;
+            while ((j < data.length) && (Math.abs(data[i][3] - data[j][3]) < epsilon)) {
+                if (v3_equals(data[i], data[j], epsilon)) {
+                    data[j][5] = false;
+                    data[j][6] = i;
                 }
+                ++j;
             }
-            if (unique) { 
-                this.uniques.push(v3_clone(curVert));
-                this.reverseIndices.push(i);
-                this.indices[i] = this.uniques.length-1;
-                this.reverseTriangles.push([ curTri ] ); // start triangle index array for this unique vertex
-            } 
         }
 
-
+        // extract unique vertex and assign indices
+        for (var i = 0; i < data.length; ++i) {
+            if (data[i][5]) {
+                this.uniques.push(v3_clone(data[i]));
+                data[i][7] = this.uniques.length - 1;
+                this.reverseIndices.push(data[i][4]);
+            }
+            this.indices[data[i][4]] = data[data[i][6]][7];
+        }
     }
 
     removeArealessTriangles(epsilon = _v3_epsilon) {
@@ -665,6 +677,20 @@ class E3D_mesh {
 
         this.edges = []; // of { done, index1, index2, normal1, normal2 } 
         // for a closed hull theres is (numFaces * 3 / 2 edges), each face has 3 edges, each edges is shared by 2 faces
+        // struct with all triangles and their adjascent triangles index
+        // each triangle has its mean normal, and the index of the 3 other adjascent triangles
+
+        var triangles = [];
+        for (var i = 0; i < this.indices.length; i = i + 3) {
+            triangles.push( { 
+                uv1i = this.indices[i + 0], //unique vertices index
+                uv2i = this.indices[i + 1], 
+                uv3i = this.indices[i + 2],
+                n = 0,
+                t1i = -1, //neighbour triangles indices
+                t2i = -1,
+                t3i = -1 } );
+        }
 
         //sanity checks
         var i1count = 0;
@@ -769,51 +795,8 @@ class E3D_mesh {
         this.bbDone = true;
     }
 
-    sortVertices() {
-        // TODO rename as genUniquesBySorting
-        // to optimize unique vertices
-        // track from which triangle the vertex was from
-        // sort
-        // regroup uniques and their triangles
-        var n = v3_normalize_new([1, 1, 1]);
 
-        var a = [];
-        // unpack
-        for (var i = 0; i < this.positions.length / 3; ++i) a.push( [
-                this.positions[i * 3 + 0], 
-                this.positions[i * 3 + 1], 
-                this.positions[i * 3 + 2],
-                0,
-                this.normals[i * 3 + 0],
-                this.normals[i * 3 + 1],
-                this.normals[i * 3 + 2],
-                this.colors[i * 3 + 0],
-                this.colors[i * 3 + 1],
-                this.colors[i * 3 + 2]
-            ]);
 
-        // "pre memoize"
-       for (var i = 0; i < a.length; ++i) a[i][3] = v3_dot(a[i], n);
-
-        a = a.sort( (v1, v2) => (v1[2] - v2[2]) );
-
-        // unpack
-        this.positions = [];
-        this.normals = [];
-        this.colors = [];
-        for (var i = 0; i < a.length; ++i) {
-            this.positions.push(a[i][0]);
-            this.positions.push(a[i][1]);
-            this.positions.push(a[i][2]);
-            this.normals.push(a[i][4]);
-            this.normals.push(a[i][5]);
-            this.normals.push(a[i][6]);
-            this.colors.push(a[i][7]);
-            this.colors.push(a[i][8]);
-            this.colors.push(a[i][9]);
-        }    
-    }
-    
 // Mesh creation methods
 
 

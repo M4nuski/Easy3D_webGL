@@ -552,6 +552,7 @@ function genProp(){
     if (showHub) meshLoader.pushTube(_v3_null, _v3_null, hubBoreRadius, maxWidth / 2, maxHeight, 64, _v3_darkgray, true, true);
 
     // Load data from mesh to entity
+    entity.clear();
     meshLoader.addModelData(entity);
 
     // Generate profiles
@@ -1047,18 +1048,18 @@ function cleanMesh() {
    // console.log("t sort vertices : " + (et - st));
 
     st = performance.now();
-    meshLoader.genUniqueVertices(); //1.7
+    meshLoader.genUniqueVertices(); //1.7 for 9440 uniques
     et = performance.now();
     console.log("t uniques: " + (et - st));
     st = performance.now();
-    meshLoader.genEdges(); //4.4
+    meshLoader.genEdges(); //4.4 for 28314 edges
     et = performance.now();
     console.log("t edges: " + (et - st)); // 28314 edges
 
     entity.clear();
     meshLoader.addModelData(entity);
     st = performance.now();
-    meshLoader.addStrokeData(entity);
+    meshLoader.addStrokeData(entity);   // 12.9 for 850 strokes
     et = performance.now();
     console.log("t add stroke data: " + (et - st));
 }
