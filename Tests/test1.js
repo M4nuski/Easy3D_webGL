@@ -2154,6 +2154,75 @@ t.test16 = function() {
 }
 
 
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}  
+
+const alphabet0 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", 
+"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+"-", "_", "."];
+
+t.test17 = function() {
+
+    const numIter = 10000;
+    const strLenMin = 2;
+    const strLenMax = 256;
+    const utf8Max = 127-32;// 0x27BF;
+  
+    addLine("Num iter: " + numIter);
+
+    var currLen = strLenMin;
+    let i0 = new Array(numIter);
+    let s0 = new Array(numIter);
+
+    while (currLen <= strLenMax) {
+        addLine("currLen: " + currLen);
+        for (var i = 0; i < numIter; ++i) {
+            i0[i] = new Array(currLen);
+            for (var j = 0; j < currLen; ++j) i0[i][j] = getRandomInt(utf8Max) + 32;
+        }
+        for (var i = 0; i < numIter; ++i) s0[i] = String.fromCharCode(...i0[i]);
+
+        var accum = 0;
+        var dt = performance.now();
+        for (let i = 0; i < numIter; ++i) {
+            var s = "";
+            for (var j = 0; j < s0[i].length; ++j) if (alphabet0.includes(s0[i][j])) s += s0[i][j];
+            accum += s.length;
+        }
+        var et = performance.now();
+        addLine("if (alphabet0.includes(s[i][j])) s += s[i][j]: " + (et-dt));
+        currLen = currLen * 2;
+    }
+
+    currLen = strLenMin;
+    while (currLen <= strLenMax) {
+        addLine("currLen: " + currLen);
+        for (var i = 0; i < numIter; ++i) {
+            i0[i] = new Array(currLen);
+            for (var j = 0; j < currLen; ++j) i0[i][j] = getRandomInt(utf8Max) + 32;
+        }
+        for (var i = 0; i < numIter; ++i) s0[i] = String.fromCharCode(...i0[i]);
+
+        var accum = 0;
+        var dt = performance.now();
+        for (let i = 0; i < numIter; ++i) {
+            var s = Array.from(s0[i]).filter((c) => alphabet0.includes(c)).join("");
+            accum += s.length;
+        }
+        var et = performance.now();
+        addLine("from filter join: " + (et-dt));
+        currLen = currLen * 2;
+    }
+
+
+
+    addLine("");
+    addLine("End Test 17");
+}
+
+
 
 
 
