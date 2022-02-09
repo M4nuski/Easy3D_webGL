@@ -463,7 +463,7 @@ class E3D_mesh {
         this.uniques = [];
         this.indices = [];
         this.reverseIndices = [];
-      //  this.reverseTriangles = [];
+        this.reverseTriangles = [];
 
         //pack
         var data = [];        
@@ -503,9 +503,18 @@ class E3D_mesh {
                 this.uniques.push(v3_clone(data[i]));
                 data[i][7] = this.uniques.length - 1;
                 this.reverseIndices.push(data[i][4]);
+                this.reverseTriangles.push( [ Math.floor(data[i][4] / 3) ] );
+            } else {
+                this.reverseTriangles[data[data[i][6]][7]].push( Math.floor(data[i][4] / 3) );
             }
             this.indices[data[i][4]] = data[data[i][6]][7];
         }
+
+     //   // store TRIANGLE indices for each unique vertex
+     //   for (var i = 0; i < this.uniques.length; ++i) this.reverseTriangles.push( [] ); 
+     //   for (var i = 0; i < data.length; ++i) this.reverseTriangles[data[i][7]].push( Math.floor(data[i][4] / 3) );
+       
+
     }
 
     removeArealessTriangles(epsilon = _v3_epsilon) {
@@ -514,7 +523,7 @@ class E3D_mesh {
         var v3 = v3_new();
         var count = 0;
         var NumTriangles = this.numFloats / 9;
-        // create face normals
+
         for (var i = NumTriangles-1; i >= 0; --i) { // for each face
             v3_val_res(v1, this.positions[(i * 9) + 0], this.positions[(i * 9) + 1], this.positions[(i * 9) + 2] );
             v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5] );
@@ -672,6 +681,10 @@ class E3D_mesh {
         }
     }
 
+    _findIn3Array(a1, a2, a3) {
+        return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) );
+    }
+
     genEdges_2() {
         if (!this.uniquesDone) this.genUniqueVertices();
 
@@ -682,15 +695,36 @@ class E3D_mesh {
 
         var triangles = [];
         for (var i = 0; i < this.indices.length; i = i + 3) {
+            var nv1 = this.getUniqueNormal(i + 0);
+            var nv2 = this.getUniqueNormal(i + 1);
+            var nv3 = this.getUniqueNormal(i + 2);
             triangles.push( { 
-                uv1i = this.indices[i + 0], //unique vertices index
-                uv2i = this.indices[i + 1], 
-                uv3i = this.indices[i + 2],
-                n = 0,
-                t1i = -1, //neighbour triangles indices
-                t2i = -1,
-                t3i = -1 } );
+                uv1i : this.indices[i + 0], //unique vertices index
+                uv2i : this.indices[i + 1], 
+                uv3i : this.indices[i + 2],
+                n : v3_avg3normalized_new(nv1, nv2, nv3),
+                t1i : -1, //neighbour triangles indices
+                t2i : -1,
+                t3i : -1 } );
         }
+
+        // edge12done
+        // edge23done
+        // edge31done
+        // t1done
+        // t2done
+        // t3done
+
+        // set neighbourg triangles indices
+        // if 2 unique vertex indices are shared.
+
+        for (var i = 0; i < triangles.length; ++i) {
+//            var vert1AdjTriangles = _findIn3Array(this.reverseTriangles[], this.reverseTriangles[], this.reverseTriangles[]);
+  //          var vert2AdjTriangles = _findIn3Array(this.reverseTriangles[], this.reverseTriangles[], this.reverseTriangles[]);
+    //        var vert3AdjTriangles = _findIn3Array(this.reverseTriangles[], this.reverseTriangles[], this.reverseTriangles[]);
+        }
+
+
 
         //sanity checks
         var i1count = 0;
@@ -816,6 +850,21 @@ class E3D_mesh {
                 };
     }
 
+    getNormal(vertex_index) {
+        if ((vertex_index+1) * 3 > this.numFloats) return [0, 0, 0];
+        return [this.normals[vertex_index * 3 + 0],   this.normals[vertex_index * 3 + 1],   this.normals[vertex_index * 3 + 2] ];
+    }
+
+    getUniqueNormal(unique_vertex_index) {
+        if (unique_vertex_index >= this.uniques.length) return false;
+        return this.getNormal(this.reverseIndices[unique_vertex_index]);
+    }
+
+    getUniqueVertex(unique_vertex_index) {
+        if (unique_vertex_index >= this.uniques.length) return false;
+        return this.getVertex(this.reverseIndices[unique_vertex_index]);
+    }
+
     pushTriangle(p1, p2, p3, n1, n2, n3, c1, c2, c3) {
         this.pushVertex(p1, n1, c1);
         this.pushVertex(p2, n2, c2);
@@ -833,9 +882,9 @@ class E3D_mesh {
     getUniqueTriangle(triangle_index) {
         if ((triangle_index+1) * 3 > this.uniques.length) return false;
         return {
-            p1: this.uniques[this.indices[triangle_index * 3 + 0]],
-            p2: this.uniques[this.indices[triangle_index * 3 + 1]],
-            p3: this.uniques[this.indices[triangle_index * 3 + 2]]
+            p1: this.getUniqueVertex(triangle_index * 3 + 0),
+            p2: this.getUniqueVertex(triangle_index * 3 + 1),
+            p3: this.getUniqueVertex(triangle_index * 3 + 2)
         }
     }
     
