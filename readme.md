@@ -9,7 +9,7 @@ Current project state is available for testing [here](https://m4nusky.com/projec
 ### /ver5
 - [ver5demo1.html](https://m4nusky.com/projects/Easy3D_webGL/ver5demo1.html) basic test page, skeleton html, auto-setup
 - [ver5demo2.html](https://m4nusky.com/projects/Easy3D_webGL/ver5demo2.html) test page with dedicated target div, auto-setup
-- [ver5demo3.html](https://m4nusky.com/projects/Easy3D_webGL/ver5demo3.html) demo for full screen and pointer lock
+- [ver5demo3.html](https://m4nusky.com/projects/Easy3D_webGL/ver5demo3.html) demo for full screen and/or pointer lock
 - [ver5demo4.html](https://m4nusky.com/projects/Easy3D_webGL/ver5demo4.html) primitive mesh generation with random parameters
 - [ver5demo5.html](https://m4nusky.com/projects/Easy3D_webGL/ver5demo5.html) various basic GLSL shaders demo
 ### current WIP
@@ -20,7 +20,7 @@ Current project state is available for testing [here](https://m4nusky.com/projec
 - [ver4cellshader.html](https://m4nusky.com/projects/Easy3D_webGL/ver4/ver4cellshader.html): toon/cell shading render demo
 - [ver4fullscreen.html](https://m4nusky.com/projects/Easy3D_webGL/ver4/ver4fullscreen.html): pointer lock, full screen demo
 - [ver4stl.html](https://m4nusky.com/projects/Easy3D_webGL/ver4/ver4stl.html): binary STL loader/viewer app 
-- [ver4physic.html](https://m4nusky.com/projects/Easy3D_webGL/ver4/ver4physic.html): Collisiton Detection and Physics demo
+- [ver4physic.html](https://m4nusky.com/projects/Easy3D_webGL/ver4/ver4physic.html): Collision Detection and Physics demo
 - [ver4maze.html](https://m4nusky.com/projects/Easy3D_webGL/ver4/ver4maze.html): Ball in Maze game, game loop and logic, pseudo-random maze generator.
 
 ### Random project that uses the testing framework and game loop 
@@ -43,7 +43,7 @@ Current project state is available for testing [here](https://m4nusky.com/projec
 Current work-in-progress and next steps
 ----------
 ### --ver5:
-- flatten engine to reduce nested calls and object hierarchy depth
+- flatten engine to reduce nested objects/structures depth (objects of arrays of objects of arrays)
 - extract all "DEV" stuff to a debug class
 - loader for all the required scripts
     - script list
@@ -56,8 +56,11 @@ Current work-in-progress and next steps
     - test progressive approximation instead of interpolation
     - Basic Physics (bounce, slide, stick) as body data attached to entity
     - Improved Physics (mass, moment of rotation etc)
+- optimizations
+    - new nlogn(O) algorithm instead of (O)n^2 for unique vertex search
+    - new algorithm for edge finding and stroke generation
 - textures
-    - convert all mesh, loader, generators, to convert colors to LUT-colors
+    - convert all mesh, loader, generators, to textures and convert colors to LUT-colors
     - convert all shader and scenes to LUT colors and textures
 - Regroup vertexArrays for mesh data in an interleaved array
     - in scene renderer
@@ -70,6 +73,9 @@ Current work-in-progress and next steps
 - Evaluate value of render culling on mobile
     - Z position
     - frustum
+- Coordinate conversion
+    - World to screen
+    - Screen to world
 
 ### --ver6
 - Other type of physics mechanic for controls. (chase camera/3rd person with spring and hit test)
