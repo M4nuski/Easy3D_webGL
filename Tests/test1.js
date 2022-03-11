@@ -956,29 +956,70 @@ t.test8 = function() {
         idx[i] = Math.floor(Math.random()*3);
     }
 
-    var s = [];
-  //  var a1 = [1, 1, 1];
-  //  var a2 = [2, 2, 2];
+    
+
 
     let dt = performance.now();
-    for (let i = 0; i < numtst; ++i) {
-        s.push([1,2,3]);
-    }
+    var s = [];
+    for (let i = 0; i < numtst; ++i) s.push([1,2,3]);
     let et = performance.now();
-    addLine("push([1, 1, 1]) : " + (et-dt));
+    addLine("=[];push : " + (et-dt));
 
-
-    s = [];
-    var idx = 0;
     dt = performance.now();
+    s = Array(numtst);
     for (let i = 0; i < numtst; ++i) {
-        s[idx] = [1, 2, 3];
-        idx++
+        s[i] = [1, 2, 3];
     }
     et = performance.now();
-    addLine("holed idx++: " + (et-dt));
+    addLine("=Array(n);a[i] = [...] : " + (et-dt));
 
-    idx = 0;
+    dt = performance.now();
+    s = [];
+    for (let i = 0; i < numtst; ++i) {
+        s[i] = [1, 2, 3];
+    }
+    et = performance.now();
+    addLine("=[];a[i] = [...] : " + (et-dt));
+
+    dt = performance.now();
+    s = Array();
+    for (let i = 0; i < numtst; ++i) {
+        s.push( [1, 2, 3] );
+    }
+    et = performance.now();
+    addLine("=Array();a.push : " + (et-dt));
+
+    dt = performance.now();
+    s = [];
+    for (let i = 0; i < numtst; ++i) {
+        s[i] = [1, 2, 3];
+    }
+    et = performance.now();
+    addLine("=[];a[i] = [...] : " + (et-dt));
+
+    dt = performance.now();
+    s = Array(numtst);
+    for (let i = 0; i < numtst; ++i) {
+        s[i] = [1, 2, 3];
+    }
+    et = performance.now();
+    addLine("=Array(n);a[i] = [...] : " + (et-dt));
+
+    dt = performance.now();
+    var s = [];
+    for (let i = 0; i < numtst; ++i) s.push([1,2,3]);
+    et = performance.now();
+    addLine("=[];push : " + (et-dt));
+
+    dt = performance.now();
+    s = Array();
+    for (let i = 0; i < numtst; ++i) {
+        s.push( [1, 2, 3] );
+    }
+    et = performance.now();
+    addLine("=Array();a.push : " + (et-dt));
+
+    var idx = 0;
     var inc = 1000000;
     s = Array(inc);
     dt = performance.now();

@@ -70,7 +70,8 @@ if (btn) btn.addEventListener("click", x => {
 
 
     if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-    if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.5); else entity.drawStrokes = false;
+    meshLoader.genUniqueVertices(0.01);
+    if (check_outline.checked) meshLoader.addStrokeData(entity, true, -0.1); else entity.drawStrokes = false;
     meshLoader.addModelData(entity);
     E3D_updateEntityData(entity);
 
@@ -176,7 +177,7 @@ if (btn) btn.addEventListener("click", x =>  {
     meshLoader.pushTorus(_v3_origin, _v3_null, radius, sectionRadius, sections, sides);
     
     if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i); 
-    if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.99999);       
+    if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.9999);       
     if (check_smooth.checked) meshLoader.smoothNormals(0.2);
 
     meshLoader.addModelData(entity);

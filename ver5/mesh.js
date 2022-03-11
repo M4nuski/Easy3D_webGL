@@ -6,6 +6,24 @@
 
 
 var _mesh_prim_mat = m4_new();
+function _findIn2Array(a1, a2) {
+    return a1.filter( (elem) => a2.includes(elem) );
+}
+function _findNotIn2Array(a1, a2) {
+    return a1.filter( (elem) => !a2.includes(elem) );
+}
+function _findIn3Array(a1, a2, a3) {
+    return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) );
+}
+function _findNotIn3Array(a1, a2, a3) {
+    return a1.filter( (elem) => !a2.includes(elem) && !a3.includes(elem) );
+}
+function _findIn2ArrayExcept(a1, a2, exception) {
+    return a1.filter( (elem) => a2.includes(elem) && (elem != exception) );
+}
+function _findIn3ArrayExcept(a1, a2, a3, exception) {
+    return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) && (elem != exception) );
+}
 
 
 
@@ -101,7 +119,7 @@ class E3D_mesh {
         
         var strokeList = [];
         for (var i = 0; i < this.edges.length; ++i) if ( (addOrphanEdges && !this.edges[i].done) ||
-            (this.edges[i].done && (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit)) ) {
+            (this.edges[i].done && (v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit) ) {
             strokeList.push(this.reverseIndices[this.edges[i].index1]);
             strokeList.push(this.reverseIndices[this.edges[i].index2]);
         }
@@ -123,7 +141,7 @@ class E3D_mesh {
         
         var strokeList = [];
         for (var i = 0; i < this.edges.length; ++i) if ( (addOrphanEdges && !this.edges[i].done) ||
-            (this.edges[i].done && (Math.abs(v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit)) ) {
+            (this.edges[i].done && (v3_dot(this.edges[i].normal1, this.edges[i].normal2) < cosineLimit)) ) {
             //strokeList.push(this.reverseIndices[this.edges[i].index1]);
             //strokeList.push(this.reverseIndices[this.edges[i].index2]);
             strokeList.push(this.edges[i].index1);
@@ -171,7 +189,7 @@ class E3D_mesh {
                 v3_avg3_res(centroid1, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index31]);
                 v3_avg3_res(centroid2, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index32]);
                 v3_sub_mod(centroid1, centroid2);
-                
+
                 if (v3_dot(centroid1, this.edges[i].normal2) < -0.001) entity.pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
             }
         }
@@ -588,8 +606,8 @@ class E3D_mesh {
 
 
     genEdges() {
-        this.genEdges_1();
-        //this.genEdges_2();
+        //this.genEdges_1();
+        this.genEdges_2();
 
         this.edgesDone = true;
         log("edges: " + this.edges.length);
@@ -681,10 +699,6 @@ class E3D_mesh {
         }
     }
 
-    _findIn3Array(a1, a2, a3) {
-        return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) );
-    }
-
     genEdges_2() {
         if (!this.uniquesDone) this.genUniqueVertices();
 
@@ -695,113 +709,129 @@ class E3D_mesh {
 
         var triangles = [];
         for (var i = 0; i < this.indices.length; i = i + 3) {
-            var nv1 = this.getUniqueNormal(i + 0);
-            var nv2 = this.getUniqueNormal(i + 1);
-            var nv3 = this.getUniqueNormal(i + 2);
+            //var nv1 = this.getNormal(i + 0);
+            //var nv2 = this.getNormal(i + 1);
+            //var nv3 = this.getNormal(i + 2);
+            var nv1 = this.getPosition(i + 0);
+            var nv2 = this.getPosition(i + 1);
+            var nv3 = this.getPosition(i + 2);
+            var uia =  [ this.indices[i + 0], this.indices[i + 1], this.indices[i + 2] ];
             triangles.push( { 
-                uv1i : this.indices[i + 0], //unique vertices index
-                uv2i : this.indices[i + 1], 
-                uv3i : this.indices[i + 2],
-                n : v3_avg3normalized_new(nv1, nv2, nv3),
-                t1i : -1, //neighbour triangles indices
-                t2i : -1,
-                t3i : -1 } );
+                ui : uia.slice(),
+                n : v3_normal_new(nv1, nv2, nv3), //v3_avg3normalized_new(nv1, nv2, nv3),
+                t1i : _findIn2ArrayExcept(this.reverseTriangles[uia[0]], this.reverseTriangles[uia[1]], Math.floor(i/3)), //neighbour triangles indices
+                t2i : _findIn2ArrayExcept(this.reverseTriangles[uia[1]], this.reverseTriangles[uia[2]], Math.floor(i/3)),
+                t3i : _findIn2ArrayExcept(this.reverseTriangles[uia[2]], this.reverseTriangles[uia[0]], Math.floor(i/3)) } );
         }
 
-        // edge12done
-        // edge23done
-        // edge31done
-        // t1done
-        // t2done
-        // t3done
-
-        // set neighbourg triangles indices
-        // if 2 unique vertex indices are shared.
+        // fill edge data
 
         for (var i = 0; i < triangles.length; ++i) {
-//            var vert1AdjTriangles = _findIn3Array(this.reverseTriangles[], this.reverseTriangles[], this.reverseTriangles[]);
-  //          var vert2AdjTriangles = _findIn3Array(this.reverseTriangles[], this.reverseTriangles[], this.reverseTriangles[]);
-    //        var vert3AdjTriangles = _findIn3Array(this.reverseTriangles[], this.reverseTriangles[], this.reverseTriangles[]);
-        }
+            var usedIndices = new Map();
+            var numOrphan = 0;
 
+            usedIndices.set(triangles[i].ui[0], 0);
+            usedIndices.set(triangles[i].ui[1], 0);
+            usedIndices.set(triangles[i].ui[2], 0);
 
+            // edge with t1
+            if (triangles[i].t1i.length > 0) {
+                if (triangles[i].t1i[0] > i) {
+                    var edgeindices = _findIn2Array( triangles[i].ui, triangles[triangles[i].t1i[0]].ui );
 
-        //sanity checks
-        var i1count = 0;
-        var i2count = 0;
-        var i3count = 0;
-        var vCount = 0;
-        var eCount = 0;
-        var vSet = new Set();
-        var vMap = new Map();
+                    this.edges.push( { done: true,
+                                    normal1: triangles[i].n,
+                                    normal2: triangles[triangles[i].t1i[0]].n,
+                                    index1: edgeindices[0],
+                                    index2: edgeindices[1],
+                                    index31: _findNotIn2Array(edgeindices, triangles[i].ui)[0],
+                                    index32: _findNotIn2Array(edgeindices, triangles[triangles[i].t1i[0]].ui)[0]
+                                    } );
 
-        // for each unique vertex
-        for (var uIndex = 0; uIndex < this.uniques.length; ++uIndex) {
-            vSet.clear();
-            var origIndex = this.reverseIndices[uIndex];
-
-            // for each triangle attached to this unique vertex
-            for (var tIndex = 0; tIndex < this.reverseTriangles[uIndex].length; ++tIndex) {
-                vCount++;
-                // get the at least 2 edges of the face connected to this unique vertex
-                var baseIndex = this.reverseTriangles[uIndex][tIndex] * 3;
-                var index1 = baseIndex + 0;
-                var index2 = baseIndex + 1;
-                var index3 = baseIndex + 2;
-                // if index != uIndex and index > uIndex
-                if (index1 > origIndex) {
-                    i1count++;
-                    vSet.add(index1);
-                    if (vMap.has(index1)) {
-                        vMap.get(index1).b = baseIndex;
-                    } else vMap.set(index1, {a: baseIndex, b:null});
-                } 
-                if (index2 > origIndex) {
-                    i2count++;
-                    vSet.add(index2);
-                    if (vMap.has(index2)) {
-                        vMap.get(index2).b = baseIndex;
-                    } else vMap.set(index2, {a: baseIndex, b:null});
-                } 
-                if (index3 > origIndex) {
-                    i3count++;
-                    vSet.add(index3);
-                    if (vMap.has(index3)) {
-                        vMap.get(index3).b = baseIndex;
-                    } else vMap.set(index3, {a: baseIndex, b:null});
+                    usedIndices.set(edgeindices[0], usedIndices.get(edgeindices[0]) + 1);
+                    usedIndices.set(edgeindices[1], usedIndices.get(edgeindices[1]) + 1);
                 }
-            }
+            } else numOrphan++;
 
-            eCount += vSet.size;
-            vSet.forEach((e) => {
-                var tris = vMap.get(e);
-                if (tris.b == null) {
-                    //orphan edge
-                    var ai = tris.a * 9;
-                    this.edges.push({
-                        done : false,
-                        index1 : origIndex,
-                        index2 : e,
-                        normal1 : v3_val_new(this.normals[ai + 0], this.normals[ai + 1], this.normals[ai + 2]),
-                        normal2 : v3_new()
-                        });
-                } else {
-                    //complete edge
-                    var ai = tris.a * 1;
-                    var bi = tris.b * 1;
-                    this.edges.push({
-                        done : true,
-                        index1 : origIndex,
-                        index2 : e,
-                        normal1 : v3_avg2normalized_new((this.getVertex(ai + 0)).n, this.getVertex(ai + 1).n, this.getVertex(ai + 2).n),
-                        normal2 : v3_avg2normalized_new((this.getVertex(bi + 0)).n, this.getVertex(bi + 1).n, this.getVertex(bi + 2).n)
-                        });
-                    }
-            });
+            //edge with t2
+            if (triangles[i].t2i.length > 0) {
+                if (triangles[i].t2i[0] > i) {
+                    var edgeindices = _findIn2Array( triangles[i].ui, triangles[triangles[i].t2i[0]].ui );
+
+                    this.edges.push( { done: true,
+                                    normal1: triangles[i].n,
+                                    normal2: triangles[triangles[i].t2i[0]].n,
+                                    index1: edgeindices[0],
+                                    index2: edgeindices[1],
+                                    index31: _findNotIn2Array(edgeindices, triangles[i].ui)[0],
+                                    index32: _findNotIn2Array(edgeindices, triangles[triangles[i].t2i[0]].ui)[0]
+                                    } );
+
+                    usedIndices.set(edgeindices[0], usedIndices.get(edgeindices[0]) + 1);
+                    usedIndices.set(edgeindices[1], usedIndices.get(edgeindices[1]) + 1);
+                }
+            } else numOrphan++;
+
+            //edge with t3
+            if (triangles[i].t3i.length > 0) {
+                if (triangles[i].t3i[0] > i) {
+                    var edgeindices = _findIn2Array( triangles[i].ui, triangles[triangles[i].t3i[0]].ui );
+
+                    this.edges.push( { done: true,
+                                    normal1: triangles[i].n,
+                                    normal2: triangles[triangles[i].t3i[0]].n,
+                                    index1: edgeindices[0],
+                                    index2: edgeindices[1],
+                                    index31: _findNotIn2Array(edgeindices, triangles[i].ui)[0],
+                                    index32: _findNotIn2Array(edgeindices, triangles[triangles[i].t3i[0]].ui)[0]
+                                    } );
+                    usedIndices.set(edgeindices[0], usedIndices.get(edgeindices[0]) + 1);
+                    usedIndices.set(edgeindices[1], usedIndices.get(edgeindices[1]) + 1);
+                }
+            } else numOrphan++;
+
+            // 1 orphan
+            // [ 2, 1a, 1b ]
+            // edge is between 1a and 1b
+            // 2 orphans
+            // [ 0, 1a, 1b ]
+            // edge1 is between 0 and 1a, and 0 and 1b
+            if (numOrphan == 1) {
+                console.log("1 o");
+                var oIndices = [];
+                for (var k of usedIndices.keys()) if (usedIndices.get(k) == 1) oIndices.push(k);
+                this.edges.push( {  done: false,
+                                    normal1: triangles[i].n,
+                                    normal2: [0, 0, 0],
+                                    index1: oIndices[0],
+                                    index2: oIndices[1],
+                                    index31: -1,
+                                    index32: -1
+                                    } );
+            } else if (numOrphan == 2) {
+                console.log("2 o");
+                var oIndices = [];
+                var summit = 0;
+                for (var k of usedIndices.keys()) if (usedIndices.get(k) == 1) oIndices.push(k); else summit = k;
+                this.edges.push( {  done: false,
+                                    normal1: triangles[i].n,
+                                    normal2: [0, 0, 0],
+                                    index1: oIndices[0],
+                                    index2: k,
+                                    index31: -1,
+                                    index32: -1
+                                    } );   
+                this.edges.push( {  done: false,
+                                    normal1: triangles[i].n,
+                                    normal2: [0, 0, 0],
+                                    index1: k,
+                                    index2: oIndices[1],
+                                    index31: -1,
+                                    index32: -1
+                                    } );  
+            }
         }
 
-        // th should be 28314
-        console.log("th " + (this.indices.length / 2) + " e " + eCount + " i1 " + i1count + " i2 " + i2count + " i3 " + i3count + " E " + (i1count + i2count + i3count) + " v " + vCount);
     }
 
     genBoundingBox() {
@@ -848,6 +878,11 @@ class E3D_mesh {
                  n: [  this.normals[vertex_index * 3 + 0],   this.normals[vertex_index * 3 + 1],   this.normals[vertex_index * 3 + 2]],
                  c: [   this.colors[vertex_index * 3 + 0],    this.colors[vertex_index * 3 + 1],    this.colors[vertex_index * 3 + 2]]
                 };
+    }
+
+    getPosition(vertex_index) {
+        if ((vertex_index+1) * 3 > this.numFloats) return false;
+        return [this.positions[vertex_index * 3 + 0], this.positions[vertex_index * 3 + 1], this.positions[vertex_index * 3 + 2] ];
     }
 
     getNormal(vertex_index) {

@@ -327,7 +327,7 @@ var minEdgeT = 0.125 * 25.4;
 
 var slipAngle = 0;
 var slipRound = true;
-var nBlades = 2;
+var nBlades = 6;
 
 // TODO merge into data object
 var segmentsAngles = [];
@@ -1028,7 +1028,7 @@ function save(filename, data) {
         window.URL.revokeObjectURL(blob);
     }
 }
-
+// TODO remove " = Array, = new Array, .push (when length is known";
 function cleanMesh() {
     var st = performance.now();
     meshLoader.removeArealessTriangles();
@@ -1040,19 +1040,12 @@ function cleanMesh() {
     et = performance.now();
     console.log("t gen bb : " + (et - st));
 
-
- //   st = performance.now();
-   // meshLoader.sortVertices();
-   // rename as genUniquesBySorting();
-  //  et = performance.now();
-   // console.log("t sort vertices : " + (et - st));
-
     st = performance.now();
-    meshLoader.genUniqueVertices(); //1.7 for 9440 uniques
+    meshLoader.genUniqueVertices(); //1.7 for 9440 uniques, now .112 for 2blade, .146 for 4blades, .283 for 6blades
     et = performance.now();
     console.log("t uniques: " + (et - st));
     st = performance.now();
-    meshLoader.genEdges(); //4.4 for 28314 edges
+    meshLoader.genEdges(); //4.4 for 28314 edges, now .121 for 2blades, .218 for 4blades, .216 for 6blades
     et = performance.now();
     console.log("t edges: " + (et - st)); // 28314 edges
 
