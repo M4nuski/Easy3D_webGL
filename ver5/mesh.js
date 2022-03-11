@@ -127,7 +127,7 @@ class E3D_mesh {
         }
         
         if (strokeList.length > 0) {
-            entity.strokeIndexArray = new Uint16Array(strokeList);
+            entity.strokeIndexArray = new Uint32Array(strokeList);
             entity.numStrokeElements = strokeList.length;
             entity.drawStrokes = true;
         }
@@ -151,7 +151,7 @@ class E3D_mesh {
         }
         
         if (strokeList.length > 0) {
-            entity.strokeIndexArray = new Uint16Array(strokeList);
+            entity.strokeIndexArray = new Uint32Array(strokeList);
             entity.numStrokeElements = strokeList.length;
             entity.drawStrokes = true;
         }

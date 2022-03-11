@@ -18,7 +18,7 @@ class E3D_scene { // Basic, single pass
         this.state = E3D_CREATED;
         this.clearColor = v3_clone(clearColor);
         this.strokeColor = v3_clone(_v3_white);
-        this.drawnElemenets = 0;
+        this.drawnElements = 0;
         this.program = null;    
     }
 
@@ -59,7 +59,7 @@ class E3D_scene { // Basic, single pass
                 this.bindAndReset3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
                 this.bindAndReset3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
                 this.bindAndReset3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
-                if (ENTITIES[i].drawStrokes) this.bindAndResetShortIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
+                if (ENTITIES[i].drawStrokes) this.bindAndResetUIntIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
                 ENTITIES[i].dataSizeChanged = false;
 
             } else if (ENTITIES[i].dataContentChanged) { 
@@ -67,7 +67,7 @@ class E3D_scene { // Basic, single pass
                 this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer, ENTITIES[i].vertexArray);
                 this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer, ENTITIES[i].normalArray);    
                 this.bindAndUpdate3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer, ENTITIES[i].colorArray);  
-                if (ENTITIES[i].drawStrokes) this.bindAndUpdateShortIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
+                if (ENTITIES[i].drawStrokes) this.bindAndUpdateUIntIndexBuffer(ENTITIES[i].strokeIndexBuffer, ENTITIES[i].strokeIndexArray);
                 ENTITIES[i].dataContentChanged = false;
 
             } else {
@@ -75,14 +75,14 @@ class E3D_scene { // Basic, single pass
                 this.bind3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer);  
                 this.bind3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer);    
                 this.bind3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer);
-                if (ENTITIES[i].drawStrokes) this.bindShortIndexBuffer(ENTITIES[i].strokeIndexBuffer);
+                if (ENTITIES[i].drawStrokes) this.bindUIntIndexBuffer(ENTITIES[i].strokeIndexBuffer);
             }
 
         } else { // static, bind only
             this.bind3FloatBuffer(this.program.shaderAttributes.aVertexPosition, ENTITIES[i].vertexBuffer);  
             this.bind3FloatBuffer(this.program.shaderAttributes.aVertexNormal, ENTITIES[i].normalBuffer);    
             this.bind3FloatBuffer(this.program.shaderAttributes.aVertexColor, ENTITIES[i].colorBuffer);
-            if (ENTITIES[i].drawStrokes) this.bindShortIndexBuffer(ENTITIES[i].strokeIndexBuffer);
+            if (ENTITIES[i].drawStrokes) this.bindUIntIndexBuffer(ENTITIES[i].strokeIndexBuffer);
         }
     }
 
@@ -92,7 +92,7 @@ class E3D_scene { // Basic, single pass
   
         this.setSceneUniforms();
 
-        this.drawnElemenets = 0;
+        this.drawnElements = 0;
 
         for (let i = 0; i < ENTITIES.length; ++i) {
             if ((ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (E3D_check_entity_visible(i)) ) {
@@ -104,14 +104,14 @@ class E3D_scene { // Basic, single pass
                 if ((ENTITIES[i].drawStrokes) && (this.program.shaderUniforms.uStrokePass != -1)) {
                     CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 1);
                     CONTEXT.uniform3fv(this.program.shaderUniforms.uStrokeColor, this.strokeColor);
-                    CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
+                    CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_INT, 0);  
                     CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
-                    this.drawnElemenets += ENTITIES[i].numStrokeElements;
+                    this.drawnElements += ENTITIES[i].numStrokeElements;
                 }
                 
                 // Draw triangles
                 CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
-                this.drawnElemenets += ENTITIES[i].numElements;
+                this.drawnElements += ENTITIES[i].numElements;
             }
         }
     }
@@ -145,16 +145,16 @@ class E3D_scene { // Basic, single pass
     }
 
 
-    bindShortIndexBuffer(buffer) {
+    bindUIntIndexBuffer(buffer) {
         CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, buffer);
     }
     
-    bindAndUpdateShortIndexBuffer(buffer, data) {
+    bindAndUpdateUIntIndexBuffer(buffer, data) {
         CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, buffer);
         CONTEXT.bufferSubData(CONTEXT.ELEMENT_ARRAY_BUFFER, 0, data);
     }
 
-    bindAndResetShortIndexBuffer(buffer, data) {
+    bindAndResetUIntIndexBuffer(buffer, data) {
         CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, buffer);
         CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, data, CONTEXT.DYNAMIC_DRAW); 
     }
@@ -257,7 +257,7 @@ class E3D_scene_2pass extends E3D_scene {
     }
 
     render() {        
-        this.drawnElemenets = 0;
+        this.drawnElements = 0;
 
         this.visibilityList = [];
         for (let i = 0; i < ENTITIES.length; ++i) this.visibilityList[i] = (ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (E3D_check_entity_visible(i)) ;
@@ -278,14 +278,14 @@ class E3D_scene_2pass extends E3D_scene {
             if ((ENTITIES[i].drawStrokes) && (this.program.shaderUniforms.uStrokePass != -1)) {
                 CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 1);
                 CONTEXT.uniform3fv(this.program.shaderUniforms.uStrokeColor, this.strokeColor);
-                CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
+                CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_INT, 0);  
                 CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
-                this.drawnElemenets += ENTITIES[i].numStrokeElements;
+                this.drawnElements += ENTITIES[i].numStrokeElements;
             }
             
             // Draw triangles
             CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
-            this.drawnElemenets += ENTITIES[i].numElements;
+            this.drawnElements += ENTITIES[i].numElements;
         }
 
 
@@ -304,14 +304,14 @@ class E3D_scene_2pass extends E3D_scene {
             if ((ENTITIES[i].drawStrokes) && (this.program.shaderUniforms.uStrokePass != -1)) {
                 CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 1);
                 CONTEXT.uniform3fv(this.program.shaderUniforms.uStrokeColor, this.strokeColor);
-                CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
+                CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_INT, 0);  
                 CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
-                this.drawnElemenets += ENTITIES[i].numStrokeElements;
+                this.drawnElements += ENTITIES[i].numStrokeElements;
             }
             
             // Draw triangles
             CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
-            this.drawnElemenets += ENTITIES[i].numElements;
+            this.drawnElements += ENTITIES[i].numElements;
         }
     }
 
@@ -347,7 +347,7 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
     }
 
     render() {
-        this.drawnElemenets = 0;
+        this.drawnElements = 0;
 
         this.visibilityList = [];
         for (let i = 0; i < ENTITIES.length; ++i) this.visibilityList[i] = (ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (E3D_check_entity_visible(i)) ;
@@ -371,7 +371,7 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
             
             // Draw Outline extensions
             CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
-            this.drawnElemenets += ENTITIES[i].numElements;
+            this.drawnElements += ENTITIES[i].numElements;
         }
 
         CONTEXT.cullFace(CONTEXT.BACK);
@@ -388,15 +388,15 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
                 
             // Draw
             CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
-            this.drawnElemenets += ENTITIES[i].numElements;
+            this.drawnElements += ENTITIES[i].numElements;
                         
             // Draw line strokes
             if ((ENTITIES[i].drawStrokes) && (this.program2.shaderUniforms.uStrokePass != -1)) {
                 CONTEXT.uniform1i(this.program2.shaderUniforms.uStrokePass, 1);
                 CONTEXT.uniform3fv(this.program2.shaderUniforms.uStrokeColor, this.strokeColor);
-                CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_SHORT, 0);  
+                CONTEXT.drawElements(CONTEXT.LINES, ENTITIES[i].numStrokeElements, CONTEXT.UNSIGNED_INT, 0);  
                 CONTEXT.uniform1i(this.program2.shaderUniforms.uStrokePass, 0);
-                this.drawnElemenets += ENTITIES[i].numStrokeElements;
+                this.drawnElements += ENTITIES[i].numStrokeElements;
             }
         }
     } // render

@@ -128,6 +128,7 @@ function E3D_InitContext(element) {
 
     log("Context Initialization", false);
     CONTEXT = CANVAS.getContext("webgl");
+    CONTEXT.getExtension("OES_element_index_uint");
 
     if (!CONTEXT) {
         log("Unable to initialize WebGL. Your browser or machine may not support it.", false);

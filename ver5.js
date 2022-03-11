@@ -96,7 +96,7 @@ initEngine();
 function updateStatus() {
     usepct_smth = timer.smooth(usepct_smth, timer.usage, 3);
     status.innerHTML = "pX:" + Math.floor(scn.camera.position[0]) + " pY:" + Math.floor(scn.camera.position[1]) + " pZ:" + Math.floor(scn.camera.position[2])+ " rX: " + Math.floor(inputs.rx * RadToDeg) + " rY:"+ Math.floor(inputs.ry * RadToDeg) + "<br />" +
-    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElemenets + "<br />"+
+    " delta:" + timer.delta + "s usage:" + Math.floor(usepct_smth) + "% nElements: " + scn.drawnElements + "<br />"+
     "nAnims: " + animations.length + " nHitTests: " + nHitTest;
 }
 

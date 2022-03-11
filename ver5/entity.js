@@ -80,7 +80,7 @@ class E3D_entity {
             this.colorArray;
         }
 
-        // int16Array
+        // int32Array
         this.strokeIndexArray;
 
         // TODO this.textureID = ""; 
