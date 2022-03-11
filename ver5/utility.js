@@ -1,7 +1,8 @@
 // Easy3D_WebGL
 // String padding and justify methods
 // Polyfill and handler classes for "on pointer hover" css switching supporting mobile touch
-// Emmanuel Charette 2017-2020
+// Array filtering methods
+// Emmanuel Charette 2017-2022
 
 "use strict"
 
@@ -65,4 +66,27 @@ function $remove(elem) {
 
 function $forEach(selector, lambda) {
     document.querySelectorAll(selector).forEach(lambda);
+}
+
+
+
+//Array methods
+
+function findIn2Array(a1, a2) {
+    return a1.filter( (elem) => a2.includes(elem) );
+}
+function findNotIn2Array(a1, a2) {
+    return a1.filter( (elem) => !a2.includes(elem) );
+}
+function findIn3Array(a1, a2, a3) {
+    return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) );
+}
+function findNotIn3Array(a1, a2, a3) {
+    return a1.filter( (elem) => !a2.includes(elem) && !a3.includes(elem) );
+}
+function findIn2ArrayExcept(a1, a2, exception) {
+    return a1.filter( (elem) => a2.includes(elem) && (elem != exception) );
+}
+function findIn3ArrayExcept(a1, a2, a3, exception) {
+    return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) && (elem != exception) );
 }

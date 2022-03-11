@@ -1,30 +1,11 @@
 // Easy3D_WebGL
 // Helper class to parse model data or create primitives, and load them into entities
-// Emmanuel Charette 2017-2020
+// Emmanuel Charette 2017-2022
 
 "use strict"
 
 
 var _mesh_prim_mat = m4_new();
-function _findIn2Array(a1, a2) {
-    return a1.filter( (elem) => a2.includes(elem) );
-}
-function _findNotIn2Array(a1, a2) {
-    return a1.filter( (elem) => !a2.includes(elem) );
-}
-function _findIn3Array(a1, a2, a3) {
-    return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) );
-}
-function _findNotIn3Array(a1, a2, a3) {
-    return a1.filter( (elem) => !a2.includes(elem) && !a3.includes(elem) );
-}
-function _findIn2ArrayExcept(a1, a2, exception) {
-    return a1.filter( (elem) => a2.includes(elem) && (elem != exception) );
-}
-function _findIn3ArrayExcept(a1, a2, a3, exception) {
-    return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) && (elem != exception) );
-}
-
 
 
 class E3D_mesh {
@@ -32,8 +13,6 @@ class E3D_mesh {
     constructor() {
 
         this.file = "";
-
-        this.numFloats = 0;
 
         // raw float data
         this.colors = [];
@@ -73,8 +52,6 @@ class E3D_mesh {
     reset() {
         this.file = "";
 
-        this.numFloats = 0;
-
         this.colors = [];
         this.positions = [];
         this.normals = [];
@@ -102,18 +79,13 @@ class E3D_mesh {
         entity.colorArray = new Float32Array(this.colors);
         entity.normalArray = new Float32Array(this.normals);
 
-        entity.numElements = this.numFloats / 3;
+        entity.numElements = this.positions.length / 3;
 
         entity.dataContentChanged = true;
         entity.dataSizeChanged = true;
     }
 
-    addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8)  {    
-        this.addStrokeData_1(entity, addOrphanEdges, cosineLimit);
-        //this.addStrokeData_2(entity, addOrphanEdges, cosineLimit);
-    }
-
-    addStrokeData_1(entity, addOrphanEdges = false, cosineLimit = 0.8) {
+    addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8) {
         entity.numStrokeElements = 0;
         entity.drawStrokes = false;
         
@@ -135,31 +107,6 @@ class E3D_mesh {
         log((strokeList.length / 2) + " strokes");  
     }
 
-    addStrokeData_2(entity, addOrphanEdges = false, cosineLimit = 0.8) {
-        entity.numStrokeElements = 0;
-        entity.drawStrokes = false;
-        
-        if (!this.edgesDone) this.genEdges();
-        
-        var strokeList = [];
-        for (var i = 0; i < this.edges.length; ++i) if ( (addOrphanEdges && !this.edges[i].done) ||
-            (this.edges[i].done && (v3_dot(this.edges[i].normal1, this.edges[i].normal2) < cosineLimit)) ) {
-            //strokeList.push(this.boundIndices[this.edges[i].index1][0]);
-            //strokeList.push(this.boundIndices[this.edges[i].index2][0]);
-            strokeList.push(this.edges[i].index1);
-            strokeList.push(this.edges[i].index2);
-        }
-        
-        if (strokeList.length > 0) {
-            entity.strokeIndexArray = new Uint32Array(strokeList);
-            entity.numStrokeElements = strokeList.length;
-            entity.drawStrokes = true;
-        }
-
-        log((strokeList.length / 2) + " strokes");  
-    }
-
-
     addCDFromData(entity, addOrphanEdges = true) {
 
         let v1 = [0, 0, 0];
@@ -167,11 +114,11 @@ class E3D_mesh {
         let v3 = [0, 0, 0];
         let newNormal = [0, 0, 0];
 
-        for (var i = 0; i < this.numFloats / 9; i++) { // for each face
+        for (var i = 0; i < this.positions.length; i += 9) { // for each face
 
-            v3_val_res(v1, this.positions[(i * 9)    ], this.positions[(i * 9) + 1], this.positions[(i * 9) + 2]);
-            v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5]);
-            v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8]);     
+            v3_val_res(v1, this.positions[i + 0], this.positions[i + 1], this.positions[i + 2]);
+            v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5]);
+            v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8]);     
 
             v3_normal_res(newNormal, v1, v2, v3);
 
@@ -201,9 +148,6 @@ class E3D_mesh {
     }
 
 
-    removeNormals() {
-        for (var i = 0; i < this.normals.length; ++i) this.normals[i] = 0.0;
-    }
 
 
 // Mesh Data Loaders
@@ -258,18 +202,17 @@ class E3D_mesh {
                 var n = chunk[j].trim();
                 if (n != "") {
                     this.positions.push(Number(chunk[j].trim()));
-                    this.colors.push(colorSweep[this.numFloats % 9]);
-                    this.numFloats++;
+                    this.colors.push(colorSweep[this.positions.length % 9]);
                 }
             }
         }
 
         // apply scale
         if (scale != _v3_unit) {
-            for (var i = 0; i < this.numFloats / 3; i++) { // for each vertex                
-               this.positions[(i * 3)    ] = this.positions[(i * 3)]     * scale[0];
-               this.positions[(i * 3) + 1] = this.positions[(i * 3) + 1] * scale[1];
-               this.positions[(i * 3) + 2] = this.positions[(i * 3) + 2] * scale[2];
+            for (var i = 0; i < this.positions.length; i += 3) { // for each vertex                
+               this.positions[i + 0] = this.positions[i + 0] * scale[0];
+               this.positions[i + 1] = this.positions[i + 1] * scale[1];
+               this.positions[i + 2] = this.positions[i + 2] * scale[2];
             }
         }
 
@@ -279,29 +222,29 @@ class E3D_mesh {
         let v3 = [0, 0, 0];
 
         // create face normals
-        for (var i = 0; i < this.numFloats / 9; i++) { // for each face
-            v3_val_res(v1, this.positions[(i * 9)    ], this.positions[(i * 9) + 1], this.positions[(i * 9) + 2] );
-            v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5] );
-            v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8] );
+        for (var i = 0; i < this.positions.length; i += 9) { // for each face
+            v3_val_res(v1, this.positions[i + 0], this.positions[i + 1], this.positions[i + 2] );
+            v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5] );
+            v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8] );
 
             v3_normal_res(newNormal, v1, v2, v3);
 
-            this.normals.push(newNormal[0]); // flat shading
-            this.normals.push(newNormal[1]); 
-            this.normals.push(newNormal[2]); 
+            this.normals[i + 0] = newNormal[0]; // flat shading
+            this.normals[i + 1] = newNormal[1]; 
+            this.normals[i + 2] = newNormal[2]; 
 
-            this.normals.push(newNormal[0]); // flat shading
-            this.normals.push(newNormal[1]); 
-            this.normals.push(newNormal[2]); 
+            this.normals[i + 3] = newNormal[0]; // flat shading
+            this.normals[i + 4] = newNormal[1]; 
+            this.normals[i + 5] = newNormal[2]; 
 
-            this.normals.push(newNormal[0]); // flat shading
-            this.normals.push(newNormal[1]); 
-            this.normals.push(newNormal[2]); 
+            this.normals[i + 6] = newNormal[0]; // flat shading
+            this.normals[i + 7] = newNormal[1]; 
+            this.normals[i + 8] = newNormal[2]; 
         }
 
-        log("Loaded " + this.numFloats + " float locations");
-        log((this.numFloats / 3) + " vertices");
-        log((this.numFloats / 9) + " triangles"); 
+        log("Loaded " + this.positions.length + " float locations");
+        log((this.positions.length / 3) + " vertices");
+        log((this.positions.length / 9) + " triangles"); 
     }
 
    
@@ -327,12 +270,11 @@ class E3D_mesh {
             0.5, 0.5, 1.0
         ];
 
-        let thiscolor = [0, 0, 0];
+        let thiscolor = [0, 0, 0,  0, 0, 0,  0, 0, 0];
 
         let mData = new DataView(rawModelData);
 
         let NumTriangle = mData.getUint32(80, true);
-        this.numFloats = NumTriangle * 9;
 
         let header = "";
         for (var i = 0; i < 80; ++i) header += String.fromCharCode(mData.getUint8(i));
@@ -343,9 +285,10 @@ class E3D_mesh {
         let idx = 0;
         if (NumTriangle > 0) for (let i = 0 ; i < NumTriangle; ++i) {
             // each triangle is
-            // 4 points X 3 axis X 32 bit float 
-            // 16 bit packed color data
+            // 3 points X 3 axis X 32 bit float (48 bytes)
+            // 16 bit packed color data (2 bytes)
             idx = 84 + (i * 50); // base offset + triangle * stride 
+            var vIndex = i * 9;
 
             let normal = [0, 0, 0];
             let p0 = [0, 0, 0];
@@ -376,25 +319,62 @@ class E3D_mesh {
                 thiscolor[1] = ((rawColor & 0x03E0) >> 5) / 31.0;
                 thiscolor[2] = ((rawColor & 0x7C00) >> 10) / 31.0;
 
-                this.colors.push(thiscolor[0]);this.colors.push(thiscolor[1]);this.colors.push(thiscolor[2]);
-                this.colors.push(thiscolor[0]);this.colors.push(thiscolor[1]);this.colors.push(thiscolor[2]);
-                this.colors.push(thiscolor[0]);this.colors.push(thiscolor[1]);this.colors.push(thiscolor[2]);
-            } else if (color == "sweep") {
-                this.colors.push(colorSweep[0]);this.colors.push(colorSweep[1]);this.colors.push(colorSweep[2]);
-                this.colors.push(colorSweep[3]);this.colors.push(colorSweep[4]);this.colors.push(colorSweep[5]);
-                this.colors.push(colorSweep[6]);this.colors.push(colorSweep[7]);this.colors.push(colorSweep[8]);              
-            } else {
-                this.colors.push(color[0]);this.colors.push(color[1]);this.colors.push(color[2]);
-                this.colors.push(color[0]);this.colors.push(color[1]);this.colors.push(color[2]);
-                this.colors.push(color[0]);this.colors.push(color[1]);this.colors.push(color[2]);
+                thiscolor[3] = thiscolor[0];
+                thiscolor[4] = thiscolor[1];
+                thiscolor[5] = thiscolor[2];
 
+                thiscolor[6] = thiscolor[0];
+                thiscolor[7] = thiscolor[1];
+                thiscolor[8] = thiscolor[2];
+            } else if (color == "sweep") {
+                thiscolor[0] = colorSweep[0];
+                thiscolor[1] = colorSweep[1];
+                thiscolor[2] = colorSweep[2];
+                
+                thiscolor[3] = colorSweep[3];
+                thiscolor[4] = colorSweep[4];
+                thiscolor[5] = colorSweep[5];
+
+                thiscolor[6] = colorSweep[6];
+                thiscolor[7] = colorSweep[7];
+                thiscolor[8] = colorSweep[8];
+            } else {
+                thiscolor[0] = color[0];
+                thiscolor[1] = color[1];
+                thiscolor[2] = color[2];
+                
+                thiscolor[3] = color[0];
+                thiscolor[4] = color[1];
+                thiscolor[5] = color[2];
+
+                thiscolor[6] = color[0];
+                thiscolor[7] = color[1];
+                thiscolor[8] = color[2];
             }
 
-            this.positions.push(p0[0]); this.positions.push(p0[1]);this.positions.push(p0[2]);
-            this.positions.push(p1[0]); this.positions.push(p1[1]);this.positions.push(p1[2]);
-            this.positions.push(p2[0]); this.positions.push(p2[1]);this.positions.push(p2[2]);
+            this.colors[vIndex + 0] = thiscolor[0];
+            this.colors[vIndex + 1] = thiscolor[1];
+            this.colors[vIndex + 2] = thiscolor[2];
 
+            this.colors[vIndex + 3] = thiscolor[3];
+            this.colors[vIndex + 4] = thiscolor[4];
+            this.colors[vIndex + 5] = thiscolor[5];
 
+            this.colors[vIndex + 6] = thiscolor[6];
+            this.colors[vIndex + 7] = thiscolor[7];
+            this.colors[vIndex + 8] = thiscolor[8];
+
+            this.positions[vIndex + 0] = p0[0];
+            this.positions[vIndex + 1] = p0[1];
+            this.positions[vIndex + 2] = p0[2];
+
+            this.positions[vIndex + 3] = p1[0];
+            this.positions[vIndex + 4] = p1[1];
+            this.positions[vIndex + 5] = p1[2];
+
+            this.positions[vIndex + 6] = p2[0];
+            this.positions[vIndex + 7] = p2[1];
+            this.positions[vIndex + 8] = p2[2];
 
             if ((normal[0] == 0) && (normal[1] == 0) && (normal[2] == 0)) {
                 v3_sub_mod(p1, p0);
@@ -403,9 +383,17 @@ class E3D_mesh {
                 v3_normalize_mod(normal);
             }
 
-            this.normals.push(normal[0]);this.normals.push(normal[1]);this.normals.push(normal[2]);
-            this.normals.push(normal[0]);this.normals.push(normal[1]);this.normals.push(normal[2]);
-            this.normals.push(normal[0]);this.normals.push(normal[1]);this.normals.push(normal[2]);
+            this.normals[vIndex + 0] = normal[0];
+            this.normals[vIndex + 1] = normal[1];
+            this.normals[vIndex + 2] = normal[2];
+
+            this.normals[vIndex + 3] = normal[0];
+            this.normals[vIndex + 4] = normal[1];
+            this.normals[vIndex + 5] = normal[2];
+
+            this.normals[vIndex + 6] = normal[0];
+            this.normals[vIndex + 7] = normal[1];
+            this.normals[vIndex + 8] = normal[2];
 
         }
 
@@ -418,6 +406,10 @@ class E3D_mesh {
 // Data Processing Utilities
 
 
+    removeNormals() {
+        for (var i = 0; i < this.normals.length; ++i) this.normals[i] = 0.0;
+    }
+
     genNormals() {
         this.normals = [];
         var v1 = v3_new();
@@ -425,42 +417,34 @@ class E3D_mesh {
         var v3 = v3_new();
         var newNormal = v3_new();
         // create face normals
-        for (var i = 0; i < this.numFloats; i = i + 9) { // for each face
+        for (var i = 0; i < this.positions.length; i += 9) { // for each face
             v3_val_res(v1, this.positions[i + 0], this.positions[i + 1], this.positions[i + 2] );
             v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5] );
             v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8] );
 
             v3_normal_res(newNormal, v1, v2, v3);
 
-            this.normals.push(newNormal[0]); // flat shading
-            this.normals.push(newNormal[1]); 
-            this.normals.push(newNormal[2]); 
+            this.normals[i + 0] = newNormal[0]; // flat shading
+            this.normals[i + 1] = newNormal[1];
+            this.normals[i + 2] = newNormal[2];
 
-            this.normals.push(newNormal[0]); // flat shading
-            this.normals.push(newNormal[1]); 
-            this.normals.push(newNormal[2]); 
+            this.normals[i + 3] = newNormal[0]; // flat shading
+            this.normals[i + 4] = newNormal[1];
+            this.normals[i + 5] = newNormal[2];
 
-            this.normals.push(newNormal[0]); // flat shading
-            this.normals.push(newNormal[1]); 
-            this.normals.push(newNormal[2]); 
+            this.normals[i + 6] = newNormal[0]; // flat shading
+            this.normals[i + 7] = newNormal[1];
+            this.normals[i + 8] = newNormal[2];
         }
     }
 
-    genUniqueVertices(epsilon = _v3_epsilon) {
-        //this.genUniqueVertices_1(epsilon);
-        this.genUniqueVertices_2(epsilon);
-
-        this.uniquesDone = true;
-        log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
-    }
-
-    genUniqueVertices_1(epsilon = _v3_epsilon) {
+    genUniqueVertices_OLD(epsilon = _v3_epsilon) {
         let curVert = v3_new();
         this.uniques = [];
         this.indices = [];
         this.boundIndices = [];
 
-        for (var i = 0; i < this.positions.length; i = i + 3) {
+        for (var i = 0; i < this.positions.length; i += 3) {
             var unique = true;
             var idx = Math.floor(i / 3);
             v3_val_res(curVert, this.positions[i + 0], this.positions[i + 1], this.positions[i + 2] );
@@ -478,9 +462,12 @@ class E3D_mesh {
                 this.indices[idx] = this.uniques.length-1;
             } 
         }
+
+        this.uniquesDone = true;
+        log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
     }
 
-    genUniqueVertices_2(epsilon = _v3_epsilon) {
+    genUniqueVertices(epsilon = _v3_epsilon) {
         this.uniques = [];
         this.indices = [];
         this.boundIndices = [];
@@ -488,7 +475,7 @@ class E3D_mesh {
 
         //pack
         var data = [];        
-        for (var i = 0; i < this.positions.length; i = i + 3) data.push( [
+        for (var i = 0; i < this.positions.length; i += 3) data.push( [
             this.positions[i + 0],  //0
             this.positions[i + 1], 
             this.positions[i + 2],
@@ -532,6 +519,9 @@ class E3D_mesh {
             }
             this.indices[data[i][4]] = data[data[i][6]][7];
         }
+
+        this.uniquesDone = true;
+        log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
     }
 
     removeArealessTriangles(epsilon = _v3_epsilon) {
@@ -539,39 +529,30 @@ class E3D_mesh {
         var v2 = v3_new();
         var v3 = v3_new();
         var count = 0;
-        var NumTriangles = this.numFloats / 9;
 
-        for (var i = NumTriangles-1; i >= 0; --i) { // for each face
-            v3_val_res(v1, this.positions[(i * 9) + 0], this.positions[(i * 9) + 1], this.positions[(i * 9) + 2] );
-            v3_val_res(v2, this.positions[(i * 9) + 3], this.positions[(i * 9) + 4], this.positions[(i * 9) + 5] );
-            v3_val_res(v3, this.positions[(i * 9) + 6], this.positions[(i * 9) + 7], this.positions[(i * 9) + 8] );
+        for (var i = this.positions.length - 9; i >= 0; i -= 9) { // for each face
+            v3_val_res(v1, this.positions[i + 0], this.positions[i + 1], this.positions[i + 2] );
+            v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5] );
+            v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8] );
 
             if (v3_equals(v1, v2, epsilon) || v3_equals(v1, v3, epsilon) || v3_equals(v2, v3, epsilon)) {
                 count++;
-                this.positions.splice(i * 9, 9);
-                this.normals.splice(i * 9, 9);
-                this.colors.splice(i * 9, 9);
-                this.numFloats -= 9;
+                this.positions.splice(i, 9);
+                this.normals.splice(i, 9);
+                this.colors.splice(i, 9);
             }
         }
 
-        console.log("Discarded " + count + " triangles out of " + NumTriangles);
+        console.log("Discarded " + count + " triangles out of " + this.positions.length / 9);
     }
-
 
     smoothNormals(cosineLimit = 0.8) {
-        //this.smoothNormals_1(cosineLimit);
-        this.smoothNormals_2(cosineLimit);
-    }
-
-    smoothNormals_2(cosineLimit = 0.8) {
 
         if (!this.uniquesDone) this.genUniqueVertices();
 
         var avgNorms = [];        
         
         // for all unique, average normals
-        let curNorm = [0, 0, 0];
         for (var i = 0; i < this.uniques.length; ++i) { 
             avgNorms[i] = v3_new();
             for (var j = 0; j < this.boundIndices[i].length; ++j) v3_add_mod(avgNorms[i], this.getNormal(this.boundIndices[i][j]));
@@ -579,22 +560,13 @@ class E3D_mesh {
         }
 
         // Smoothing
-        for (var i = 0; i < this.boundIndices.length; ++i) { 
-            for (var j = 0; j < this.boundIndices[i].length; ++j) {
-                var idx = this.boundIndices[i][j];
-                v3_val_res(curNorm, this.normals[idx * 3], this.normals[(idx * 3) + 1], this.normals[(idx * 3) + 2] );
-
-                if (v3_dot(avgNorms[i], curNorm) >= cosineLimit) {
-                    this.normals[(idx * 3)]     = avgNorms[i][0];
-                    this.normals[(idx * 3) + 1] = avgNorms[i][1];
-                    this.normals[(idx * 3) + 2] = avgNorms[i][2];
-                }
-            }
-        }
+        for (var i = 0; i < this.boundIndices.length; ++i) 
+            for (var j = 0; j < this.boundIndices[i].length; ++j) 
+                if (v3_dot(avgNorms[i], this.getNormal(this.boundIndices[i][j])) >= cosineLimit) this.setNormal(this.boundIndices[i][j], avgNorms[i]);
 
     }
 
-    smoothNormals_1(cosineLimit = 0.8) {
+    smoothNormals_OLD(cosineLimit = 0.8) {
 
         if (!this.uniquesDone) this.genUniqueVertices();
 
@@ -635,15 +607,7 @@ class E3D_mesh {
 
     }
 
-
-    genEdges() {
-        //this.genEdges_1();
-        this.genEdges_2();
-
-        this.edgesDone = true;
-        log("edges: " + this.edges.length);
-    }
-    genEdges_1() {
+    genEdges_OLD() {
         if (!this.uniquesDone) this.genUniqueVertices();
 
         this.edges = []; // of { done, index1, index2, normal1, normal2 } 
@@ -728,18 +692,20 @@ class E3D_mesh {
                 );
             }
         }
+
+        this.edgesDone = true;
+        log("edges: " + this.edges.length);
     }
 
-    genEdges_2() {
+    genEdges() {
         if (!this.uniquesDone) this.genUniqueVertices();
 
-        this.edges = []; // of { done, index1, index2, normal1, normal2 } 
+        this.edges = []; // of { done, index1, index2, normal1, normal2, index31, index32 } 
         // for a closed hull theres is (numFaces * 3 / 2 edges), each face has 3 edges, each edges is shared by 2 faces
-        // struct with all triangles and their adjascent triangles index
-        // each triangle has its flat normal, and the index of the 3 other adjascent triangles
 
+        // each triangle has its flat normal, and the index of the 3 other adjascent triangles
         var triangles = [];
-        for (var i = 0; i < this.indices.length; i = i + 3) {
+        for (var i = 0; i < this.indices.length; i += 3) {
             var nv1 = this.getPosition(i + 0);
             var nv2 = this.getPosition(i + 1);
             var nv3 = this.getPosition(i + 2);
@@ -747,13 +713,12 @@ class E3D_mesh {
             triangles.push( { 
                 ui : uia.slice(),
                 n : v3_normal_new(nv1, nv2, nv3),
-                t1i : _findIn2ArrayExcept(this.boundTriangles[uia[0]], this.boundTriangles[uia[1]], Math.floor(i/3)), //neighbour triangles indices
-                t2i : _findIn2ArrayExcept(this.boundTriangles[uia[1]], this.boundTriangles[uia[2]], Math.floor(i/3)),
-                t3i : _findIn2ArrayExcept(this.boundTriangles[uia[2]], this.boundTriangles[uia[0]], Math.floor(i/3)) } );
+                t1i : findIn2ArrayExcept(this.boundTriangles[uia[0]], this.boundTriangles[uia[1]], Math.floor(i/3)), //neighbour triangles indices
+                t2i : findIn2ArrayExcept(this.boundTriangles[uia[1]], this.boundTriangles[uia[2]], Math.floor(i/3)),
+                t3i : findIn2ArrayExcept(this.boundTriangles[uia[2]], this.boundTriangles[uia[0]], Math.floor(i/3)) } );
         }
 
         // fill edge data
-
         for (var i = 0; i < triangles.length; ++i) {
             var usedIndices = new Map();
             var numOrphan = 0;
@@ -765,15 +730,15 @@ class E3D_mesh {
             // edge with t1
             if (triangles[i].t1i.length > 0) {
                 if (triangles[i].t1i[0] > i) {
-                    var edgeindices = _findIn2Array( triangles[i].ui, triangles[triangles[i].t1i[0]].ui );
+                    var edgeindices = findIn2Array( triangles[i].ui, triangles[triangles[i].t1i[0]].ui );
 
                     this.edges.push( { done: true,
                                     normal1: triangles[i].n,
                                     normal2: triangles[triangles[i].t1i[0]].n,
                                     index1: edgeindices[0],
                                     index2: edgeindices[1],
-                                    index31: _findNotIn2Array(edgeindices, triangles[i].ui)[0],
-                                    index32: _findNotIn2Array(edgeindices, triangles[triangles[i].t1i[0]].ui)[0]
+                                    index31: findNotIn2Array(edgeindices, triangles[i].ui)[0],
+                                    index32: findNotIn2Array(edgeindices, triangles[triangles[i].t1i[0]].ui)[0]
                                     } );
 
                     usedIndices.set(edgeindices[0], usedIndices.get(edgeindices[0]) + 1);
@@ -784,15 +749,15 @@ class E3D_mesh {
             //edge with t2
             if (triangles[i].t2i.length > 0) {
                 if (triangles[i].t2i[0] > i) {
-                    var edgeindices = _findIn2Array( triangles[i].ui, triangles[triangles[i].t2i[0]].ui );
+                    var edgeindices = findIn2Array( triangles[i].ui, triangles[triangles[i].t2i[0]].ui );
 
                     this.edges.push( { done: true,
                                     normal1: triangles[i].n,
                                     normal2: triangles[triangles[i].t2i[0]].n,
                                     index1: edgeindices[0],
                                     index2: edgeindices[1],
-                                    index31: _findNotIn2Array(edgeindices, triangles[i].ui)[0],
-                                    index32: _findNotIn2Array(edgeindices, triangles[triangles[i].t2i[0]].ui)[0]
+                                    index31: findNotIn2Array(edgeindices, triangles[i].ui)[0],
+                                    index32: findNotIn2Array(edgeindices, triangles[triangles[i].t2i[0]].ui)[0]
                                     } );
 
                     usedIndices.set(edgeindices[0], usedIndices.get(edgeindices[0]) + 1);
@@ -803,15 +768,15 @@ class E3D_mesh {
             //edge with t3
             if (triangles[i].t3i.length > 0) {
                 if (triangles[i].t3i[0] > i) {
-                    var edgeindices = _findIn2Array( triangles[i].ui, triangles[triangles[i].t3i[0]].ui );
+                    var edgeindices = findIn2Array( triangles[i].ui, triangles[triangles[i].t3i[0]].ui );
 
                     this.edges.push( { done: true,
                                     normal1: triangles[i].n,
                                     normal2: triangles[triangles[i].t3i[0]].n,
                                     index1: edgeindices[0],
                                     index2: edgeindices[1],
-                                    index31: _findNotIn2Array(edgeindices, triangles[i].ui)[0],
-                                    index32: _findNotIn2Array(edgeindices, triangles[triangles[i].t3i[0]].ui)[0]
+                                    index31: findNotIn2Array(edgeindices, triangles[i].ui)[0],
+                                    index32: findNotIn2Array(edgeindices, triangles[triangles[i].t3i[0]].ui)[0]
                                     } );
                     usedIndices.set(edgeindices[0], usedIndices.get(edgeindices[0]) + 1);
                     usedIndices.set(edgeindices[1], usedIndices.get(edgeindices[1]) + 1);
@@ -825,7 +790,6 @@ class E3D_mesh {
             // [ 0, 1a, 1b ]
             // edge1 is between 0 and 1a, and 0 and 1b
             if (numOrphan == 1) {
-                console.log("1 o");
                 var oIndices = [];
                 for (var k of usedIndices.keys()) if (usedIndices.get(k) == 1) oIndices.push(k);
                 this.edges.push( {  done: false,
@@ -837,7 +801,6 @@ class E3D_mesh {
                                     index32: -1
                                     } );
             } else if (numOrphan == 2) {
-                console.log("2 o");
                 var oIndices = [];
                 var summit = 0;
                 for (var k of usedIndices.keys()) if (usedIndices.get(k) == 1) oIndices.push(k); else summit = k;
@@ -845,21 +808,48 @@ class E3D_mesh {
                                     normal1: triangles[i].n,
                                     normal2: [0, 0, 0],
                                     index1: oIndices[0],
-                                    index2: k,
+                                    index2: summit,
                                     index31: -1,
                                     index32: -1
                                     } );   
                 this.edges.push( {  done: false,
                                     normal1: triangles[i].n,
                                     normal2: [0, 0, 0],
-                                    index1: k,
+                                    index1: summit,
                                     index2: oIndices[1],
+                                    index31: -1,
+                                    index32: -1
+                                    } );  
+            } else if (numOrphan == 3) {
+                this.edges.push( {  done: false,
+                                    normal1: triangles[i].n,
+                                    normal2: [0, 0, 0],
+                                    index1: triangles[i].ui[0],
+                                    index2: triangles[i].ui[1],
+                                    index31: -1,
+                                    index32: -1
+                                    } );   
+                this.edges.push( {  done: false,
+                                    normal1: triangles[i].n,
+                                    normal2: [0, 0, 0],
+                                    index1: triangles[i].ui[1],
+                                    index2: triangles[i].ui[2],
+                                    index31: -1,
+                                    index32: -1
+                                    } );  
+                this.edges.push( {  done: false,
+                                    normal1: triangles[i].n,
+                                    normal2: [0, 0, 0],
+                                    index1: triangles[i].ui[2],
+                                    index2: triangles[i].ui[0],
                                     index31: -1,
                                     index32: -1
                                     } );  
             }
         }
 
+        this.edgesDone = true;
+        log("edges: " + this.edges.length);
     }
 
     genBoundingBox() {
@@ -867,10 +857,10 @@ class E3D_mesh {
         this.bbMin = [ Infinity,  Infinity,  Infinity];
         this.bbLength = -1.0;
         var v = v3_new();
-        for (var i = 0; i < this.positions.length / 3; ++i) {
-            v[0] = this.positions[i * 3 + 0];
-            v[1] = this.positions[i * 3 + 1];
-            v[2] = this.positions[i * 3 + 2];
+        for (var i = 0; i < this.positions.length; i += 3) {
+            v[0] = this.positions[i + 0];
+            v[1] = this.positions[i + 1];
+            v[2] = this.positions[i + 2];
 
             var l = v3_lengthsquared(v);
             if (l > this.bbLength) this.bbLength = l;
@@ -897,11 +887,10 @@ class E3D_mesh {
         this.positions.push(p[0]);      this.positions.push(p[1]);      this.positions.push(p[2]);  
         this.normals.push(n[0]);        this.normals.push(n[1]);        this.normals.push(n[2]);   
         this.colors.push(c[0]);         this.colors.push(c[1]);         this.colors.push(c[2]);
-        this.numFloats += 3;
     }
 
     getVertex(vertex_index) {
-        if ((vertex_index+1) * 3 > this.numFloats) return false;
+        if ((vertex_index+1) * 3 > this.positions.length) throw new Error("E3D_mesh.getVertex index out of bound");
         return { p: [this.positions[vertex_index * 3 + 0], this.positions[vertex_index * 3 + 1], this.positions[vertex_index * 3 + 2]],
                  n: [  this.normals[vertex_index * 3 + 0],   this.normals[vertex_index * 3 + 1],   this.normals[vertex_index * 3 + 2]],
                  c: [   this.colors[vertex_index * 3 + 0],    this.colors[vertex_index * 3 + 1],    this.colors[vertex_index * 3 + 2]]
@@ -909,24 +898,51 @@ class E3D_mesh {
     }
 
     getPosition(vertex_index) {
-        if ((vertex_index+1) * 3 > this.numFloats) return false;
+        if ((vertex_index+1) * 3 > this.positions.length) throw new Error("E3D_mesh.getPosition index out of bound");
         return [this.positions[vertex_index * 3 + 0], this.positions[vertex_index * 3 + 1], this.positions[vertex_index * 3 + 2] ];
     }
 
     getNormal(vertex_index) {
-        if ((vertex_index+1) * 3 > this.numFloats) return [0, 0, 0];
+        if ((vertex_index+1) * 3 > this.normals.length) throw new Error("E3D_mesh.getNormal index out of bound");
         return [this.normals[vertex_index * 3 + 0],   this.normals[vertex_index * 3 + 1],   this.normals[vertex_index * 3 + 2] ];
     }
 
+    getColor(vertex_index) {
+        if ((vertex_index+1) * 3 > this.colors.length) throw new Error("E3D_mesh.getColor index out of bound");
+        return [this.colors[vertex_index * 3 + 0],   this.colors[vertex_index * 3 + 1],   this.colors[vertex_index * 3 + 2] ];
+    }
+
+    setPosition(vertex_index, p) {
+        if ((vertex_index+1) * 3 > this.positions.length) throw new Error("E3D_mesh.setPosition index out of bound");
+        this.positions[vertex_index * 3 + 0] = p[0];
+        this.positions[vertex_index * 3 + 1] = p[1];
+        this.positions[vertex_index * 3 + 2] = p[2];
+    }
+
+    setNormal(vertex_index, n) {
+        if ((vertex_index+1) * 3 > this.normals.length) throw new Error("E3D_mesh.setNormal index out of bound");
+        this.normals[vertex_index * 3 + 0] = n[0];
+        this.normals[vertex_index * 3 + 1] = n[1];
+        this.normals[vertex_index * 3 + 2] = n[2];
+    }
+
+    setColor(vertex_index, c) {
+        if ((vertex_index+1) * 3 > this.colors.length) throw new Error("E3D_mesh.setColor index out of bound");
+        this.colors[vertex_index * 3 + 0] = c[0];
+        this.colors[vertex_index * 3 + 1] = c[1];
+        this.colors[vertex_index * 3 + 2] = c[2];
+    }
+
+
     /*getUniqueNormal(unique_vertex_index) {
         // SHOULD RETURN AN ARRAY
-        if (unique_vertex_index >= this.uniques.length) return false;
+        if (unique_vertex_index >= this.uniques.length) throw new Error("E3D_mesh.getUniqueNormal index out of bound");
         return this.getNormal(this.boundIndices[unique_vertex_index]);
     }*/
 
     /*getUniqueVertex(unique_vertex_index) {
         // SHOULD RETURN AN ARRAY
-        if (unique_vertex_index >= this.uniques.length) return false;
+        if (unique_vertex_index >= this.uniques.length) throw new Error("E3D_mesh.getUniqueVertex index out of bound");
         return this.getVertex(this.boundIndices[unique_vertex_index]);
     }*/
 
@@ -937,7 +953,7 @@ class E3D_mesh {
     }
 
     getTriangle(triangle_index) {
-        if ((triangle_index+1) * 9 > this.numFloats) return false;
+        if ((triangle_index+1) * 9 > this.positions.length) throw new Error("E3D_mesh.getTriangle index out of bound");
         return {
             p1: this.getVertex(triangle_index * 3 + 0),
             p2: this.getVertex(triangle_index * 3 + 1),
@@ -945,7 +961,7 @@ class E3D_mesh {
         }
     }
     /*getUniqueTriangle(triangle_index) {
-        if ((triangle_index+1) * 3 > this.uniques.length) return false;
+        if ((triangle_index+1) * 3 > this.uniques.length) throw new Error("E3D_mesh.getUniqueTriangle index out of bound");
          // SHOULD RETURN AN ARRAY
         return {
             p1: this.getUniqueVertex(triangle_index * 3 + 0),

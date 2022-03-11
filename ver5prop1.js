@@ -699,23 +699,23 @@ function calcThrustAndTorque(angle) {
 
 
 function CopyMirrorEntity() {
-    for (var i = 0; i < meshLoader.numFloats / 3; ++i) {
-        meshLoader.positions.push(-meshLoader.positions[i * 3]);
-        meshLoader.positions.push( meshLoader.positions[i * 3 + 1]);
-        meshLoader.positions.push(-meshLoader.positions[i * 3 + 2]);
+    var numFloats = meshLoader.positions.length;
+    for (var i = 0; i < numFloats; i += 3) {
+        meshLoader.positions.push(-meshLoader.positions[i + 0]);
+        meshLoader.positions.push( meshLoader.positions[i + 1]);
+        meshLoader.positions.push(-meshLoader.positions[i + 2]);
 
-        meshLoader.colors.push(meshLoader.colors[i * 3]);
-        meshLoader.colors.push(meshLoader.colors[i * 3 + 1]);
-        meshLoader.colors.push(meshLoader.colors[i * 3 + 2]);
+        meshLoader.colors.push(meshLoader.colors[i + 0]);
+        meshLoader.colors.push(meshLoader.colors[i + 1]);
+        meshLoader.colors.push(meshLoader.colors[i + 2]);
 
-        meshLoader.normals.push(-meshLoader.normals[i * 3]);
-        meshLoader.normals.push( meshLoader.normals[i * 3 + 1]);
-        meshLoader.normals.push(-meshLoader.normals[i * 3 + 2]);
+        meshLoader.normals.push(-meshLoader.normals[i + 0]);
+        meshLoader.normals.push( meshLoader.normals[i + 1]);
+        meshLoader.normals.push(-meshLoader.normals[i + 2]);
     }
-    meshLoader.numFloats = meshLoader.positions.length;
 }
 function CopyRotateEntity(angleList) {
-    var initialNumFloat = meshLoader.numFloats;
+    var numFloats = meshLoader.positions.length;
     if (angleList.length < 1) return;
     for (var a = 0; a < angleList.length; ++a) {
             var c = Math.cos(angleList[a] * DegToRad);
@@ -724,21 +724,20 @@ function CopyRotateEntity(angleList) {
             //y
             //z = a[2] * c - a[0] * s;
 
-        for (var i = 0; i < initialNumFloat / 3; ++i) {
-            meshLoader.positions.push((meshLoader.positions[i * 3 + 2] * s) + (meshLoader.positions[i * 3 + 0] * c));
-            meshLoader.positions.push( meshLoader.positions[i * 3 + 1]);
-            meshLoader.positions.push((meshLoader.positions[i * 3 + 2] * c) - (meshLoader.positions[i * 3 + 0] * s));
+        for (var i = 0; i < numFloats; i += 3) {
+            meshLoader.positions.push((meshLoader.positions[i + 2] * s) + (meshLoader.positions[i + 0] * c));
+            meshLoader.positions.push( meshLoader.positions[i + 1]);
+            meshLoader.positions.push((meshLoader.positions[i + 2] * c) - (meshLoader.positions[i + 0] * s));
 
-            meshLoader.colors.push(meshLoader.colors[i * 3]);
-            meshLoader.colors.push(meshLoader.colors[i * 3 + 1]);
-            meshLoader.colors.push(meshLoader.colors[i * 3 + 2]);
+            meshLoader.colors.push(meshLoader.colors[i + 0]);
+            meshLoader.colors.push(meshLoader.colors[i + 1]);
+            meshLoader.colors.push(meshLoader.colors[i + 2]);
 
-            meshLoader.normals.push((meshLoader.normals[i * 3 + 2] * s) + (meshLoader.normals[i * 3 + 0] * c));
-            meshLoader.normals.push( meshLoader.normals[i * 3 + 1]);
-            meshLoader.normals.push((meshLoader.normals[i * 3 + 2] * c) - (meshLoader.normals[i * 3 + 0] * s));
+            meshLoader.normals.push((meshLoader.normals[i + 2] * s) + (meshLoader.normals[i + 0] * c));
+            meshLoader.normals.push( meshLoader.normals[i + 1]);
+            meshLoader.normals.push((meshLoader.normals[i + 2] * c) - (meshLoader.normals[i + 0] * s));
         }
     }
-    meshLoader.numFloats = meshLoader.positions.length;
 }
 // Setup entity
 entity.isVisible = true;
@@ -998,6 +997,7 @@ var text_output = document.getElementById("text_output");
 
 document.getElementById("button_save").addEventListener("click", saveMesh);
 document.getElementById("button_clean").addEventListener("click", cleanMesh);
+// TODO move to E3D_Mesh
 function saveMesh() {
     var data = "solid Propeller1\n"
     for (var i = 0; i < meshLoader.positions.length / 9; ++i) {
@@ -1013,6 +1013,7 @@ function saveMesh() {
 
     save("mesh.stl", data);
 }
+// TODO move to E3D utility
 function save(filename, data) {
     const blob = new Blob([data], {type: 'text/csv'});
     if(window.navigator.msSaveOrOpenBlob) {
@@ -1028,7 +1029,7 @@ function save(filename, data) {
         window.URL.revokeObjectURL(blob);
     }
 }
-// TODO remove .push (when length is known);
+
 function cleanMesh() {
 
     var st = performance.now();
@@ -1047,7 +1048,7 @@ function cleanMesh() {
     console.log("t uniques: " + (et - st));
 
     st = performance.now();
-    meshLoader.smoothNormals(0.8); //was 3.0sec for 2blades 11.2 for 4blades 27 for 6blades, .03 for 2blades, .06 for 4blades, .06 for 6blades
+    meshLoader.smoothNormals(0.71); //was 3.0sec for 2blades 11.2 for 4blades 27 for 6blades, .03 for 2blades, .06 for 4blades, .06 for 6blades
     et = performance.now();
     console.log("t smooth : " + (et - st)); 
 
