@@ -60,7 +60,9 @@ if (!check_outline) check_outline = { checked: false };
 var btn = document.getElementById("btn_s1"); // plane
 if (btn) btn.addEventListener("click", x => {
 
+    entity.clear();
     meshLoader.reset();
+    
     var w = 24 + randomFloatPlusMinus(12);
     var h = 24 + randomFloatPlusMinus(12);
 
@@ -68,7 +70,7 @@ if (btn) btn.addEventListener("click", x => {
 
 
     if (check_colored.checked) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-    if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.5);
+    if (check_outline.checked) meshLoader.addStrokeData(entity, true, 0.5); else entity.drawStrokes = false;
     meshLoader.addModelData(entity);
     E3D_updateEntityData(entity);
 
@@ -78,6 +80,7 @@ if (btn) btn.addEventListener("click", x => {
 var btn = document.getElementById("btn_s2"); // box
 if (btn) btn.addEventListener("click", x =>  {
 
+    entity.clear();
     meshLoader.reset();
     var w = 36 + randomFloatPlusMinus(18);
     var h = 36 + randomFloatPlusMinus(18);
@@ -98,6 +101,7 @@ if (btn) btn.addEventListener("click", x =>  {
 var btn = document.getElementById("btn_s3"); // pyramid
 if (btn) btn.addEventListener("click", x => {
 
+    entity.clear();
     meshLoader.reset();
     var nbSide = randomInteger(30) + 3;
     var height = 36 + randomFloatPlusMinus(20);
@@ -118,6 +122,7 @@ if (btn) btn.addEventListener("click", x => {
 var btn = document.getElementById("btn_s4"); // prism
 if (btn) btn.addEventListener("click", x =>  {
 
+    entity.clear();
     meshLoader.reset();
     var nbSide = randomInteger(30) + 3;
     var height = 36 + randomFloatPlusMinus(20);
@@ -138,6 +143,7 @@ if (btn) btn.addEventListener("click", x =>  {
 var btn = document.getElementById("btn_s5"); // sphere
 if (btn) btn.addEventListener("click", x =>  {
 
+    entity.clear();
     meshLoader.reset();
 
     var radius = 32 + randomFloatPlusMinus(10);
@@ -159,6 +165,7 @@ if (btn) btn.addEventListener("click", x =>  {
 var btn = document.getElementById("btn_s6"); // torus
 if (btn) btn.addEventListener("click", x =>  {
 
+    entity.clear();
     meshLoader.reset();
 
     var radius = 32 + randomFloatPlusMinus(16);

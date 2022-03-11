@@ -1018,7 +1018,7 @@ class E3D_mesh {
         for (var i = 1; i < nbSides; ++i) pts.push(v3_rotateY_new(pts[0], (PIx2 / nbSides) * i));
 
         // adjust for position and rotation
-        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+        v3a_applym4_mod(pts, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1037,7 +1037,7 @@ class E3D_mesh {
         for (var i = 1; i < nbSides; ++i) pts.push(v3_rotateY_new(pts[0], (PIx2 / nbSides) * i));
 
         // adjust for position and rotation
-        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+        v3a_applym4_mod(pts, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1059,8 +1059,8 @@ class E3D_mesh {
         for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
 
         // adjust for position and rotation
-        for (var i = 0; i < ptsb.length; ++i) v3_applym4_mod(ptsb[i], _mesh_prim_mat);
-        for (var i = 0; i < ptst.length; ++i) v3_applym4_mod(ptst[i], _mesh_prim_mat);
+        v3a_applym4_mod(ptsb, _mesh_prim_mat);
+        v3a_applym4_mod(ptst, _mesh_prim_mat);
         
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1087,7 +1087,7 @@ class E3D_mesh {
         for (var j = 1; j < nbSections; ++j) for (var i = 0; i < nbSides; ++i) pts.push(v3_rotateY_new(pts[i], (PIx2 / nbSections) * j));
 
         // adjust for position and rotation
-        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+        v3a_applym4_mod(pts, _mesh_prim_mat);
 
         // create faces
         for (var j = 0; j < nbSections; ++j) for (var i = 0; i < nbSides; ++i) {
@@ -1266,10 +1266,10 @@ class E3D_mesh {
         }
 
         // size the points to radius
-        for (var i = 0; i < pts.length; ++i) v3_scale_mod(pts[i], radius);
+        v3a_scale_mod(pts, radius);
 
         // adjust for position and rotation
-        for (var i = 0; i < pts.length; ++i) v3_applym4_mod(pts[i], _mesh_prim_mat);
+        v3a_applym4_mod(pts, _mesh_prim_mat);
 
         // write the faces to the mesh
         for (var i = 0; i < faces.length; ++i) this.pushTriangle3p(pts[faces[i][0]], pts[faces[i][1]], pts[faces[i][2]], color);
@@ -1300,8 +1300,8 @@ class E3D_mesh {
         }
 
         // adjust for position and rotation
-        for (var i = 0; i < ptsb.length; ++i) v3_applym4_mod(ptsb[i], _mesh_prim_mat);
-        for (var i = 0; i < ptst.length; ++i) v3_applym4_mod(ptst[i], _mesh_prim_mat);
+        v3a_applym4_mod(ptsb, _mesh_prim_mat);       
+        v3a_applym4_mod(ptst, _mesh_prim_mat);
         
         // faces
         for (var i = 0; i < nbSides; ++i) {

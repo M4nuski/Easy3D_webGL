@@ -963,6 +963,28 @@ function v3a_new(n) {
 }
 
 
+// Scale vector array
+// = a * f
+function v3a_scale_new(a, f) {
+    var res = [];
+    for (var i = 0; i < a.length; ++i) res.push( [ a[i][0] * f, 
+                                                   a[i][1] * f, 
+                                                   a[i][2] * f ] );
+    return res; 
+}
+function v3a_scale_mod(a, f) {
+    for (var i = 0; i < a.length; ++i) a[i] = [ a[i][0] * f,
+                                                a[i][1] * f,
+                                                a[i][2] * f ];
+}
+function v3a_scale_res(res, a, f) {
+    res = [];
+    for (var i = 0; i < a.length; ++i) res.push( [ a[i][0] * f, 
+                                                   a[i][1] * f, 
+                                                   a[i][2] * f ] );
+}
+
+
 // v3 and m4
 
 
@@ -1008,6 +1030,56 @@ function v3_applym4_mod(a, m) {
     a[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
 }
 
+
+
+// v3 Array and m4
+
+// Apply m4 matrix to all vectors
+function v3a_applym4_new(a, m) {
+    var res = [];
+    for (var i = 0; i < a.length; ++i) {
+        var a0 = a[i][0];
+        var a1 = a[i][1];
+        var a2 = a[i][2];
+
+        var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+        w = w || 1.0;
+
+        res.push( [ (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w,
+                    (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w,
+                    (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w ]);
+    }
+    return res;
+}
+function v3a_applym4_res(res, a, m) {
+    res = [];
+    for (var i = 0; i < a.length; ++i) {
+        var a0 = a[i][0];
+        var a1 = a[i][1];
+        var a2 = a[i][2];
+
+        var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+        w = w || 1.0;
+
+        res.push( [ (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w,
+                    (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w,
+                    (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w ]);
+    }
+}
+function v3a_applym4_mod(a, m) {
+    for (var i = 0; i < a.length; ++i) {
+        var a0 = a[i][0];
+        var a1 = a[i][1];
+        var a2 = a[i][2];
+
+        var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+        w = w || 1.0;
+
+        a[i][0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w;
+        a[i][1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w;
+        a[i][2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
+    }
+}
 
 
 // v3 format
