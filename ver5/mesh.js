@@ -29,13 +29,10 @@ class E3D_mesh {
         this.edgesDone = false;
         this.edges = [];
 
-        this.bbDone = false;
-        this.bbMin = [0, 0, 0];
-        this.bbMax = [0, 0, 0];
-        this.bbLength = 0.0;
-
-        // TODO create struct with v3s for loading and parsing
-        // and convert to array of float only on mesh "add"
+        this.boundingboxDone = false;
+        this.boundingboxMin = [0, 0, 0];
+        this.boundingboxMax = [0, 0, 0];
+        this.boundingboxLength = 0.0;
 
         // moved in constructor to avoir error in Edge
         this.sphereBaseType = {
@@ -66,10 +63,10 @@ class E3D_mesh {
         this.edgesDone = false;
         this.edges = [];
 
-        this.bbDone = false;
-        this.bbMin = [0, 0, 0];
-        this.bbMax = [0, 0, 0];
-        this.bbLength = 0.0;
+        this.boundingboxDone = false;
+        this.boundingboxMin = [0, 0, 0];
+        this.boundingboxMax = [0, 0, 0];
+        this.boundingboxLength = 0.0;
     }
 
 // Entity Data Writers
@@ -486,8 +483,8 @@ class E3D_mesh {
             0                           //7 index to extracted unique
         ]);
         
-        if (!this.bbDone) this.genBoundingBox();        
-        var n = v3_normalize_new([this.bbMax[0] - this.bbMin[0], this.bbMax[1] - this.bbMin[1], this.bbMax[2] - this.bbMin[2]]);
+        if (!this.boundingboxDone) this.genBoundingBox();        
+        var n = v3_normalize_new([this.boundingboxMax[0] - this.boundingboxMin[0], this.boundingboxMax[1] - this.boundingboxMin[1], this.boundingboxMax[2] - this.boundingboxMin[2]]);
         if (v3_lengthsquared(n) < _v3_epsilon) n = [0.57735, 0.57735, 0.57735];
 
         for (var i = 0; i < data.length; ++i) data[i][3] = v3_dot(data[i], n);
@@ -853,9 +850,9 @@ class E3D_mesh {
     }
 
     genBoundingBox() {
-        this.bbMax = [-Infinity, -Infinity, -Infinity];
-        this.bbMin = [ Infinity,  Infinity,  Infinity];
-        this.bbLength = -1.0;
+        this.boundingboxMax = [-Infinity, -Infinity, -Infinity];
+        this.boundingboxMin = [ Infinity,  Infinity,  Infinity];
+        this.boundingboxLength = -1.0;
         var v = v3_new();
         for (var i = 0; i < this.positions.length; i += 3) {
             v[0] = this.positions[i + 0];
@@ -863,18 +860,18 @@ class E3D_mesh {
             v[2] = this.positions[i + 2];
 
             var l = v3_lengthsquared(v);
-            if (l > this.bbLength) this.bbLength = l;
+            if (l > this.boundingboxLength) this.boundingboxLength = l;
 
-            if (v[0] < this.bbMin[0]) this.bbMin[0] = v[0];
-            if (v[1] < this.bbMin[1]) this.bbMin[1] = v[1];
-            if (v[2] < this.bbMin[2]) this.bbMin[2] = v[2];
+            if (v[0] < this.boundingboxMin[0]) this.boundingboxMin[0] = v[0];
+            if (v[1] < this.boundingboxMin[1]) this.boundingboxMin[1] = v[1];
+            if (v[2] < this.boundingboxMin[2]) this.boundingboxMin[2] = v[2];
 
-            if (v[0] > this.bbMax[0]) this.bbMax[0] = v[0];
-            if (v[1] > this.bbMax[1]) this.bbMax[1] = v[1];
-            if (v[2] > this.bbMax[2]) this.bbMax[2] = v[2];
+            if (v[0] > this.boundingboxMax[0]) this.boundingboxMax[0] = v[0];
+            if (v[1] > this.boundingboxMax[1]) this.boundingboxMax[1] = v[1];
+            if (v[2] > this.boundingboxMax[2]) this.boundingboxMax[2] = v[2];
         }
-        this.bbLength = Math.sqrt(this.bbLength);
-        this.bbDone = true;
+        this.boundingboxLength = Math.sqrt(this.boundingboxLength);
+        this.boundingboxDone = true;
     }
 
 
@@ -882,7 +879,7 @@ class E3D_mesh {
 // Mesh creation methods
 
 
-
+// Vertex, positions, normals, colors
     pushVertex(p, n, c) {        
         this.positions.push(p[0]);      this.positions.push(p[1]);      this.positions.push(p[2]);  
         this.normals.push(n[0]);        this.normals.push(n[1]);        this.normals.push(n[2]);   
@@ -895,6 +892,22 @@ class E3D_mesh {
                  n: [  this.normals[vertex_index * 3 + 0],   this.normals[vertex_index * 3 + 1],   this.normals[vertex_index * 3 + 2]],
                  c: [   this.colors[vertex_index * 3 + 0],    this.colors[vertex_index * 3 + 1],    this.colors[vertex_index * 3 + 2]]
                 };
+    }
+
+    setVertex(vertex_index, p, n, c) {
+        if ((vertex_index+1) * 3 > this.positions.length) throw new Error("E3D_mesh.setVertex index out of bound");
+        var idx = vertex_index * 3;
+        this.positions[idx + 0] = p[0];
+        this.positions[idx + 1] = p[1];
+        this.positions[idx + 2] = p[2];
+
+        this.normals[idx + 0] = n[0];
+        this.normals[idx + 1] = n[1];
+        this.normals[idx + 2] = n[2];
+
+        this.colors[idx + 0] = c[0];
+        this.colors[idx + 1] = c[1];
+        this.colors[idx + 2] = c[2];
     }
 
     getPosition(vertex_index) {
@@ -933,19 +946,7 @@ class E3D_mesh {
         this.colors[vertex_index * 3 + 2] = c[2];
     }
 
-
-    /*getUniqueNormal(unique_vertex_index) {
-        // SHOULD RETURN AN ARRAY
-        if (unique_vertex_index >= this.uniques.length) throw new Error("E3D_mesh.getUniqueNormal index out of bound");
-        return this.getNormal(this.boundIndices[unique_vertex_index]);
-    }*/
-
-    /*getUniqueVertex(unique_vertex_index) {
-        // SHOULD RETURN AN ARRAY
-        if (unique_vertex_index >= this.uniques.length) throw new Error("E3D_mesh.getUniqueVertex index out of bound");
-        return this.getVertex(this.boundIndices[unique_vertex_index]);
-    }*/
-
+// Triangles
     pushTriangle(p1, p2, p3, n1, n2, n3, c1, c2, c3) {
         this.pushVertex(p1, n1, c1);
         this.pushVertex(p2, n2, c2);
@@ -960,15 +961,6 @@ class E3D_mesh {
             p3: this.getVertex(triangle_index * 3 + 2)
         }
     }
-    /*getUniqueTriangle(triangle_index) {
-        if ((triangle_index+1) * 3 > this.uniques.length) throw new Error("E3D_mesh.getUniqueTriangle index out of bound");
-         // SHOULD RETURN AN ARRAY
-        return {
-            p1: this.getUniqueVertex(triangle_index * 3 + 0),
-            p2: this.getUniqueVertex(triangle_index * 3 + 1),
-            p3: this.getUniqueVertex(triangle_index * 3 + 2)
-        }
-    }*/
     
     pushTriangle3p(p1, p2, p3, color = _v3_white, c2 = null, c3 = null) {
         if (c2 == null) {
@@ -979,7 +971,7 @@ class E3D_mesh {
         this.pushTriangle(p1, p2, p3, n, n, n, color, c2, c3);
     }
 
-
+// Quads
     pushQuad(p1, p2, p3, p4, n1, n2, n3, n4, c1, c2, c3, c4) {
         this.pushVertex(p1, n1, c1);
         this.pushVertex(p2, n2, c2);
@@ -1015,7 +1007,7 @@ class E3D_mesh {
 
 
 
-
+// Wall
     // Add quad, vertical, facing viewer
     pushWall(pleft, pright, height, color = _v3_white) {
         var pleftTop = v3_val_new(pleft[0], pleft[1] + height, pleft[2]);
@@ -1024,7 +1016,7 @@ class E3D_mesh {
         this.pushQuad4p(prightTop, pleftTop, pleft, pright, color);
     }
 
-    // plane, vertical
+// Plane
     pushPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, c2 = null, c3 = null, c4 = null) {
         m4_transform_res(_mesh_prim_mat, position, rotation);
         width /= 2;
@@ -1057,7 +1049,7 @@ class E3D_mesh {
 
 
     
-    // box
+// Primitives
     pushBox(position, rotation, width, height, depth, color = _v3_white, cback = null, ctop = null, cbottom = null, cright = null, cleft = null) {
         if (cback == null) {
             cback = color;
