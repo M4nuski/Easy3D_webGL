@@ -1028,8 +1028,9 @@ function save(filename, data) {
         window.URL.revokeObjectURL(blob);
     }
 }
-// TODO remove " = Array, = new Array, .push (when length is known";
+// TODO remove .push (when length is known);
 function cleanMesh() {
+
     var st = performance.now();
     meshLoader.removeArealessTriangles();
     var et = performance.now();
@@ -1041,18 +1042,25 @@ function cleanMesh() {
     console.log("t gen bb : " + (et - st));
 
     st = performance.now();
-    meshLoader.genUniqueVertices(); //1.7 for 9440 uniques, now .112 for 2blade, .146 for 4blades, .283 for 6blades
+    meshLoader.genUniqueVertices(); //was 1.4sec for 2blades 5.1 for 4blades 11.5 for 6blades, now .112 for 2blade .146 for 4blades .283 for 6blades
     et = performance.now();
     console.log("t uniques: " + (et - st));
+
     st = performance.now();
-    meshLoader.genEdges(); //4.4 for 28314 edges, now .121 for 2blades, .218 for 4blades, .216 for 6blades
+    meshLoader.smoothNormals(0.8); //was 3.0sec for 2blades 11.2 for 4blades 27 for 6blades, .03 for 2blades, .06 for 4blades, .06 for 6blades
+    et = performance.now();
+    console.log("t smooth : " + (et - st)); 
+
+    st = performance.now();
+    meshLoader.genEdges(); //was 4.1sec for 2blades 19.8 for 4blades 35 for 6blades, now .121 for 2blades, .218 for 4blades, .240 for 6blades
     et = performance.now();
     console.log("t edges: " + (et - st)); // 28314 edges
 
     entity.clear();
     meshLoader.addModelData(entity);
+
     st = performance.now();
-    meshLoader.addStrokeData(entity);   // 12.9 for 850 strokes
+    meshLoader.addStrokeData(entity);   // 0.013 for 2blades, 0.02 for 2blades, 0.04 for 6blades
     et = performance.now();
     console.log("t add stroke data: " + (et - st));
 }
