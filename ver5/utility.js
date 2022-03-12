@@ -25,7 +25,9 @@ function justify(str1, str2, len) {
     var delta = len - str1.length - str2.length;    
     return str1 + ( (delta >=0) ? (" ".repeat(delta) + str2) : ("#".repeat(len - str1.length))) ;
 }
-
+function replaceAll(str, target, by) {
+    return str.split(target).join(by);
+}
 
 
 // DOM helpers
@@ -68,9 +70,7 @@ function $forEach(selector, lambda) {
     document.querySelectorAll(selector).forEach(lambda);
 }
 
-function replaceAll(str, target, by) {
-    return str.split(target).join(by);
-}
+
 function downloadBlob(filename, data) {
     const blob = new Blob([data], {type: 'text/plain'});
     if (window.navigator.msSaveOrOpenBlob) {
