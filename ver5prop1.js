@@ -329,12 +329,17 @@ var slipAngle = 0;
 var slipRound = true;
 var nBlades = 6;
 
-// TODO merge into data object
-var segmentsAngles = [];
-var segmentsScales = [];
-var segmentsLengthsOrig = [];
-var segmentsLengthsFinal = [];
-var segmentsRadius = [];
+class segment {
+    constructor () {
+        this.profile = [];
+        this.angle = 0.0;
+        this.scale = 1.0;
+        this.lengthOrig = 0.0;
+        this.lengthFinal = 0.0;
+        this.radius = 0.0;
+    }
+}
+var segments = [];
 
 function getAngle(dist) {    
     return Math.atan(helixP / dist) + baseAng;
@@ -363,21 +368,19 @@ function genProp(){
     meshLoader.reset();
     var p0 = v3_new();    
     var stepLen = (maxL - minL) / (numSegments-1);
-    var segmentsProfiles = [];
-    segmentsAngles = [];
-    segmentsScales = [];
-    segmentsLengthsOrig = [];
-    segmentsLengthsFinal = [];
-    segmentsRadius = [];
+
+    segments = [];
 
     // generate tiwsted segment profiles
     for (var j = 0; j < numSegments; ++j) {
+        segments[j] = new segment();
 
-        segmentsProfiles.push([]);
         var d = (j * stepLen) + minL;
-        segmentsRadius.push(d);
+        segments[j].radius = d;
+
         var twistAngle = getAngle(d);
-        segmentsAngles.push(twistAngle * RadToDeg);
+        segments[j].angle = twistAngle * RadToDeg;
+
         var puffBase = Math.atan(maxWidth / d) / 2.0;
         var maxPuff = 0;
         for (var i = 0; i < profile.length; ++i) {
@@ -390,14 +393,14 @@ function genProp(){
                 p0[1] = p0[1] * puff;
             }
             v3_rotateZ_mod(p0, -twistAngle);  
-            segmentsProfiles[j].push( v3_clone(p0) );
+            segments[j].profile.push( v3_clone(p0) );
         }
-        segmentsScales.push(maxPuff);
+        segments[j].scale = maxPuff;
     }
 
     // slip angle
     for (var j = 0; j < numSegments; ++j) {
-        for (var i = 0; i < profile.length; ++i) v3_rotateY_mod(segmentsProfiles[j][i], slipAngle * j / (numSegments-1));
+        for (var i = 0; i < profile.length; ++i) v3_rotateY_mod(segments[j].profile[i], slipAngle * j / (numSegments-1));
     }
 
     var taperEnd = maxL * taperRatio;
@@ -407,7 +410,7 @@ function genProp(){
     for (var j = 0; j < numSegments; ++j) {
 
         // get max width
-        var limits = getBox(segmentsProfiles[j]);
+        var limits = getBox(segments[j].profile);
         var x_scale = maxWidth / (limits.max_X - limits.min_X);
 
         var d = (j * stepLen) + minL;
@@ -417,12 +420,12 @@ function genProp(){
 
         for (var i = 0; i < profile.length; ++i) {
             // scale
-            v3_scale_mod(segmentsProfiles[j][i], x_scale);
+            v3_scale_mod(segments[j].profile[i], x_scale);
             // translate along 
-            segmentsProfiles[j][i][2] += d;
+            segments[j].profile[i][2] += d;
         }
 
-        segmentsLengthsOrig.push(v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]));
+        segments[j].lengthOrig = v3_distanceXY(segments[j].profile[0], segments[j].profile[55]);
 
         // offset into position
         var offset = [(x_scale * limits.min_X) + (maxWidth / 2), -maxHeight +  (x_scale * limits.max_Y), 0];
@@ -430,47 +433,47 @@ function genProp(){
         // top 0 - 55
         var limitX = -1;
         for (var i = 0; i < 56; ++i) { 
-            v3_sub_mod(segmentsProfiles[j][i], offset);
-            if (segmentsProfiles[j][i][1] < minEdgeT) {
-                segmentsProfiles[j][i][1] = minEdgeT;
-                segmentsProfiles[j][i][0] = segmentsProfiles[j][(i+111) % 112][0];
-                limitX = segmentsProfiles[j][(i+111) % 112][0];
+            v3_sub_mod(segments[j].profile[i], offset);
+            if (segments[j].profile[i][1] < minEdgeT) {
+                segments[j].profile[i][1] = minEdgeT;
+                segments[j].profile[i][0] = segments[j].profile[(i+111) % 112][0];
+                limitX = segments[j].profile[(i+111) % 112][0];
             }
         }
 
 
         // bottom 56 - 111
         for (var i = 111; i >= 56; --i) {
-            v3_sub_mod(segmentsProfiles[j][i], offset);
-            if (segmentsProfiles[j][i][1] < 0.0) {
-                segmentsProfiles[j][i][1] = 0.0;
-                if (segmentsProfiles[j][i][0] > limitX) segmentsProfiles[j][i][0] = limitX;
+            v3_sub_mod(segments[j].profile[i], offset);
+            if (segments[j].profile[i][1] < 0.0) {
+                segments[j].profile[i][1] = 0.0;
+                if (segments[j].profile[i][0] > limitX) segments[j].profile[i][0] = limitX;
             }
         }
-        segmentsLengthsFinal.push(v3_distanceXY(segmentsProfiles[j][0], segmentsProfiles[j][55]));
+        segments[j].lengthFinal = v3_distanceXY(segments[j].profile[0], segments[j].profile[55]);
 
 
         // round profile
         if (slipRound) for (var i = 0; i < profile.length; ++i) {
-            var newZdist = Math.sqrt((d*d) - (segmentsProfiles[j][i][0]*segmentsProfiles[j][i][0]));
-            if (!isNaN(newZdist)) segmentsProfiles[j][i][2] -= (d - newZdist);
+            var newZdist = Math.sqrt((d*d) - (segments[j].profile[i][0]*segments[j].profile[i][0]));
+            if (!isNaN(newZdist)) segments[j].profile[i][2] -= (d - newZdist);
         }
 
         // wrap vertex of last segment closer than the radius
         if (d <= maxWidth / 2) {
             for (var i = 0; i < 112; ++i) {
-                if (Math.abs(segmentsProfiles[j][i][0]) >= maxWidth / 2) {
-                    segmentsProfiles[j][i][2] = 0;
-                    segmentsProfiles[j][i][0] = (maxWidth / 2) * Math.sign(segmentsProfiles[j][i][0]);
+                if (Math.abs(segments[j].profile[i][0]) >= maxWidth / 2) {
+                    segments[j].profile[i][2] = 0;
+                    segments[j].profile[i][0] = (maxWidth / 2) * Math.sign(segments[j].profile[i][0]);
                 } else {
-                    segmentsProfiles[j][i][2] = Math.sqrt( Math.pow(maxWidth / 2, 2) - Math.pow(segmentsProfiles[j][i][0], 2));
+                    segments[j].profile[i][2] = Math.sqrt( Math.pow(maxWidth / 2, 2) - Math.pow(segments[j].profile[i][0], 2));
                 }
                 var nextI = i+1;
                 if (nextI == 112) nextI = 1; // skip index 0 as it is a duplicate of index 111
                 if (clipTop && 
-                    (segmentsProfiles[j][i][1] < segmentsProfiles[j][nextI][1])  &&
-                    (segmentsProfiles[j][i][0] < segmentsProfiles[j][nextI][0])) {
-                     segmentsProfiles[j][i][1] = maxHeight;
+                    (segments[j].profile[i][1] < segments[j].profile[nextI][1])  &&
+                    (segments[j].profile[i][0] < segments[j].profile[nextI][0])) {
+                     segments[j].profile[i][1] = maxHeight;
                 }  
             }
         }
@@ -482,61 +485,61 @@ function genProp(){
     for (var j = 0; j < numSegments-1; ++j) {
         for (var i = 0; i < profile.length-1; ++i) {
 
-            if (v3_equals(segmentsProfiles[j+1][i], segmentsProfiles[j+1][i+1], 0.01)) {
+            if (v3_equals(segments[j+1].profile[i], segments[j+1].profile[i+1], 0.01)) {
                 meshLoader.pushTriangle3p(
-                    segmentsProfiles[j][i], 
-                    segmentsProfiles[j+1][i], 
-                    segmentsProfiles[j][i+1], 
+                    segments[j].profile[i], 
+                    segments[j+1].profile[i], 
+                    segments[j].profile[i+1], 
                     _v3_green// getColor(i, j)
                     );
-            } else if (v3_equals(segmentsProfiles[j][i], segmentsProfiles[j][i+1], 0.01)) {
+            } else if (v3_equals(segments[j].profile[i], segments[j].profile[i+1], 0.01)) {
                 meshLoader.pushTriangle3p(
-                    segmentsProfiles[j][i], 
-                    segmentsProfiles[j+1][i], 
-                    segmentsProfiles[j+1][i+1], 
+                    segments[j].profile[i], 
+                    segments[j+1].profile[i], 
+                    segments[j+1].profile[i+1], 
                     _v3_red// getColor(i, j)
                     );
                  } else {
             // j1i ji jidx j1idx
                     if (i < 56) {
                         meshLoader.pushQuad4p(
-                            segmentsProfiles[j+1][i+1], 
-                            segmentsProfiles[j][i+1], 
-                            segmentsProfiles[j][i], 
-                            segmentsProfiles[j+1][i], 
+                            segments[j+1].profile[i+1], 
+                            segments[j].profile[i+1], 
+                            segments[j].profile[i], 
+                            segments[j+1].profile[i], 
                             getColor(i, j)
                         );
                     } else {
                         meshLoader.pushQuad4p(
-                            segmentsProfiles[j+1][i],
-                            segmentsProfiles[j+1][i+1], 
-                            segmentsProfiles[j][i+1], 
-                            segmentsProfiles[j][i],                              
+                            segments[j+1].profile[i],
+                            segments[j+1].profile[i+1], 
+                            segments[j].profile[i+1], 
+                            segments[j].profile[i],                              
                             getColor(i, j)
                         );
                     }
             }
-            //meshLoader.pushQuad4p(segmentsProfiles[j+1][i], segmentsProfiles[j+1][idx], segmentsProfiles[j][idx], segmentsProfiles[j][i]);
+            //meshLoader.pushQuad4p(segments[j+1].profile[i], segments[j+1].profile[idx], segments[j].profile[idx], segments[j].profile[i]);
         }        
     }
 
     // tip cap
     for (var i = 0; i < 55; ++i) {
         meshLoader.pushQuad4p(
-            segmentsProfiles[numSegments-1][i+1], 
-            segmentsProfiles[numSegments-1][i], 
-            segmentsProfiles[numSegments-1][111-i], 
-            segmentsProfiles[numSegments-1][110-i],
+            segments[numSegments-1].profile[i+1], 
+            segments[numSegments-1].profile[i], 
+            segments[numSegments-1].profile[111-i], 
+            segments[numSegments-1].profile[110-i],
             getColor(i)
         );
     }
     // root cap
     for (var i = 0; i < 55; ++i) {
         meshLoader.pushQuad4p(
-            segmentsProfiles[0][110-i], 
-            segmentsProfiles[0][111-i], 
-            segmentsProfiles[0][i], 
-            segmentsProfiles[0][i+1],
+            segments[0].profile[110-i], 
+            segments[0].profile[111-i], 
+            segments[0].profile[i], 
+            segments[0].profile[i+1],
             getColor(i)
         );
     }
@@ -559,8 +562,8 @@ function genProp(){
     if (showProfile) {
         profileEntity.clear();
         for (var j = 0; j < numSegments; ++j) {
-            profileEntity.moveCursorTo(segmentsProfiles[j][0]);
-            for (var i = 1; i < profile.length; ++i) profileEntity.addLineTo(segmentsProfiles[j][i], false, _v3_orange);
+            profileEntity.moveCursorTo(segments[j].profile[0]);
+            for (var i = 1; i < profile.length; ++i) profileEntity.addLineTo(segments[j].profile[i], false, _v3_orange);
         }
     }
 
@@ -663,19 +666,19 @@ function calcThrustAndTorque(angle) {
     thrustList = [];
     // calc forces at segments profile
     for (var j = 0; j < numSegments; ++j) {
-        var v = (number_rpm.value / 60) * Math.PI * 2.0 * segmentsRadius[j] / 1000.0; // t/s * m/t = m/s
+        var v = (number_rpm.value / 60) * Math.PI * 2.0 * segments[j].radius / 1000.0; // t/s * m/t = m/s
         //var v = 320.0;
-        var coefs = getCoef(segmentsAngles[j] - angle);
+        var coefs = getCoef(segments[j].angle - angle);
         const normalRatio = 0.115;
-        var pRatio = segmentsScales[j] * normalRatio;
-        pRatio = pRatio * segmentsLengthsOrig[j] / segmentsLengthsFinal[j];
+        var pRatio = segments[j].scale * normalRatio;
+        pRatio = pRatio * segments[j].lengthOrig / segments[j].lengthFinal;
         var goodRatio = normalRatio / pRatio;
         var badRatio = 1.0 - goodRatio;
         coefs[0] = (goodRatio * coefs[0]) + (badRatio * Cyl_CL);
         coefs[1] = (goodRatio * coefs[1]) + (badRatio * Cyl_CD);
 
-        var fl = coefs[0] * 0.5 * select_air.value * (v * v) * (segmentsLengthsFinal[j] / 1000.0); // 1 * 1 * Kg/m^3 * m^2/s^2 * m = Kg/s^2
-        var fd = coefs[1] * 0.5 * select_air.value * (v * v) * (segmentsLengthsFinal[j] / 1000.0);
+        var fl = coefs[0] * 0.5 * select_air.value * (v * v) * (segments[j].lengthFinal / 1000.0); // 1 * 1 * Kg/m^3 * m^2/s^2 * m = Kg/s^2
+        var fd = coefs[1] * 0.5 * select_air.value * (v * v) * (segments[j].lengthFinal / 1000.0);
         segAeroResults.push([fl, fd]);
     }
     // calc forces for segment's widths
@@ -689,7 +692,7 @@ function calcThrustAndTorque(angle) {
 
         l = (segAeroResults[j][1] + segAeroResults[j + 1][1]) / 2; // avg between 2 profiles
         t = l * stepLen; // Kg/s^2 * m = Kgm/s^2 = N
-        t = t * (segmentsRadius[j+1] + segmentsRadius[j]) / 2000.0; // N * m = Nm
+        t = t * (segments[j+1].radius + segments[j].radius) / 2000.0; // N * m = Nm
         totalTorque += t;
     }
     totalLift *= nBlades; // N 
@@ -983,8 +986,7 @@ function paramDiv4CB(event, type, id, value) {
 
 var bottomBar = document.getElementById("bottomBar");
 CB_tick = function() {
-    // TODO add mesh and render stats
-    var t = "";
+    var t = meshLoader.positions.length/9 + " poly, ";
     for (var i = 0; i < backupTL.length; ++i) t += (backupTL[i][1] * 0.224337).toFixed(1) + " ";
     bottomBar.innerText = t;
 }
@@ -996,39 +998,10 @@ number_rpm.addEventListener("input", calcAero);
 var text_output = document.getElementById("text_output");
 
 document.getElementById("button_save").addEventListener("click", saveMesh);
-document.getElementById("button_clean").addEventListener("click", cleanMesh);
-// TODO move to E3D_Mesh
 function saveMesh() {
-    var data = "solid Propeller1\n"
-    for (var i = 0; i < meshLoader.positions.length / 9; ++i) {
-        data += "\tfacet normal " + meshLoader.normals[i * 9 + 0].toExponential(6) +" "+ meshLoader.normals[i * 9 + 1].toExponential(6) +" "+ meshLoader.normals[i * 9 + 2].toExponential(6) +"\n";
-        data += "\t\touter loop\n";
-        data += "\t\t\tvertex " + meshLoader.positions[i * 9 + 0].toExponential(6) +" "+ meshLoader.positions[i * 9 + 1].toExponential(6) +" "+ meshLoader.positions[i * 9 + 2].toExponential(6) +"\n";
-        data += "\t\t\tvertex " + meshLoader.positions[i * 9 + 3].toExponential(6) +" "+ meshLoader.positions[i * 9 + 4].toExponential(6) +" "+ meshLoader.positions[i * 9 + 5].toExponential(6) +"\n";
-        data += "\t\t\tvertex " + meshLoader.positions[i * 9 + 6].toExponential(6) +" "+ meshLoader.positions[i * 9 + 7].toExponential(6) +" "+ meshLoader.positions[i * 9 + 8].toExponential(6) +"\n";
-        data += "\t\tendloop\n";
-        data += "\tendfacet\n";
-    }
-    data += "endsolid Propeller1";
-
-    save("mesh.stl", data);
+    downloadBlob("mesh.stl", meshLoader.saveModel_ASCIISTL("ver5prop1.js"));
 }
-// TODO move to E3D utility
-function save(filename, data) {
-    const blob = new Blob([data], {type: 'text/csv'});
-    if(window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveBlob(blob, filename);
-    }
-    else{
-        const elem = window.document.createElement('a');
-        elem.href = window.URL.createObjectURL(blob);
-        elem.download = filename;        
-        document.body.appendChild(elem);
-        elem.click();        
-        document.body.removeChild(elem);
-        window.URL.revokeObjectURL(blob);
-    }
-}
+document.getElementById("button_clean").addEventListener("click", cleanMesh);
 
 function cleanMesh() {
 

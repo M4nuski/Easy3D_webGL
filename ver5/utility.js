@@ -68,6 +68,23 @@ function $forEach(selector, lambda) {
     document.querySelectorAll(selector).forEach(lambda);
 }
 
+function replaceAll(str, target, by) {
+    return str.split(target).join(by);
+}
+function downloadBlob(filename, data) {
+    const blob = new Blob([data], {type: 'text/plain'});
+    if (window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+    } else {
+        const elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = filename;        
+        document.body.appendChild(elem);
+        elem.click();        
+        document.body.removeChild(elem);
+        window.URL.revokeObjectURL(blob);
+    }
+}
 
 
 //Array methods
