@@ -506,7 +506,7 @@ class E3D_mesh {
         data = data.sort( (v1, v2) => (v1[3] - v2[3]) );
 
         // walk the array and flag vertex that are not unique anymore
-        for (var i = 0; i < data.length-1; ++i) if (data[i][5]) {
+        for (var i = 0; i < data.length; ++i) if (data[i][5]) {
             data[i][6] = i;
             var j = i + 1;
             while ((j < data.length) && (Math.abs(data[i][3] - data[j][3]) < epsilon)) {
