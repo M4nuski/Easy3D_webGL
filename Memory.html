@@ -58,6 +58,7 @@
         .E3D_monospaceText {
             white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
+            line-height: 18px;
         }
 
         .E3D_tabButton {
@@ -132,6 +133,7 @@
             margin: 5px;
             right: 0px;
             position: absolute;
+            background-color: salmon;
         }
         
         #scoreDiv {
@@ -158,6 +160,7 @@
             color: red;
             font-size: 0.85em;
             margin-left: 0.2em;
+            display: none;
         }
 
         .hoverSize {
@@ -465,18 +468,30 @@
 
             var currentScore = 0;
             var localHighScore = 0;
+            var playerHighScore = 0;
+
             if (window.localStorage) {
                 var hs = window.localStorage.getItem("m3.hs");
                 if (hs != undefined) {
                     localHighScore = hs;
                 }
-                var pn = window.localStorage.getItem("m3.pn");
-                if (pn != undefined) {
+                var pn = window.localStorage.getItem("m4.pn");
+                if ((pn !== undefined) && (pn !== null)) {
                     playerName = pn;
+                    playernameInput.value = pn;
                 }
+                getPlayerHighScore();
             } 
 
+            function getPlayerHighScore() {
+                if (playerName != "<Player>") {
+                    let hsl = getHSlist();
+                    for (var hs of hsl) if ((hs.name == playerName) && (hs.score > playerHighScore)) playerHighScore = hs.score;
+                }
+            }
+
             var newHS = false;
+            var newHSobj;
             const version = "3";
             class scoreObject {
                 constructor(n) {
@@ -491,6 +506,7 @@
                     this.score = currentScore;
                 }
             }
+
 
             const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
             // a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
@@ -531,7 +547,7 @@
             const CSM_AfterEachTeach = 4;
             const CSM_Always = 5;
             const CSM_Max = 5;
-            const CSM_Strings = ["None", "Level", "Recall", "Input", "Teach", "Always"]; //  ["None", "BeforeTeach", "AfterTeach", "AfterEachRecalls", "BeforeEachRecalls"];
+            const CSM_Strings = ["None", "Level ★", "Recall ★★", "Input ★★★", "Teach ★★★★", "Always ★★★★★"]; //  ["None", "BeforeTeach", "AfterTeach", "AfterEachRecalls", "BeforeEachRecalls"];
             const CSM_ScoreMultipliers = [5, 10, 15, 20, 25, 30];
             var colorShuffleMode = CSM_None;
             var CSM_AfterEachTeach_Done = true;
@@ -550,7 +566,7 @@
             const SSM_EachLevel = 1;
             const SSM_AfterTeach = 2;
             const SSM_Max = 2;
-            const SSM_Strings = ["None", "Level", "Recall"]; //  ["No Shuffle", "EachLevel", "AfterTeach"];
+            const SSM_Strings = ["None", "Level ★", "Recall ★★"]; //  ["No Shuffle", "EachLevel", "AfterTeach"];
             const SSM_ScoreMultipliers = [5, 10, 15];
             var soundSuffleMode = SSM_None;
             var soundShuffle = shuffleResetState.slice();
@@ -811,15 +827,42 @@
                 state = GS_Failed;
                 bfail.play();
                 lastHitStartAngle = 0;
+
+                if (currentScore > playerHighScore) {
+                    playerHighScore = currentScore;
+                    newHS = true;
+                }
                 if (currentScore > localHighScore)  {
                     localHighScore = currentScore;
                     newHS = true;
-                    if (window.localStorage) {
-                        window.localStorage.setItem("m3.hs", localHighScore);
-                    }
-                    var nhs = new scoreObject("currentUser");
-                    console.log(JSON.stringify(nhs, null, 2));
                 }
+                if (newHS) {
+                    if (localStorage) localStorage.setItem("m3.hs", localHighScore);
+                    newHSobj = new scoreObject(playerName);
+                    var list = getHSlist();
+                    list.push(newHSobj);
+                    setHSlist(list);
+
+                    if (playerName != "<Player>") postNewHS();
+                }
+            }
+
+            function getHSlist() {
+                if (localStorage) try {
+                    let text = localStorage.getItem("m4.hsl");
+                    if (text) {
+                        let list = JSON.parse(text);
+                        if (!list.length) throw Error("wtf");
+                        return list;
+                    }
+                } catch (ex) { console.log(ex); }
+                return [];
+            }
+            function setHSlist(list) {
+                if (localStorage) try {
+                    let text = JSON.stringify(list);
+                    localStorage.setItem("m4.hsl", text);
+                } catch (ex) { console.log(ex); }
             }
 
             function performShuffle() {
@@ -978,13 +1021,15 @@
                 // text
                 var txt = "";
                 txt = statusFormat.replace("$mode", CSM_Strings[colorShuffleMode]);
-                txt = txt.replace("$qty",  shuffleQty);
+                txt = txt.replace("$qty", (shuffleQty.toString()) + ( (shuffleQty > 2) ? (" " + "★".repeat(shuffleQty-2)) : "") );
                 txt = txt.replace("$sound", SSM_Strings[soundSuffleMode]);
                 txt = txt.replace("$state", GS_Strings[state]);
                 txt = txt.replace("$level", currentLevel + 1);
                 txt = txt.replace("$step", currentStep);
                 txt = txt.replace("$score", currentScore);
                 txt = txt.replace("$lhs", localHighScore);
+                txt = txt.replace("$pn", playerName);
+                txt = txt.replace("$phs", playerHighScore);
                 status.innerText = txt;
 
                 //log.innerText = "";
@@ -1178,9 +1223,27 @@
                 const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
                 if (name_regex.test(playernameInput.value)) {
                     playerInputWarining.style.display = "none";
+                    playerName = playernameInput.value;
+                    if (window.localStorage) window.localStorage.setItem("m4.pn", playerName);
+                    getPlayerHighScore();
+                    if (newHS) postNewHS();
                 } else {
                     playerInputWarining.innerText = "Invalid name, must be 3 to 32 characters long,\n can only contain: a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]";
                 }
+            }
+
+
+            function postNewHS() {
+                console.log("uploading new HS");
+                newHS = false;
+            }
+
+            function getLocalScores() {
+
+            }
+
+            function getGlobalScores() {
+
             }
             // tabs
             //      global fetch data from aws
@@ -1209,7 +1272,7 @@
         <div id="statusDiv" class="E3D_flexVerticalContentFit">
             <span id="statusSpan" class="E3D_monospaceText">Color Shuffle: $mode, Qty: $qty, Sound Suflle: $sound, Stage: $state
 Level: $level, Step: $step
-Score: $score, HighScore: $lhs</span>
+Score: $score, HighScore(local): $lhs, Player: $pn, Highscore(Player): $phs</span>
         </div>     
 
         <div class="E3D_flexContent">
