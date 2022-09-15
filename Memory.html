@@ -60,6 +60,27 @@
             font-family: 'Courier New', Courier, monospace;
         }
 
+        .E3D_tabButton {
+            cursor: pointer;
+            border: solid 1px black;
+            background-color: #d0d0d0;   
+            padding: 0.3em 0.2em 0.2em 0.2em;
+            user-select: none;   
+            box-shadow: 0.1em 0.1em black;      
+            border-radius: 0.2em 0.2em 0em 0em;
+            margin: 0.1em 0.0em 0.2em 0.1em;
+        }
+        .E3D_tabButton:hover {
+            background-color: #a0a0a0;
+        }
+        .E3D_tabButtonActive {
+            background-color: white;
+        }
+        .E3D_tabContent {
+            display: none;
+            margin: 0.5em;
+        }
+
         #statusDiv {
             z-index: 10;
             border-bottom: 2px solid black;
@@ -109,7 +130,8 @@
         }
         #scoreCloseButton {
             margin: 5px;
-            display: inline-block;
+            right: 0px;
+            position: absolute;
         }
         
         #scoreDiv {
@@ -122,6 +144,20 @@
             bottom: 0px;
             right: 0px;
             background-color: white;
+        }
+
+        #scoreHeaderDiv {
+            border-bottom: 2px solid black;
+            height: 2em;
+            margin-bottom: 1em;
+            display: flex;
+            align-items: center;
+        }
+
+        #playerInputWarining {
+            color: red;
+            font-size: 0.85em;
+            margin-left: 0.2em;
         }
 
         .hoverSize {
@@ -143,7 +179,7 @@
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() { 
 
-            var c = document.getElementById("canvas");
+            var c = getElem("canvas");
             var ctx = c.getContext("2d");
             ctx.save();
             var width = 1920;
@@ -336,7 +372,10 @@
                 if (elem) return elem;
                 return false;
             }
-
+            function onClick(elemOrID, callback) {
+                if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+                if (elemOrID) elemOrID.addEventListener("click", callback);
+            }
 
 
 
@@ -392,10 +431,17 @@
             var startImage = document.createElement('img');
             var newImage = document.createElement('img');
             var newHSImage = document.createElement('img');
-            var scoreButton = document.getElementById('scoreButtonDiv');
-            scoreButton.addEventListener("click", scoreButtonClick);
-            var scoreDiv = document.getElementById("scoreDiv");
-            document.getElementById("scoreCloseButton").addEventListener("click", closeScore);
+
+            // Highscore panel
+            var scoreButton = getElem('scoreButtonDiv');
+            onClick(scoreButton, scoreButtonClick);
+            var scoreDiv = getElem("scoreDiv");
+            onClick("scoreCloseButton", closeScore);
+            var tabButtons = document.querySelectorAll(".E3D_tabButton");
+            tabButtons.forEach( (elem) => onClick(elem, scoreTabClick) );
+            var tabs = document.querySelectorAll(".E3D_tabContent");
+            onClick("playerSetButton", setPlayerName);
+            var playernameInput = getElem("playernameInput");
 
             // Game States
             const GS_Idle = 0;
@@ -415,12 +461,18 @@
             var RNG_Sequence = new Random(666);
             var RNG_ColorShuffle = new Random(1337);
 
+            var playerName = "<Player>";
+
             var currentScore = 0;
             var localHighScore = 0;
             if (window.localStorage) {
                 var hs = window.localStorage.getItem("m3.hs");
                 if (hs != undefined) {
                     localHighScore = hs;
+                }
+                var pn = window.localStorage.getItem("m3.pn");
+                if (pn != undefined) {
+                    playerName = pn;
                 }
             } 
 
@@ -439,17 +491,22 @@
                     this.score = currentScore;
                 }
             }
-            // TODO local list of scores 
-            // 21/06/17 20:53:17 None2None 12345
-            // 20210617 211313 Level4None 12345
-            // 210617 221212 Level3Level 12345
+
+            const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
+            // a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
+
+            // on game start check for username, otherwise default "<Player>"
+            // on game end save score and state
+            // if highscore flash score button
+            //      if username not set show username input, if set save highscore
+            //      on new username set, refresh local list with "<player>", send latest to server.
+            //      if set add to local list, send to server
             // TODO panel with local list
-            // TODO user name input
-            // TODO upload highscore
-            // TODO panel with global list, tab for global, selector for "regroup per mode/qty"
-            // lambda + dynamodb
-            // postScore: validate, append to list, trim out lower scores if qty-per-mode > max(10), send status + scoresList
-            // getScores: send back scoresList
+            //          Update on open
+            //          Filter by
+            // TODO panel with global list
+            //          Update on open
+            //          Filter by
 
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
@@ -900,7 +957,17 @@
                     }
                 }
 
-                scoreButton.style.backgroundColor = ((newHS) ? "lime" : "");
+                if (newHS) {
+                    scoreButton.style.backgroundColor = "lime";
+                    if (playerName != "<Player>") {
+                        playerInputWarining.style.display = "none";
+                    } else {
+                        playerInputWarining.style.display = "";
+                    }
+                } else {
+                    scoreButton.style.backgroundColor = "";
+                }
+                
             }
 
             function drawScene(){                
@@ -1089,19 +1156,32 @@
 
 
             // ScoreBoard management methods
+
             function scoreButtonClick(event) {
                 run = false;
                 scoreDiv.style.visibility = "visible";
-                    // show local tab
-                    // update with current data
+                tabButtons[0].click();
+            }
 
+            function scoreTabClick(event) {
+                tabButtons.forEach( (btn) => btn.classList.remove("E3D_tabButtonActive") );
+                event.target.classList.add("E3D_tabButtonActive");
+                tabs.forEach( (tab) => tab.style.display = "none");
+                getElem(event.target.id + "Content").style.display = "block";
             }
 
             function closeScore(event) {
                 scoreDiv.style.visibility = "hidden";
                 setTimeout(() => run = true, 1000);
             }
-
+            function setPlayerName(event) {
+                const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
+                if (name_regex.test(playernameInput.value)) {
+                    playerInputWarining.style.display = "none";
+                } else {
+                    playerInputWarining.innerText = "Invalid name, must be 3 to 32 characters long,\n can only contain: a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]";
+                }
+            }
             // tabs
             //      global fetch data from aws
             //      parse format and display data
@@ -1113,9 +1193,18 @@
 
 <body>
     <div class="E3D_fullscreenContainer E3D_flexVertical">
-        <div id="scoreDiv"><div id="scoreCloseButton" class="E3D_fakeButton">Close</div> <br />
-        Name Input <br />
-        Local Score Tab, Global Score Tab</div>
+        <div id="scoreDiv">
+            <div id="scoreHeaderDiv">
+            <span>Palyer Name: <input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playerSetButton" class="E3D_fakeButton">Set</span></span><span id="playerInputWarining">Set player name to allow global rankings participation</span> <span id="scoreCloseButton" class="E3D_fakeButton">Close</span>
+        </div>
+            <span class="E3D_tabButton" id="local">Local Scores</span><span class="E3D_tabButton" id="global">Global Scores</span>
+            <div class="E3D_tabContent" id="localContent">
+                Local Score list
+            </div>
+            <div class="E3D_tabContent" id="globalContent">
+                Global Score list
+            </div>
+        </div>
 
         <div id="statusDiv" class="E3D_flexVerticalContentFit">
             <span id="statusSpan" class="E3D_monospaceText">Color Shuffle: $mode, Qty: $qty, Sound Suflle: $sound, Stage: $state
