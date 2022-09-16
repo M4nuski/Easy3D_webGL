@@ -6,12 +6,18 @@ const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
 // a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
 
 exports.handler = async (event) => {
+    
+    const ref = event.headers.origin;    
+    if ((process.env.AWS_LAMBDA_FUNCTION_VERSION != "$LATEST") && // ie not in prod
+        (ref != "https://m4nusky.com") && 
+        (ref != "https://www.m4nusky.com")) return resp.unauth("Invalid Origin");
+    
     const query = parser.getQuery(event);
     let status = "failed";
     let result = "unkown op";
     
     if (query.version != "4") return resp.object( { "op": query.op, "status": "failed", body: "Invalid version" } );
-    
+
     switch (query.op) {
 
         case 'add': try {
