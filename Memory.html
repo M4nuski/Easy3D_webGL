@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Memory Game 2</title>
+    <title>Memory Game 2.4</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="media/memory.ico">
     <style>
+        /* global */
         body {
             margin: 0px;
             font-size: 18px;
@@ -17,9 +18,22 @@
             z-index: 0;
             position: relative;
         }
-        #hiddenMedia {
-            display: none;
+
+        /* classes */
+        .hoverSize {
+            max-width: 50px;
+            max-height: 50px;
+            background-color: rgba(255, 255, 255, 0.25);
+
+            transition: all 0.1s linear;
+        }      
+        .hoverSize:hover{
+            max-width: 500px;
+            max-height: 500px; /* should be equal to max-width to avoid transition overshoot */
+            background-color: rgba(255, 255, 255, 0.95);
         }
+
+        /* standard E3D classes */
         .E3D_fullscreenContainer {
             position:fixed;
             top:0px;
@@ -61,6 +75,7 @@
             line-height: 18px;
         }
 
+        /* score tabs */
         .E3D_tabButton {
             cursor: pointer;
             border: solid 1px black;
@@ -81,6 +96,11 @@
             display: none;
             margin-top: 4px;
             border-top: 2px solid black;
+        }
+
+        /* per element */
+        #hiddenMedia {
+            display: none;
         }
 
         #statusDiv {
@@ -166,19 +186,6 @@
             display: none;
         }
 
-        .hoverSize {
-            max-width: 50px;
-            max-height: 50px;
-            background-color: rgba(255, 255, 255, 0.25);
-
-            transition: all 0.1s linear;
-        }      
-        .hoverSize:hover{
-            max-width: 500px;
-            max-height: 500px; /* should be equal to max-width to avoid transition overshoot */
-            background-color: rgba(255, 255, 255, 0.95);
-        }
-
         /* Table Styles */ 
         table {
             border-collapse: separate;
@@ -219,12 +226,15 @@
         .highlightedRow {
             background-color: lightskyblue !important; 
         }
-
-
     </style>
 
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() { 
+            // Version 4 2022-09
+
+
+            // Canvas and context
+
 
             var c = getElem("canvas");
             var ctx = c.getContext("2d");
@@ -234,7 +244,10 @@
 
             const DegToRad = (Math.PI / 180.0);            
 
+
             // Render
+
+
             var viewportScale = 1.0;
             var viewportOffsetX = 0;
             var viewportOffsetY = 0;
@@ -243,7 +256,10 @@
             var canvasOffsetX = 0;
             var canvasOffsetY = 0;
 
+
             // Events
+
+
             window.addEventListener("resize", resizeViewport);
             c.addEventListener("mousedown", canvasMouseDown);
            // c.addEventListener("touchstart", canvasTouchStart);
@@ -253,7 +269,10 @@
             c.addEventListener("mouseleave", canvasMouseLeave);
             document.addEventListener("keydown", canvasKeyDown);
             
+
             // Inputs
+
+
             var newUserInput = 0;
             var userInput = 0;
 
@@ -334,12 +353,6 @@
 
             function canvasKeyDown(event) {
                 // Debug state override
-                if (event.key == "i") state = GS_Idle;
-                if (event.key == "f") state = GS_Failed;
-                if (event.key == "t") state = GS_Teach;
-                if (event.key == "r") state = GS_Recall;
-                if (event.key == "s") state = GS_Success;
-                if (event.key == "x") performShuffle();
                 timeSinceLastHit = 0;
                 stepDelayRemaining = 1.0;
                 if (event.key == "d") {
@@ -349,36 +362,12 @@
                         localStorage.setItem("m4.hsl", "[]");
                     }
                 }
-                if (event.key == "+") currentScore += randInt(100);
-                if (event.key == "n") newHS = true;
-                if (event.key == "m") {
-                    var list = getHSlist();
-                        var obj = new scoreObject("Player");
-                        obj.version = 4;
-                        obj.name = "Player" + randText(2);
-                        obj.timestamp = Date.now() - randInt(3600*1000*31)
-                        obj.score = randInt(2048)+1;
-                        obj.level = randInt(100)+1;
-                        obj.step = randInt(obj.level);
-                        obj.CSM = randInt(6);
-                        obj.SQTY = 2 + randInt(3);
-                        obj.SSM = randInt(3);
-
-                        list.push(obj);
-
-                    setHSlist(list);
-                }
-            }
-            function randInt(max) {
-                return Math.floor(Math.random() * max);
+                if (event.key == "+") currentScore += Math.floor(Math.random() * 100);
             }
 
-            const alph = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-0123456789";
-            function randText(len) {
-                let res = "";
-                for (var i = 0; i < len; ++i) res += alph[randInt(alph.length)];
-                return res;
-            }
+
+            // Viewport
+
 
             function resizeViewport() {
                 width  = c.offsetWidth;
@@ -420,9 +409,8 @@
             }
 
 
-
-
             // Helper Methods
+
 
             // Seeded RNG based on https://gist.github.com/blixt/f17b47c62508be59987b
             class Random {
@@ -443,6 +431,39 @@
                     return Math.floor(maxInt * (this.next() - 1) / 2147483646);
                 }
             }
+
+            // Create rendered text from canvas to avoid canvas scale issues with font sizes
+            function convertText(text, image, size = 48, color = "white") {
+                var textCanvas = document.createElement("canvas");
+                textCanvas.width = 512;
+                textCanvas.height = size;
+                var textContext = textCanvas.getContext("2d");
+                textContext.font = size + "px Lucida Console";
+                textContext.textAlign = "center";
+                textContext.textBaseline = "middle";
+                textContext.fillStyle = color;
+                var textSize = textContext.measureText(text); 
+
+                textCanvas.width = textSize.width*1.1;
+
+                textContext.font = size + "px Lucida Console";
+                textContext.textAlign = "center";
+                textContext.textBaseline = "middle";
+                textContext.fillStyle = color;
+
+                textContext.fillText(text, textCanvas.width / 2, textCanvas.height / 2);
+
+                textCanvas.toBlob(function(blob) {
+                    //image = document.createElement('img');
+                    url = URL.createObjectURL(blob);
+                    image.onload = function() {
+                        URL.revokeObjectURL(url);
+                    };
+                    image.src = url;
+                });
+            }
+
+            // DOM
             function getElem(id) {
                 var elem = document.getElementById(id);
                 if (elem) return elem;
@@ -460,11 +481,9 @@
             }
 
 
+            // Timing state
 
-            // Debug data
-            var strList = new Map();     
 
-            // Timing
             var time = 0;
             var timeLast = 0;
             var timeDelta = 0;
@@ -473,12 +492,18 @@
             var frameInterval = 1; // update scene every "frameInterval" frames
             var run = true;
 
-            // Audio Stuff
+
+            // Audio Data
+
+
             var audioContext, gainNode;
             var b0, b1, b2, b3, bfail;
             var t0, t1, t2, t3, tfail;
 
-            // Colors  240 120 60 0
+
+            // Colors
+
+
             var fillStyles = [ 
                 // red        yellow     green      blue
                 ["#FF0000", "#FFFF00", "#00FC00", "#0017FF"], // off
@@ -505,7 +530,10 @@
             y  106.0 D2C800 FFFFD2
 */
 
+
             // Images
+
+
             var checkImage = getElem("check");
             var crossImage = getElem("cross");
             var eyeImage = getElem("eye");
@@ -513,7 +541,10 @@
             var newImage = document.createElement('img');
             var newHSImage = document.createElement('img');
 
-            // Highscore panel
+
+            // Highscore panel elements and events
+
+
             var scoreButton = getElem('scoreButtonDiv');
             onClick(scoreButton, scoreButtonClick);
             var scoreDiv = getElem("scoreDiv");
@@ -524,7 +555,10 @@
             onClick("playerSetButton", setPlayerName);
             var playernameInput = getElem("playernameInput");
 
-            // Game States
+
+            // Game State Data
+
+
             const GS_Idle = 0;
             const GS_Teach = 1;
             const GS_Recall = 2;
@@ -543,48 +577,19 @@
             var RNG_ColorShuffle = new Random(1337);
 
             var playerName = "<Player>";
+            const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
+            // a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
+
+            
+            // Score data
+
 
             var currentScore = 0;
             var localHighScore = 0;
             var playerHighScore = 0;
 
-            if (localStorage) {
-                var hs = localStorage.getItem("m3.hs");
-                if (hs != undefined) {
-                    localHighScore = hs;
-                }
-                var pn = localStorage.getItem("m4.pn");
-                if ((pn !== undefined) && (pn !== null)) {
-                    playerName = pn;
-                    playernameInput.value = pn;
-                }
-                getPlayerHighScore();
-            } 
-
-            function getPlayerHighScore() {
-                if (playerName != "<Player>") {
-                    let hsl = getHSlist();
-                    for (var hs of hsl) if ((hs.name == playerName) && (hs.score > playerHighScore)) playerHighScore = hs.score;
-                }
-            }
-
             var newHS = false;
             var newHSobj;
-            /*
-            class scoreObject {
-                constructor(n) {
-                    this.version = 3;
-                    this.name = n;
-                    this.date = Date.now();
-                    this.CSM = colorShuffleMode;
-                    this.qty = shuffleQty;
-                    this.SSM = soundSuffleMode;
-                    this.level = currentLevel + 1;
-                    this.step = currentStep;
-                    this.score = currentScore;
-                }
-            }
-            */
             class scoreObject {
                 constructor(n) {
                     this.version = 4;
@@ -598,15 +603,10 @@
                     this.SSM = soundSuffleMode;
                 }
             }
-            const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
-            // a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
 
-            //      if username not set show username input, if set save highscore
-            //      on new username set, refresh local list with "<player>", send latest to server.
-            //      if set add to local list, send to server
-            // TODO push score to server
-            // TODO FR - EN localization
-            // TODO general cleanup and refactor
+
+            // Timing and display
+
 
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
@@ -619,11 +619,17 @@
             const successDelay = 1.25;
             const flashDelay = 0.1;
 
+
             // Shuffle
+
+
             const shuffleResetState = [0, 1, 2, 3];
             var shuffle = shuffleResetState.slice();
 
+
             // Color Shuffle Modes
+
+
             const CSM_None = 0;
             const CSM_BeforeTeach = 1;
             const CSM_AfterTeach = 2;
@@ -642,10 +648,12 @@
             T: Colors shuffle after each color ligts up in the teaching stage <br /> CSM_AfterEachTeach
             E: Colors shuffle everytime after they light up. <hr /> CSM_Always
             */
-
             var shuffleQty = 2; // 2, 3 or 4
 
+
             // Sound Shuffle Modes
+
+
             const SSM_None = 0;
             const SSM_EachLevel = 1;
             const SSM_AfterTeach = 2;
@@ -660,8 +668,8 @@
             if ((status) && (status.innerText != "")) statusFormat = status.innerText;
 
 
-
             // UI event handlers
+
 
             // volume slider
             var volSlider = getElem("vol");
@@ -718,50 +726,24 @@
                 if (s != undefined) {
                     soundSuffleMode = s;
                 }
-            }   
-
-
-
-
-            // Create rendered text from canvas to avoid canvas scale issues with font sizes
-            function convertText(text, image, size = 48, color = "white") {
-                var textCanvas = document.createElement("canvas");
-                textCanvas.width = 512;
-                textCanvas.height = size;
-                var textContext = textCanvas.getContext("2d");
-                textContext.font = size + "px Lucida Console";
-                textContext.textAlign = "center";
-                textContext.textBaseline = "middle";
-                textContext.fillStyle = color;
-                var textSize = textContext.measureText(text); 
-
-                textCanvas.width = textSize.width*1.1;
-
-                textContext.font = size + "px Lucida Console";
-                textContext.textAlign = "center";
-                textContext.textBaseline = "middle";
-                textContext.fillStyle = color;
-
-                textContext.fillText(text, textCanvas.width / 2, textCanvas.height / 2);
-
-                textCanvas.toBlob(function(blob) {
-                    //image = document.createElement('img');
-                    url = URL.createObjectURL(blob);
-                    image.onload = function() {
-                        URL.revokeObjectURL(url);
-                    };
-                    image.src = url;
-                });
             }
+            // TODO FR - EN localization
+
 
             // Init
+
+
             resizeViewport();
             startLoop();
             convertText("Start Game", startImage);
             convertText("New Game", newImage);
             convertText("New High Score!", newHSImage, 36, "lime");
+            loadHighscores();
+
 
             // Loop
+
+
             function startLoop() {
                 window.requestAnimationFrame((startTime) => { 
                     timeLast = startTime; 
@@ -783,14 +765,20 @@
                 window.requestAnimationFrame(gameLoop);
             }
 
+
             // Timing
+
+
             function timeKeeping(newTime) {
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
                 if (run) time += timeDelta;
                 timeLast = newTime;
             }
 
+
             // Inputs processing
+
+
             function updateInputs() {
                 // handle mouse down
                 if (mouseDn0) {
@@ -852,9 +840,6 @@
             }
 
             function checkHitRegion(x, y) {
-                //strList.set("X", x.toFixed(3));
-                //strList.set("Y", y.toFixed(3));
-
                 if (state != GS_Teach) {
                     var d = Math.sqrt((x * x) + (y * y));
                     if ((d > 0.05) && (d < 0.40)) {
@@ -868,11 +853,11 @@
             }
 
 
+            // Game Methods
 
-
-
-            // Methods
             
+            // Audio
+
             function setAudio() {
                 audioContext = new window.AudioContext();
                 gainNode = audioContext.createGain();
@@ -907,6 +892,8 @@
                 }
             }
 
+            // Game state
+
             function fail() {
                 state = GS_Failed;
                 bfail.play();
@@ -933,45 +920,11 @@
                 }
             }
 
-            function getHSlist() {
-                if (localStorage) try {
-                    let text = localStorage.getItem("m4.hsl");
-                    if (text) {
-                        let list = JSON.parse(text);
-                        if (!list.length) throw Error("wtf");
-                        list = list.map( function(score) {
-                            if (Number(score.version) == 4) return score; else {
-                                return {
-                                    version: 4,
-                                    timestamp: score.date,
-                                    name: score.name,
-                                    score: score.score,
-                                    level: score.level,
-                                    step: score.step,
-                                    CSM: score.CSM,
-                                    SQTY: score.qty,
-                                    SSM: score.SSM
-                                }
-                            }
-                        } );
-                        return list;
-                    }
-                } catch (ex) { console.log(ex); }
-                return [];
-            }
-            function setHSlist(list) {
-                if (localStorage) try {
-                    let text = JSON.stringify(list);
-                    localStorage.setItem("m4.hsl", text);
-                } catch (ex) { console.log(ex); }
-            }
-
             function performShuffle() {
                 // prep array
                 var newPos = [];
                 var possiblePos = [0, 1, 2, 3];                
                 for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1)); 
-                //console.log(newPos);
 
                 // variable length swap
                 var b = shuffle[newPos[0]];
@@ -979,13 +932,11 @@
                 shuffle[newPos[shuffleQty - 1]] = b;
             }
 
-
             function performSoundShuffle() {
                 // prep array
                 var newPos = [];
                 var possiblePos = [0, 1, 2, 3];                
                 for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1)); 
-                //console.log(newPos);
 
                 // variable length swap
                 var b = soundShuffle[newPos[0]];
@@ -993,21 +944,54 @@
                 soundShuffle[newPos[shuffleQty - 1]] = b;
             }
 
+            // Highscores
 
+            function getHSlist() {
+                if (localStorage) try {
+                    let text = localStorage.getItem("m4.hsl");
+                    if (text) {
+                        let list = JSON.parse(text);
+                        if (!list.length) throw Error("wtf");
+                        return list;
+                    }
+                } catch (ex) { console.log(ex); }
+                return [];
+            }
+
+            function setHSlist(list) {
+                if (localStorage) try {
+                    let text = JSON.stringify(list);
+                    localStorage.setItem("m4.hsl", text);
+                } catch (ex) { console.log(ex); }
+            }
+
+            function loadHighscores(){
+                if (localStorage) {
+                    var hs = localStorage.getItem("m3.hs");
+                    if (hs != undefined) {
+                        localHighScore = hs;
+                    }
+                    var pn = localStorage.getItem("m4.pn");
+                    if ((pn !== undefined) && (pn !== null)) {
+                        playerName = pn;
+                        playernameInput.value = pn;
+                    }
+                    getPlayerHighScore();
+                } 
+            }
+
+            function getPlayerHighScore() {
+                if (playerName != "<Player>") {
+                    let hsl = getHSlist();
+                    for (var hs of hsl) if ((hs.name == playerName) && (hs.score > playerHighScore)) playerHighScore = hs.score;
+                }
+            }
 
 
             // Scene
+
+
             function updateScene() {            
-                // stats and shit
-             /*   strList.set("state", GS_Strings[state]);
-                //strList.set("s", "[" + shuffle[0] + "," + shuffle[1] + "," + shuffle[2] + "," + shuffle[3] + "]");
-                strList.set("shuffle", "\n" + CSM_Strings[colorShuffleMode]);
-                strList.set("shuffle n", shuffleQty);
-                strList.set("sound", "\n" + SSM_Strings[soundSuffleMode]);
-                strList.set("level", currentLevel + 1);
-                strList.set("step", currentStep);
-                //strList.set("stepDelay", teachDelayBase - (teachDelayDecrements * currentLevel));
-*/
 
                 // inputs
                 if ((newUserInput > 0) && (newUserInput < 5)) {
@@ -1015,7 +999,6 @@
                     lastHitStartAngle += (360 * timeSinceLastHit / maxTimeBetweenHit);
                     if (lastHitStartAngle > 360) lastHitStartAngle -= 360;
                     timeSinceLastHit = 0;
-                    //console.log("input: " + newUserInput);
                     userInput = newUserInput;
                     userInputDelay = flashDelay;
                 }
@@ -1026,7 +1009,6 @@
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
                     } else if ((newUserInput > 0) && (newUserInput < 5)) {
-                        //console.log("recalled: " + newUserInput);
                         if (newUserInput == seq[currentStep]) {
                             currentStep++;
                             if (currentStep > currentLevel) {
@@ -1121,9 +1103,6 @@
                 txt = txt.replace("$phs", playerHighScore);
                 status.innerText = txt;
 
-                //log.innerText = "";
-                //strList.forEach((a, b) => { log.innerText += (b + ": " + a) + "\n"; } );
-                
                 // grid
                 ctx.setLineDash([]);
                 ctx.strokeStyle = "#888";
@@ -1195,25 +1174,6 @@
                 } else if (state == GS_Success) {
                     drawImageScaledCentered(checkImage, 0.0, 0.0, 0.4);
                 }
-
-                /*
-                // alignment X
-                var w = c.offsetWidth;
-                var h = c.offsetHeight;
-                ctx.strokeStyle = "#F00";
-                ctx.lineWidth = 1.0;
-                ctx.save();
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(w, h);
-                ctx.moveTo(0, h);
-                ctx.lineTo(w, 0);
-                ctx.stroke();
-                ctx.restore();
-                ctx.lineWidth = 1.0 / viewportScale;
-                */
-
             }
 
             function cleanupScene(){
@@ -1226,14 +1186,8 @@
             }
 
 
-
-
-
-
-
-
-
             // Context drawing methods
+
 
             function line(x1, y1, x2, y2) {
                 ctx.moveTo(x1, y1);
@@ -1288,8 +1242,8 @@
             }
 
 
-
             // ScoreBoard management methods
+
 
             function scoreButtonClick(event) {
                 run = false;
@@ -1323,22 +1277,12 @@
                 }
             }
 
-
             function postNewHS() {
                 console.log("uploading new HS");
-                var httpRequest = new XMLHttpRequest();
-                
                 newHS = false;
-                /*
-                    "op": "add",
-                    "name": "example",
-                    "score": 20220914,
-                    "level": 4,
-                    "step": 2,
-                    "SQTY": 4,
-                    "CSM": 1,
-                    "SSM": 1
-                */
+
+                var httpRequest = new XMLHttpRequest();  
+
                 httpRequest.onerror = function(event) {
                     console.log("upload error " + event.target.status + "\n" + event.target.responseText);
                 }
@@ -1357,16 +1301,86 @@
                     "CSM": newHSobj.CSM,
                     "SSM": newHSobj.SSM
                 }
+
                 httpRequest.send(JSON.stringify(payload));
             }
 
-            const scoreTableHeader = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Level</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle</th><th class="h" onClick="sortTable(this, bySQTY)">Shuffle Qty</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
-            const scoreRowFormat = '<tr$class><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>';
             const localContentTab = getElem("localContent");
+            const globalContentTab = getElem("globalContent");
+            var _LastGlobalList = [];
+            var _LastGlobalFetch = 0;
+
             function genLocalScores() {                
                 var list = getHSlist();
                 localContentTab.innerHTML = genScoreTable(list, byScore);
             }
+
+            function genGlobalScores() {
+                if ((Date.now() - _LastGlobalFetch) < 1000 * 60) return; // throttle to 1 per minute
+                
+                globalContentTab.innerText = "Fetching global score list...";
+                var httpRequest = new XMLHttpRequest();
+
+                httpRequest.onerror = function(event) {
+                    console.log("Status: " + event.target.status);
+                    globalContentTab.innerText = "Error getting global score list:\n" + event.target.responseText;
+                }
+                httpRequest.ontimeout = httpRequest.onerror;
+
+                httpRequest.onloadend = function(event) {
+                    console.log("Status: " + event.target.status);
+                    if (event.target.status != 200) { globalContentTab.innerText = "Error getting global score list"; return; }
+
+                    var list = event.target.responseText;
+                    try {
+                        list = JSON.parse(list);
+                        if (list.status != "ok") {
+                            globalContentTab.innerText = "Error parsing global score list:\nstatus = " + list.status;
+                            console.log(list.body);
+                            return;
+                        }
+                        list = list.body;
+                        _LastGlobalList = list.slice();
+                    } catch (ex) {
+                        globalContentTab.innerText = "Error parsing global score list:\n" + ex.message;
+                        return;
+                    }
+                    globalContentTab.innerHTML = genScoreTable(list, byScore);
+                }
+
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
+                httpRequest.send('{"op":"global"}');
+                _LastGlobalFetch = Date.now();
+            }
+
+
+            const scoreTableHeader = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Level</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle</th><th class="h" onClick="sortTable(this, bySQTY)">Shuffle Qty</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
+            const scoreRowFormat = '<tr$class><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>';
+            function genScoreTable(list, sortFunction) {
+                let newHTML = scoreTableHeader.slice();
+                list = list.sort(sortFunction);
+                for (var score of list) {
+                    newHTML += scoreRowFormat.replace("$name", score.name);
+                    newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
+                    newHTML = newHTML.replace("$qty", (score.SQTY.toString()) + ( (score.SQTY > 2) ? (" " + "★".repeat(score.SQTY-2)) : "") );
+                    newHTML = newHTML.replace("$SSM", SSM_Strings[score.SSM]);
+                    newHTML = newHTML.replace("$level", score.level + 1);
+                    newHTML = newHTML.replace("$step", score.step);
+                    newHTML = newHTML.replace("$score", score.score);
+                    newHTML = newHTML.replace("$date", formatDate(new Date(score.timestamp)));
+                    newHTML = newHTML.replace("$class", (score.name == playerName) ? ' class="highlightedRow"' : "");
+                }
+                newHTML += "</table>";
+                return newHTML;
+            }
+
+            function formatDate(d) {
+                return d.getFullYear() + "/" + (""+(d.getMonth() + 1)).padStart(2, "0") + "/" + ("" + d.getDate()).padStart(2, "0") + " " + ("" + d.getHours()).padStart(2, "0") + ":" + ("" + d.getMinutes()).padStart(2, "0") + ":" + ("" + d.getSeconds()).padStart(2, "0");
+            }
+
+
+            // Global format and sort functions
+
 
             window.byScore = function(a, b) {
                 const as = Number(a.score)
@@ -1409,71 +1423,8 @@
                 }
             }
 
-            const globalContentTab = getElem("globalContent");
-            var _LastGlobalList = [];
-            var _LastGlobalFetch = 0;
-            function genGlobalScores() {
-                if ((Date.now() - _LastGlobalFetch) < 1000 * 60) return; // throttle to 1 per minute
-                
-                globalContentTab.innerText = "Fetching global score list...";
-                var httpRequest = new XMLHttpRequest();
 
-                httpRequest.onerror = function(event) {
-                    console.log("Status: " + event.target.status);
-                    globalContentTab.innerText = "Error getting global score list:\n" + event.target.responseText;
-                }
-                httpRequest.ontimeout = httpRequest.onerror;
-
-                httpRequest.onloadend = function(event) {
-                    console.log("Status: " + event.target.status);
-                    if (event.target.status != 200) { globalContentTab.innerText = "Error getting global score list"; return; }
-
-                    var list = event.target.responseText;
-                    try {
-                        list = JSON.parse(list);
-                        if (list.status != "ok") {
-                            globalContentTab.innerText = "Error parsing global score list:\nstatus = " + list.status;
-                            console.log(list.body);
-                            return;
-                        }
-                        list = list.body;
-                        _LastGlobalList = list.slice();
-                    } catch (ex) {
-                        globalContentTab.innerText = "Error parsing global score list:\n" + ex.message;
-                        return;
-                    }
-                    globalContentTab.innerHTML = genScoreTable(list, byScore);
-                }
-
-                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
-                httpRequest.send('{"op":"global"}');
-                _LastGlobalFetch = Date.now();
-            }
-
-
-            function genScoreTable(list, sortFunction) {
-                let newHTML = scoreTableHeader.slice();
-                list = list.sort(sortFunction);
-                for (var score of list) newHTML = formatScoreRow(newHTML, score);
-                newHTML += "</table>";
-                return newHTML;
-            }
-            function formatDate(d) {
-                return d.getFullYear() + "/" + (""+(d.getMonth() + 1)).padStart(2, "0") + "/" + ("" + d.getDate()).padStart(2, "0") + " " + ("" + d.getHours()).padStart(2, "0") + ":" + ("" + d.getMinutes()).padStart(2, "0") + ":" + ("" + d.getSeconds()).padStart(2, "0");
-            }
-            function formatScoreRow(rowHTML, score) {
-                rowHTML += scoreRowFormat.replace("$name", score.name);
-                rowHTML = rowHTML.replace("$CSM", CSM_Strings[score.CSM]);
-                rowHTML = rowHTML.replace("$qty", (score.SQTY.toString()) + ( (score.SQTY > 2) ? (" " + "★".repeat(score.SQTY-2)) : "") );
-                rowHTML = rowHTML.replace("$SSM", SSM_Strings[score.SSM]);
-                rowHTML = rowHTML.replace("$level", score.level + 1);
-                rowHTML = rowHTML.replace("$step", score.step);
-                rowHTML = rowHTML.replace("$score", score.score);
-                rowHTML = rowHTML.replace("$date", formatDate(new Date(score.timestamp)));
-                rowHTML = rowHTML.replace("$class", (score.name == playerName) ? ' class="highlightedRow"' : "");
-                return rowHTML;
-            }
-
+            // EOS
         } );
 
     </script>
@@ -1509,6 +1460,7 @@ Score: $score, HighScore(local): $lhs, Player: $pn, Highscore(Player): $phs</spa
                 <div id="shuffleModeButton" class="E3D_fakeButton">Shuffle Mode</div>
                 <div id="shuffleQtyButton" class="E3D_fakeButton">Shuffle Qty.</div>
                 <div id="shuffleSoundButton" class="E3D_fakeButton">Sound Shuffle</div>
+                <div id="toggleLangButton" class="E3D_fakeButton">EN/FR</div>
             </div>
 
             <div id="scoreButtonDiv">
