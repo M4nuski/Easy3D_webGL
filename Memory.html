@@ -279,7 +279,6 @@
             c.addEventListener("mouseup", canvasMouseUp);
             c.addEventListener("wheel", canvasMouseWheel);
             c.addEventListener("mouseleave", canvasMouseLeave);
-            document.addEventListener("keydown", canvasKeyDown);
             
 
             // Inputs
@@ -361,20 +360,6 @@
                 mouseUp1 = false;
                 mouseUp2 = false;
                 mouseW = 0;
-            }
-
-            function canvasKeyDown(event) {
-                // Debug state override
-                timeSinceLastHit = 0;
-                stepDelayRemaining = 1.0;
-                if (event.key == "d") {
-                    localHighScore = 0;
-                    if (localStorage) {
-                        localStorage.setItem("m3.hs", 0);
-                        localStorage.setItem("m4.hsl", "[]");
-                    }
-                }
-                if (event.key == "+") currentScore += Math.floor(Math.random() * 100);
             }
 
 
@@ -1342,8 +1327,11 @@
 
                 httpRequest.onloadend = function(event) {
                     console.log("Status: " + event.target.status);
-                    if (event.target.status != 200) { globalContentTab.innerText = "Error getting global score list"; return; }
-
+                    if (event.target.status != 200) {
+                        globalContentTab.innerText = "Error getting global score list"; 
+                        console.log(event.target.responseText);
+                        return; 
+                    }
                     var list = event.target.responseText;
                     try {
                         list = JSON.parse(list);
