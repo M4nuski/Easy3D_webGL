@@ -199,16 +199,16 @@
         }
 
         tr:nth-child(even) {
-            background-color: #E2E2ED;
+            background-color: #E2E2E2;
         }
         tr:nth-child(even):hover {
-            background-color: #D2D2ED;
+            background-color: #D2D2F2;
         }
         tr:nth-child(odd) {
-            background-color:#F2F2FD;
+            background-color:#F2F2F2;
         }
         tr:nth-child(odd):hover {
-            background-color:#E2E2FD;
+            background-color:#E2E2F2;
         }
 
         th {
@@ -227,16 +227,16 @@
         }
 
         tr:nth-child(even).highlightedRow {
-            background-color: hsl(209, 100%, 98%) !important;
+            background-color: hsl(209, 100%, 94%) !important;
         }
         tr:nth-child(even):hover.highlightedRow {
-            background-color: hsl(209, 100%, 96%) !important;
+            background-color: hsl(209, 100%, 92%) !important;
         }
         tr:nth-child(odd).highlightedRow {
-            background-color:hsl(209, 100%, 94%) !important;
+            background-color:hsl(209, 100%, 97%) !important;
         }
         tr:nth-child(odd):hover.highlightedRow {
-            background-color:hsl(209, 100%, 92%) !important;
+            background-color:hsl(209, 100%, 95%) !important;
         }
     </style>
 
@@ -1242,7 +1242,7 @@
             // ScoreBoard management methods
 
 
-            function scoreButtonClick(event) {
+            function scoreButtonClick() {
                 run = false;
                 scoreDiv.style.visibility = "visible";
                 tabButtons[0].click();
@@ -1257,7 +1257,7 @@
                 if (event.target.id == "local") genLocalScores(); else genGlobalScores();
             }
 
-            function closeScore(event) {
+            function closeScore() {
                 scoreDiv.style.visibility = "hidden";
                 setTimeout(() => run = true, 1000);
             }
@@ -1269,8 +1269,10 @@
                     if (localStorage) localStorage.setItem("m4.pn", playerName);
                     getPlayerHighScore();
                     if (newHS) postNewHS();
+                    closeScore();
                 } else {
-                    playerInputWarining.innerText = "Invalid name, must be 3 to 32 characters long,\n can only contain: a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]";
+                    playerInputWarining.innerText = "Invalid name:\n, must only contain 3 to 32 of the following characters: a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]";
+                    playerInputWarining.style.display = "inline";
                 }
             }
 
@@ -1287,6 +1289,7 @@
                 httpRequest.onloadend = function(event) {
                     console.log("upload done " + event.target.status + "\n" + event.target.responseText);
                 }
+
                 httpRequest.open("POST", "https://api.m4nusky.com/Memory/v4");
                 let payload = {
                     "version":"4",
