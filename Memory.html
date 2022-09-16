@@ -604,6 +604,8 @@
             //      on new username set, refresh local list with "<player>", send latest to server.
             //      if set add to local list, send to server
             // TODO push score to server
+            // TODO FR - EN localization
+            // TODO general cleanup and refactor
 
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
@@ -1333,6 +1335,16 @@
             function postNewHS() {
                 console.log("uploading new HS");
                 newHS = false;
+                /*
+                    "op": "add",
+                    "name": "example",
+                    "score": 20220914,
+                    "level": 4,
+                    "step": 2,
+                    "SQTY": 4,
+                    "CSM": 1,
+                    "SSM": 1
+                */
             }
 
             const scoreTableHeader = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Level</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle</th><th class="h" onClick="sortTable(this, bySQTY)">Shuffle Qty</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
@@ -1515,6 +1527,7 @@ Score: $score, HighScore(local): $lhs, Player: $pn, Highscore(Player): $phs</spa
     </div>
 
     <div id="hiddenMedia">
+        <!-- SFX made with sfxr - sound effect generator -->
         <audio id="b0" src="media/Beep0.wav"></audio>
         <audio id="b1" src="media/Beep1.wav"></audio>
         <audio id="b2" src="media/Beep2.wav"></audio>
