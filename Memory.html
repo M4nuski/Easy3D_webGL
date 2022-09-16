@@ -1318,7 +1318,7 @@
                 
                 let newHTML = scoreTableHeader.slice();
                 var list = getHSlist();
-                list = list.sort( (a, b) => (Number(b.score) - Number(a.score)) );
+                list = list.sort(byScore);
                 for (var score of list) {
                     newHTML += scoreRowFormat.replace("$name", score.name);
                     newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
@@ -1334,9 +1334,16 @@
                 localContentTab.innerHTML = newHTML;
             }
 
+            function byScore(a, b) {
+                return Number(b.score) - Number(a.score);
+            }
+
             var httpRequest;
             const globalContentTab = getElem("globalContent");
+            var _LastGlobalFetch = 0;
             function genGlobalScores() {
+                if ((Date.now() - _LastGlobalFetch) < 1000 * 60) return; // throttle to 1 per minute
+
                 globalContentTab.innerText = "Fetching global score list...";
                 httpRequest = new XMLHttpRequest();
                 httpRequest.onerror = genGlobalScores_error;
@@ -1344,6 +1351,7 @@
                 httpRequest.onloadend = genGlobalScores_loadEnd;
                 httpRequest.open("POST", "https://api.m4nusky.com/Memory");
                 httpRequest.send(' {"op":"global" }');
+                _LastGlobalFetch = Date.now();
             }
 
             function genGlobalScores_error(event) {
@@ -1369,6 +1377,7 @@
                     return;
                 }
 
+                list = list.sort(byScore);
                 for (var score of list) {
                     newHTML += scoreRowFormat.replace("$name", score.name);
                     newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
