@@ -1,4 +1,4 @@
-const ddb = require("./ddb2.js");
+const ddb = require("ddb");
 const resp = require("responses");
 const parser = require("parser");
 
@@ -12,35 +12,6 @@ exports.handler = async (event) => {
     
     switch (query.op) {
 
-        // TODO remove
-        case 'get': try {
-            result = await ddb.getRow("Memory", "timestamp", Number(query.key));
-            status = "ok";
-        } catch (ex) { result = ex.message; status = "failed"; }
-        break;
-
-        // TODO remove
-        case 'random': try {
-            let max = (query.max) ? Number(query.max) : 1;
-            for (var x = 0; x < max; ++x) {
-                let data = {
-                    "timestamp": Date.now(),
-                    "name": "Example" + randText(4 + randInt(2)),
-                    "score": randInt(1024),
-                    "level": randInt(20),
-                    "step": randInt(4),
-                    "SQTY": 2 + randInt(2),
-                    "CSM": randInt(5),
-                    "SSM": randInt(2)
-                    };
-                await ddb.setRow("Memory", data);
-            }
-            
-            result = await ddb.getSingleColumn("Memory", "score");
-            status = "ok";
-        } catch (ex) { result = ex.message; status = "failed"; }
-        break;
-        
         case 'add': try {
             if (!(name_regex.test(query.name))) throw Error("Invalid Name: " + query.name);
 
@@ -56,8 +27,7 @@ exports.handler = async (event) => {
                 };
             await ddb.setRow("Memory", data);
             
-            result = await ddb.selectRows("Memory", "name", query.name);
-            //result = data.sort( (a, b) => (Number(b.score) - Number(a.score)) );
+            result = data.timestamp;
             status = "ok";
         } catch (ex) { result = ex.message; status = "failed"; }
         break;
@@ -72,13 +42,12 @@ exports.handler = async (event) => {
             result = "////UNIMPLEMENTED////";
             // clean by user+date (delete each user's oldest scores)
             // clean by user+num (delete each user's lowest scores)
-            //status = "ok";
+            status = "failed";
         } catch (ex) { result = ex.message; status = "failed"; }
         break;
         
         case 'global': try {
             result = await ddb.getAllRows("Memory");
-            //result = data.sort( (a, b) => (Number(b.score) - Number(a.score)) );
             status = "ok";
         } catch (ex) { result = ex.message; status = "failed"; }
         break;
@@ -89,35 +58,15 @@ exports.handler = async (event) => {
                                             { ":name": query.name, ":last48h": (Date.now() - (1000 * 3600 * 48)) },
                                             "#name = :name AND #date >= :last48h");
             */
-            let data = await ddb.selectRows("Memory", "name", query.name);
-            result = data.sort( (a, b) => (Number(b.score) - Number(a.score)) );
+            result = await ddb.selectRows("Memory", "name", query.name);
             status = "ok";
         } catch (ex) { result = ex.message; status = "failed"; }
         break;
 
     }
     
-    return /*resp.object*/ object2( { "op": query.op, "status": status, body: result } );
+    return resp.object( { "op": query.op, "status": status, body: result } );
 };
-
-function object2(Content, Format = false, Indent = 2) {
-    let bodyContent = (Format) ? JSON.stringify(Content, null, Indent) : JSON.stringify(Content);
-    return {
-        statusCode: 200,
-        body: bodyContent
-    };
-}
-
-function randInt(max) {
-    return Math.floor(Math.random() * max);
-}
-
-const alph = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-0123456789";
-function randText(len) {
-    let res = "";
-    for (var i = 0; i < len; ++i) res += alph[randInt(alph.length)];
-    return res;
-}
 
 function validateNum(num, min, max) {
     var res = Number(num);
