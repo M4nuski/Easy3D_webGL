@@ -208,6 +208,9 @@
             box-shadow: 0px 3px 3px 0px #303030;
             padding: 2px 10px 0px 10px;
         }
+        th.h {
+            cursor: pointer;
+        }
 
         td {
             padding: 2px 10px 0px 10px;
@@ -341,25 +344,24 @@
                 stepDelayRemaining = 1.0;
                 if (event.key == "d") {
                     localHighScore = 0;
-                    if (window.localStorage) {
-                        window.localStorage.setItem("m3.hs", 0);
-                        window.localStorage.setItem("m4.hsl", "[]");
+                    if (localStorage) {
+                        localStorage.setItem("m3.hs", 0);
+                        localStorage.setItem("m4.hsl", "[]");
                     }
                 }
                 if (event.key == "n") newHS = true;
                 if (event.key == "m") {
                     var list = getHSlist();
-
                         var obj = new scoreObject("Player");
-                        obj.CSM = randInt(6);
-                        obj.SSM = randInt(3);
-                        obj.date = Date.now() - randInt(3600*1000*31)
+                        obj.version = 4;
                         obj.name = "Player" + randText(2);
-                        obj.level = randInt(100)+1;
+                        obj.timestamp = Date.now() - randInt(3600*1000*31)
                         obj.score = randInt(2048)+1;
+                        obj.level = randInt(100)+1;
                         obj.step = randInt(obj.level);
-                        obj.qty = 2 + randInt(3);
-                        obj.version = "3b";
+                        obj.CSM = randInt(6);
+                        obj.SQTY = 2 + randInt(3);
+                        obj.SSM = randInt(3);
 
                         list.push(obj);
 
@@ -449,7 +451,12 @@
                 if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
                 if (elemOrID) elemOrID.addEventListener("click", callback);
             }
-
+            function parentID(elem) {
+                while ((elem) && (!(elem.id))) {
+                    elem = elem.parentElement;
+                }
+                return elem.id;
+            }
 
 
 
@@ -540,12 +547,12 @@
             var localHighScore = 0;
             var playerHighScore = 0;
 
-            if (window.localStorage) {
-                var hs = window.localStorage.getItem("m3.hs");
+            if (localStorage) {
+                var hs = localStorage.getItem("m3.hs");
                 if (hs != undefined) {
                     localHighScore = hs;
                 }
-                var pn = window.localStorage.getItem("m4.pn");
+                var pn = localStorage.getItem("m4.pn");
                 if ((pn !== undefined) && (pn !== null)) {
                     playerName = pn;
                     playernameInput.value = pn;
@@ -562,10 +569,10 @@
 
             var newHS = false;
             var newHSobj;
-            const version = "3";
+            /*
             class scoreObject {
                 constructor(n) {
-                    this.version = version;
+                    this.version = 3;
                     this.name = n;
                     this.date = Date.now();
                     this.CSM = colorShuffleMode;
@@ -576,23 +583,27 @@
                     this.score = currentScore;
                 }
             }
-
-
+            */
+            class scoreObject {
+                constructor(n) {
+                    this.version = 4;
+                    this.timestamp = Date.now();
+                    this.name = n;
+                    this.score = currentScore;
+                    this.level = currentLevel + 1;
+                    this.step = currentStep;
+                    this.CSM = colorShuffleMode;
+                    this.SQTY = shuffleQty;
+                    this.SSM = soundSuffleMode;
+                }
+            }
             const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
             // a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
 
-            // on game start check for username, otherwise default "<Player>"
-            // on game end save score and state
-            // if highscore flash score button
             //      if username not set show username input, if set save highscore
             //      on new username set, refresh local list with "<player>", send latest to server.
             //      if set add to local list, send to server
-            // TODO panel with local list
-            //          Update on open
-            //          Filter by
-            // TODO panel with global list
-            //          Update on open
-            //          Filter by
+            // TODO push score to server
 
             var timeSinceLastHit = 0.0;
             const maxTimeBetweenHit = 1.5;
@@ -651,15 +662,15 @@
 
             // volume slider
             var volSlider = getElem("vol");
-            if (window.localStorage) {
-                var v = window.localStorage.getItem("m1.vol");
+            if (localStorage) {
+                var v = localStorage.getItem("m1.vol");
                 if (v != undefined) {
                     volSlider.value = v;
                 }
             }
             volSlider.addEventListener("input", function (event) { 
                 if (gainNode) gainNode.gain.value = this.value; 
-                if (window.localStorage) window.localStorage.setItem("m1.vol", this.value);
+                if (localStorage) localStorage.setItem("m1.vol", this.value);
             });
 
             // shuffle mode button
@@ -667,10 +678,10 @@
                 if (isGameActive()) return;
                 colorShuffleMode++;
                 if (colorShuffleMode > CSM_Max) colorShuffleMode = 0;
-                if (window.localStorage) window.localStorage.setItem("m2.mode", colorShuffleMode);
+                if (localStorage) localStorage.setItem("m2.mode", colorShuffleMode);
             });
-            if (window.localStorage) {
-                var m = window.localStorage.getItem("m2.mode");
+            if (localStorage) {
+                var m = localStorage.getItem("m2.mode");
                 if (m != undefined) {
                     colorShuffleMode = m;
                 }
@@ -681,10 +692,10 @@
                 if (isGameActive()) return;
                 shuffleQty++;
                 if (shuffleQty > 4) shuffleQty = 2;
-                if (window.localStorage) window.localStorage.setItem("m2.itt", shuffleQty);
+                if (localStorage) localStorage.setItem("m2.itt", shuffleQty);
             });   
-            if (window.localStorage) {
-                var i = window.localStorage.getItem("m2.itt");
+            if (localStorage) {
+                var i = localStorage.getItem("m2.itt");
                 if (i != undefined) {
                     shuffleQty = i;
                     if (shuffleQty < 2) shuffleQty = 2;
@@ -697,10 +708,10 @@
                 if (isGameActive()) return;
                 soundSuffleMode++;
                 if (soundSuffleMode > SSM_Max) soundSuffleMode = 0;
-                if (window.localStorage) window.localStorage.setItem("m2.ssm", soundSuffleMode);
+                if (localStorage) localStorage.setItem("m2.ssm", soundSuffleMode);
             });   
-            if (window.localStorage) {
-                var s = window.localStorage.getItem("m2.ssm");
+            if (localStorage) {
+                var s = localStorage.getItem("m2.ssm");
                 if (s != undefined) {
                     soundSuffleMode = s;
                 }
@@ -923,6 +934,21 @@
                     if (text) {
                         let list = JSON.parse(text);
                         if (!list.length) throw Error("wtf");
+                        list = list.map( function(score) {
+                            if (Number(score.version) == 4) return score; else {
+                                return {
+                                    version: 4,
+                                    timestamp: score.date,
+                                    name: score.name,
+                                    score: score.score,
+                                    level: score.level,
+                                    step: score.step,
+                                    CSM: score.CSM,
+                                    SQTY: score.qty,
+                                    SSM: score.SSM
+                                }
+                            }
+                        } );
                         return list;
                     }
                 } catch (ex) { console.log(ex); }
@@ -1295,7 +1321,7 @@
                 if (name_regex.test(playernameInput.value)) {
                     playerInputWarining.style.display = "none";
                     playerName = playernameInput.value;
-                    if (window.localStorage) window.localStorage.setItem("m4.pn", playerName);
+                    if (localStorage) localStorage.setItem("m4.pn", playerName);
                     getPlayerHighScore();
                     if (newHS) postNewHS();
                 } else {
@@ -1309,37 +1335,58 @@
                 newHS = false;
             }
 
-            // TODO date formatter
-
-            const scoreTableHeader = "<table><tr><th>Player</th><th>Score</th><th>Level</th><th>Step</th><th>Color Shuffle</th><th>Shuffle Qty</th><th>Sound Shuffle</th><th>Date</th></tr>";
-            const scoreRowFormat = "<tr$class><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>"
+            const scoreTableHeader = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Level</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle</th><th class="h" onClick="sortTable(this, bySQTY)">Shuffle Qty</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
+            const scoreRowFormat = '<tr$class><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>';
             const localContentTab = getElem("localContent");
-            function genLocalScores() {
-                
-                let newHTML = scoreTableHeader.slice();
+            function genLocalScores() {                
                 var list = getHSlist();
-                list = list.sort(byScore);
-                for (var score of list) {
-                    newHTML += scoreRowFormat.replace("$name", score.name);
-                    newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
-                    newHTML = newHTML.replace("$qty", (score.qty.toString()) + ( (score.qty > 2) ? (" " + "★".repeat(score.qty-2)) : "") );
-                    newHTML = newHTML.replace("$SSM", SSM_Strings[score.SSM]);
-                    newHTML = newHTML.replace("$level", score.level + 1);
-                    newHTML = newHTML.replace("$step", score.step);
-                    newHTML = newHTML.replace("$score", score.score);
-                    newHTML = newHTML.replace("$date", score.date);
-                    newHTML = newHTML.replace("$class", (score.name == playerName) ? ' class="highlightedRow"' : "");
-                }
-                newHTML += "</table>";
-                localContentTab.innerHTML = newHTML;
+                localContentTab.innerHTML = genScoreTable(list, byScore);
             }
 
-            function byScore(a, b) {
-                return Number(b.score) - Number(a.score);
+            window.byScore = function(a, b) {
+                const as = Number(a.score)
+                const bs = Number(b.score);
+                if (as != bs) return bs - as;
+                return Number(b.timestamp) - Number(a.timestamp);
+            }
+            window.byDate = function(a, b) {
+                return Number(b.timestamp) - Number(a.timestamp);
+            }
+            window.byName = function(a, b) {
+                if (a.name == b.name) return (byScore(a, b));
+                if (b.name < a.name) return  1;
+                if (b.name > a.name) return -1;
+            }
+            window.byLevel = function(a, b) {
+                if (a.level == b.level) return (byScore(a, b));
+                return (b.level - a.level);
+            }
+            window.byCSM = function(a, b) {
+                if (a.CSM == b.CSM) return (byScore(a, b));
+                return (b.CSM - a.CSM);
+            }
+            window.bySQTY = function(a, b) {
+                if (a.SQTY == b.SQTY) return (byScore(a, b));
+                return (b.SQTY - a.SQTY);
+            }
+            window.bySSM = function(a, b) {
+                if (a.SSM == b.SSM) return (byScore(a, b));
+                return (b.SSM - a.SSM);
+            }
+            window.sortTable = function(context, sortFunction) {
+                var id = parentID(context);
+                if (id == "localContent") {
+                    var list = getHSlist();
+                    localContentTab.innerHTML = genScoreTable(list, sortFunction);
+                } else {
+                    var list = getHSlist();
+                    globalContentTab.innerHTML = genScoreTable(_LastGlobalList, sortFunction);
+                }
             }
 
             var httpRequest;
             const globalContentTab = getElem("globalContent");
+            var _LastGlobalList = [];
             var _LastGlobalFetch = 0;
             function genGlobalScores() {
                 if ((Date.now() - _LastGlobalFetch) < 1000 * 60) return; // throttle to 1 per minute
@@ -1350,7 +1397,7 @@
                 httpRequest.ontimeout = genGlobalScores_error;
                 httpRequest.onloadend = genGlobalScores_loadEnd;
                 httpRequest.open("POST", "https://api.m4nusky.com/Memory");
-                httpRequest.send(' {"op":"global" }');
+                httpRequest.send('{"op":"global"}');
                 _LastGlobalFetch = Date.now();
             }
 
@@ -1363,47 +1410,45 @@
                 console.log("Status: " + event.target.status);
                 if (event.target.status != 200) { globalContentTab.innerText = "Error getting global score list"; return; }
 
-                let newHTML = scoreTableHeader.slice();
                 var list = event.target.responseText;
                 try {
                     list = JSON.parse(list);
                     if (list.status != "ok") {
-                        globalContentTab.innerText = "Error parsing global score list:\n status != \"ok\"";
+                        globalContentTab.innerText = "Error parsing global score list:\nstatus = " + list.status;
+                        console.log(list.body);
                         return;
                     }
                     list = list.body;
+                    _LastGlobalList = list.slice();
                 } catch (ex) {
                     globalContentTab.innerText = "Error parsing global score list:\n" + ex.message;
                     return;
                 }
-
-                list = list.sort(byScore);
-                for (var score of list) {
-                    newHTML += scoreRowFormat.replace("$name", score.name);
-                    newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
-                    newHTML = newHTML.replace("$qty", (score.SQTY.toString()) + ( (score.SQTY > 2) ? (" " + "★".repeat(score.SQTY-2)) : "") );
-                    newHTML = newHTML.replace("$SSM", SSM_Strings[score.SSM]);
-                    newHTML = newHTML.replace("$level", score.level + 1);
-                    newHTML = newHTML.replace("$step", score.step);
-                    newHTML = newHTML.replace("$score", score.score);
-                    newHTML = newHTML.replace("$date", score.timestamp);
-
-                    newHTML = newHTML.replace("$class", (score.name == playerName) ? 'class="highlightedRow"' : "");
-                }
-                newHTML += "</table>";
-                globalContentTab.innerHTML = newHTML;
+                globalContentTab.innerHTML = genScoreTable(list, byScore);
             }
 
-            /*
-                "timestamp": Date.now(),
-                "name": query.name,
-                "score": validateNum(query.score, 0, Infinity),
-                "level": validateNum(query.level, 1, Infinity),
-                "step": validateNum(query.step, 0, Number(query.level)),
-                "SQTY": validateNum(query.SQTY, 2, 4),
-                "CSM": validateNum(query.CSM, 0, 5),
-                "SSM": validateNum(query.SSM, 0, 2)
-                */
+            function genScoreTable(list, sortFunction) {
+                let newHTML = scoreTableHeader.slice();
+                list = list.sort(sortFunction);
+                for (var score of list) newHTML = formatScoreRow(newHTML, score);
+                newHTML += "</table>";
+                return newHTML;
+            }
+            function formatDate(d) {
+                return d.getFullYear() + "/" + (""+(d.getMonth() + 1)).padStart(2, "0") + "/" + ("" + d.getDate()).padStart(2, "0") + " " + ("" + d.getHours()).padStart(2, "0") + ":" + ("" + d.getMinutes()).padStart(2, "0") + ":" + ("" + d.getSeconds()).padStart(2, "0");
+            }
+            function formatScoreRow(rowHTML, score) {
+                rowHTML += scoreRowFormat.replace("$name", score.name);
+                rowHTML = rowHTML.replace("$CSM", CSM_Strings[score.CSM]);
+                rowHTML = rowHTML.replace("$qty", (score.SQTY.toString()) + ( (score.SQTY > 2) ? (" " + "★".repeat(score.SQTY-2)) : "") );
+                rowHTML = rowHTML.replace("$SSM", SSM_Strings[score.SSM]);
+                rowHTML = rowHTML.replace("$level", score.level + 1);
+                rowHTML = rowHTML.replace("$step", score.step);
+                rowHTML = rowHTML.replace("$score", score.score);
+                rowHTML = rowHTML.replace("$date", formatDate(new Date(score.timestamp)));
+                rowHTML = rowHTML.replace("$class", (score.name == playerName) ? ' class="highlightedRow"' : "");
+                return rowHTML;
+            }
 
         } );
 
