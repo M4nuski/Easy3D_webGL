@@ -156,6 +156,9 @@
             position: absolute;
             background-color: salmon;
         }
+        #scoreCloseButton:hover {
+            background-color:#f83620;
+        }
         
         #scoreDiv {
             /* Score Div is a "modal" panel hiding the game and inhibiting the game loop */ 
@@ -196,16 +199,16 @@
         }
 
         tr:nth-child(even) {
-            background-color: #E2E2ED;/**/
+            background-color: #E2E2ED;
         }
         tr:nth-child(even):hover {
-            background-color: #D2D2ED;/**/
+            background-color: #D2D2ED;
         }
         tr:nth-child(odd) {
-            background-color:#F2F2FD;/*lightBackground*/
+            background-color:#F2F2FD;
         }
         tr:nth-child(odd):hover {
-            background-color:#E2E2FD;/*lightBackground*/
+            background-color:#E2E2FD;
         }
 
         th {
@@ -223,8 +226,17 @@
             padding: 2px 10px 0px 10px;
         }
 
-        .highlightedRow {
-            background-color: lightskyblue !important; 
+        tr:nth-child(even).highlightedRow {
+            background-color: hsl(209, 100%, 98%) !important;
+        }
+        tr:nth-child(even):hover.highlightedRow {
+            background-color: hsl(209, 100%, 96%) !important;
+        }
+        tr:nth-child(odd).highlightedRow {
+            background-color:hsl(209, 100%, 94%) !important;
+        }
+        tr:nth-child(odd):hover.highlightedRow {
+            background-color:hsl(209, 100%, 92%) !important;
         }
     </style>
 
@@ -1290,8 +1302,9 @@
                 httpRequest.onloadend = function(event) {
                     console.log("upload done " + event.target.status + "\n" + event.target.responseText);
                 }
-                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory/v4");
                 let payload = {
+                    "version":"4",
                     "op": "add",
                     "name": newHSobj.name,
                     "score": newHSobj.score,
@@ -1348,8 +1361,8 @@
                     globalContentTab.innerHTML = genScoreTable(list, byScore);
                 }
 
-                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
-                httpRequest.send('{"op":"global"}');
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory/v4");
+                httpRequest.send('{"version":"4","op":"global"}');
                 _LastGlobalFetch = Date.now();
             }
 
