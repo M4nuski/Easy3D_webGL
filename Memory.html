@@ -213,6 +213,10 @@
             padding: 2px 10px 0px 10px;
         }
 
+        .highlightedRow {
+            background-color: lightskyblue !important; 
+        }
+
 
     </style>
 
@@ -1305,14 +1309,18 @@
                 newHS = false;
             }
 
-            const scoreFormat = "<tr><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>"
-            function genLocalScores() {
-                const tab = getElem("localContent");
-                let newHTML = "<table><tr><th>Player</th><th>Score</th><th>Level</th><th>Step</th><th>Color Shuffle</th><th>Shuffle Qty</th><th>Sound Shuffle</th><th>Date</th></tr>";
-                var list = getHSlist();
+            // TODO date formatter
 
+            const scoreTableHeader = "<table><tr><th>Player</th><th>Score</th><th>Level</th><th>Step</th><th>Color Shuffle</th><th>Shuffle Qty</th><th>Sound Shuffle</th><th>Date</th></tr>";
+            const scoreRowFormat = "<tr$class><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>"
+            const localContentTab = getElem("localContent");
+            function genLocalScores() {
+                
+                let newHTML = scoreTableHeader.slice();
+                var list = getHSlist();
+                list = list.sort( (a, b) => (Number(b.score) - Number(a.score)) );
                 for (var score of list) {
-                    newHTML += scoreFormat.replace("$name", score.name);
+                    newHTML += scoreRowFormat.replace("$name", score.name);
                     newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
                     newHTML = newHTML.replace("$qty", (score.qty.toString()) + ( (score.qty > 2) ? (" " + "★".repeat(score.qty-2)) : "") );
                     newHTML = newHTML.replace("$SSM", SSM_Strings[score.SSM]);
@@ -1320,17 +1328,73 @@
                     newHTML = newHTML.replace("$step", score.step);
                     newHTML = newHTML.replace("$score", score.score);
                     newHTML = newHTML.replace("$date", score.date);
+                    newHTML = newHTML.replace("$class", (score.name == playerName) ? ' class="highlightedRow"' : "");
                 }
                 newHTML += "</table>";
-                tab.innerHTML = newHTML;
+                localContentTab.innerHTML = newHTML;
             }
 
+            var httpRequest;
+            const globalContentTab = getElem("globalContent");
             function genGlobalScores() {
+                globalContentTab.innerText = "Fetching global score list...";
+                httpRequest = new XMLHttpRequest();
+                httpRequest.onerror = genGlobalScores_error;
+                httpRequest.ontimeout = genGlobalScores_error;
+                httpRequest.onloadend = genGlobalScores_loadEnd;
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
+                httpRequest.send(' {"op":"global" }');
+            }
+
+            function genGlobalScores_error(event) {
+                console.log("Status: " + event.target.status);
+                globalContentTab.innerText = "Error getting global score list:\n" + event.target.responseText;
 
             }
-            // tabs
-            //      global fetch data from aws
-            //      parse format and display data
+            function genGlobalScores_loadEnd(event) {
+                console.log("Status: " + event.target.status);
+                if (event.target.status != 200) { globalContentTab.innerText = "Error getting global score list"; return; }
+
+                let newHTML = scoreTableHeader.slice();
+                var list = event.target.responseText;
+                try {
+                    list = JSON.parse(list);
+                    if (list.status != "ok") {
+                        globalContentTab.innerText = "Error parsing global score list:\n status != \"ok\"";
+                        return;
+                    }
+                    list = list.body;
+                } catch (ex) {
+                    globalContentTab.innerText = "Error parsing global score list:\n" + ex.message;
+                    return;
+                }
+
+                for (var score of list) {
+                    newHTML += scoreRowFormat.replace("$name", score.name);
+                    newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
+                    newHTML = newHTML.replace("$qty", (score.SQTY.toString()) + ( (score.SQTY > 2) ? (" " + "★".repeat(score.SQTY-2)) : "") );
+                    newHTML = newHTML.replace("$SSM", SSM_Strings[score.SSM]);
+                    newHTML = newHTML.replace("$level", score.level + 1);
+                    newHTML = newHTML.replace("$step", score.step);
+                    newHTML = newHTML.replace("$score", score.score);
+                    newHTML = newHTML.replace("$date", score.timestamp);
+
+                    newHTML = newHTML.replace("$class", (score.name == playerName) ? 'class="highlightedRow"' : "");
+                }
+                newHTML += "</table>";
+                globalContentTab.innerHTML = newHTML;
+            }
+
+            /*
+                "timestamp": Date.now(),
+                "name": query.name,
+                "score": validateNum(query.score, 0, Infinity),
+                "level": validateNum(query.level, 1, Infinity),
+                "step": validateNum(query.step, 0, Number(query.level)),
+                "SQTY": validateNum(query.SQTY, 2, 4),
+                "CSM": validateNum(query.CSM, 0, 5),
+                "SSM": validateNum(query.SSM, 0, 2)
+                */
 
         } );
 
