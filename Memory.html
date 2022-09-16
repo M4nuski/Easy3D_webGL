@@ -68,7 +68,7 @@
             padding: 0.3em 0.2em 0.2em 0.2em;
             user-select: none;   
             box-shadow: 0.1em 0.1em black;      
-            border-radius: 0.2em 0.2em 0em 0em;
+            border-radius: 0.5em 0.5em 0em 0em;
             margin: 0.1em 0.0em 0.2em 0.1em;
         }
         .E3D_tabButton:hover {
@@ -79,7 +79,8 @@
         }
         .E3D_tabContent {
             display: none;
-            margin: 0.5em;
+            margin-top: 4px;
+            border-top: 2px solid black;
         }
 
         #statusDiv {
@@ -131,7 +132,7 @@
         }
         #scoreCloseButton {
             margin: 5px;
-            right: 0px;
+            right: 0.8em;
             position: absolute;
             background-color: salmon;
         }
@@ -146,6 +147,7 @@
             bottom: 0px;
             right: 0px;
             background-color: white;
+            overflow: auto;
         }
 
         #scoreHeaderDiv {
@@ -154,6 +156,7 @@
             margin-bottom: 1em;
             display: flex;
             align-items: center;
+            padding-left: 0.3em;
         }
 
         #playerInputWarining {
@@ -174,6 +177,40 @@
             max-width: 500px;
             max-height: 500px; /* should be equal to max-width to avoid transition overshoot */
             background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Table Styles */ 
+        table {
+            border-collapse: separate;
+            border: 0px solid #808080;/*grayBackground*/		
+            border-spacing: 0px 5px;
+            margin: 0px 15px 15px 15px;
+            width:98%;
+        }
+
+        tr:nth-child(even) {
+            background-color: #E2E2ED;/**/
+        }
+        tr:nth-child(even):hover {
+            background-color: #D2D2ED;/**/
+        }
+        tr:nth-child(odd) {
+            background-color:#F2F2FD;/*lightBackground*/
+        }
+        tr:nth-child(odd):hover {
+            background-color:#E2E2FD;/*lightBackground*/
+        }
+
+        th {
+            color:#F2F2FD;/*lightBackground*/
+            background-color:#505050;
+            border-radius: 5px;
+            box-shadow: 0px 3px 3px 0px #303030;
+            padding: 2px 10px 0px 10px;
+        }
+
+        td {
+            padding: 2px 10px 0px 10px;
         }
 
 
@@ -302,9 +339,38 @@
                     localHighScore = 0;
                     if (window.localStorage) {
                         window.localStorage.setItem("m3.hs", 0);
+                        window.localStorage.setItem("m4.hsl", "[]");
                     }
                 }
                 if (event.key == "n") newHS = true;
+                if (event.key == "m") {
+                    var list = getHSlist();
+
+                        var obj = new scoreObject("Player");
+                        obj.CSM = randInt(6);
+                        obj.SSM = randInt(3);
+                        obj.date = Date.now() - randInt(3600*1000*31)
+                        obj.name = "Player" + randText(2);
+                        obj.level = randInt(100)+1;
+                        obj.score = randInt(2048)+1;
+                        obj.step = randInt(obj.level);
+                        obj.qty = 2 + randInt(3);
+                        obj.version = "3b";
+
+                        list.push(obj);
+
+                    setHSlist(list);
+                }
+            }
+            function randInt(max) {
+                return Math.floor(Math.random() * max);
+            }
+
+            const alph = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-0123456789";
+            function randText(len) {
+                let res = "";
+                for (var i = 0; i < len; ++i) res += alph[randInt(alph.length)];
+                return res;
             }
 
             function resizeViewport() {
@@ -593,7 +659,7 @@
             });
 
             // shuffle mode button
-            getElem("shuffleModeButton").addEventListener("click", function (event) {
+            onClick("shuffleModeButton", function (event) {
                 if (isGameActive()) return;
                 colorShuffleMode++;
                 if (colorShuffleMode > CSM_Max) colorShuffleMode = 0;
@@ -607,7 +673,7 @@
             }  
 
             // shuffle qty button
-            getElem("shuffleQtyButton").addEventListener("click", function (event) {
+            onClick("shuffleQtyButton", function (event) {
                 if (isGameActive()) return;
                 shuffleQty++;
                 if (shuffleQty > 4) shuffleQty = 2;
@@ -623,7 +689,7 @@
             }
 
             // shuffle sound button
-            getElem("shuffleSoundButton").addEventListener("click", function (event) {
+            onClick("shuffleSoundButton", function (event) {
                 if (isGameActive()) return;
                 soundSuffleMode++;
                 if (soundSuffleMode > SSM_Max) soundSuffleMode = 0;
@@ -1213,6 +1279,7 @@
                 event.target.classList.add("E3D_tabButtonActive");
                 tabs.forEach( (tab) => tab.style.display = "none");
                 getElem(event.target.id + "Content").style.display = "block";
+                if (event.target.id == "local") genLocalScores(); else genGlobalScores();
             }
 
             function closeScore(event) {
@@ -1238,11 +1305,27 @@
                 newHS = false;
             }
 
-            function getLocalScores() {
+            const scoreFormat = "<tr><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>"
+            function genLocalScores() {
+                const tab = getElem("localContent");
+                let newHTML = "<table><tr><th>Player</th><th>Score</th><th>Level</th><th>Step</th><th>Color Shuffle</th><th>Shuffle Qty</th><th>Sound Shuffle</th><th>Date</th></tr>";
+                var list = getHSlist();
 
+                for (var score of list) {
+                    newHTML += scoreFormat.replace("$name", score.name);
+                    newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
+                    newHTML = newHTML.replace("$qty", (score.qty.toString()) + ( (score.qty > 2) ? (" " + "★".repeat(score.qty-2)) : "") );
+                    newHTML = newHTML.replace("$SSM", SSM_Strings[score.SSM]);
+                    newHTML = newHTML.replace("$level", score.level + 1);
+                    newHTML = newHTML.replace("$step", score.step);
+                    newHTML = newHTML.replace("$score", score.score);
+                    newHTML = newHTML.replace("$date", score.date);
+                }
+                newHTML += "</table>";
+                tab.innerHTML = newHTML;
             }
 
-            function getGlobalScores() {
+            function genGlobalScores() {
 
             }
             // tabs
@@ -1258,7 +1341,7 @@
     <div class="E3D_fullscreenContainer E3D_flexVertical">
         <div id="scoreDiv">
             <div id="scoreHeaderDiv">
-            <span>Palyer Name: <input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playerSetButton" class="E3D_fakeButton">Set</span></span><span id="playerInputWarining">Set player name to allow global rankings participation</span> <span id="scoreCloseButton" class="E3D_fakeButton">Close</span>
+            <span> Player Name: <input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playerSetButton" class="E3D_fakeButton">Set</span></span><span id="playerInputWarining">Set player name to allow global rankings participation</span> <span id="scoreCloseButton" class="E3D_fakeButton">Close</span>
         </div>
             <span class="E3D_tabButton" id="local">Local Scores</span><span class="E3D_tabButton" id="global">Global Scores</span>
             <div class="E3D_tabContent" id="localContent">
