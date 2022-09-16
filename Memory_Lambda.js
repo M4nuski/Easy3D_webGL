@@ -10,6 +10,8 @@ exports.handler = async (event) => {
     let status = "failed";
     let result = "unkown op";
     
+    if (query.version != "4") return resp.object( { "op": query.op, "status": "failed", body: "Invalid version" } );
+    
     switch (query.op) {
 
         case 'add': try {
