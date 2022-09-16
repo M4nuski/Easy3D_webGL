@@ -349,6 +349,7 @@
                         localStorage.setItem("m4.hsl", "[]");
                     }
                 }
+                if (event.key == "+") currentScore += randInt(100);
                 if (event.key == "n") newHS = true;
                 if (event.key == "m") {
                     var list = getHSlist();
@@ -926,6 +927,8 @@
                     list.push(newHSobj);
                     setHSlist(list);
 
+                    scoreButton.style.backgroundColor = "lime";
+                    playerInputWarining.style.display = (playerName != "<Player>") ? "none" : "";
                     if (playerName != "<Player>") postNewHS();
                 }
             }
@@ -1097,18 +1100,6 @@
                         stepDelayRemaining = teachDelayBase;
                     }
                 }
-
-                if (newHS) {
-                    scoreButton.style.backgroundColor = "lime";
-                    if (playerName != "<Player>") {
-                        playerInputWarining.style.display = "none";
-                    } else {
-                        playerInputWarining.style.display = "";
-                    }
-                } else {
-                    scoreButton.style.backgroundColor = "";
-                }
-                
             }
 
             function drawScene(){                
@@ -1304,6 +1295,7 @@
                 run = false;
                 scoreDiv.style.visibility = "visible";
                 tabButtons[0].click();
+                scoreButton.style.backgroundColor = "";
             }
 
             function scoreTabClick(event) {
@@ -1334,6 +1326,8 @@
 
             function postNewHS() {
                 console.log("uploading new HS");
+                var httpRequest = new XMLHttpRequest();
+                
                 newHS = false;
                 /*
                     "op": "add",
@@ -1345,6 +1339,25 @@
                     "CSM": 1,
                     "SSM": 1
                 */
+                httpRequest.onerror = function(event) {
+                    console.log("upload error " + event.target.status + "\n" + event.target.responseText);
+                }
+
+                httpRequest.onloadend = function(event) {
+                    console.log("upload done " + event.target.status + "\n" + event.target.responseText);
+                }
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
+                let payload = {
+                    "op": "add",
+                    "name": newHSobj.name,
+                    "score": newHSobj.score,
+                    "level": newHSobj.level,
+                    "step": newHSobj.step,
+                    "SQTY": newHSobj.SQTY,
+                    "CSM": newHSobj.CSM,
+                    "SSM": newHSobj.SSM
+                }
+                httpRequest.send(JSON.stringify(payload));
             }
 
             const scoreTableHeader = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Level</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle</th><th class="h" onClick="sortTable(this, bySQTY)">Shuffle Qty</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
@@ -1396,48 +1409,47 @@
                 }
             }
 
-            var httpRequest;
             const globalContentTab = getElem("globalContent");
             var _LastGlobalList = [];
             var _LastGlobalFetch = 0;
             function genGlobalScores() {
                 if ((Date.now() - _LastGlobalFetch) < 1000 * 60) return; // throttle to 1 per minute
-
+                
                 globalContentTab.innerText = "Fetching global score list...";
-                httpRequest = new XMLHttpRequest();
-                httpRequest.onerror = genGlobalScores_error;
-                httpRequest.ontimeout = genGlobalScores_error;
-                httpRequest.onloadend = genGlobalScores_loadEnd;
+                var httpRequest = new XMLHttpRequest();
+
+                httpRequest.onerror = function(event) {
+                    console.log("Status: " + event.target.status);
+                    globalContentTab.innerText = "Error getting global score list:\n" + event.target.responseText;
+                }
+                httpRequest.ontimeout = httpRequest.onerror;
+
+                httpRequest.onloadend = function(event) {
+                    console.log("Status: " + event.target.status);
+                    if (event.target.status != 200) { globalContentTab.innerText = "Error getting global score list"; return; }
+
+                    var list = event.target.responseText;
+                    try {
+                        list = JSON.parse(list);
+                        if (list.status != "ok") {
+                            globalContentTab.innerText = "Error parsing global score list:\nstatus = " + list.status;
+                            console.log(list.body);
+                            return;
+                        }
+                        list = list.body;
+                        _LastGlobalList = list.slice();
+                    } catch (ex) {
+                        globalContentTab.innerText = "Error parsing global score list:\n" + ex.message;
+                        return;
+                    }
+                    globalContentTab.innerHTML = genScoreTable(list, byScore);
+                }
+
                 httpRequest.open("POST", "https://api.m4nusky.com/Memory");
                 httpRequest.send('{"op":"global"}');
                 _LastGlobalFetch = Date.now();
             }
 
-            function genGlobalScores_error(event) {
-                console.log("Status: " + event.target.status);
-                globalContentTab.innerText = "Error getting global score list:\n" + event.target.responseText;
-
-            }
-            function genGlobalScores_loadEnd(event) {
-                console.log("Status: " + event.target.status);
-                if (event.target.status != 200) { globalContentTab.innerText = "Error getting global score list"; return; }
-
-                var list = event.target.responseText;
-                try {
-                    list = JSON.parse(list);
-                    if (list.status != "ok") {
-                        globalContentTab.innerText = "Error parsing global score list:\nstatus = " + list.status;
-                        console.log(list.body);
-                        return;
-                    }
-                    list = list.body;
-                    _LastGlobalList = list.slice();
-                } catch (ex) {
-                    globalContentTab.innerText = "Error parsing global score list:\n" + ex.message;
-                    return;
-                }
-                globalContentTab.innerHTML = genScoreTable(list, byScore);
-            }
 
             function genScoreTable(list, sortFunction) {
                 let newHTML = scoreTableHeader.slice();

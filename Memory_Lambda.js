@@ -24,7 +24,7 @@ exports.handler = async (event) => {
                 "SQTY": validateNum(query.SQTY, 2, 4),
                 "CSM": validateNum(query.CSM, 0, 5),
                 "SSM": validateNum(query.SSM, 0, 2)
-                };
+            };
             await ddb.setRow("Memory", data);
             
             result = data.timestamp;
