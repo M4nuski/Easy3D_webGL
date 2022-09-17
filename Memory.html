@@ -778,7 +778,6 @@
             if (localStorage) {
                 var l = localStorage.getItem("m4.lang");
                 if (l != undefined) {
-                    language = l;
                     if (l != language_default) toggleLangButton.click();
                 }
             }
@@ -808,14 +807,13 @@
 
             function gameLoop(t) {
                 frame++;
+                if (frame == 2) resizeViewport();
                 if ((frame % frameInterval) == 0) {
                     timeKeeping(t);
                     updateInputs();
-                    if (run) {
-                        updateScene();
-                        drawScene();
-                        cleanupScene();
-                    }
+                    if (run) updateScene();
+                     drawScene();
+                    if (run) cleanupScene();
                 }
                 window.requestAnimationFrame(gameLoop);
             }
@@ -885,12 +883,12 @@
                 if (mouseW < 0) {
                 //    canvasZoom = canvasZoom * 1.25;
                     mouseW = 0;
-                    resizeCanvas();
+                //    resizeCanvas();
                 }
                 if (mouseW > 0) {
                  //   canvasZoom = canvasZoom / 1.25;
                     mouseW = 0;
-                    resizeCanvas();
+                 //   resizeCanvas();
                 }
             }
 
@@ -1309,6 +1307,7 @@
 
             function scoreButtonClick() {
                 run = false;
+
                 scoreDiv.style.visibility = "visible";
                 tabButtons[0].click();
                 scoreButton.style.backgroundColor = "";
@@ -1324,9 +1323,10 @@
                 if (btn.id == "local") genLocalScores(); else genGlobalScores();
             }
 
-            function closeScore(restart = true) {
+            function closeScore() {
                 scoreDiv.style.visibility = "hidden";
-                if (restart) setTimeout(() => run = true, 1000);
+
+                setTimeout(() => run = true, 1000);
             }
             function setPlayerName(event) {
                 const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
@@ -1340,6 +1340,7 @@
                     
                     playernameWarning.style.display = "none";
                     playernameDiv.style.display = "none";
+
                     setTimeout(() => run = true, 500);
                 } else {
                     playernameWarning.style.display = "inline";
@@ -1539,12 +1540,10 @@
 
         <div class="E3D_flexContent">
             <canvas id="canvas" width="192" height="108">Canvas</canvas>
-
             <div id="playernameDiv">
                 <span class="lang_EN">Player Name: </span><span class="lang_FR">Nom du Joueur: </span><input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playernameSetButton" class="E3D_fakeButton"><span class="lang_EN">Save</span><span class="lang_FR">Enregistrer</span></span><span id="playernameWarning"><span class="lang_EN">Invalid Name</span><span class="lang_FR">Nom Invalide</span></span><br/>
                 <span class="lang_EN">Name must be 3 to 32 of the following characters:</span><span class="lang_FR">Le nom doit être de 3 à 32 des caractères suivants:</span> a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
             </div>
-
             <div id="volDiv">
                 <b><span class="volSpan">Volume:</span></b><br />
                 <input id="vol" type="range" min="0" max="2" value="1" step="0.1" /><br />
@@ -1555,7 +1554,6 @@
                 <b><span class="lang_EN volSpan">Language: </span><span class="lang_FR volSpan">Langue: </span></b><br />
                 <div id="toggleLangButton" class="E3D_fakeButton" style="display:block">En/Fr</div>
             </div>
-
             <div id="scoreButtonDiv">
                 <img src="media/Score.svg" width="50" height="50" /></img><br />
             </div>
