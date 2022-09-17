@@ -1366,10 +1366,10 @@
                 httpRequest.onloadend = function(event) {
                     console.log("upload done " + event.target.status + "\n" + event.target.responseText);
                 }
-// TODO hide
-                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
+
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory/v4");
                 let payload = {
-                    "version":"4b",
+                    "version":"4",
                     "op": "add",
                     "name": newHSobj.name,
                     "score": newHSobj.score,
@@ -1431,16 +1431,16 @@
                     }
                     globalContentTab.innerHTML = genScoreTable(list, byScore);
                 }
-// TODO hide
-                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
-                httpRequest.send('{"version":"4b","op":"global"}');
+
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory/v4");
+                httpRequest.send('{"version":"4","op":"global"}');
                 _LastGlobalFetch = Date.now();
             }
 
 
             const scoreTableHeaders = {};
-            scoreTableHeaders[".lang_EN"] = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Level</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle</th><th class="h" onClick="sortTable(this, bySQTY)">Quantity</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
-            scoreTableHeaders[".lang_FR"] = '<table><tr><th class="h" onClick="sortTable(this, byName)">Joueur</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Niveau</th><th>Étape</th><th class="h" onClick="sortTable(this, byCSM)">Mélange des Couleurs</th><th class="h" onClick="sortTable(this, bySQTY)">Quantité</th><th class="h" onClick="sortTable(this, bySSM)">Mélange des Sons</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
+            scoreTableHeaders[".lang_EN"] = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player ▼</th><th class="h" onClick="sortTable(this, byScore)">Score ▼</th><th class="h" onClick="sortTable(this, byLevel)">Level ▼</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle ▼</th><th class="h" onClick="sortTable(this, bySQTY)">Quantity ▼</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle ▼</th><th class="h" onClick="sortTable(this, byDate)">Date ▼</th></tr>';
+            scoreTableHeaders[".lang_FR"] = '<table><tr><th class="h" onClick="sortTable(this, byName)">Joueur ▼</th><th class="h" onClick="sortTable(this, byScore)">Pointage ▼</th><th class="h" onClick="sortTable(this, byLevel)">Niveau ▼</th><th>Étape</th><th class="h" onClick="sortTable(this, byCSM)">Mélange des Couleurs ▼</th><th class="h" onClick="sortTable(this, bySQTY)">Quantité ▼</th><th class="h" onClick="sortTable(this, bySSM)">Mélange des Sons ▼</th><th class="h" onClick="sortTable(this, byDate)">Date ▼</th></tr>';
 
             const scoreRowFormat = '<tr$class><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>';
             function genScoreTable(list, sortFunction) {
