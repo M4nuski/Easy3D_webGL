@@ -1352,7 +1352,10 @@
             }
 
             function genGlobalScores() {
-                if ((Date.now() - _LastGlobalFetch) < 1000 * 60) return; // throttle to 1 per minute
+                if ((Date.now() - _LastGlobalFetch) < 1000 * 60) { // throttle to 1 per minute
+                    globalContentTab.innerHTML = genScoreTable(_LastGlobalList, byScore);
+                    return; 
+                }
                 
                 globalContentTab.innerText = "Fetching global score list...";
                 var httpRequest = new XMLHttpRequest();
