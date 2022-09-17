@@ -28,9 +28,23 @@
             transition: all 0.1s linear;
         }      
         .hoverSize:hover{
-            max-width: 500px;
-            max-height: 500px; /* should be equal to max-width to avoid transition overshoot */
+            max-width: 525px;
+            max-height: 525px; /* should be equal to max-width to avoid transition overshoot */
             background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .volSpan {
+            display: inline-block;
+            padding-left: 0.2em;
+        }
+
+        .lang_EN {
+            /* empty for localization toggle */
+            background-color: transparent;
+        }
+        .lang_FR {
+            display: none;
+            background-color: transparent;
         }
 
         /* standard E3D classes */
@@ -53,6 +67,8 @@
             box-shadow: 0.1em 0.1em black;      
             border-radius: 0.2em; 
             margin: 0.1em 0.2em 0.2em 0.2em;
+            text-align: center;
+            display: inline;
         }
         .E3D_fakeButton:hover {
             background-color: #a0a0a0;
@@ -72,7 +88,7 @@
         .E3D_monospaceText {
             white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
-            line-height: 18px;
+            line-height: 1em;
         }
 
         /* score tabs */
@@ -85,6 +101,8 @@
             box-shadow: 0.1em 0.1em black;      
             border-radius: 0.5em 0.5em 0em 0em;
             margin: 0.1em 0.0em 0.2em 0.1em;
+            text-align: center;
+            display: inline;
         }
         .E3D_tabButton:hover {
             background-color: #a0a0a0;
@@ -127,14 +145,10 @@
             position: absolute;
             display: inline-block;
             left: 0px;
-            text-align: center;
             border-radius: 5px;
             border: 2px solid black;
             margin: 2px;
             background-color: white;
-        }
-        #volSpan {
-            display: block;
         }
 
         #scoreButtonDiv {
@@ -679,8 +693,10 @@
             var soundShuffle = shuffleResetState.slice();
 
             var status = getElem("statusSpan");
-            var statusFormat = "Color Shuffle:$mode, Sound Suflle:$sound, Stage:$state, Level:$level, Step: $step";
-            if ((status) && (status.innerText != "")) statusFormat = status.innerText;
+
+            var statusFormats = {};
+            statusFormats[".lang_EN"] = 'Color Shuffle: $mode, Quantity: $qty, Sound Suflle: $sound, Stage: $state\nLevel: $level, Step: $step\nScore: $score, HighScore(local): $lhs, Player: $pn, Highscore(player): $phs';
+            statusFormats[".lang_FR"] = 'Mélange Couleur: $mode, Quantité: $qty, Mélange des Sons: $sound, Phase: $state\nNiveau: $level, Étape: $step\nScore: $score, HighScore(local): $lhs, Joueur: $pn, Highscore(joueur): $phs';
 
 
             // UI event handlers
@@ -742,7 +758,30 @@
                     soundSuffleMode = s;
                 }
             }
-            // TODO FR - EN localization
+
+            const language_default = ".lang_EN";
+            const language_other = ".lang_FR";
+            var language = language_default;
+            onClick("toggleLangButton", function (event) {
+                // toggle
+                let oldLanguage = language.slice();
+                language = (language == language_default) ? language_other : language_default;  
+
+                // update style
+                for (var rule of document.styleSheets[0].cssRules) {
+                    if (rule.selectorText == oldLanguage) rule.style.display = "none";
+                    if (rule.selectorText == language) rule.style.display = "";
+                }
+
+                if (localStorage) localStorage.setItem("m4.lang", language);
+            });
+            if (localStorage) {
+                var l = localStorage.getItem("m4.lang");
+                if (l != undefined) {
+                    language = l;
+                    if (l != language_default) toggleLangButton.click();
+                }
+            }
 
 
             // Init
@@ -877,6 +916,7 @@
             function setAudio() {
                 audioContext = new window.AudioContext();
                 gainNode = audioContext.createGain();
+                gainNode.gain.value = volSlider.value; 
 
                 b0 = getElem("b0");
                 var t0 = audioContext.createMediaElementSource(b0);
@@ -1113,7 +1153,7 @@
 
                 // text
                 var txt = "";
-                txt = statusFormat.replace("$mode", CSM_Strings[colorShuffleMode]);
+                txt = statusFormats[language].replace("$mode", CSM_Strings[colorShuffleMode]);
                 txt = txt.replace("$qty", (shuffleQty.toString()) + ( (shuffleQty > 2) ? (" " + "★".repeat(shuffleQty-2)) : "") );
                 txt = txt.replace("$sound", SSM_Strings[soundSuffleMode]);
                 txt = txt.replace("$state", GS_Strings[state]);
@@ -1277,10 +1317,11 @@
 
             function scoreTabClick(event) {
                 tabButtons.forEach( (btn) => btn.classList.remove("E3D_tabButtonActive") );
-                event.target.classList.add("E3D_tabButtonActive");
+                let btn = getElem(parentID(event.target));
+                btn.classList.add("E3D_tabButtonActive");
                 tabs.forEach( (tab) => tab.style.display = "none");
-                getElem(event.target.id + "Content").style.display = "block";
-                if (event.target.id == "local") genLocalScores(); else genGlobalScores();
+                getElem(btn.id + "Content").style.display = "block";
+                if (btn.id == "local") genLocalScores(); else genGlobalScores();
             }
 
             function closeScore(restart = true) {
@@ -1324,10 +1365,10 @@
                 httpRequest.onloadend = function(event) {
                     console.log("upload done " + event.target.status + "\n" + event.target.responseText);
                 }
-
-                httpRequest.open("POST", "https://api.m4nusky.com/Memory/v4");
+// TODO hide
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
                 let payload = {
-                    "version":"4",
+                    "version":"4b",
                     "op": "add",
                     "name": newHSobj.name,
                     "score": newHSobj.score,
@@ -1389,9 +1430,9 @@
                     }
                     globalContentTab.innerHTML = genScoreTable(list, byScore);
                 }
-
-                httpRequest.open("POST", "https://api.m4nusky.com/Memory/v4");
-                httpRequest.send('{"version":"4","op":"global"}');
+// TODO hide
+                httpRequest.open("POST", "https://api.m4nusky.com/Memory");
+                httpRequest.send('{"version":"4b","op":"global"}');
                 _LastGlobalFetch = Date.now();
             }
 
@@ -1478,9 +1519,9 @@
     <div class="E3D_fullscreenContainer E3D_flexVertical">
         <div id="scoreDiv">
             <div id="scoreHeaderDiv">
-                Player Name: <span id="playernameOutput">&lt;Player&gt;</span><span id="playernameChangeButton" class="E3D_fakeButton">Change</span><span id="scoreCloseButton" class="E3D_fakeButton">Close</span>
+                <span class="lang_EN">Player:</span><span class="lang_FR">Joueur:</span> <span id="playernameOutput">&lt;Player&gt;</span> <div id="playernameChangeButton" class="E3D_fakeButton"><span class="lang_EN">Change</span><span class="lang_FR">Modifier</span></div><div id="scoreCloseButton" class="E3D_fakeButton"><span class="lang_EN">Close</span><span class="lang_FR">Fermer</span></div>
             </div>
-            <span class="E3D_tabButton" id="local">Local Scores</span><span class="E3D_tabButton" id="global">Global Scores</span>
+            <div class="E3D_tabButton" id="local"><span class="lang_EN">Local Scores</span><span class="lang_FR">Pointages locaux</span></div><div class="E3D_tabButton" id="global"><span class="lang_EN">Global Scores</span><span class="lang_FR">Pointages Globaux</span></div>
             <div class="E3D_tabContent" id="localContent">
                 Local Score list
             </div>
@@ -1490,26 +1531,26 @@
         </div>
 
         <div id="statusDiv" class="E3D_flexVerticalContentFit">
-            <span id="statusSpan" class="E3D_monospaceText">Color Shuffle: $mode, Qty: $qty, Sound Suflle: $sound, Stage: $state
-Level: $level, Step: $step
-Score: $score, HighScore(local): $lhs, Player: $pn, Highscore(Player): $phs</span>
-        </div>     
+            <span id="statusSpan" class="E3D_monospaceText"></span>
+        </div>
 
         <div class="E3D_flexContent">
             <canvas id="canvas" width="192" height="108">Canvas</canvas>
 
             <div id="playernameDiv">
-                Player Name: <input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playernameSetButton" class="E3D_fakeButton">Set</span><span id="playernameWarning">Invalid Name</span><br/>
-                Name must be 3 to 32 of the following characters: a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
+                <span class="lang_EN">Player Name: </span><span class="lang_FR">Nom du Joueur: </span><input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playernameSetButton" class="E3D_fakeButton"><span class="lang_EN">Save</span><span class="lang_FR">Enregistrer</span></span><span id="playernameWarning"><span class="lang_EN">Invalid Name</span><span class="lang_FR">Nom Invalide</span></span><br/>
+                <span class="lang_EN">Name must be 3 to 32 of the following characters:</span><span class="lang_FR">Le nom doit être de 3 à 32 des caractères suivants:</span> a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
             </div>
 
             <div id="volDiv">
-                <span id="volSpan">Volume:</span>
-                <input id="vol" type="range" min="0" max="2" value="1" step="0.1" />
-                <div id="shuffleModeButton" class="E3D_fakeButton">Shuffle Mode</div>
-                <div id="shuffleQtyButton" class="E3D_fakeButton">Shuffle Qty.</div>
-                <div id="shuffleSoundButton" class="E3D_fakeButton">Sound Shuffle</div>
-                <div id="toggleLangButton" class="E3D_fakeButton">EN/FR</div>
+                <b><span class="volSpan">Volume:</span></b><br />
+                <input id="vol" type="range" min="0" max="2" value="1" step="0.1" /><br />
+                <b><span class="lang_EN volSpan">Shuffle: </span><span class="lang_FR volSpan">Mélange: </span></b><br />
+                <div id="shuffleModeButton" class="E3D_fakeButton" style="display:block"><span class="lang_EN">Colors</span><span class="lang_FR">Couleurs</span></div>
+                <div id="shuffleQtyButton" class="E3D_fakeButton" style="display:block"><span class="lang_EN">Quantity</span><span class="lang_FR">Quantité</span></div>
+                <div id="shuffleSoundButton" class="E3D_fakeButton" style="display:block"><span class="lang_EN">Sounds</span><span class="lang_FR">Sons</span></div>
+                <b><span class="lang_EN volSpan">Language: </span><span class="lang_FR volSpan">Langue: </span></b><br />
+                <div id="toggleLangButton" class="E3D_fakeButton" style="display:block">En/Fr</div>
             </div>
 
             <div id="scoreButtonDiv">
@@ -1519,22 +1560,22 @@ Score: $score, HighScore(local): $lhs, Player: $pn, Highscore(Player): $phs</spa
 
         <div id="helpDiv" class="hoverSize">
             <img id="help" src="media/Help.svg" width="50" height="50" /></img><br />
-            [EN]: <br />
-            Learn the color pattern and repeat it to advance to the next level. Changing shuffle modes and quantity increase the score reward!<hr />
-            Shuffle Modes: <br />
-            None: Colors stay at the same place <br />
-            Level: Shuffle at the begining of the level <br />
-            Recall: Shuffle before the recall stage <br />
-            Input: Shuffle after each player input in the recall stage <br />
-            Teach: Colors shuffle after each color ligts up in the teaching stage <br />
-            Always: Shuffle everytime after they light up. <hr />
-            Shuffle QTY:<br />
-            Number of colors that get shuffled.<hr />
-            Sound Suffle:<br />
-            Association of sounds and colors<br />    
-            None: Sounds vs colors stay the same<br />
-            Level: Shuffle at the begining of the level <br />
-            Recall: Shuffle before the recall stage <br />
+            <b><span class="lang_EN">[English]: </span><span class="lang_FR">[Français]: </span></b> <br />
+            <span class="lang_EN">Learn the color pattern and repeat it to advance to the next level.<br/>Changing shuffle modes and quantity increase the score reward!</span><span class="lang_FR">Retenez la séquence des couleurs et avancez au niveaux suivant en la répétant correctement.<br />Changer les modes de mélange et la quantité augmente la récompense en pointage!</span><hr />
+            <b><span class="lang_EN">Color Shuffle:</span><span class="lang_FR">Mélange des couleurs:</span></b><br />
+            <span class="E3D_monospaceText">None: </span><span class="lang_EN">Colors stay at the same place</span><span class="lang_FR">Les couleurs restent au même endroit</span> <br />
+            <span class="E3D_monospaceText">Level: </span><span class="lang_EN">Shuffle at the begining of the level</span><span class="lang_FR">Les couleurs change d'endroit à début du niveau</span> <br />
+            <span class="E3D_monospaceText">Recall: </span><span class="lang_EN">Shuffle before the recall stage</span><span class="lang_FR">Mélange des couleurs avant la phase du rappel</span> <br />
+            <span class="E3D_monospaceText">Input: </span><span class="lang_EN">Shuffle after each player input in the recall stage</span><span class="lang_FR">Mélange après chaque action du joueur lors du rappel</span> <br />
+            <span class="E3D_monospaceText">Teach: </span><span class="lang_EN">Colors shuffle after each color ligts up in the teaching stage</span><span class="lang_FR">Mélange après chaque étapes lors de la phase d'apprentissage</span> <br />
+            <span class="E3D_monospaceText">Always: </span><span class="lang_EN">Shuffle everytime after they light up</span><span class="lang_FR">Mélange à chaque étapes</span> <hr />
+            <b><span class="lang_EN">Quantity:</span><span class="lang_FR">Quantité:</span></b><br />
+            <span class="lang_EN">Number of colors that get shuffled</span><span class="lang_FR">Nombre couleurs mélangées</span><hr />
+            <b><span class="lang_EN">Sound Suffle:</span><span class="lang_FR">Mélange des sons:</span></b><br />
+            <span class="lang_EN">Association of sounds with a color</span><span class="lang_FR">Association des sons à une couleur</span><br />    
+            <span class="E3D_monospaceText">None: </span><span class="lang_EN">Stays the same</span><span class="lang_FR">Toujours la même</span><br />
+            <span class="E3D_monospaceText">Level: </span><span class="lang_EN">Shuffle at the begining of the level</span><span class="lang_FR">Mélange au début du niveau</span> <br />
+            <span class="E3D_monospaceText">Recall: </span><span class="lang_EN">Shuffle before the recall stage</span><span class="lang_FR">Mélange avant la phase du rappel</span> <br />
         </div>
 
     </div>
