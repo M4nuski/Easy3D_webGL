@@ -182,11 +182,24 @@
             padding-left: 0.3em;
         }
 
-        #playerInputWarining {
+        #playernameWarning {
             color: red;
-            font-size: 0.85em;
             margin-left: 0.2em;
             display: none;
+        }
+        #playernameDiv {
+            background-color: lightgreen;
+            position: fixed;
+            padding: 0.25em;
+            height: 2.25em;
+            width: 48em;
+            margin-top: 0.275em;
+            margin-left:-24em;
+            top: 50vh;
+            left: 50vw;
+            z-index: 10;
+            border-radius: 5px;
+            border: 2px solid black;
         }
 
         /* Table Styles */ 
@@ -546,12 +559,17 @@
             onClick(scoreButton, scoreButtonClick);
             var scoreDiv = getElem("scoreDiv");
             onClick("scoreCloseButton", closeScore);
+
             var tabButtons = document.querySelectorAll(".E3D_tabButton");
             tabButtons.forEach( (elem) => onClick(elem, scoreTabClick) );
             var tabs = document.querySelectorAll(".E3D_tabContent");
-            onClick("playerSetButton", setPlayerName);
-            var playernameInput = getElem("playernameInput");
 
+            onClick("playernameSetButton", setPlayerName);
+            onClick("playernameChangeButton", changePlayerName);
+            var playernameInput = getElem("playernameInput");
+            var playernameOutput = getElem("playernameOutput");
+            var playernameDiv = getElem("playernameDiv");
+            var playernameWarning = getElem("playernameWarning");
 
             // Game State Data
 
@@ -735,6 +753,7 @@
             convertText("Start Game", startImage);
             convertText("New Game", newImage);
             convertText("New High Score!", newHSImage, 36, "lime");
+            loadPlayerName();
             loadHighscores();
 
 
@@ -912,7 +931,6 @@
                     setHSlist(list);
 
                     scoreButton.style.backgroundColor = "lime";
-                    playerInputWarining.style.display = (playerName != "<Player>") ? "none" : "";
                     if (playerName != "<Player>") postNewHS();
                 }
             }
@@ -962,16 +980,23 @@
                 } catch (ex) { console.log(ex); }
             }
 
+            function loadPlayerName() {
+                if (localStorage) {
+                    var pn = localStorage.getItem("m4.pn");
+                    if ((pn !== undefined) && (pn !== null)) {
+                        playerName = pn;
+                        playernameInput.value = pn;
+                        playernameOutput.innerText = pn;
+                        playernameDiv.style.display = "none";
+                    }
+                }
+            }
+
             function loadHighscores(){
                 if (localStorage) {
                     var hs = localStorage.getItem("m3.hs");
                     if (hs != undefined) {
                         localHighScore = hs;
-                    }
-                    var pn = localStorage.getItem("m4.pn");
-                    if ((pn !== undefined) && (pn !== null)) {
-                        playerName = pn;
-                        playernameInput.value = pn;
                     }
                     getPlayerHighScore();
                 } 
@@ -1247,6 +1272,7 @@
                 scoreDiv.style.visibility = "visible";
                 tabButtons[0].click();
                 scoreButton.style.backgroundColor = "";
+                playernameOutput.innerText = playerName;
             }
 
             function scoreTabClick(event) {
@@ -1257,23 +1283,32 @@
                 if (event.target.id == "local") genLocalScores(); else genGlobalScores();
             }
 
-            function closeScore() {
+            function closeScore(restart = true) {
                 scoreDiv.style.visibility = "hidden";
-                setTimeout(() => run = true, 1000);
+                if (restart) setTimeout(() => run = true, 1000);
             }
             function setPlayerName(event) {
                 const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
                 if (name_regex.test(playernameInput.value)) {
-                    playerInputWarining.style.display = "none";
+
                     playerName = playernameInput.value;
+                    playernameOutput.innerText = playerName;
+                    
                     if (localStorage) localStorage.setItem("m4.pn", playerName);
                     getPlayerHighScore();
-                    if (newHS) postNewHS();
-                    closeScore();
+                    
+                    playernameWarning.style.display = "none";
+                    playernameDiv.style.display = "none";
+                    setTimeout(() => run = true, 500);
                 } else {
-                    playerInputWarining.innerText = "Invalid name:\n, must only contain 3 to 32 of the following characters: a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]";
-                    playerInputWarining.style.display = "inline";
+                    playernameWarning.style.display = "inline";
                 }
+            }
+            function changePlayerName() {
+                playernameInput.value = playerName;
+                playernameWarning.style.display = "none";
+                playernameDiv.style.display = "block";
+                scoreDiv.style.visibility = "hidden";
             }
 
             function postNewHS() {
@@ -1361,8 +1396,10 @@
             const scoreTableHeader = '<table><tr><th class="h" onClick="sortTable(this, byName)">Player</th><th class="h" onClick="sortTable(this, byScore)">Score</th><th class="h" onClick="sortTable(this, byLevel)">Level</th><th>Step</th><th class="h" onClick="sortTable(this, byCSM)">Color Shuffle</th><th class="h" onClick="sortTable(this, bySQTY)">Shuffle Qty</th><th class="h" onClick="sortTable(this, bySSM)">Sound Shuffle</th><th class="h" onClick="sortTable(this, byDate)">Date</th></tr>';
             const scoreRowFormat = '<tr$class><td>$name</td><td>$score</td><td>$level</td><td>$step</td><td>$CSM</td><td>$qty</td><td>$SSM</td><td>$date</td></tr>';
             function genScoreTable(list, sortFunction) {
+
                 let newHTML = scoreTableHeader.slice();
                 list = list.sort(sortFunction);
+
                 for (var score of list) {
                     newHTML += scoreRowFormat.replace("$name", score.name);
                     newHTML = newHTML.replace("$CSM", CSM_Strings[score.CSM]);
@@ -1438,8 +1475,8 @@
     <div class="E3D_fullscreenContainer E3D_flexVertical">
         <div id="scoreDiv">
             <div id="scoreHeaderDiv">
-            <span> Player Name: <input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playerSetButton" class="E3D_fakeButton">Set</span></span><span id="playerInputWarining">Set player name to allow global rankings participation</span> <span id="scoreCloseButton" class="E3D_fakeButton">Close</span>
-        </div>
+                Player Name: <span id="playernameOutput">&lt;Player&gt;</span><span id="playernameChangeButton" class="E3D_fakeButton">Change</span><span id="scoreCloseButton" class="E3D_fakeButton">Close</span>
+            </div>
             <span class="E3D_tabButton" id="local">Local Scores</span><span class="E3D_tabButton" id="global">Global Scores</span>
             <div class="E3D_tabContent" id="localContent">
                 Local Score list
@@ -1457,6 +1494,11 @@ Score: $score, HighScore(local): $lhs, Player: $pn, Highscore(Player): $phs</spa
 
         <div class="E3D_flexContent">
             <canvas id="canvas" width="192" height="108">Canvas</canvas>
+
+            <div id="playernameDiv">
+                Player Name: <input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playernameSetButton" class="E3D_fakeButton">Set</span><span id="playernameWarning">Invalid Name</span><br/>
+                Name must be 3 to 32 of the following characters: a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
+            </div>
 
             <div id="volDiv">
                 <span id="volSpan">Volume:</span>
