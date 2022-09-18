@@ -1,3 +1,5 @@
+"use strict"
+
 const ddb = require("ddb");
 const resp = require("responses");
 const parser = require("parser");
