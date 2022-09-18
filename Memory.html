@@ -39,7 +39,6 @@
         }
 
         .lang_EN {
-            /* empty for localization toggle */
             background-color: transparent;
         }
         .lang_FR {
@@ -762,7 +761,7 @@
             const language_default = ".lang_EN";
             const language_other = ".lang_FR";
             var language = language_default;
-            onClick("toggleLangButton", function (event) {
+            onClick("toggleLangButton", function () {
                 // toggle
                 let oldLanguage = language.slice();
                 language = (language == language_default) ? language_other : language_default;  
@@ -777,9 +776,7 @@
             });
             if (localStorage) {
                 var l = localStorage.getItem("m4.lang");
-                if (l != undefined) {
-                    if (l != language_default) toggleLangButton.click();
-                }
+                if ((l != undefined) && (l != language_default)) toggleLangButton.click();
             }
 
 

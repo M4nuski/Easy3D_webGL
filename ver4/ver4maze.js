@@ -1,6 +1,6 @@
 // Easy3D_WebGL
-// Maze demo game for version 0.4
-// Emmanuel Charette 2020
+// Maze demo game for version 0.5
+// Emmanuel Charette 2022
 
 "use strict"
 
@@ -43,7 +43,6 @@ const input_nb_size = document.getElementById("input_nb_size");
 const input_nb_seed = document.getElementById("input_nb_seed");
 
 const span_time = document.getElementById("span_time");
-const span_time_text = span_time.getAttribute("data-text") + ": ";
 const btn_help = document.getElementById("btn_help");
 
 const div_help = document.getElementById("helpDiv");
@@ -136,6 +135,30 @@ log("Session Start", true);
 initEngine();
 
 
+// Localization
+const language_default = ".lang_FR";
+const language_other = ".lang_EN";
+var language = language_default;
+document.getElementById("btn_lang").addEventListener("click", toggleLangButton);
+function toggleLangButton() {
+    // toggle
+    let oldLanguage = language.slice();
+    language = (language == language_default) ? language_other : language_default;  
+
+    // update style
+    for (var rule of document.styleSheets[0].cssRules) {
+        if (rule.selectorText == oldLanguage) rule.style.display = "none";
+        if (rule.selectorText == language) rule.style.display = "";
+    }
+
+    if (localStorage) localStorage.setItem("maze05.lang", language);
+}
+if (localStorage) {
+    var l = localStorage.getItem("maze05.lang");
+    if ((l != undefined) && (l != language_default)) toggleLangButton();
+}
+
+
 // Event handlers
 
 function winResize() {
@@ -206,7 +229,7 @@ function restartGame() {
     scn.changeClearColor(runColor);
 
     startTime = 0;
-    span_time.innerText = span_time_text + "00:00.00";
+    span_time.innerText = "00:00.00";
     span_time.style.color = "gray";
 
     gameState = "start";
@@ -312,7 +335,7 @@ var _target = v3_new();
 
 function prepRender() {
     // stats display
-    span_status.innerText = "Utilisation: " + padStart(""+timer.usageSmoothed.toFixed(2), " ", 8) + "%";
+    span_status.innerText =padStart(""+timer.usageSmoothed.toFixed(2), " ", 8) + "%";
 
     if ((gameState == "run") || (gameState == "start")) {
         // move maze per inputs
@@ -368,9 +391,9 @@ function prepRender() {
             scn.changeClearColor(winColor);
         } else {
             var deltaTime = new Date(Date.now() - startTime);
-            span_time.innerText = span_time_text + padStart("" + deltaTime.getMinutes(), "0", 2) + ":" 
-                                        + padStart("" + deltaTime.getSeconds(), "0", 2) + ":" 
-                                        + padStart(""+Math.floor(deltaTime.getMilliseconds() / 10), "0", 2);
+            span_time.innerText =  padStart("" + deltaTime.getMinutes(), "0", 2) + ":" 
+                                   + padStart("" + deltaTime.getSeconds(), "0", 2) + ":" 
+                                   + padStart(""+Math.floor(deltaTime.getMilliseconds() / 10), "0", 2);
             if (deltaTime > 3600000) {
                 span_time.style.color = "red";
                 gameState = "loss";
