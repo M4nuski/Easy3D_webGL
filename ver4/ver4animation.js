@@ -516,7 +516,8 @@ function collisionResult_asSource_slide(){
             firstCol.t0 = Math.sqrt(-firstCol.t0);
             v3_normalize_mod(firstCol.n);
             this.pspd[1] += this.frameG;
-            v3_copy(this.last_position, firstCol.p0); 
+
+            v3_copy(this.last_position, firstCol.p0);
 
             v3_addscaled_mod(this.pspd, firstCol.n, this.deltaLength * firstCol.t0);
 
@@ -530,15 +531,14 @@ function collisionResult_asSource_slide(){
             this.pspd[1] -= this.frameG;
 
         } else { // along path
+
             firstCol.t0 = Math.sqrt(firstCol.t0);
             v3_normalize_mod(firstCol.n);
             this.pspd[1] += this.frameG;
             
             if (v3_dot(firstCol.n, this.delta) < 0.0) { // face to face
                 
-                v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit
-
-                
+                v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit                
                 v3_reflect_mod(this.pspd, firstCol.n);
                 
                 var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
@@ -562,6 +562,37 @@ function collisionResult_asSource_slide(){
             
                 this.target.resetMatrix();
             } // face to face  
+            else { // not face to face, outside
+                console.log("Not inside, not along path??");
+
+                v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit                
+
+                // todo projection
+
+                // normalize, pspd = proj * pspd.length
+
+                var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
+                remainder = remainder - 0.2;
+                if (remainder < 0.0) remainder = 0.0;
+
+                var drag = 0.8;
+                v3_scale_mod(this.pspd, drag); // hit speed "drag"
+                //if (this.pspd[1] > 0.0) this.pspd[1] *= drag;
+
+                v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
+                
+                // project remaining delta on hit plane
+                //var offset = v3_mult_new(this.pspd, firstCol.n);
+                //v3_sub_mod(this.pspd, offset);
+                
+            //    v3_addscaled_mod(this.pspd, firstCol.n, v3_length(offset) );
+
+                this.deltaLength = v3_length(this.delta);
+                v3_add_res(this.target.position, this.last_position, this.delta); // new position        
+            
+                this.target.resetMatrix();
+                console.log("slinding...")
+            }
             this.pspd[1] -= this.frameG;
         } // t0 < 0
     } // deltalength > 0
