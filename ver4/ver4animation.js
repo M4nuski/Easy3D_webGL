@@ -133,7 +133,6 @@ class E3D_animation {  // TODO merge with entity
 
         this.colNum = 0;
         this.otherColNum = 0;
-        //this.lastHitMarker = "";
     }
 
     pushCollisionSource(m, t, n, p, sDesc, scdi, tei, tDesc, tcdi) {
@@ -329,61 +328,7 @@ function newBaseAnim_RelativeToCamera(entity, camera, pos_speed, rot_speed, grav
 
 
 function newParticuleAnim(entity, pos_speed, rot_speed, nbPart, partPosFunc, partDirFunc, gravity = 0, ttl = -1, CD = false, endState = E3D_DONE) {
-    var SrepassFunct = (CD) ? collisionResult_asSource_mark : null;
-    //var TrepassFunct = (CD) ? collisionResult_asTarget_mark : null;
-    var endFunct = (ttl > 0.0) ? anim_Base_endPass_ttl : anim_Base_endPass;
 
-    var anim = new E3D_animation("", entity, anim_Part_firstPass, SrepassFunct, null, endFunct, 0);
-
-    v3_copy(anim.pspd, pos_speed);
-    v3_copy(anim.rspd, rot_speed);
-
-    anim.endState = endState;
-    anim.ttl = ttl;
-    anim.gravity = gravity;
-    anim.pCD = CD;
-
-    anim.pNum = nbPart;
-    anim.pActive = Array(nbPart);
-    anim.pLastPos = Array(nbPart);
-    anim.pPos = Array(nbPart);
-    anim.pSpd = Array(nbPart);
-    anim.pSpdLength = Array(nbPart);
-
-    // clone elements to make the number of particules
-    anim.target.setSize(anim.target.srcNumElements * anim.pNum);
-
-    // gen starting positions
-    for (let i = 0; i < anim.pNum; ++i) {
-        //new pellet
-        anim.target.copySource(anim.target.srcNumElements * i);
-        anim.pActive[i] = true;
-        anim.pLastPos[i] = ((partPosFunc != null) ? partPosFunc(i, nbPart) : v3_new());
-    }
-    
-    // gen particules direction
-    for (let i = 0; i < anim.pNum; ++i) {
-        anim.pSpd[i] = ((partDirFunc != null) ? partPosFunc(anim.pPos[i], i, nbPart) : v3_new());
-        anim.pSpdLength[i] = v3_length(anim.pSpd[i]);        
-        anim.pPos[i] = v3_clone(anim.pLastPos[i]);
-
-        //offset pelets vertex by new origin
-        for (var j = 0; j < anim.target.srcNumElements; ++j ) {
-            var idx = ( i * anim.target.srcNumElements) + j;
-            var b = anim.target.getVertex3f(idx);
-            v3_add_mod(b, anim.pPos[i])
-        }
-
-        if (CD) anim.target.pushCD_point(anim.pPos[i]);
-    }
-
-    anim.target.collisionDetection = CD;
-    anim.state = E3D_PLAY;
-    anim.target.visible = true;
-    anim.target.resetMatrix();
-    anim.last_position = v3_clone(anim.target.position);
-
-    return anim;
 }    
 
 
@@ -491,9 +436,7 @@ function collisionResult_asSource_bounce(){
             
             v3_reflect_mod(this.pspd, firstCol.n);
             v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit
-            /*
-            absorbtion by drag / linear factor
-
+            
             var remainder = 1.0 - firstCol.t0; // remaining fraction
             remainder = remainder - 0.2;
             if (remainder < 0.0) remainder = 0.0;
@@ -502,18 +445,6 @@ function collisionResult_asSource_bounce(){
             v3_scale_mod(this.pspd, drag); // hit speed "drag"
 
             v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
-            */
-
-            /*
-            absorbtion by subtraction
-            */
-           var remainder = 1.0 - firstCol.t0; // remaining fraction
-           if (remainder < 0.0) remainder = 0.0;
-
-           var subvect = v3_reverse_new(firstCol.n);
-           v3_mult_mod(this.pspd, subvect);
-
-            v3_scale_res(this.delta, this.pspd, remainder * timer.delta); // new delta
             this.deltaLength = v3_length(this.delta);
             v3_add_res(this.target.position, this.last_position, this.delta); // new position        
         
@@ -601,69 +532,15 @@ function collisionResult_asSource_slide(){
         } else { // along path
             firstCol.t0 = Math.sqrt(firstCol.t0);
             v3_normalize_mod(firstCol.n);
-           // this.pspd[1] += this.frameG;
+            this.pspd[1] += this.frameG;
             
             if (v3_dot(firstCol.n, this.delta) < 0.0) { // face to face
                 
                 v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit
 
-                /* by using absorbtion
-                var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
-                if (remainder < 0.0) remainder = 0.0;
-
+                
                 v3_reflect_mod(this.pspd, firstCol.n);
-                var nm = v3_scale_new(firstCol.n, 0.8);
-                var subvect = v3_reverse_new(nm);
-                v3_mult_mod(this.pspd, subvect);
-                v3_scale_res(this.delta, this.pspd, remainder * timer.delta * 0.8); 
-                */
-
-                /* by using absorbtion, sideways drag and rebound 
-                */
-
-                var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
-                if (remainder < 0.0) remainder = 0.0;
-
-                v3_reflect_mod(this.pspd, firstCol.n);
-                var pl = v3_length(this.pspd);
-                var npl = pl - (2 / timer.delta);
-                if (npl < 0.0) npl = 0.0;
-
-                v3_scale_mod(this.pspd, npl / pl);
-
-                //var reboundDrag = v3_scale_new(firstCol.n, 0.2 * timer.delta);
-                //var sideDrag = v3_reverse_new(firstCol.n);
-                //v3_scale_mod(sideDrag, 0.1 * timer.delta);
-                /*
-                var steal = 20;
-                if (this.pspd[0] > 0.0) {
-                    this.pspd[0] -= steal;
-                    if (this.pspd[0] < 0.0) this.pspd[0] = 0.0;
-                } else {
-                    this.pspd[0] += steal;
-                    if (this.pspd[0] > 0.0) this.pspd[0] = 0.0;
-                }
-                if (this.pspd[1] > 0.0) {
-                    this.pspd[1] -= steal;
-                    if (this.pspd[1] < 0.0) this.pspd[1] = 0.0;
-                } else {
-                    this.pspd[1] += steal;
-                    if (this.pspd[1] > 0.0) this.pspd[1] = 0.0;
-                }
-                if (this.pspd[2] > 0.0) {
-                    this.pspd[2] -= steal;
-                    if (this.pspd[2] < 0.0) this.pspd[2] = 0.0;
-                } else {
-                    this.pspd[2] += steal;
-                    if (this.pspd[2] > 0.0) this.pspd[2] = 0.0;
-                }
-               //subtract vectors without changing direction
-*/
-                v3_scale_res(this.delta, this.pspd, remainder * timer.delta); 
-
-
-
-                /*
+                
                 var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
                 remainder = remainder - 0.2;
                 if (remainder < 0.0) remainder = 0.0;
@@ -679,13 +556,13 @@ function collisionResult_asSource_slide(){
                 //v3_sub_mod(this.pspd, offset);
                 
             //    v3_addscaled_mod(this.pspd, firstCol.n, v3_length(offset) );
-*/
+
                 this.deltaLength = v3_length(this.delta);
                 v3_add_res(this.target.position, this.last_position, this.delta); // new position        
             
                 this.target.resetMatrix();
             } // face to face  
-          //  this.pspd[1] -= this.frameG;
+            this.pspd[1] -= this.frameG;
         } // t0 < 0
     } // deltalength > 0
 }
