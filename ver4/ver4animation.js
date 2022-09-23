@@ -232,7 +232,7 @@ function collisionDetectionAnimator(animList, scn, /*animGroup, */ maxCDIteratio
     while ((numIter > 0) && (hitDetected)){
 
         // Collision Detection
-        hitDetected = false;
+        hitDetected = true;
         for (let i = 0; i < animList.length; ++i) if ((animList[i].target.collisionDetection) && (animList[i].deltaLength > 0.0)) {
             if (animList[i].target.CD_sph > 0) CheckForAnimationCollisions_SphSource(animList[i], scn, animList);
             if (animList[i].target.CD_point > 0) CheckForAnimationCollisions_PointSource(animList[i], scn, animList);
@@ -495,7 +495,10 @@ function collisionResult_asSource_mark(){
     }
 }
 
-
+// TODO rem after debug
+let CD_n_inside = 0;
+let CD_n_face2face = 0;
+let CD_n_face2butt = 0;
 function collisionResult_asSource_slide(){
     if (this.deltaLength > 0) {
 
@@ -509,10 +512,13 @@ function collisionResult_asSource_slide(){
             }
         }
 
-        this.lastHitMarker = ""+firstCol.marker;        
+        this.lastHitMarker = ""+firstCol.marker;
+        CD_n_inside = 0;// TODO rem after debug
+        CD_n_face2face = 0;
+        CD_n_face2butt = 0;
 
         if (firstCol.t0 < 0.0) { // inside
-
+            CD_n_inside++;// TODO rem after debug
             firstCol.t0 = Math.sqrt(-firstCol.t0);
             v3_normalize_mod(firstCol.n);
             this.pspd[1] += this.frameG;
@@ -537,12 +543,12 @@ function collisionResult_asSource_slide(){
             this.pspd[1] += this.frameG;
             
             if (v3_dot(firstCol.n, this.delta) < 0.0) { // face to face
-                
+                CD_n_face2face++;// TODO rem after deb
                 v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit                
                 v3_reflect_mod(this.pspd, firstCol.n);
                 
                 var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
-                remainder = remainder - 0.2;
+                remainder = remainder - 0.05;
                 if (remainder < 0.0) remainder = 0.0;
 
                 var drag = 0.8;
@@ -551,47 +557,34 @@ function collisionResult_asSource_slide(){
 
                 v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
                 
-                // project remaining delta on hit plane
-                //var offset = v3_mult_new(this.pspd, firstCol.n);
-                //v3_sub_mod(this.pspd, offset);
-                
-            //    v3_addscaled_mod(this.pspd, firstCol.n, v3_length(offset) );
-
                 this.deltaLength = v3_length(this.delta);
                 v3_add_res(this.target.position, this.last_position, this.delta); // new position        
             
                 this.target.resetMatrix();
             } // face to face  
             else { // not face to face, outside
-                console.log("Not inside, not along path??");
-
+                CD_n_face2butt++;// TODO rem after deb
                 v3_copy(this.last_position, firstCol.p0); // reset position as per firstHit                
-
-                // todo projection
-
-                // normalize, pspd = proj * pspd.length
+             //   v3_addscaled_mod(this.last_position, firstCol.n, 0.1); // bump up
+                // projection over normal
+                let d = v3_dot(firstCol.n, this.pspd);
+                v3_addscaled_mod(this.pspd, firstCol.n, -d);
 
                 var remainder = 1.0 - (firstCol.t0 / this.deltaLength); // remaining fraction
-                remainder = remainder - 0.2;
+                remainder = remainder - 0.01;
                 if (remainder < 0.0) remainder = 0.0;
 
-                var drag = 0.8;
-                v3_scale_mod(this.pspd, drag); // hit speed "drag"
+                //var drag = 0.99;
+                //v3_scale_mod(this.pspd, drag); // hit speed "drag"
                 //if (this.pspd[1] > 0.0) this.pspd[1] *= drag;
 
-                v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
-                
-                // project remaining delta on hit plane
-                //var offset = v3_mult_new(this.pspd, firstCol.n);
-                //v3_sub_mod(this.pspd, offset);
-                
-            //    v3_addscaled_mod(this.pspd, firstCol.n, v3_length(offset) );
+                //v3_scale_res(this.delta, this.pspd, remainder * timer.delta * drag); // new delta
+                v3_scale_res(this.delta, this.pspd, remainder * timer.delta); // new delta
 
                 this.deltaLength = v3_length(this.delta);
                 v3_add_res(this.target.position, this.last_position, this.delta); // new position        
             
                 this.target.resetMatrix();
-                console.log("slinding...")
             }
             this.pspd[1] -= this.frameG;
         } // t0 < 0
