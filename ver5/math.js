@@ -39,6 +39,9 @@ const PIx2 = Math.PI * 2.0;
 const RadToDeg = (180.0 / Math.PI);
 const DegToRad = (Math.PI / 180.0);
 
+const g_iss = 386.1;
+const g_fss = 32.2;
+const g_mss = 9.81;
 
 // Premade v3 and m4 to avoid inline creation of instances
 const _v3_origin = [ 0,  0,  0];

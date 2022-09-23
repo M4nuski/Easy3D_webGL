@@ -59,16 +59,19 @@
             c.addEventListener("wheel", canvasMouseWheel);
             c.addEventListener("mouseleave", canvasMouseLeave);
             document.addEventListener("keydown", canvasKeyDown);
+
             var currentI = 0;
             var currentX = 0;
             var currentY = 0;
             var currentT = 0;
             var lastX = 0;
             var lastY = 0;
+
             var cX = 0;
             var cY = 0;
             var lX = 0;
             var lY = 0;
+
             mouseDn0 = false;
             mouseDn1 = false;
             mouseDn2 = false;
@@ -91,7 +94,7 @@
 
             function canvasMouseMove(event) {
                 currentX = (((event.pageX - c.offsetLeft) / canvasZoom) - viewportOffsetX) / viewportScale;
-                currentY = (((event.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / viewportScale;  
+                currentY = (((event.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / -viewportScale;  
                 cX = event.pageX;
                 cY = event.pageY;
             }
@@ -176,59 +179,66 @@
                 CAPSULE:    "capsule"
             }
             const CD_modes = {
-                STATIC:     "static",
-                DYNAMIC:    "dynamic",
-                CONTROLLED: "controlled"
+                STATIC:     "static", // dosent move, affect dynamic (physics) and controlled (block)
+                DYNAMIC:    "dynamic", // can move (physics), affect dynamic, react to static, dynamic, controlled
+                CONTROLLED: "controlled" // can be moved, affect dynamic, react to static and controlled (block, rubberband)
             }
 
             class obj {
                 constructor() {
-                    this.pos = v3_new();
-                    this.pSpeed = v3_new();
+                    //this.mass = 1.0;
+                    //this.cg = [0, 0, 0]; // center of mass, relative to entity origin
+                    //this.cp = [0, 0, 0]; // aerodynamic center
+                    //this.area = [0.577, 0.577, 0.577]; // aerodynamic area in 3 axis
 
+                    this.pos = v3_new(); // should not be set directly, affect accel and speed
+                    this.pAccel = v3_new();
+                    this.pSpeed = v3_new(); // should always be calculated, not set
+                    
                     this.pDelta = v3_new(); //pLast to next pos
                     this.deltaLength = 0.0;
-
                     this.pLast = v3_new();
-                    this.aLast = v3_new();
 
                     this.ang = v3_new();
+                    this.aAccel = v3_new();
                     this.aSpeed = v3_new();
+                    
                     this.aDelta = v3_new();
+                    this.aLast = v3_new();
 
-                    this.rad = 0.2;
-
+                    //this.CD_culling_radius = 10.0; // deltaLength + largest CD data ?
+                    
+                    // should be in CD_Result
                     this.potentialHit = false;
                     this.hit = false;
                     this.hit_t = 0.0;
                     this.hit_n = [0, -1, 0];
                     this.hit_p = [0, 0, 0];
                     this.hit_o = -1; // other
-                    // TODO this.hitList
 
+                    // TODO this.hitList
 
                     // eager : first hit found, indivudial resolved, 1 pass
                     // first : lowest t, individual resolved, 1 pass
-                    // full  : lowest t both resolved, multi pass until no t <= 1.0 or max number of passes.
-
+                    // full  : lowest t both resolved, multi pass until no t <= 1.0 or max number of passes
                     // analytical : mathematical resolving of t 
                     // successive approximation : spherical envelope testing then s-approx until threashold
-                    //this.mass = 1.0;
-                    //this.cg = [0, 0, 0]; // center of mass, relative to entity origin
-                    //this.cp = [0, 0, 0]; // aerodynamic center
-                    //this.area = [0.577, 0.577, 0.577]; // aerodynamic area in 3 axis
 
                     this.CD_type = CD_types.NONE; 
                     this.CD_mode = CD_modes.STATIC; 
+
                     // TODO point body
                     this.CD_point_p = [0, 0, 0];
+
                     // TODO circle body
                     this.CD_circle_p = [0, 0, 0];
                     this.CD_circle_r = 0.5;
+                    
                     // TODO line body
                     this.CD_line_p = [0, 0, 0];
                     this.CD_line_n = [1, 0, 0];
                     this.CD_line_l = 1.0;
+
                     // TODO capsule body
                     this.CD_capsule_p = [0, 0, 0];
                     this.CD_capsule_n = [1, 0, 0];
@@ -238,41 +248,31 @@
             }
 
             var strList = new Map();
+
             var objList = [];
             var hitLst = [];
 
             objList.push(new obj);
             objList[0].pos[0] =  0.0;
-            objList[0].pos[1] =  0.4;
+            objList[0].pos[1] =  -0.4;
             objList[0].CD_type = CD_types.LINE;
-            objList[0].CD_line_n = [0.0, -1.0, 0.0];
+            objList[0].CD_line_n = [0.0, 1.0, 0.0];
             objList[0].CD_line_l = 1.0;
 
             objList.push(new obj);
             objList[1].pos[0] =  0.9;
             objList[1].pos[1] =  0.0;
             objList[1].CD_type = CD_types.LINE;
-            objList[1].CD_line_n = [-0.707, -0.707, 0.0];
+            objList[1].CD_line_n = [-0.707, 0.707, 0.0];
             objList[1].CD_line_l = 1.0;
 
             objList.push(new obj);
             objList[2].pos[0] = -0.9;
             objList[2].pos[1] =  0.0;
             objList[2].CD_type = CD_types.LINE;
-            objList[2].CD_line_n = [0.707, -0.707, 0.0];
+            objList[2].CD_line_n = [0.707, 0.707, 0.0];
             objList[2].CD_line_l = 1.0;
 
-            /*
-                var c = Math.cos(ang);// == 0
-                var s = Math.sin(ang); // sin 90 = 1.0 // sin-90 = -1.0
-
-                // 90
-                a[0] = -a[1];
-                a[1] =  a[0];
-                // -90
-                a[0] =  a[1];
-                a[1] = -a[0];
-            */
             function rot_p90(v) {
                 return [-v[1], v[0], v[2] ];
             }
@@ -309,7 +309,7 @@
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
                 if (run) time += timeDelta;
                 timeLast = newTime;
-                // TODO: add time jitter
+                // TODO: add time jitter to verify physics
             }
 
             function updateInputs() {
@@ -414,25 +414,34 @@
 
                     // update position
                     for (var i = 0; i < objList.length; ++i) if ((i != currentI) && (objList[i].CD_mode == CD_modes.DYNAMIC)) {
-
-                        objList[i].pSpeed[1] += 32 * timeDelta;
-
                         v3_copy(objList[i].pLast, objList[i].pos);
                         v3_copy(objList[i].aLast, objList[i].ang);
 
-                        v3_scale_res(objList[i].pDelta, objList[i].pSpeed, timeDelta);
-                        v3_scale_res(objList[i].aDelta, objList[i].aSpeed, timeDelta);
+                        // at the begining accel += gravity
+                        // at the end accel = 0
+                        // as animation (ie rocket) set accel before position phase
+                        // as control set next position and recalc accel
 
-                        v3_add_mod(objList[i].pos, objList[i].pDelta); 
-                        v3_add_mod(objList[i].ang, objList[i].aDelta);
+                        // Gravity
+                        // TODO add scaling factor for g, both globally and per object
+                        objList[i].pAccel[1] -= g_iss;// * timeDelta
 
+                        v3_addscaled_mod(objList[i].pSpeed, objList[i].pAccel, timeDelta);
+                        v3_addscaled_mod(objList[i].pos, objList[i].pSpeed, timeDelta);
+                        v3_sub_res(objList[i].pDelta, objList[i].pos, objList[i].pLast);
                         objList[i].deltaLength = v3_length(objList[i].pDelta);
 
+                        v3_addscaled_mod(objList[i].aSpeed, objList[i].aAccel, timeDelta);
+                        v3_addscaled_mod(objList[i].ang, objList[i].aSpeed, timeDelta);
+                        v3_sub_res(objList[i].aDelta, objList[i].ang, objList[i].aLast);
+
+                        v3_copy(objList[i].pAccel, _v3_null); 
+
                         // is this the correct place ?
-                 //       objList[i].pSpeed[1] += 32 * timeDelta;
+                        // objList[i].pSpeed[1] += 32 * timeDelta;
                         // at the start it inhibit all move that are smaller than gravity
                         // at the end it can mess up the CD calculations as the speed changed
-                        //  between the pos calc and the CD calc
+                        // between the pos calc and the CD calc
                     }
 
                     // detect collisions
@@ -486,7 +495,7 @@
 
                         }
 
-
+/*
                         var dir_dot = v3_dot(h_norm, objList[i].pDelta);
 
                         if (dir_dot < 0.0) {
@@ -568,6 +577,9 @@
 
                             }
                         }
+*/
+
+
                     }
 
                     // TODO: resolve shortest t, dont recheck CD afterward
@@ -576,7 +588,7 @@
                     // recalc final trajectory
                     for (var i = 0; i < objList.length; ++i) /*if (i != currentI)*/ {
                         if (objList[i].hit) {
-
+                            console.log("hit " + i);
                         }
                     }
 
@@ -587,7 +599,7 @@
             function drawScene(){
                 
                 // clear
-               // ctx.fillStyle = 'white';
+                // ctx.fillStyle = 'white';
                 if (clear) ctx.clearRect(0, 0, width, height);
                 clear = false;
 
@@ -616,94 +628,69 @@
 
 
 
-                // draw static objects
-                ctx.setLineDash([1]);
-                ctx.lineWidth = 3.0;
-                ctx.strokeStyle = "#800";
-                for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.STATIC) {
-                    switch (objList[i].CD_type) {
-                        case CD_types.LINE:
-                            // p0 = obj.pos + obj.line_p + rot_90(obj.CD_line_n) * obj.CD_line_l;
-                            var p = v3_add_new(objList[i].pos, objList[i].CD_line_p);
-                            var p0 = v3_addscaled_new(p, rot_p90(objList[i].CD_line_n), objList[i].CD_line_l);
-                            var p1 = v3_addscaled_new(p, rot_m90(objList[i].CD_line_n), objList[i].CD_line_l);
-                            ctx.beginPath();
-                            moveTo(p);
-                            lineTo(p0[0], p0[1]);
-                            moveTo(p);
-                            lineTo(p1[0], p1[1]);
-                            ctx.stroke();
-                            break;
-                        case CD_types.CIRCLE:
-                            var p = v3_add_new(objList[i].pos, objList[i].CD_circle_p);
-                            ctx.beginPath();
-                            circle(p[0], p[1], objList[i].CD_circle_r); 
-                            ctx.stroke();
-                            break;
-                        case CD_types.POINT:
-
-                            break;
-                        case CD_types.CAPSULE:
-
-                            break;
-                    }
-                } 
+                // draw objects
+                ctx.setLineDash([1]); //solid line
                 
-                // draw dynamic objects
-                ctx.setLineDash([1]);
-                ctx.lineWidth = 2.0;
-                for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.DYNAMIC) {
-                    switch (objList[i].CD_type) {
+                for (let current_obj of objList) {
+
+                    ctx.lineWidth = (current_obj.CD_mode == CD_modes.STATIC) ? 3.0 : 2.0;
+                    if (current_obj.CD_mode == CD_modes.STATIC) ctx.strokeStyle = "#666";
+                    if (current_obj.CD_mode == CD_modes.DYNAMIC) ctx.strokeStyle = "#080";
+                    if (current_obj.CD_mode == CD_modes.CONTROLLED) ctx.strokeStyle = "#008";
+
+                    switch (current_obj.CD_type) {
                         case CD_types.LINE:
-                            // p0 = obj.pos + obj.line_p + rot_90(obj.CD_line_n) * obj.CD_line_l;
-                            var p = v3_add_new(objList[i].pos, objList[i].CD_line_p);
-                            var p0 = v3_addscaled_new(p, rot_p90(objList[i].CD_line_n), objList[i].CD_line_l);
-                            var p1 = v3_addscaled_new(p, rot_m90(objList[i].CD_line_n), objList[i].CD_line_l);
+                            var p = v3_add_new(current_obj.pos, current_obj.CD_line_p);
+                            var pn = v3_addscaled_new(p, current_obj.CD_line_n, 0.1);
+                            var p0 = v3_addscaled_new(p, rot_p90(current_obj.CD_line_n), current_obj.CD_line_l);
+                            var p1 = v3_addscaled_new(p, rot_m90(current_obj.CD_line_n), current_obj.CD_line_l);
                             ctx.beginPath();
-                            moveTo(p);
+                            moveTo(p[0], p[1]);
+                            lineTo(pn[0], pn[1]);
+                            moveTo(p[0], p[1]);
                             lineTo(p0[0], p0[1]);
-                            moveTo(p);
+                            moveTo(p[0], p[1]);
                             lineTo(p1[0], p1[1]);
                             ctx.stroke();
                             break;
                         case CD_types.CIRCLE:                        
-                            ctx.strokeStyle = objList[i].potentialHit ? "#800" : "#080";
-                            var p = v3_add_new(objList[i].pos, objList[i].CD_circle_p);
+                            ctx.strokeStyle = current_obj.potentialHit ? "#800" : "#080";
+                            var p = v3_add_new(current_obj.pos, current_obj.CD_circle_p);
                             ctx.beginPath();
-                            circle(p[0], p[1], objList[i].CD_circle_r); 
+                            circle(p[0], p[1], current_obj.CD_circle_r); 
                             ctx.stroke();
 
-                            if (objList[i].potentialHit) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = "#00F";
-                        line(objList[i].pos[0], objList[i].pos[1], objList[i].pLast[0], objList[i].pLast[1]);
-                        ctx.stroke();
+                            if (current_obj.potentialHit) {
+                                ctx.beginPath();
+                                ctx.strokeStyle = "#00F";
+                                line(current_obj.pos[0], current_obj.pos[1], current_obj.pLast[0], current_obj.pLast[1]);
+                                ctx.stroke();
 
-                        if (!objList[i].hit) {
+                        if (!current_obj.hit) {
                             ctx.strokeStyle = "#00F";
                             ctx.beginPath();
-                            circle(objList[i].pLast[0], objList[i].pLast[1], objList[i].rad - 0.001); 
+                            circle(current_obj.pLast[0], current_obj.pLast[1], current_obj.rad - 0.001); 
                             ctx.stroke();
                         }
 
-                        if (objList[i].hit_p) {
+                        if (current_obj.hit_p) {
                             ctx.strokeStyle = "#00F";
                             ctx.beginPath();
-                            circle(objList[i].hit_p[0], objList[i].hit_p[1], 0.01); 
+                            circle(current_obj.hit_p[0], current_obj.hit_p[1], 0.01); 
                             ctx.stroke();
                             //run = false;
 
-                            if (objList[i].hit) {
+                            if (current_obj.hit) {
                                 ctx.strokeStyle = "#F00";
                                 ctx.beginPath();
-                                circle(objList[i].hit_p[0], objList[i].hit_p[1],  objList[i].rad); 
+                                circle(current_obj.hit_p[0], current_obj.hit_p[1],  current_obj.rad); 
                                 ctx.stroke();  
 
                                 ctx.beginPath();
-                                line(objList[i].pLast[0], objList[i].pLast[1], objList[i].hit_p[0], objList[i].hit_p[1]);
+                                line(current_obj.pLast[0], current_obj.pLast[1], current_obj.hit_p[0], current_obj.hit_p[1]);
                                 ctx.stroke();
                                 ctx.beginPath();
-                                line(objList[i].hit_p[0], objList[i].hit_p[1], objList[i].pos[0], objList[i].pos[1]);
+                                line(current_obj.hit_p[0], current_obj.hit_p[1], current_obj.pos[0], current_obj.pos[1]);
                                 ctx.stroke();
 
                             }
@@ -719,7 +706,7 @@
 
                             break;
                     }
-                }
+                } //for objects
 
 
                 ctx.lineWidth = 1.0;
@@ -742,18 +729,18 @@
 
             
             function moveTo(x, y) {
-                ctx.moveTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
+                ctx.moveTo(x * viewportScale + viewportOffsetX, -y * viewportScale + viewportOffsetY);
             }
             function lineTo(x, y) {
-                ctx.lineTo(x * viewportScale + viewportOffsetX, y * viewportScale + viewportOffsetY);
+                ctx.lineTo(x * viewportScale + viewportOffsetX, -y * viewportScale + viewportOffsetY);
             }
             function line(x1, y1, x2, y2) {
-                ctx.moveTo(x1 * viewportScale + viewportOffsetX, y1 * viewportScale + viewportOffsetY);
-                ctx.lineTo(x2 * viewportScale + viewportOffsetX, y2 * viewportScale + viewportOffsetY);
+                ctx.moveTo(x1 * viewportScale + viewportOffsetX, -y1 * viewportScale + viewportOffsetY);
+                ctx.lineTo(x2 * viewportScale + viewportOffsetX, -y2 * viewportScale + viewportOffsetY);
             }
             function circle(x, y, r) {
                 ctx.arc(x * viewportScale + viewportOffsetX,
-                        y * viewportScale + viewportOffsetY,
+                        -y * viewportScale + viewportOffsetY,
                         r * viewportScale, 0, Math.PI * 2.0);
             }
 

@@ -22,8 +22,8 @@ CAMERA.moveBy(0, 0, 200);
 var entity = new E3D_entity_wireframe_canvas("entity0");
 
 // Large axis planes
-entity.addPlane(_v3_origin, _v3_90x, 1000, 1000, 11, _v3_lightred);
-entity.addPlane(_v3_origin, _v3_90y, 1000, 1000, 11, _v3_lightgreen);
+entity.addPlane(_v3_origin, _v3_90x, 1000, 1000, 11, _v3_lightgreen);
+entity.addPlane(_v3_origin, _v3_90y, 1000, 1000, 11, _v3_lightred);
 entity.addPlane(_v3_origin, _v3_90z, 1000, 1000, 11, _v3_lightblue);
 
 let n = v3_normalize_new([ 0.0, 1.0, 1.0]);
@@ -42,6 +42,7 @@ E3D_addEntity(entity);
 CB_tick = function() {
     if (INPUTS.checkCommand("action1", true)) {
         n = v3_addnoise_new(_v3_origin, 1.0);
+        v = v3_addnoise_new(_v3_origin, 256.0);
         v3_normalize_mod(n);
         p = v3_projection_new(v, n);        
         entity.addLineByPosNormLen(_v3_origin, n, 10, false, _v3_white);

@@ -73,6 +73,7 @@
             var btn0 = "u";
             var btn1 = "u";
             var btn2 = "u";
+            var keydata = "";
 
             function log(t) {
                 s.innerText  = "x:" + x.toString().padStart(7) + "\n";
@@ -87,6 +88,7 @@
                 s.innerText += "dx:" + (x - dx).toString().padStart(6) + "\n";
                 s.innerText += "dy:" + (y - dy).toString().padStart(6) + "\n";
 
+                s.innerText += "key: " + keydata + "\n";
 
                 if (dx != -1) {
                     var d = new Date();
@@ -152,6 +154,16 @@
                         dy = -1;
                     }
                 }
+                keydata  = "\n\t alt: " + event.altKey;
+                keydata += "\n\t code: " + event.code;
+                keydata += "\n\t ctrl: " + event.ctrlKey;
+                keydata += "\n\t composing: " + event.isComposing;
+                keydata += "\n\t key: " + event.key;
+                keydata += "\n\t lcoation: " + event.location;
+                keydata += "\n\t meta: " + event.metaKey;
+                keydata += "\n\t repeat: " + event.repeat;
+                keydata += "\n\t shift: " + event.shiftKey;
+                log();
             }
 
 
