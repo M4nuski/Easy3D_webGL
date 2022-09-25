@@ -134,6 +134,15 @@
                     currentI = -1;
                     strList.clear();
                 }
+
+                if (event.code == "Digit1") {
+                    clear = true;
+                    if (event.shiftKey) {
+                        objList[3].pos = [currentX, currentY, 0];
+                    } else {
+                        objList[3].pLast = [currentX, currentY, 0];
+                    }
+                } 
             }
 
             function resizeViewport() {
@@ -184,6 +193,15 @@
                 CONTROLLED: "controlled" // can be moved, affect dynamic, react to static and controlled (block, rubberband)
             }
 
+            class hit {
+                constructor() {
+                    this.t = 0.0;
+                    this.n = [0, 1, 0];
+                    this.p = [0, 0, 0];
+                    this.other = null;
+                }
+            }
+
             class obj {
                 constructor() {
                     //this.mass = 1.0;
@@ -195,28 +213,20 @@
                     this.pAccel = v3_new();
                     this.pSpeed = v3_new(); // should always be calculated, not set
                     
+                    this.pLast = v3_new();
                     this.pDelta = v3_new(); //pLast to next pos
                     this.deltaLength = 0.0;
-                    this.pLast = v3_new();
 
                     this.ang = v3_new();
                     this.aAccel = v3_new();
                     this.aSpeed = v3_new();
                     
-                    this.aDelta = v3_new();
                     this.aLast = v3_new();
+                    this.aDelta = v3_new();
 
                     //this.CD_culling_radius = 10.0; // deltaLength + largest CD data ?
                     
-                    // should be in CD_Result
-                    this.potentialHit = false;
-                    this.hit = false;
-                    this.hit_t = 0.0;
-                    this.hit_n = [0, -1, 0];
-                    this.hit_p = [0, 0, 0];
-                    this.hit_o = -1; // other
-
-                    // TODO this.hitList
+                    this.hits = [];
 
                     // eager : first hit found, indivudial resolved, 1 pass
                     // first : lowest t, individual resolved, 1 pass
@@ -244,17 +254,17 @@
                     this.CD_capsule_n = [1, 0, 0];
                     this.CD_capsule_l = 1.0;
                     this.CD_capsule_r = 0.5;
+                    // TODO reuse p n l r for multiple type of body
                 }
             }
 
             var strList = new Map();
 
             var objList = [];
-            var hitLst = [];
 
             objList.push(new obj);
             objList[0].pos[0] =  0.0;
-            objList[0].pos[1] =  -0.4;
+            objList[0].pos[1] =  -0.2;
             objList[0].CD_type = CD_types.LINE;
             objList[0].CD_line_n = [0.0, 1.0, 0.0];
             objList[0].CD_line_l = 1.0;
@@ -262,17 +272,50 @@
             objList.push(new obj);
             objList[1].pos[0] =  0.9;
             objList[1].pos[1] =  0.0;
-            objList[1].CD_type = CD_types.LINE;
+            objList[1].CD_type = CD_types.POINT;
             objList[1].CD_line_n = [-0.707, 0.707, 0.0];
             objList[1].CD_line_l = 1.0;
 
             objList.push(new obj);
             objList[2].pos[0] = -0.9;
             objList[2].pos[1] =  0.0;
-            objList[2].CD_type = CD_types.LINE;
+            objList[2].CD_type = CD_types.POINT;
             objList[2].CD_line_n = [0.707, 0.707, 0.0];
             objList[2].CD_line_l = 1.0;
 
+
+
+            objList.push(new obj);
+            objList[3].pos = [ -0.5, -0.5, 0];
+            objList[3].pLast = [-0.5, 0.35, 0];
+            objList[3].CD_mode = CD_modes.CONTROLLED;
+            objList[3].CD_type = CD_types.CIRCLE;
+            objList[3].CD_circle_r = 0.1;
+            objList[3].CD_circle_p = [0, 0, 0];
+
+
+            /*
+            objList.push(new obj);
+            objList[3].pos[0] = 0.0;
+            objList[3].pos[1] = 0.25;
+            objList[3].CD_type = CD_types.CAPSULE;
+            objList[3].CD_capsule_p = [0.0, 0.0, 0.0];
+            objList[3].CD_capsule_l = 0.1;
+            objList[3].CD_capsule_r = 0.05;
+            objList[3].CD_capsule_n = v3_normalize_new([1, -0.2, 0]);
+            */
+
+            /*
+            objList.push(new obj);
+            objList[4].pos[0] = 0.0;
+            objList[4].pos[1] = 0.125;
+            objList[4].CD_type = CD_types.CAPSULE;
+            objList[4].CD_capsule_p = [0.0, 0.0, 0.0];
+            objList[4].CD_capsule_l = 0.1;
+            objList[4].CD_capsule_r = 0.05;
+            objList[4].CD_capsule_n = v3_normalize_new([1, 0.2, 0]);
+            */
+           
             function rot_p90(v) {
                 return [-v[1], v[0], v[2] ];
             }
@@ -352,8 +395,8 @@
                     if (currentI != -1) {
                         var td = time - lastT;
                         //if (abs(td) < 0.0001) td = timeDelta;
-                        objList[currentI].pSpeed[0] = (currentX - lastX) / td / 2.0;
-                        objList[currentI].pSpeed[1] = (currentY - lastY) / td / 2.0;
+                        objList[currentI].pSpeed[0] = (currentX - lastX) / td;
+                        objList[currentI].pSpeed[1] = (currentY - lastY) / td;
                         currentI = -1;
                     }
                 }                
@@ -403,9 +446,12 @@
             function updateScene() {            
                     // remove out of frame object
                     if (currentI == -1) for (var i = objList.length - 1; i >= 0; --i) {
-                        objList[i].potentialHit = false;
+                       // objList[i].potentialHit = false;
                         if (v3_length(objList[i].pos) > 5) objList.splice(i, 1);
                     }
+
+            //v3_rotateZ_mod(objList[4].CD_capsule_n, 0.025);
+            //v3_normalize_mod(objList[4].CD_capsule_n);
 
                     // stats and shit
                     strList.set("time", time.toFixed(2));
@@ -413,9 +459,13 @@
                     strList.set("current i", currentI);
 
                     // update position
-                    for (var i = 0; i < objList.length; ++i) if ((i != currentI) && (objList[i].CD_mode == CD_modes.DYNAMIC)) {
-                        v3_copy(objList[i].pLast, objList[i].pos);
-                        v3_copy(objList[i].aLast, objList[i].ang);
+                    for (var i = 0; i < objList.length; ++i) {
+
+                        objList[i].hits = [];
+
+                        if ((i != currentI) && (objList[i].CD_mode == CD_modes.DYNAMIC)) {
+                            v3_copy(objList[i].pLast, objList[i].pos);
+                            v3_copy(objList[i].aLast, objList[i].ang);
 
                         // at the begining accel += gravity
                         // at the end accel = 0
@@ -424,29 +474,45 @@
 
                         // Gravity
                         // TODO add scaling factor for g, both globally and per object
-                        objList[i].pAccel[1] -= g_iss;// * timeDelta
+                            objList[i].pAccel[1] -= g_iss;// * timeDelta
 
-                        v3_addscaled_mod(objList[i].pSpeed, objList[i].pAccel, timeDelta);
-                        v3_addscaled_mod(objList[i].pos, objList[i].pSpeed, timeDelta);
-                        v3_sub_res(objList[i].pDelta, objList[i].pos, objList[i].pLast);
-                        objList[i].deltaLength = v3_length(objList[i].pDelta);
+                            v3_addscaled_mod(objList[i].pSpeed, objList[i].pAccel, timeDelta);
+                            v3_addscaled_mod(objList[i].pos, objList[i].pSpeed, timeDelta);
+                            v3_sub_res(objList[i].pDelta, objList[i].pos, objList[i].pLast);
+                            objList[i].deltaLength = v3_length(objList[i].pDelta);
 
-                        v3_addscaled_mod(objList[i].aSpeed, objList[i].aAccel, timeDelta);
-                        v3_addscaled_mod(objList[i].ang, objList[i].aSpeed, timeDelta);
-                        v3_sub_res(objList[i].aDelta, objList[i].ang, objList[i].aLast);
+                            v3_addscaled_mod(objList[i].aSpeed, objList[i].aAccel, timeDelta);
+                            v3_addscaled_mod(objList[i].ang, objList[i].aSpeed, timeDelta);
+                            v3_sub_res(objList[i].aDelta, objList[i].ang, objList[i].aLast);
 
-                        v3_copy(objList[i].pAccel, _v3_null); 
+                            v3_copy(objList[i].pAccel, _v3_null); 
 
                         // is this the correct place ?
                         // objList[i].pSpeed[1] += 32 * timeDelta;
                         // at the start it inhibit all move that are smaller than gravity
                         // at the end it can mess up the CD calculations as the speed changed
                         // between the pos calc and the CD calc
+                        }
+                        if (objList[i].CD_mode == CD_modes.DYNAMIC) {
+                            v3_sub_res(objList[i].pDelta, objList[i].pos, objList[i].pLast);
+                            objList[i].deltaLength = v3_length(objList[i].pDelta);
+                            v3_sub_res(objList[i].aDelta, objList[i].ang, objList[i].aLast);
+                        }
+                        if (objList[i].CD_mode == CD_modes.CONTROLLED) {
+                            v3_sub_res(objList[i].pDelta, objList[i].pos, objList[i].pLast);
+                            objList[i].deltaLength = v3_length(objList[i].pDelta);
+                            v3_sub_res(objList[i].aDelta, objList[i].ang, objList[i].aLast);
+                        }
                     }
 
                     // detect collisions
                     // for now only dynamic objects vs static objects
-                    for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.DYNAMIC) {
+                    // TODO clear list
+                    // TODO CD object 
+                    // TODO CD list in entity
+                    // eager resolve : first in list
+                    // first resolve : sort list by t, first in list
+                    for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.CONTROLLED) {
                         var source = objList[i];
 
                         // Direction DOT < 0.0 ( == 0 is at 90deg )
@@ -455,20 +521,19 @@
                         // then check for t of collision
                         // (t <= 1.0) && (t >= 0.0)
 
-                        strList.set("potentialHit[" + i + "]", "level 0");
+                        //strList.set("potentialHit[" + i + "]", "level 0");
 
-                        for (var j = 0; j < objList.length; ++j) if (objList[j].CD_mode == CD_modes.STATIC) {
+                        for (var j = 0; j < objList.length; ++j) if ((i!=j) && (objList[j].CD_mode == CD_modes.STATIC)) {
                             var target = objList[j];
+
                             switch (source.CD_type) {
                                 case CD_types.POINT:
                                     switch (target.CD_type) {
                                         case CD_types.LINE:
-
-
+                                            CD_dyn_sta_point_line(source, target);
                                             break;
                                         case CD_types.CIRCLE:
-
-
+                                            CD_dyn_sta_point_circle(source, target);
                                             break;
                                     }
 
@@ -476,23 +541,17 @@
                                 case CD_types.CIRCLE:
                                     switch (target.CD_type) {
                                             case CD_types.POINT:
-
-
+                                                CD_dyn_sta_circle_point(source, target);
                                                 break;
                                             case CD_types.LINE:
-
-
+                                                CD_dyn_sta_circle_line(source, target);
                                                 break;
                                             case CD_types.CIRCLE:
-
-
+                                                CD_dyn_sta_circle_circle(source, target);
                                                 break;
                                         }
                                     break;
                             }
-
-
-
                         }
 
 /*
@@ -594,6 +653,89 @@
 
             }
 
+            function CD_dyn_sta_point_line(source, target) {}
+            function CD_dyn_sta_point_circle(source, target) {}
+            function CD_dyn_sta_circle_point(source, target) {
+               /* let dir_dot = v3_dot(target.CD_line_n, source.pDelta); strList.set("dir_dot", dir_dot);                    
+                if (dir_dot < 0) { // face to face
+
+                    let src_p0 = v3_add_new(source.pLast, source.CD_circle_p); strList.set("src_p0", src_p0);
+
+                    let tgt_p = v3_add_new(target.pos, target.CD_line_p); strList.set("tgt_p", tgt_p);
+                    // offset for radius
+                    v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
+
+                    let delta_p0 = v3_sub_new(src_p0, tgt_p); strList.set("delta_p0", delta_p0);
+                    let delta_p1 = v3_add_new(delta_p0, source.pDelta); strList.set("delta_p1", delta_p1);
+
+                    let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strList.set("pos0_dot", pos0_dot);
+                    let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strList.set("pos1_dot", pos1_dot);
+
+                    if ((pos0_dot > -source.CD_circle_r) && (pos1_dot < 0)) { // was in front
+                        let i = source.hits.push(new hit())-1;
+                        
+                        source.hits[i].t = pos0_dot / (pos0_dot - pos1_dot); strList.set("source.hit_t", source.hits[i].t);
+                        source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                        source.hits[i].n = v3_clone(target.CD_line_n);
+                        source.hits[i].other = target;
+                    }
+
+                } else if (dir_dot > 0) { // from behind
+                    // IGNORE
+                }*/
+            }
+
+            function CD_dyn_sta_circle_line(source, target) {
+
+                let dir_dot = v3_dot(target.CD_line_n, source.pDelta); strList.set("dir_dot", dir_dot);                    
+                if (dir_dot < 0) { // face to face
+
+                    let src_p0 = v3_add_new(source.pLast, source.CD_circle_p); strList.set("src_p0", src_p0);
+
+                    let tgt_p = v3_add_new(target.pos, target.CD_line_p); strList.set("tgt_p", tgt_p);
+                    // offset for radius
+                    v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
+
+                    let delta_p0 = v3_sub_new(src_p0, tgt_p); strList.set("delta_p0", delta_p0);
+                    let delta_p1 = v3_add_new(delta_p0, source.pDelta); strList.set("delta_p1", delta_p1);
+
+                    let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strList.set("pos0_dot", pos0_dot);
+                    let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strList.set("pos1_dot", pos1_dot);
+
+                    if ((pos0_dot > -source.CD_circle_r) && (pos1_dot < 0)) { // was in front
+                        let i = source.hits.push(new hit())-1;
+                        
+                        source.hits[i].t = pos0_dot / (pos0_dot - pos1_dot); strList.set("source.hit_t", source.hits[i].t);
+                        source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                        source.hits[i].n = v3_clone(target.CD_line_n);
+                        source.hits[i].other = target;
+                    }
+
+                } /*else if (dir_dot > 0) { // from behind
+                    let src_p0 = v3_add_new(source.pLast, source.CD_circle_p); strList.set("src_p0", src_p0);
+
+                    let tgt_p = v3_add_new(target.pos, target.CD_line_p); strList.set("tgt_p", tgt_p);
+                    // offset for radius
+                    v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
+
+                    let delta_p0 = v3_sub_new(src_p0, tgt_p); strList.set("delta_p0", delta_p0);
+                    //let delta_p1 = v3_add_new(delta_p0, source.pDelta); strList.set("delta_p1", delta_p1);
+
+                    let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strList.set("pos0_dot", pos0_dot);
+                    //let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strList.set("pos1_dot", pos1_dot);
+
+                    if ((pos0_dot > -source.CD_circle_r) && (pos0_dot <= 0)) {
+                        let i = source.hits.push(new hit())-1;
+                        
+                        source.hits[i].t = pos0_dot / -source.deltaLength; strList.set("source.hit_t", source.hits[i].t);
+                        source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                        source.hits[i].n = v3_clone(target.CD_line_n);
+                        source.hits[i].other = target;
+                    }
+                }*/
+            }
+            function CD_dyn_sta_circle_circle(source, target) {}
+
             var clear = true;
             var run = true;
             function drawScene(){
@@ -645,65 +787,114 @@
                             var p0 = v3_addscaled_new(p, rot_p90(current_obj.CD_line_n), current_obj.CD_line_l);
                             var p1 = v3_addscaled_new(p, rot_m90(current_obj.CD_line_n), current_obj.CD_line_l);
                             ctx.beginPath();
-                            moveTo(p[0], p[1]);
-                            lineTo(pn[0], pn[1]);
-                            moveTo(p[0], p[1]);
-                            lineTo(p0[0], p0[1]);
-                            moveTo(p[0], p[1]);
-                            lineTo(p1[0], p1[1]);
+                                moveTo(p[0], p[1]);
+                                lineTo(pn[0], pn[1]);
+                                moveTo(p[0], p[1]);
+                                lineTo(p0[0], p0[1]);
+                                moveTo(p[0], p[1]);
+                                lineTo(p1[0], p1[1]);
                             ctx.stroke();
                             break;
                         case CD_types.CIRCLE:                        
-                            ctx.strokeStyle = current_obj.potentialHit ? "#800" : "#080";
-                            var p = v3_add_new(current_obj.pos, current_obj.CD_circle_p);
+                            //ctx.strokeStyle = current_obj.potentialHit ? "#800" : "#080";
+                            ctx.strokeStyle = "#080";
+                            var p0 = v3_add_new(current_obj.pLast, current_obj.CD_circle_p);
                             ctx.beginPath();
-                            circle(p[0], p[1], current_obj.CD_circle_r); 
+                                circle(p0[0], p0[1], current_obj.CD_circle_r); 
                             ctx.stroke();
 
-                            if (current_obj.potentialHit) {
-                                ctx.beginPath();
-                                ctx.strokeStyle = "#00F";
-                                line(current_obj.pos[0], current_obj.pos[1], current_obj.pLast[0], current_obj.pLast[1]);
-                                ctx.stroke();
-
-                        if (!current_obj.hit) {
-                            ctx.strokeStyle = "#00F";
+                            ctx.strokeStyle = "#008";
+                            var p1 = v3_add_new(current_obj.pos, current_obj.CD_circle_p);
                             ctx.beginPath();
-                            circle(current_obj.pLast[0], current_obj.pLast[1], current_obj.rad - 0.001); 
+                                circle(p1[0], p1[1], current_obj.CD_circle_r); 
                             ctx.stroke();
-                        }
 
-                        if (current_obj.hit_p) {
-                            ctx.strokeStyle = "#00F";
+                            ctx.strokeStyle = "#000";
                             ctx.beginPath();
-                            circle(current_obj.hit_p[0], current_obj.hit_p[1], 0.01); 
+                                line(p0[0], p0[1], p1[0], p1[1]);
                             ctx.stroke();
-                            //run = false;
 
-                            if (current_obj.hit) {
+                            for (var hit of current_obj.hits) {
                                 ctx.strokeStyle = "#F00";
                                 ctx.beginPath();
-                                circle(current_obj.hit_p[0], current_obj.hit_p[1],  current_obj.rad); 
-                                ctx.stroke();  
-
-                                ctx.beginPath();
-                                line(current_obj.pLast[0], current_obj.pLast[1], current_obj.hit_p[0], current_obj.hit_p[1]);
+                                    circle(hit.p[0], hit.p[1], current_obj.CD_circle_r - 0.001); 
                                 ctx.stroke();
-                                ctx.beginPath();
-                                line(current_obj.hit_p[0], current_obj.hit_p[1], current_obj.pos[0], current_obj.pos[1]);
-                                ctx.stroke();
-
                             }
-                        }
-                    }
+/*
+                            if (current_obj.potentialHit) {
+                                ctx.strokeStyle = "#00F";
+                                ctx.beginPath();
+                                    line(current_obj.pos[0], current_obj.pos[1], current_obj.pLast[0], current_obj.pLast[1]);
+                                ctx.stroke();
+
+                                if (!current_obj.hit) {
+                                    ctx.strokeStyle = "#00F";
+                                    ctx.beginPath();
+                                        circle(current_obj.pLast[0], current_obj.pLast[1], current_obj.rad - 0.001); 
+                                    ctx.stroke();
+                                }
+
+                                if (current_obj.hit_p) {
+                                    ctx.strokeStyle = "#00F";
+                                    ctx.beginPath();
+                                        circle(current_obj.hit_p[0], current_obj.hit_p[1], 0.01); 
+                                    ctx.stroke();
+                                    //run = false;
+
+                                    if (current_obj.hit) {
+                                        ctx.strokeStyle = "#F00";
+                                        ctx.beginPath();
+                                        circle(current_obj.hit_p[0], current_obj.hit_p[1],  current_obj.rad); 
+                                        ctx.stroke();  
+
+                                        ctx.beginPath();
+                                            line(current_obj.pLast[0], current_obj.pLast[1], current_obj.hit_p[0], current_obj.hit_p[1]);
+                                        ctx.stroke();
+                                        ctx.beginPath();
+                                            line(current_obj.hit_p[0], current_obj.hit_p[1], current_obj.pos[0], current_obj.pos[1]);
+                                        ctx.stroke();
+
+                                    }
+                                }
+                            }*/
 
 
                             break;
                         case CD_types.POINT:
-
+                            var p = v3_add_new(current_obj.pos, current_obj.CD_point_p);
+                            ctx.beginPath();
+                                circle(p[0], p[1], 0.01);
+                                moveTo(p[0]-0.02, p[1]);
+                                lineTo(p[0]+0.02, p[1]);
+                                moveTo(p[0], p[1]-0.02);
+                                lineTo(p[0], p[1]+0.02);
+                            ctx.stroke();
                             break;
                         case CD_types.CAPSULE:
+                            var p = v3_add_new(current_obj.pos, current_obj.CD_capsule_p);
+                            var p0 = v3_addscaled_new(p, current_obj.CD_capsule_n, current_obj.CD_capsule_l);
+                            var p1 = v3_addscaled_new(p, current_obj.CD_capsule_n, -current_obj.CD_capsule_l);
+                            var o = rot_m90(current_obj.CD_capsule_n);
+                            v3_scale_mod(o, current_obj.CD_capsule_r);
+                            var a0 = v3_angle( _v3_x, current_obj.CD_capsule_n) * -Math.sign(current_obj.CD_capsule_n[1]);
+                            ctx.beginPath();
+                            //circle(p[0], p[1], 0.01);
+                                moveTo(p[0] + o[0], p[1] + o[1]);
+                                lineTo(p0[0] + o[0], p0[1] + o[1]);
+                                moveTo(p[0] + o[0], p[1] + o[1]);
+                                lineTo(p1[0] + o[0], p1[1] + o[1]);
 
+                                moveTo(p[0] - o[0], p[1] - o[1]);
+                                lineTo(p0[0] - o[0], p0[1] - o[1]);
+                                moveTo(p[0] - o[0], p[1] - o[1]);
+                                lineTo(p1[0] - o[0], p1[1] - o[1]);
+                            ctx.stroke();
+                            ctx.beginPath();
+                                arc(p0[0], p0[1], current_obj.CD_capsule_r, a0 - PIdiv2, a0 - PIdiv2 + Math.PI);
+                            ctx.stroke();
+                            ctx.beginPath();
+                                arc(p1[0], p1[1], current_obj.CD_capsule_r, a0 + PIdiv2, a0 + PIdiv2 + Math.PI);
+                            ctx.stroke();
                             break;
                     }
                 } //for objects
@@ -742,6 +933,11 @@
                 ctx.arc(x * viewportScale + viewportOffsetX,
                         -y * viewportScale + viewportOffsetY,
                         r * viewportScale, 0, Math.PI * 2.0);
+            }
+            function arc(x, y, r, a0, a1) {
+                ctx.arc(x * viewportScale + viewportOffsetX,
+                        -y * viewportScale + viewportOffsetY,
+                        r * viewportScale, a0, a1);
             }
 
         } );

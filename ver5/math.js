@@ -389,9 +389,9 @@ function v3_mult_res(res, a, b) {
 // Linear interpolation
 // = a + (f * (b - a))
 function v3_lerp_new(a, b, f) {
-    return [ a[0] = a[0] + f * (b[0] - a[0]),
-             a[1] = a[1] + f * (b[1] - a[1]),
-             a[2] = a[2] + f * (b[2] - a[2]) ];
+    return [ a[0] + f * (b[0] - a[0]),
+             a[1] + f * (b[1] - a[1]),
+             a[2] + f * (b[2] - a[2]) ];
 }
 function v3_lerp_mod(a, b, f) {
     a[0] = a[0] + f * (b[0] - a[0]);
