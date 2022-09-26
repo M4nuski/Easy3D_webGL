@@ -199,6 +199,7 @@
                     this.n = [0, 1, 0];
                     this.p = [0, 0, 0];
                     this.other = null;
+                    this.pre = false;
                 }
             }
 
@@ -263,25 +264,24 @@
             var objList = [];
 
             objList.push(new obj);
-            objList[0].pos[0] =  0.0;
-            objList[0].pos[1] =  -0.2;
+            objList[0].pos = [ 0.0 ,-0.2, 0.0 ];
+            objList[0].pLast = [ 0.0 ,-0.2, 0.0 ];
             objList[0].CD_type = CD_types.LINE;
             objList[0].CD_line_n = [0.0, 1.0, 0.0];
             objList[0].CD_line_l = 1.0;
 
             objList.push(new obj);
-            objList[1].pos[0] =  0.9;
-            objList[1].pos[1] =  0.0;
+            objList[1].pos = [ 0.8, 0.0, 0.0 ];
+            objList[1].pLast = [ 0.8, 0.0, 0.0 ];
             objList[1].CD_type = CD_types.POINT;
-            objList[1].CD_line_n = [-0.707, 0.707, 0.0];
-            objList[1].CD_line_l = 1.0;
+            objList[1].CD_point_p = [0.0, 0.0, 0.0];
 
             objList.push(new obj);
-            objList[2].pos[0] = -0.9;
-            objList[2].pos[1] =  0.0;
-            objList[2].CD_type = CD_types.POINT;
-            objList[2].CD_line_n = [0.707, 0.707, 0.0];
-            objList[2].CD_line_l = 1.0;
+            objList[2].pos = [ -0.8, 0.0, 0.0 ];
+            objList[2].pLast = [ -0.8, 0.0, 0.0 ];
+            objList[2].CD_type = CD_types.CIRCLE;
+            objList[2].CD_circle_p = [0.0, 0.0, 0.0];
+            objList[2].CD_circle_r = 0.05;
 
 
 
@@ -454,9 +454,9 @@
             //v3_normalize_mod(objList[4].CD_capsule_n);
 
                     // stats and shit
-                    strList.set("time", time.toFixed(2));
-                    strList.set("nb Obj", objList.length);
-                    strList.set("current i", currentI);
+                    strListset("time", time.toFixed(2));
+                    strListset("nb Obj", objList.length);
+                    strListset("current i", currentI);
 
                     // update position
                     for (var i = 0; i < objList.length; ++i) {
@@ -521,7 +521,7 @@
                         // then check for t of collision
                         // (t <= 1.0) && (t >= 0.0)
 
-                        //strList.set("potentialHit[" + i + "]", "level 0");
+                        //strListset("potentialHit[" + i + "]", "level 0");
 
                         for (var j = 0; j < objList.length; ++j) if ((i!=j) && (objList[j].CD_mode == CD_modes.STATIC)) {
                             var target = objList[j];
@@ -559,14 +559,14 @@
 
                         if (dir_dot < 0.0) {
 
-                            strList.set("potentialHit[" + i + "]", "level 1");
+                            strListset("potentialHit[" + i + "]", "level 1");
                             var detRadius = objList[i].deltaLength + objList[i].rad;
 
                             var relative_pLast = v3_sub_new(objList[i].pLast, h_pos);
                             var rpl_dot = v3_dot(h_norm, relative_pLast);
 
                             if ((rpl_dot > 0.0) && (rpl_dot <= detRadius)) {
-                                strList.set("potentialHit[" + i + "]", "level 2");
+                                strListset("potentialHit[" + i + "]", "level 2");
 
                                 // pLast + dir_dot == 0
                                 objList[i].potentialHit = true;
@@ -618,10 +618,10 @@
                                         objList[i].pSpeed[2] *= (1.0 - x_absorb);
                                     } else objList[i].pSpeed[2] = 0.0;
 
-                                    strList.set("hit[" + i + "].hit_t", objList[i].hit_t);
-                                    strList.set("hit[" + i + "].hit_p", v3_string(objList[i].hit_p));
-                                    strList.set("hit[" + i + "].pSpeed", v3_string(objList[i].pSpeed));
-                                    strList.set("hit[" + i + "] speed", v3_length(objList[i].pSpeed).toFixed(4) );
+                                    strListsetFloat("hit[" + i + "].hit_t", objList[i].hit_t);
+                                    strListsetV3("hit[" + i + "].hit_p", v3_string(objList[i].hit_p));
+                                    strListsetFloat("hit[" + i + "].pSpeed", v3_string(objList[i].pSpeed));
+                                    strListsetFloat("hit[" + i + "] speed", v3_length(objList[i].pSpeed).toFixed(4) );
 
                                    // v3_addscaled_mod(objList[i].pos, objList[i].pDelta, (1.0 - t));
 
@@ -653,87 +653,96 @@
 
             }
 
-            function CD_dyn_sta_point_line(source, target) {}
-            function CD_dyn_sta_point_circle(source, target) {}
+            function CD_dyn_sta_point_line(source, target) {
+
+                // TBD
+            }
+            function CD_dyn_sta_point_circle(source, target) {
+
+                // TBD
+            }
+
             function CD_dyn_sta_circle_point(source, target) {
-               /* let dir_dot = v3_dot(target.CD_line_n, source.pDelta); strList.set("dir_dot", dir_dot);                    
-                if (dir_dot < 0) { // face to face
 
-                    let src_p0 = v3_add_new(source.pLast, source.CD_circle_p); strList.set("src_p0", src_p0);
+                // in global space
+                let src_p0 = v3_add_new(source.pLast, source.CD_circle_p);
+                let tgt_p = v3_add_new(target.pos, target.CD_point_p);
 
-                    let tgt_p = v3_add_new(target.pos, target.CD_line_p); strList.set("tgt_p", tgt_p);
-                    // offset for radius
-                    v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
+                let delta_p0 = v3_sub_new(tgt_p, src_p0); strListsetV3("cp delta_p0", delta_p0);
+                let v_dot = v3_dot(delta_p0, source.pDelta) / source.deltaLength; 
+                //let relative_r = source.CD_circle_r / source.deltaLength;
+                strListsetFloat("cp v_dot", v_dot);
+                strListset("cp along", false);
+                if ((v_dot >= -source.CD_circle_r) && (v_dot <= (source.CD_circle_r + source.deltaLength))) {
+                    strListset("cp along", true);
+                    let hyp = v3_length(delta_p0);
+                    let rad = Math.sqrt((hyp * hyp) - (v_dot * v_dot)); strListsetFloat("cp rad", rad);
+                    if (isNaN(rad)) return;
+                    strListset("cp inside", false);
+                    if (rad <= source.CD_circle_r) {
+                        // inside a cylinder
+                        strListset("cp inside", true);
+                       // var delta_rad = source.CD_circle_r - rad;
+                        var offset = Math.sqrt((source.CD_circle_r * source.CD_circle_r) - (rad * rad));
+                        if (isNaN(offset)) return;
+                        strListsetFloat("cp v_dot+o", v_dot + offset);
+                        strListsetFloat("cp v_dot-o", v_dot - offset);
+                        let p0 = v_dot - offset;
+                        let p1 = v_dot + offset;
+                        // point is closest to 0.0 while inside 0 and 1 
+                        if (p0 < 0.0) {
+                            if ((p1 < 0.0) || (p1 > 1.0)) return;
 
-                    let delta_p0 = v3_sub_new(src_p0, tgt_p); strList.set("delta_p0", delta_p0);
-                    let delta_p1 = v3_add_new(delta_p0, source.pDelta); strList.set("delta_p1", delta_p1);
+                            let i = source.hits.push(new hit())-1;                            
+                            source.hits[i].t = p1 / source.deltaLength; strListsetFloat("cp source.hit_t p1", source.hits[i].t);
+                            source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                            source.hits[i].n = v3_normalize_new(v3_sub_new(source.hits[i].p, tgt_p));
+                            source.hits[i].other = target;
 
-                    let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strList.set("pos0_dot", pos0_dot);
-                    let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strList.set("pos1_dot", pos1_dot);
+                            source.hits[i].pre = (v_dot < p1);
 
-                    if ((pos0_dot > -source.CD_circle_r) && (pos1_dot < 0)) { // was in front
-                        let i = source.hits.push(new hit())-1;
-                        
-                        source.hits[i].t = pos0_dot / (pos0_dot - pos1_dot); strList.set("source.hit_t", source.hits[i].t);
-                        source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
-                        source.hits[i].n = v3_clone(target.CD_line_n);
-                        source.hits[i].other = target;
+                        } else {
+                            if (p0 > 1.0) return;
+
+                            let i = source.hits.push(new hit())-1;                            
+                            source.hits[i].t = p0 / source.deltaLength; strListsetFloat("cp source.hit_t p0", source.hits[i].t);
+                            source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                            source.hits[i].n = v3_normalize_new(v3_sub_new(source.hits[i].p, tgt_p));
+                            source.hits[i].other = target;
+
+                            source.hits[i].pre = (v_dot < p0);
+                        }
                     }
-
-                } else if (dir_dot > 0) { // from behind
-                    // IGNORE
-                }*/
+                }
             }
 
             function CD_dyn_sta_circle_line(source, target) {
 
-                let dir_dot = v3_dot(target.CD_line_n, source.pDelta); strList.set("dir_dot", dir_dot);                    
-                if (dir_dot < 0) { // face to face
+                let src_p0 = v3_add_new(source.pLast, source.CD_circle_p); strListsetV3("cl src_p0", src_p0);
 
-                    let src_p0 = v3_add_new(source.pLast, source.CD_circle_p); strList.set("src_p0", src_p0);
+                let tgt_p = v3_add_new(target.pos, target.CD_line_p); strListsetV3("cl tgt_p", tgt_p);
+                // offset for radius
+                v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
 
-                    let tgt_p = v3_add_new(target.pos, target.CD_line_p); strList.set("tgt_p", tgt_p);
-                    // offset for radius
-                    v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
+                let delta_p0 = v3_sub_new(src_p0, tgt_p); strListsetV3("cl delta_p0", delta_p0);
+                let delta_p1 = v3_add_new(delta_p0, source.pDelta); strListsetV3("cl delta_p1", delta_p1);
 
-                    let delta_p0 = v3_sub_new(src_p0, tgt_p); strList.set("delta_p0", delta_p0);
-                    let delta_p1 = v3_add_new(delta_p0, source.pDelta); strList.set("delta_p1", delta_p1);
+                let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strListsetFloat("cl pos0_dot", pos0_dot);
+                let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strListsetFloat("cl pos1_dot", pos1_dot);
 
-                    let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strList.set("pos0_dot", pos0_dot);
-                    let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strList.set("pos1_dot", pos1_dot);
 
-                    if ((pos0_dot > -source.CD_circle_r) && (pos1_dot < 0)) { // was in front
-                        let i = source.hits.push(new hit())-1;
-                        
-                        source.hits[i].t = pos0_dot / (pos0_dot - pos1_dot); strList.set("source.hit_t", source.hits[i].t);
-                        source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
-                        source.hits[i].n = v3_clone(target.CD_line_n);
-                        source.hits[i].other = target;
-                    }
+                if ( ((pos0_dot > -source.CD_circle_r) && (pos1_dot < 0)) || ((pos0_dot < 0) && (pos1_dot > 0)) ) { // was in front
+                    let i = source.hits.push(new hit())-1;
+                    
+                    source.hits[i].t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", source.hits[i].t);
+                    source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                    source.hits[i].n = v3_clone(target.CD_line_n);
+                    source.hits[i].other = target;
 
-                } /*else if (dir_dot > 0) { // from behind
-                    let src_p0 = v3_add_new(source.pLast, source.CD_circle_p); strList.set("src_p0", src_p0);
-
-                    let tgt_p = v3_add_new(target.pos, target.CD_line_p); strList.set("tgt_p", tgt_p);
-                    // offset for radius
-                    v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
-
-                    let delta_p0 = v3_sub_new(src_p0, tgt_p); strList.set("delta_p0", delta_p0);
-                    //let delta_p1 = v3_add_new(delta_p0, source.pDelta); strList.set("delta_p1", delta_p1);
-
-                    let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strList.set("pos0_dot", pos0_dot);
-                    //let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strList.set("pos1_dot", pos1_dot);
-
-                    if ((pos0_dot > -source.CD_circle_r) && (pos0_dot <= 0)) {
-                        let i = source.hits.push(new hit())-1;
-                        
-                        source.hits[i].t = pos0_dot / -source.deltaLength; strList.set("source.hit_t", source.hits[i].t);
-                        source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
-                        source.hits[i].n = v3_clone(target.CD_line_n);
-                        source.hits[i].other = target;
-                    }
-                }*/
+                    source.hits[i].pre = (v3_dot(target.CD_line_n, source.pDelta) > 0.0);  strListset("cl pre", source.hits[i].pre);
+                }
             }
+
             function CD_dyn_sta_circle_circle(source, target) {}
 
             var clear = true;
@@ -815,7 +824,7 @@
                             ctx.stroke();
 
                             for (var hit of current_obj.hits) {
-                                ctx.strokeStyle = "#F00";
+                                ctx.strokeStyle = hit.pre ? "#FF0" : "#F00";
                                 ctx.beginPath();
                                     circle(hit.p[0], hit.p[1], current_obj.CD_circle_r - 0.001); 
                                 ctx.stroke();
@@ -939,6 +948,17 @@
                         -y * viewportScale + viewportOffsetY,
                         r * viewportScale, a0, a1);
             }
+
+            function strListset(item, data) {
+                strList.set(item, data);
+            }
+            function strListsetFloat(item, data, dec = 3) {
+                strList.set(item, data.toFixed(dec));
+            }
+            function strListsetV3(item, data) {
+                strList.set(item, v3_string(data));
+            }
+
 
         } );
     </script>

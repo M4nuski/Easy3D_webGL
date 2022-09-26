@@ -2160,7 +2160,7 @@ function cylinderIntersect(dir, rpos, rad2, height) {
 }
 
 
-
+// TODO inline
 var _point_vector_t_offset = [0, 0, 0];
 function point_vector_t(orig, norm, point) {
     // http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
