@@ -674,18 +674,17 @@
                 if ((v_dot >= -source.CD_circle_r) && (v_dot <= (source.CD_circle_r + source.deltaLength))) {
 
                     let hyp = v3_length(delta_p0);
-                    let rad = Math.sqrt((hyp * hyp) - (v_dot * v_dot)); strListsetFloat("cp rad", rad);
-                    if (isNaN(rad)) return;
+                    let radSq = (hyp * hyp) - (v_dot * v_dot); strListsetFloat("cp radSq", radSq);
+                    if (isNaN(radSq)) return;
 
-                    if (rad <= source.CD_circle_r) {
+                    let circle_rSq = source.CD_circle_r * source.CD_circle_r;
+                    if (radSq <= circle_rSq) {
 
-                        var offset = Math.sqrt((source.CD_circle_r * source.CD_circle_r) - (rad * rad));
+                        var offset = Math.sqrt(circle_rSq - radSq);
                         if (isNaN(offset)) return;
 
-                        strListsetFloat("cp v_dot+o", v_dot + offset);
-                        strListsetFloat("cp v_dot-o", v_dot - offset);
-                        let p0 = v_dot - offset;
-                        let p1 = v_dot + offset;
+                        let p0 = v_dot - offset; strListsetFloat("cp v_dot-o", p0);
+                        let p1 = v_dot + offset; strListsetFloat("cp v_dot+o", p1);
                         if ((p0 < 0.0) && (p1 < 0.0)) return;
                         if (p0 < 0.0) p0 = p1;
 
@@ -703,16 +702,14 @@
             function CD_dyn_sta_circle_line(source, target) {
 
                 let src_p0 = v3_add_new(source.pLast, source.CD_circle_p);
-
+                let src_p1 = v3_add_new(source.pos, source.CD_circle_p);
                 let tgt_p = v3_add_new(target.pos, target.CD_line_p);
+
                 // offset for radius
                 v3_addscaled_mod(tgt_p, target.CD_line_n, source.CD_circle_r);
 
-                let delta_p0 = v3_sub_new(src_p0, tgt_p);
-                let delta_p1 = v3_add_new(delta_p0, source.pDelta);
-
-                let pos0_dot = v3_dot(target.CD_line_n, delta_p0); strListsetFloat("cl pos0_dot", pos0_dot);
-                let pos1_dot = v3_dot(target.CD_line_n, delta_p1); strListsetFloat("cl pos1_dot", pos1_dot);
+                let pos0_dot = v3_offset_dot(src_p0, tgt_p, target.CD_line_n); strListsetFloat("cl pos0_dot", pos0_dot);
+                let pos1_dot = v3_offset_dot(src_p1, tgt_p, target.CD_line_n); strListsetFloat("cl pos1_dot", pos1_dot);
 
                 if ( ((pos0_dot > -source.CD_circle_r) && (pos1_dot < 0)) || ((pos0_dot < 0) && (pos1_dot > 0)) ) { // was in front
                     let i = source.hits.push(new hit())-1;
@@ -726,7 +723,42 @@
                 }
             }
 
-            function CD_dyn_sta_circle_circle(source, target) {}
+            function CD_dyn_sta_circle_circle(source, target) {
+                // in global space
+                let src_p0 = v3_add_new(source.pLast, source.CD_circle_p);
+                let tgt_p = v3_add_new(target.pos, target.CD_circle_p);
+
+                let radSum = source.CD_circle_r + target.CD_circle_r;
+
+                let delta_p0 = v3_sub_new(tgt_p, src_p0);
+                let v_dot = v3_dot(delta_p0, source.pDelta) / source.deltaLength; strListsetFloat("cc v_dot", v_dot);                
+
+                if ((v_dot >= -radSum) && (v_dot <= (radSum + source.deltaLength))) {
+
+                    let hyp = v3_length(delta_p0);
+                    let radSq = (hyp * hyp) - (v_dot * v_dot); strListsetFloat("cc radSq", radSq);
+                    if (isNaN(radSq)) return;
+                    radSum = radSum * radSum;
+                    if (radSq <= radSum) {
+
+                        var offset = Math.sqrt(radSum - radSq);
+                        if (isNaN(offset)) return;
+
+                        let p0 = v_dot - offset; strListsetFloat("cc v_dot-o", p0);
+                        let p1 = v_dot + offset; strListsetFloat("cc v_dot+o", p1);
+                        if ((p0 < 0.0) && (p1 < 0.0)) return;
+                        if (p0 < 0.0) p0 = p1;
+
+                        let i = source.hits.push(new hit())-1;                            
+                        source.hits[i].t = p0 / source.deltaLength; strListsetFloat("cc source.hit_t", source.hits[i].t);
+                        source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                        source.hits[i].n = v3_normalize_new(v3_sub_new(source.hits[i].p, tgt_p));
+                        source.hits[i].other = target;
+
+                        source.hits[i].pre = (p0 > v_dot);
+                    }
+                }
+            }
 
             var clear = true;
             var run = true;

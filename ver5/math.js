@@ -405,9 +405,13 @@ function v3_lerp_res(res, a, b, f) {
 }
 
 
-// Dot product
+// Dot product: a (.*) b
 function v3_dot(a, b) {
     return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]);
+}
+// Dot product: (point - origin) (.*) normal 
+function v3_offset_dot(point, origin, normal) {
+    return ((point[0] - origin[0]) * normal[0]) + ((point[1] - origin[1]) * normal[1]) + ((point[2] - origin[2]) * normal[2]);
 }
 
 // Cross product
