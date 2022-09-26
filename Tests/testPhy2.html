@@ -669,19 +669,15 @@
                 let tgt_p = v3_add_new(target.pos, target.CD_point_p);
 
                 let delta_p0 = v3_sub_new(tgt_p, src_p0);
-                let v_dot = v3_dot(delta_p0, source.pDelta) / source.deltaLength; 
+                let v_dot = v3_dot(delta_p0, source.pDelta) / source.deltaLength; strListsetFloat("cp v_dot", v_dot);                
 
-                strListsetFloat("cp v_dot", v_dot);
-                //strListset("cp along", false);
                 if ((v_dot >= -source.CD_circle_r) && (v_dot <= (source.CD_circle_r + source.deltaLength))) {
-                    //strListset("cp along", true);
+
                     let hyp = v3_length(delta_p0);
                     let rad = Math.sqrt((hyp * hyp) - (v_dot * v_dot)); strListsetFloat("cp rad", rad);
                     if (isNaN(rad)) return;
-                    //strListset("cp inside", false);
+
                     if (rad <= source.CD_circle_r) {
-                        // inside a cylinder
-                        //strListset("cp inside", true);
 
                         var offset = Math.sqrt((source.CD_circle_r * source.CD_circle_r) - (rad * rad));
                         if (isNaN(offset)) return;
@@ -690,16 +686,16 @@
                         strListsetFloat("cp v_dot-o", v_dot - offset);
                         let p0 = v_dot - offset;
                         let p1 = v_dot + offset;
-
                         if ((p0 < 0.0) && (p1 < 0.0)) return;
+                        if (p0 < 0.0) p0 = p1;
 
                         let i = source.hits.push(new hit())-1;                            
-                        source.hits[i].t = p0 / source.deltaLength; strListsetFloat("cp source.hit_t p0", source.hits[i].t);
+                        source.hits[i].t = p0 / source.deltaLength; strListsetFloat("cp source.hit_t", source.hits[i].t);
                         source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
                         source.hits[i].n = v3_normalize_new(v3_sub_new(source.hits[i].p, tgt_p));
                         source.hits[i].other = target;
 
-                        source.hits[i].pre = (p0 < 0.0);
+                        source.hits[i].pre = (p0 > v_dot);
                     }
                 }
             }
