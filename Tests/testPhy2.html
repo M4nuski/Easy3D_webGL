@@ -668,13 +668,12 @@
                 let src_p0 = v3_add_new(source.pLast, source.CD_circle_p);
                 let tgt_p = v3_add_new(target.pos, target.CD_point_p);
 
-                let delta_p0 = v3_sub_new(tgt_p, src_p0);
-                let v_dot = v3_dot(delta_p0, source.pDelta) / source.deltaLength; strListsetFloat("cp v_dot", v_dot);                
+                let v_dot = v3_offset_dot(tgt_p, src_p0, source.pDelta) / source.deltaLength; strListsetFloat("cp v_dot", v_dot);                
 
                 if ((v_dot >= -source.CD_circle_r) && (v_dot <= (source.CD_circle_r + source.deltaLength))) {
 
-                    let hyp = v3_length(delta_p0);
-                    let radSq = (hyp * hyp) - (v_dot * v_dot); strListsetFloat("cp radSq", radSq);
+                    let hypSq = v3_distancesquared(tgt_p, src_p0);
+                    let radSq = hypSq - (v_dot * v_dot); strListsetFloat("cp radSq", radSq);
                     if (isNaN(radSq)) return;
 
                     let circle_rSq = source.CD_circle_r * source.CD_circle_r;
@@ -730,13 +729,12 @@
 
                 let radSum = source.CD_circle_r + target.CD_circle_r;
 
-                let delta_p0 = v3_sub_new(tgt_p, src_p0);
-                let v_dot = v3_dot(delta_p0, source.pDelta) / source.deltaLength; strListsetFloat("cc v_dot", v_dot);                
+                let v_dot = v3_offset_dot(tgt_p, src_p0, source.pDelta) / source.deltaLength; strListsetFloat("cc v_dot", v_dot);                
 
                 if ((v_dot >= -radSum) && (v_dot <= (radSum + source.deltaLength))) {
 
-                    let hyp = v3_length(delta_p0);
-                    let radSq = (hyp * hyp) - (v_dot * v_dot); strListsetFloat("cc radSq", radSq);
+                    let hypSq = v3_distancesquared(tgt_p, src_p0);
+                    let radSq = hypSq - (v_dot * v_dot); strListsetFloat("cc radSq", radSq);
                     if (isNaN(radSq)) return;
                     radSum = radSum * radSum;
                     if (radSq <= radSum) {
