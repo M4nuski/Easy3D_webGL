@@ -277,8 +277,8 @@
             objList[1].CD_point_p = [0.0, 0.0, 0.0];
 
             objList.push(new obj);
-            objList[2].pos = [ -0.8, 0.0, 0.0 ];
-            objList[2].pLast = [ -0.8, 0.0, 0.0 ];
+            objList[2].pos = [ -0.5, 0.0, 0.0 ];
+            objList[2].pLast = [ -0.5, 0.0, 0.0 ];
             objList[2].CD_type = CD_types.CIRCLE;
             objList[2].CD_circle_p = [0.0, 0.0, 0.0];
             objList[2].CD_circle_r = 0.05;
@@ -301,7 +301,7 @@
             objList[4].pos[1] = 0.125;
             objList[4].CD_type = CD_types.CAPSULE;
             objList[4].CD_capsule_p = [0.0, 0.0, 0.0];
-            objList[4].CD_capsule_l = 0.1;
+            objList[4].CD_capsule_l = 0.2;
             objList[4].CD_capsule_r = 0.05;
             objList[4].CD_capsule_n = v3_normalize_new([1, 0.2, 0]);
 
@@ -692,7 +692,7 @@
 
                     let hypSq = v3_distancesquared(tgt_p, src_p0);
                     let radSq = hypSq - (v_dot * v_dot); strListsetFloat("cp radSq", radSq);
-                    if (isNaN(radSq)) return;
+                    if (radSq < 0) return;
 
                     let circle_rSq = source.CD_circle_r * source.CD_circle_r;
                     if (radSq <= circle_rSq) {
@@ -753,7 +753,7 @@
 
                     let hypSq = v3_distancesquared(tgt_p, src_p0);
                     let radSq = hypSq - (v_dot * v_dot); strListsetFloat("cci radSq", radSq);
-                    if (isNaN(radSq)) return;
+                    if (radSq < 0) return;
                     radSum = radSum * radSum;
                     if (radSq <= radSum) {
 
@@ -776,28 +776,11 @@
                 }
             }
             function CD_dyn_sta_circle_capsule(source, target) {
-                
+
                 let src_p0 = v3_add_new(source.pLast, source.CD_circle_p);
-                let src_p1 = v3_add_new(source.pos, source.CD_circle_p);
-                let tgt_p = v3_add_new(target.pos, target.CD_capsule_p);
+                let tgt_p0 = v3_add_new(target.pos, target.CD_capsule_p);
+                let delta_p = v3_sub_new(src_p0, tgt_p0);
 
-                // offset for radius
-                let radSum = source.CD_circle_r + target.CD_capsule_r;
-                v3_addscaled_mod(tgt_p, target.CD_line_n, radSum);
-
-                let pos0_dot = v3_offset_dot(src_p0, tgt_p, target.CD_line_n); strListsetFloat("cca pos0_dot", pos0_dot);
-                let pos1_dot = v3_offset_dot(src_p1, tgt_p, target.CD_line_n); strListsetFloat("cca pos1_dot", pos1_dot);
-
-                if ( ((pos0_dot > -radSum) && (pos1_dot < 0)) || ((pos0_dot < 0) && (pos1_dot > 0)) ) { // was in front
-                    let i = source.hits.push(new hit())-1;
-                    
-                    source.hits[i].t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cca source.hit_t", source.hits[i].t);
-                    source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
-                    //source.hits[i].n = v3_clone(target.CD_line_n);
-                    source.hits[i].other = target;
-
-                    //source.hits[i].pre = (v3_dot(target.CD_line_n, source.pDelta) > 0.0);  strListset("cca pre", source.hits[i].pre);
-                }
             }
 
             
@@ -912,27 +895,44 @@
                             break;
                         case CD_types.CAPSULE:
                             var p = v3_add_new(current_obj.pos, current_obj.CD_capsule_p);
-                            var p0 = v3_addscaled_new(p, current_obj.CD_capsule_n, current_obj.CD_capsule_l);
-                            var p1 = v3_addscaled_new(p, current_obj.CD_capsule_n, -current_obj.CD_capsule_l);
+                            var p1 = v3_addscaled_new(p, current_obj.CD_capsule_n, current_obj.CD_capsule_l);
                             var o = rot_m90(current_obj.CD_capsule_n);
                             v3_scale_mod(o, current_obj.CD_capsule_r);
                             var a0 = v3_angle( _v3_x, current_obj.CD_capsule_n) * -Math.sign(current_obj.CD_capsule_n[1]);
                             ctx.beginPath();
-                                moveTo(p[0] + o[0], p[1] + o[1]);
-                                lineTo(p0[0] + o[0], p0[1] + o[1]);
+                                moveTo(p[0], p[1]);
+                                lineTo(p1[0], p1[1]);
+
                                 moveTo(p[0] + o[0], p[1] + o[1]);
                                 lineTo(p1[0] + o[0], p1[1] + o[1]);
 
                                 moveTo(p[0] - o[0], p[1] - o[1]);
-                                lineTo(p0[0] - o[0], p0[1] - o[1]);
+                                lineTo(p1[0] - o[0], p1[1] - o[1]);
+                            ctx.stroke();
+                            ctx.beginPath();
+                                arc(p[0], p[1], current_obj.CD_capsule_r, a0 + PIdiv2, a0 + PIdiv2 + Math.PI);
+                            ctx.stroke();
+                            ctx.beginPath();
+                                arc(p1[0], p1[1], current_obj.CD_capsule_r, a0 - PIdiv2, a0 - PIdiv2 + Math.PI);
+                            ctx.stroke();
+
+                            ctx.strokeStyle = "#88F";
+                            v3_scale_mod(o, (current_obj.CD_capsule_r + 0.1) / current_obj.CD_capsule_r);
+                            ctx.beginPath();
+                                moveTo(p[0], p[1]);
+                                lineTo(p1[0], p1[1]);
+
+                                moveTo(p[0] + o[0], p[1] + o[1]);
+                                lineTo(p1[0] + o[0], p1[1] + o[1]);
+
                                 moveTo(p[0] - o[0], p[1] - o[1]);
                                 lineTo(p1[0] - o[0], p1[1] - o[1]);
                             ctx.stroke();
                             ctx.beginPath();
-                                arc(p0[0], p0[1], current_obj.CD_capsule_r, a0 - PIdiv2, a0 - PIdiv2 + Math.PI);
+                                arc(p[0], p[1], current_obj.CD_capsule_r + 0.1, a0 + PIdiv2, a0 + PIdiv2 + Math.PI);
                             ctx.stroke();
                             ctx.beginPath();
-                                arc(p1[0], p1[1], current_obj.CD_capsule_r, a0 + PIdiv2, a0 + PIdiv2 + Math.PI);
+                                arc(p1[0], p1[1], current_obj.CD_capsule_r + 0.1, a0 - PIdiv2, a0 - PIdiv2 + Math.PI);
                             ctx.stroke();
                             break;
                     }
@@ -989,6 +989,59 @@
                 strList.set(item, v3_string(data));
             }
 
+            var _vector_vector_distance_Odelta = [0,0,0];
+            function vector_vector_t(orig1, v1, orig2, v2) {
+                // http://geomalgorithms.com/a07-_distance.html
+                v3_sub_res(_vector_vector_distance_Odelta, orig1, orig2);
+                var a = v3_lengthsquared(v1);
+                var b = v3_dot(v1, v2);
+                var c = v3_lengthsquared(v2);
+                var d = v3_dot(v1, _vector_vector_distance_Odelta);
+                var e = v3_dot(v2, _vector_vector_distance_Odelta);
+
+                var D = a * c - b * b;
+                var sc = 0.0;
+                var tc = 0.0;
+
+                if (D < _v3_epsilon) {
+                    sc = -1.0;
+                    tc = (b > c) ? d / b : e / c;      
+                } else {
+                    sc = (b * e - c * d) / D;
+                    tc = (a * e - b * d) / D;
+                }
+                return [sc, tc];
+            }
+
+            function vector_sph_min_t(n, sphO_minus_vectO, sphRadSquared) { 
+                var tca = v3_dot(sphO_minus_vectO, n);    
+                //if (tca < 0) return NaN;
+
+                var d2 = v3_lengthsquared(sphO_minus_vectO) - (tca * tca);
+                if (d2 > sphRadSquared) return NaN;
+
+                return tca - Math.sqrt(sphRadSquared - d2);
+            }
+
+            var _path_path_closest_t_Vdelta = [0, 0, 0];
+            var _path_path_closest_t_Odelta = [0, 0, 0];
+            function path_path_closest_t(orig1, v1, orig2, v2) {
+                // http://geomalgorithms.com/a07-_distance.html
+                v3_sub_res(_path_path_closest_t_Vdelta, v1, v2);
+                var dvlen = v3_lengthsquared(_path_path_closest_t_Vdelta);
+                if (dvlen < _v3_epsilon) return -1.0;
+                v3_sub_res(_path_path_closest_t_Odelta, orig1, orig2);
+                return -v3_dot(_path_path_closest_t_Odelta, _path_path_closest_t_Vdelta) / dvlen;
+            }
+
+            var _path_path_closest_distance_p1 = [0, 0, 0];
+            var _path_path_closest_distance_p2 = [0, 0, 0];
+            function path_path_closest_distance(orig1, v1, orig2, v2) {
+                var t = path_path_closest_t(orig1, v1, orig2, v2);
+                v3_addscaled_res(_path_path_closest_distance_p1, orig1, v1, t);
+                v3_addscaled_res(_path_path_closest_distance_p2, orig2, v2, t);
+                return v3_distance(_path_path_closest_distance_p1, _path_path_closest_distance_p2);
+            }
 
         } );
     </script>
