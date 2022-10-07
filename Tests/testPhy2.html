@@ -134,6 +134,13 @@
                     currentI = -1;
                     strList.clear();
                 }
+                if (event.key == "Enter") {
+                    run = false;
+                    step = true;
+                }
+                if (event.key == "a") {
+                    anim = !anim;
+                } 
 
                 if (event.code == "Digit1") {
                     clear = true;
@@ -295,7 +302,7 @@
             const CTRL_obj = 3;
 
 
-
+/*
             objList.push(new obj);
             objList[4].pos[0] = 0.1;
             objList[4].pos[1] = 0.125;
@@ -303,7 +310,14 @@
             objList[4].CD_capsule_p = [0.0, 0.0, 0.0];
             objList[4].CD_capsule_l = 0.2;
             objList[4].CD_capsule_r = 0.05;
-            objList[4].CD_capsule_n = v3_normalize_new([1, 0.2, 0]);
+            objList[4].CD_capsule_n = v3_normalize_new([1, 0.2, 0]);*/
+
+            objList.push(new obj);
+            objList[4].pos = [ 0.4, 0.0, 0];
+            objList[4].pLast = [ 0.4, 0.0, 0];
+            objList[4].CD_type = CD_types.LINE;
+            objList[4].CD_line_p = [0.0, 0.0, 0.0];
+            objList[4].CD_line_n = v3_normalize_new([-0.707, 1.0, 0]);
 
            
             function rot_p90(v) {
@@ -329,18 +343,19 @@
                     timeKeeping(t);
 
                     updateInputs();
-                    if (run) {
+                    if (run || (step)) {
                         updateScene();
                         drawScene();
                         saveLastState();
                     }
+                    step = false;
                 }
                 window.requestAnimationFrame(gameLoop);
             }
 
             function timeKeeping(newTime) {
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
-                if (run) time += timeDelta;
+                if (run || (step)) time += timeDelta;
                 timeLast = newTime;
                 // TODO: add time jitter to verify physics
             }
@@ -496,22 +511,9 @@
                     }
 
                     // detect collisions
-                    // for now only dynamic objects vs static objects
-                    // TODO clear list
-                    // TODO CD object 
-                    // TODO CD list in entity
-                    // eager resolve : first in list
-                    // first resolve : sort list by t, first in list
-                    for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.CONTROLLED) {
+
+                    for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.DYNAMIC) {
                         var source = objList[i];
-
-                        // Direction DOT < 0.0 ( == 0 is at 90deg )
-                        // AdjustedPosition DOT > 0.0
-                        // APDOT <= detRadius
-                        // then check for t of collision
-                        // (t <= 1.0) && (t >= 0.0)
-
-                        //strListset("potentialHit[" + i + "]", "level 0");
 
                         for (var j = 0; j < objList.length; ++j) if ((i!=j) && (objList[j].CD_mode == CD_modes.STATIC)) {
                             var target = objList[j];
@@ -566,102 +568,34 @@
                             }
                         }
 
-/*
-                        var dir_dot = v3_dot(h_norm, objList[i].pDelta);
-
-                        if (dir_dot < 0.0) {
-
-                            strListset("potentialHit[" + i + "]", "level 1");
-                            var detRadius = objList[i].deltaLength + objList[i].rad;
-
-                            var relative_pLast = v3_sub_new(objList[i].pLast, h_pos);
-                            var rpl_dot = v3_dot(h_norm, relative_pLast);
-
-                            if ((rpl_dot > 0.0) && (rpl_dot <= detRadius)) {
-                                strListset("potentialHit[" + i + "]", "level 2");
-
-                                // pLast + dir_dot == 0
-                                objList[i].potentialHit = true;
-                                
-                                var relative_pNext = v3_sub_new(objList[i].pos, h_pos);
-                                var rpn_dot = v3_dot(h_norm, relative_pNext);
-                                var deltaDot = rpl_dot - rpn_dot; // inverted because moving toward plane
-                                
-                                var t = (rpl_dot - objList[i].rad) / deltaDot;
-                                
-                                if ((t >= -0.1) && (t <= 1.0)) {
-                                    // TODO: shortest CD resolver (recalc only first hit (smallest t))
-                                    objList[i].hit = true;
-                                    objList[i].hit_p = v3_addscaled_new(objList[i].pLast, objList[i].pDelta, t);
-                                    objList[i].hit_t = t;
-                                    objList[i].hit_n = v3_clone(h_norm);
-
-                                    // eager CD resolver (recalc trajectory as soon as a collision is detected)
-                                    // move body out
-                                    v3_addscaled_mod(objList[i].pos, objList[i].hit_n, deltaDot);
-
-                                    //objList[i].pDelta[1] -= 32 * timeDelta * timeDelta * (1.0 - t) * (1.0 - t);
-                                    //v3_reflect_mod(objList[i].pDelta, objList[i].hit_n);
-                                    //objList[i].pDelta[1] += 32 * timeDelta * timeDelta * t * t;
-
-                                   // objList[i].pSpeed[1] -= 32 * timeDelta * t ;
-
-                                    v3_reflect_mod(objList[i].pSpeed, [-h_norm[0], -h_norm[1], -h_norm[2]] );
-                                    //objList[i].pSpeed[1] += 32 * timeDelta * (1.0 - t);
-                                    v3_scale_res(objList[i].pDelta, objList[i].pSpeed, timeDelta);
-                                    const x_absorb = 0.01;
-                                    const y_absorb = 0.1;
-
-                                    if (objList[i].pSpeed[0] > x_absorb) {
-                                        objList[i].pSpeed[0] *= (1.0 - x_absorb);
-                                    } else if (objList[i].pSpeed[0] < x_absorb) {
-                                        objList[i].pSpeed[0] *= (1.0 - x_absorb);
-                                    } else objList[i].pSpeed[0] = 0.0;
-
-                                    if (objList[i].pSpeed[1] > y_absorb) {
-                                        objList[i].pSpeed[1] *= (1.0 - y_absorb);
-                                    } else if (objList[i].pSpeed[1] < y_absorb) {
-                                        objList[i].pSpeed[1] *= (1.0 - y_absorb);
-                                    } else objList[i].pSpeed[1] = 0.0;
-
-                                    if (objList[i].pSpeed[2] > x_absorb) {
-                                        objList[i].pSpeed[2] *= (1.0 - x_absorb);
-                                    } else if (objList[i].pSpeed[2] < x_absorb) {
-                                        objList[i].pSpeed[2] *= (1.0 - x_absorb);
-                                    } else objList[i].pSpeed[2] = 0.0;
-
-                                    strListsetFloat("hit[" + i + "].hit_t", objList[i].hit_t);
-                                    strListsetV3("hit[" + i + "].hit_p", v3_string(objList[i].hit_p));
-                                    strListsetFloat("hit[" + i + "].pSpeed", v3_string(objList[i].pSpeed));
-                                    strListsetFloat("hit[" + i + "] speed", v3_length(objList[i].pSpeed).toFixed(4) );
-
-                                   // v3_addscaled_mod(objList[i].pos, objList[i].pDelta, (1.0 - t));
-
-
-
-                                } else {
-                                    objList[i].hit_p = false;
-                                }
-
-                              //  v3_add_mod(objList[i].hit_p, objList[i].pLast);
-
-
-                            }
-                        }
-*/
-
 
                     }
 
                     // TODO: resolve shortest t, dont recheck CD afterward
-                    // TODO: resolve shortest t, recheck CD until no collisions or maxChecks 
+                    // TODO: resolve shortest t, recheck CD until no collisions or maxChecks
+                    // TODO global hit list with source and target
+                    // sort by t
+                    // recalc pos and checkhits
 
-                    // recalc final trajectory
-                    for (var i = 0; i < objList.length; ++i) /*if (i != currentI)*/ {
-                        if (objList[i].hit) {
-                            console.log("hit " + i);
-                        }
+                    // sort by earliest hit
+                    for (var i = 0; i < objList.length; ++i) if (objList[i].hits.length > 1) objList[i].hits.sort( (a, b) => a.t - b.t );
+
+                    // resolve each object individually
+                    for (var i = 0; i < objList.length; ++i) if (objList[i].hits.length > 0) {
+                        let o = objList[i];
+                        let h = objList[i].hits[0];
+
+                        //v3_scale_mod(o.pSpeed, h.t);
+                        o.pos = h.p;
+                        if (h.pre) {
+                            v3_scale_mod(o.pSpeed, (1.0 - h.t)); 
+                        } else {                            
+                            v3_reflect_mod(o.pSpeed, h.n);
+                            v3_addscaled_mod(o.pos, o.pSpeed, timeDelta * h.t); 
+                        }                    
                     }
+
+                    // recalc actual accel and/or speed
 
             }
 
@@ -776,11 +710,21 @@
                 }
             }
             function CD_dyn_sta_circle_capsule(source, target) {
-
+                /*
                 let src_p0 = v3_add_new(source.pLast, source.CD_circle_p);
                 let tgt_p0 = v3_add_new(target.pos, target.CD_capsule_p);
-                let delta_p = v3_sub_new(src_p0, tgt_p0);
+                let cap_v = v3_scale_new(target.CD_capsule_n, target.CD_capsule_l);
 
+                let [src_t, tgt_t] = vector_vector_t(src_p0, source.pDelta, tgt_p0, cap_v);
+
+                let i = source.hits.push(new hit())-1; 
+                source.hits[i].t = src_t;  strListsetFloat("cca source.hit_t", source.hits[i].t);
+                source.hits[i].p = v3_lerp_new(source.pLast, source.pos, source.hits[i].t);
+                //source.hits[i].n = v3_normalize_new(v3_sub_new(source.hits[i].p, tgt_p));
+                source.hits[i].other = target;
+
+                //source.hits[i].pre = (p0 > v_dot);
+                */
             }
 
             
@@ -801,11 +745,13 @@
 
             var clear = true;
             var run = true;
+            var step = false;
+            var anim = false;
             function drawScene(){
                 
                 // clear
                 // ctx.fillStyle = 'white';
-                if (clear) ctx.clearRect(0, 0, width, height);
+                if (clear || anim) ctx.clearRect(0, 0, width, height);
                 clear = false;
 
                 // text
@@ -1013,35 +959,8 @@
                 return [sc, tc];
             }
 
-            function vector_sph_min_t(n, sphO_minus_vectO, sphRadSquared) { 
-                var tca = v3_dot(sphO_minus_vectO, n);    
-                //if (tca < 0) return NaN;
 
-                var d2 = v3_lengthsquared(sphO_minus_vectO) - (tca * tca);
-                if (d2 > sphRadSquared) return NaN;
 
-                return tca - Math.sqrt(sphRadSquared - d2);
-            }
-
-            var _path_path_closest_t_Vdelta = [0, 0, 0];
-            var _path_path_closest_t_Odelta = [0, 0, 0];
-            function path_path_closest_t(orig1, v1, orig2, v2) {
-                // http://geomalgorithms.com/a07-_distance.html
-                v3_sub_res(_path_path_closest_t_Vdelta, v1, v2);
-                var dvlen = v3_lengthsquared(_path_path_closest_t_Vdelta);
-                if (dvlen < _v3_epsilon) return -1.0;
-                v3_sub_res(_path_path_closest_t_Odelta, orig1, orig2);
-                return -v3_dot(_path_path_closest_t_Odelta, _path_path_closest_t_Vdelta) / dvlen;
-            }
-
-            var _path_path_closest_distance_p1 = [0, 0, 0];
-            var _path_path_closest_distance_p2 = [0, 0, 0];
-            function path_path_closest_distance(orig1, v1, orig2, v2) {
-                var t = path_path_closest_t(orig1, v1, orig2, v2);
-                v3_addscaled_res(_path_path_closest_distance_p1, orig1, v1, t);
-                v3_addscaled_res(_path_path_closest_distance_p2, orig2, v2, t);
-                return v3_distance(_path_path_closest_distance_p1, _path_path_closest_distance_p2);
-            }
 
         } );
     </script>
