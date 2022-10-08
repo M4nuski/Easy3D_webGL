@@ -200,6 +200,10 @@
                 CONTROLLED: "controlled" // can be moved, affect dynamic, react to static and controlled (block, rubberband)
             }
 
+            const bounce_fact = 0.9;
+            const drag_static = 0.25;
+            const drag_dynamic = 0.20; 
+
             class hit {
                 constructor() {
                     this.t = 0.0;
@@ -270,56 +274,55 @@
 
             var objList = [];
 
-            objList.push(new obj);
-            objList[0].pos = [ 0.0 ,-0.2, 0.0 ];
-            objList[0].pLast = [ 0.0 ,-0.2, 0.0 ];
-            objList[0].CD_type = CD_types.LINE;
-            objList[0].CD_line_n = [0.0, 1.0, 0.0];
-            objList[0].CD_line_l = 1.0;
+            var lobi = objList.push(new obj)-1;
+            objList[lobi].pos = [ 0.0 ,-0.2, 0.0 ];
+            objList[lobi].pLast = v3_clone(objList[lobi].pos);
+            objList[lobi].CD_type = CD_types.LINE;
+            objList[lobi].CD_line_n = [0.0, 1.0, 0.0];
+            objList[lobi].CD_line_l = 1.0;
 
-            objList.push(new obj);
-            objList[1].pos = [ 0.8, 0.0, 0.0 ];
-            objList[1].pLast = [ 0.8, 0.0, 0.0 ];
-            objList[1].CD_type = CD_types.POINT;
-            objList[1].CD_point_p = [0.0, 0.0, 0.0];
+            /*lobi = objList.push(new obj)-1;
+            objList[lobi].pos = [ 0.8, 0.0, 0.0 ];
+            objList[lobi].pLast = v3_clone(objList[lobi].pos);
+            objList[lobi].CD_type = CD_types.POINT;
+            objList[lobi].CD_point_p = [0.0, 0.0, 0.0];*/
 
-            objList.push(new obj);
-            objList[2].pos = [ -0.5, 0.0, 0.0 ];
-            objList[2].pLast = [ -0.5, 0.0, 0.0 ];
-            objList[2].CD_type = CD_types.CIRCLE;
-            objList[2].CD_circle_p = [0.0, 0.0, 0.0];
-            objList[2].CD_circle_r = 0.05;
+            /*lobi = objList.push(new obj)-1;
+            objList[lobi].pos = [ -0.5, 0.0, 0.0 ];
+            objList[lobi].pLast = v3_clone(objList[lobi].pos);
+            objList[lobi].CD_type = CD_types.CIRCLE;
+            objList[lobi].CD_circle_p = [0.0, 0.0, 0.0];
+            objList[lobi].CD_circle_r = 0.05;*/
 
 
 
-            objList.push(new obj);
-            objList[3].pos = [ -0.5, -0.5, 0];
-            objList[3].pLast = [-0.5, 0.35, 0];
-            objList[3].CD_mode = CD_modes.CONTROLLED;
-            objList[3].CD_type = CD_types.CIRCLE;
-            objList[3].CD_circle_r = 0.1;
-            objList[3].CD_circle_p = [0, 0, 0];
-            const CTRL_obj = 3;
+            let CTRL_obj = objList.push(new obj)-1;
+            objList[CTRL_obj].pos = [ -0.5, -0.5, 0];
+            objList[CTRL_obj].pLast = v3_clone(objList[lobi].pos);
+            objList[CTRL_obj].CD_mode = CD_modes.CONTROLLED;
+            objList[CTRL_obj].CD_type = CD_types.CIRCLE;
+            objList[CTRL_obj].CD_circle_r = 0.1;
+            objList[CTRL_obj].CD_circle_p = [0, 0, 0];
 
 
 /*
-            objList.push(new obj);
-            objList[4].pos[0] = 0.1;
-            objList[4].pos[1] = 0.125;
-            objList[4].CD_type = CD_types.CAPSULE;
-            objList[4].CD_capsule_p = [0.0, 0.0, 0.0];
-            objList[4].CD_capsule_l = 0.2;
-            objList[4].CD_capsule_r = 0.05;
-            objList[4].CD_capsule_n = v3_normalize_new([1, 0.2, 0]);*/
+            lobi = objList.push(new obj)-1;
+            objList[lobi].pos = [0.1, 0.125, 0 ];
+            objList[lobi].pLast = [0.1, 0.125, 0 ];
+            objList[lobi].CD_type = CD_types.CAPSULE;
+            objList[lobi].CD_capsule_p = [0.0, 0.0, 0.0];
+            objList[lobi].CD_capsule_l = 0.2;
+            objList[lobi].CD_capsule_r = 0.05;
+            objList[lobi].CD_capsule_n = v3_normalize_new([1, 0.2, 0]);*/
 
-            objList.push(new obj);
-            objList[4].pos = [ 0.4, 0.0, 0];
-            objList[4].pLast = [ 0.4, 0.0, 0];
-            objList[4].CD_type = CD_types.LINE;
-            objList[4].CD_line_p = [0.0, 0.0, 0.0];
-            objList[4].CD_line_n = v3_normalize_new([-0.707, 1.0, 0]);
+           /* lobi = objList.push(new obj)-1;
+            objList[lobi].pos = [ 0.4, 0.0, 0];
+            objList[lobi].pLast = v3_clone(objList[lobi].pos);
+            objList[lobi].CD_type = CD_types.LINE;
+            objList[lobi].CD_line_p = [0.0, 0.0, 0.0];
+            objList[lobi].CD_line_n = v3_normalize_new([-0.707, 1.0, 0]);
 
-           
+           */
             function rot_p90(v) {
                 return [-v[1], v[0], v[2] ];
             }
@@ -330,9 +333,9 @@
             var time = 0;
             var timeLast = 0;
             var timeDelta = 0;
-            var timeScale = 0.1;
+            var timeScale = 0.25;
             var frame = 0;
-            var frameInterval = 10; // update scene every "frameInterval" frames
+            var frameInterval = 5; // update scene every "frameInterval" frames
 
             resizeViewport();
             window.requestAnimationFrame((startTime) => { timeLast = startTime; window.requestAnimationFrame(gameLoop); } );
@@ -583,21 +586,28 @@
                     // resolve each object individually
                     for (var i = 0; i < objList.length; ++i) if (objList[i].hits.length > 0) {
                         let o = objList[i];
-                        let h = objList[i].hits[0];
+                        let h = o.hits[0];
 
                         //v3_scale_mod(o.pSpeed, h.t);
-                        o.pos = h.p;
+                        v3_copy(o.pos, h.p);
                         if (h.pre) {
-                            v3_scale_mod(o.pSpeed, (1.0 - h.t)); 
+                        //    v3_scale_mod(o.pSpeed, timeDelta * h.t); 
                         } else {                            
+                            if (h.t < 0) throw new Error("impossible t < 0");
+                            if (h.t > 1) throw new Error("impossible t > 1");
+                            let t_pre = h.t * timeDelta;
+                            let t_post = (1.0 - h.t) * timeDelta;
+                        //    o.pSpeed[1] += g_iss * timeDelta;
                             v3_reflect_mod(o.pSpeed, h.n);
-                            v3_addscaled_mod(o.pos, o.pSpeed, timeDelta * h.t); 
-                        }                    
+                            o.pSpeed[1] -= g_iss * t_post;
+                            v3_addscaled_mod(o.pos, o.pSpeed, t_post); 
+                        }
                     }
 
                     // recalc actual accel and/or speed
 
             }
+
 
 
             // Collision Detection: Point source
@@ -670,7 +680,7 @@
                     source.hits[i].n = v3_clone(target.CD_line_n);
                     source.hits[i].other = target;
 
-                    source.hits[i].pre = (v3_dot(target.CD_line_n, source.pDelta) > 0.0);  strListset("cl pre", source.hits[i].pre);
+                    source.hits[i].pre = source.hits[i].t < 0.0;  strListset("cl pre", source.hits[i].pre);
                 }
             }
 
