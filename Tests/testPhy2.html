@@ -278,7 +278,7 @@
             objList[lobi].pos = [ 0.0 ,-0.2, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
-            objList[lobi].CD_line_n = [0.0, 1.0, 0.0];
+            objList[lobi].CD_line_n = v3_normalize_new([-0.1, 1.0, 0.0]);
             objList[lobi].CD_line_l = 1.0;
 
             /*lobi = objList.push(new obj)-1;
@@ -592,14 +592,17 @@
                         v3_copy(o.pos, h.p);
                         if (h.pre) {
                         //    v3_scale_mod(o.pSpeed, timeDelta * h.t); 
+                            console.log("pre t" + h.t);
                         } else {                            
                             if (h.t < 0) throw new Error("impossible t < 0");
                             if (h.t > 1) throw new Error("impossible t > 1");
                             let t_pre = h.t * timeDelta;
                             let t_post = (1.0 - h.t) * timeDelta;
                         //    o.pSpeed[1] += g_iss * timeDelta;
+                            let act_spd = v3_sub_new(o.pos, o.pLast);
+                            v3_invscale_res(o.pSpeed, act_spd, t_pre);
                             v3_reflect_mod(o.pSpeed, h.n);
-                            o.pSpeed[1] -= g_iss * t_post;
+                            o.pSpeed[1] -= g_iss * t_post * 0.999;
                             v3_addscaled_mod(o.pos, o.pSpeed, t_post); 
                         }
                     }
