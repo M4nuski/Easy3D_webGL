@@ -303,7 +303,6 @@
             objList[CTRL_obj].CD_circle_r = 0.1;
             objList[CTRL_obj].CD_circle_p = [0, 0, 0];
 
-
 /*
             lobi = objList.push(new obj)-1;
             objList[lobi].pos = [0.1, 0.125, 0 ];
@@ -314,14 +313,14 @@
             objList[lobi].CD_capsule_r = 0.05;
             objList[lobi].CD_capsule_n = v3_normalize_new([1, 0.2, 0]);*/
 
-           /* lobi = objList.push(new obj)-1;
-            objList[lobi].pos = [ 0.4, 0.0, 0];
+            lobi = objList.push(new obj)-1;
+            objList[lobi].pos = [ 0.8, 0.0, 0];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
             objList[lobi].CD_line_p = [0.0, 0.0, 0.0];
-            objList[lobi].CD_line_n = v3_normalize_new([-0.707, 1.0, 0]);
+            objList[lobi].CD_line_n = v3_normalize_new([-0.25, 1.0, 0]);
 
-           */
+
             function rot_p90(v) {
                 return [-v[1], v[0], v[2] ];
             }
