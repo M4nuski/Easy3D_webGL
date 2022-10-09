@@ -26,11 +26,12 @@ entity.addPlane(_v3_origin, _v3_90x, 1000, 1000, 11, _v3_lightgreen);
 entity.addPlane(_v3_origin, _v3_90y, 1000, 1000, 11, _v3_lightred);
 entity.addPlane(_v3_origin, _v3_90z, 1000, 1000, 11, _v3_lightblue);
 
+let o = v3_val_new(10, 0, 20);
 let n = v3_normalize_new([ 0.0, 1.0, 1.0]);
 let v = v3_val_new(100.0, 42.0, 20.0);
 let p = v3_projection_new(v, n);
 
-entity.addLineByPosNormLen(_v3_origin, n, 10, false, _v3_white);
+entity.addLineByPosNormLen(o, n, 10, false, _v3_white);
 entity.addLine(_v3_origin, v, false, _v3_red);
 entity.addLine(v, p, false, _v3_yellow);
 
@@ -45,8 +46,8 @@ CB_tick = function() {
         v = v3_addnoise_new(_v3_origin, 256.0);
         v3_normalize_mod(n);
         p = v3_projection_new(v, n);        
-        entity.addLineByPosNormLen(_v3_origin, n, 10, false, _v3_white);
-        entity.addLine(_v3_origin, v, false, _v3_red);
+        entity.addLineByPosNormLen(o, n, 10, false, _v3_white);
+        entity.addLine(o, v, false, _v3_red);
         entity.addLine(v, p, false, _v3_yellow);
     }
 }

@@ -160,7 +160,7 @@ function v3_equals(a, b, epsilon = _v3_epsilon) {
 
 // Clamp each components to min and max
 function v3_clamp_new(a, min, max) {
-    var res = v3_clone(a);
+    var res = v3_clone(a); // TODO inline
     if (res[0] < min) res[0] = min;
     if (res[0] > max) res[0] = max;
     if (res[1] < min) res[1] = min;
@@ -286,10 +286,21 @@ function v3_addscaled_res(res, a, b, f) {
     res[2] = a[2] + (b[2] * f);
 }
 
+// = a + b + (c * f)
 function v3_addaddscaled_new(a, b, c, f) {
     return [ a[0] + b[0] + (c[0] * f),
              a[1] + b[1] + (c[1] * f),
              a[2] + b[2] + (c[2] * f) ];
+}
+function v3_addaddscaled_mod(a, b, c, f) {
+    a[0] = a[0] + b[0] +(c[0] * f);
+    a[1] = a[1] + b[0] +(c[1] * f);
+    a[2] = a[2] + b[0] +(c[2] * f);
+}
+function v3_addaddscaled_res(res, a, b, c, f) {
+    res[0] = a[0] + b[0] +(c[0] * f);
+    res[1] = a[1] + b[0] +(c[1] * f);
+    res[2] = a[2] + b[0] +(c[2] * f);
 }
 
 // Scale vector
@@ -805,6 +816,37 @@ function v3_avg3normalized_res(res, a, b, c) {
 }
 
 
+// projections
+function v3_projection_new(point, normal) {
+    let d = v3_dot(normal, point);
+    return v3_addscaled_new(point, normal, -d);
+}
+function v3_projection_mod(point, normal) {
+    let d = v3_dot(normal, point);
+    v3_addscaled_mod(point, normal, -d);
+}
+function v3_projection_res(res, point, normal) {
+    let d = v3_dot(normal, point);
+    v3_addscaled_res(res, point, normal, -d);
+}
+
+let _v3_proj_offset = v3_new();
+function v3_offset_proj_new(point, origin, normal) {
+    v3_sub_res(_v3_proj_offset, point, origin);
+    let d = v3_dot(normal, _v3_proj_offset);
+    return v3_addscaled_new(point, normal, -d);
+}
+function v3_offset_proj_mod(point, origin, normal) {
+    v3_sub_res(_v3_proj_offset, point, origin);
+    let d = v3_dot(normal, _v3_proj_offset);
+    v3_addscaled_mod(point, normal, -d);
+}
+function v3_offset_proj_res(res, point, origin, normal) {
+    v3_sub_res(_v3_proj_offset, point, origin);
+    let d = v3_dot(normal, _v3_proj_offset);
+    v3_addscaled_res(res, point, normal, -d);
+}
+
 // random noise
 function v3_addv3noise_new(a, range) {
     return [
@@ -1096,6 +1138,12 @@ function v3_string(v) {
     return ((v[0] >= 0) ? "[ " : "[") + v[0].toFixed(3) + ((v[1] >= 0) ? ", " : ",") + v[1].toFixed(3) + ((v[2] >= 0) ? ", " : ",") + v[2].toFixed(3) + " ]";
 }
 
+
+// validate
+
+function v3_NaN(v) {
+    return isNaN(v[0]) || isNaN(v[1]) || isNaN(v[2]);
+}
 
 
 // m4 Matrices
