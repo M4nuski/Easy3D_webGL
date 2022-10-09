@@ -180,14 +180,13 @@
                 var ar = width / height;
 
                 if (ar > 1.0) {
-                    var s = width / 2.0;
-                    viewportScale = width / 2.0;
-                    viewportOffsetX = viewportScale;
-                    viewportOffsetY = viewportScale / ar;
+                    viewportScale = height / 11;
+                    viewportOffsetX = viewportScale * 11;
+                    viewportOffsetY = viewportScale * 11 / ar;
                 } else {
-                    viewportScale = height / 2.0;
-                    viewportOffsetX = viewportScale * ar;
-                    viewportOffsetY = viewportScale;
+                    viewportScale = width / 21.3;
+                    viewportOffsetX = viewportScale * 21.3 * ar;
+                    viewportOffsetY = viewportScale * 21.3;
                 }
 
                 resizeCanvas();
@@ -296,11 +295,11 @@
             var objList = [];
 
             var lobi = objList.push(new obj)-1;
-            objList[lobi].pos = [ 0.0 ,-0.2, 0.0 ];
+            objList[lobi].pos = [ 0.0 ,-3.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
             objList[lobi].CD_n = v3_normalize_new([-0.0, 1.0, 0.0]);
-            objList[lobi].CD_l = 1.0;
+            objList[lobi].CD_l = 10.0;
 
             /*lobi = objList.push(new obj)-1;
             objList[lobi].pos = [ 0.8, 0.0, 0.0 ];
@@ -352,9 +351,9 @@
             var time = 0;
             var timeLast = 0;
             var timeDelta = 0;
-            var timeScale = 0.2;
+            var timeScale = 1.0;
             var frame = 0;
-            var frameInterval = 5; // update scene every "frameInterval" frames
+            var frameInterval = 1; // update scene every "frameInterval" frames
 
             resizeViewport();
             window.requestAnimationFrame((startTime) => { timeLast = startTime; window.requestAnimationFrame(gameLoop); } );
@@ -399,7 +398,7 @@
                     objList[currentI].ang[2] = Math.random() * Math.PI * 2.0;
                     objList[currentI].aSpeed[2] = Math.random() * 63 - 31.5;
 
-                    objList[currentI].rad = 0.02 + (Math.random() * 0.1);
+                    objList[currentI].rad = 0.2 + (Math.random() * 1.0);
                     objList[currentI].CD_r = objList[currentI].rad;
 
                 }
@@ -479,7 +478,7 @@
                     // remove out of frame object
                     if (currentI == -1) for (var i = objList.length - 1; i >= 0; --i) if (i != CTRL_obj) {
                        // objList[i].potentialHit = false;
-                        if (v3_length(objList[i].pos) > 5) objList.splice(i, 1);
+                        if (v3_length(objList[i].pos) > 48) objList.splice(i, 1);
                     }
 
             //v3_rotateZ_mod(objList[4].CD_n, 0.025);
@@ -821,9 +820,9 @@
                 ctx.setLineDash([1]);
                 ctx.strokeStyle = "#888";
                 ctx.beginPath();
-                for (var i = -10; i <= 10; ++i) {
-                    line((i/10), -1.0, (i/10), 1.0);
-                    line(-1.0, (i/10), 1.0, (i/10));
+                for (var i = -12; i <= 12; ++i) {
+                    line(i, -12.0, i, 12.0);
+                    line(-12, i, 12, i);
                 }
                 ctx.stroke();
 
@@ -852,7 +851,7 @@
                     switch (current_obj.CD_type) {
                         case CD_types.LINE:
                             var p = v3_add_new(current_obj.pos, current_obj.CD_p);
-                            var pn = v3_addscaled_new(p, current_obj.CD_n, 0.1);
+                            var pn = v3_addscaled_new(p, current_obj.CD_n, 1.0);
                             var p0 = v3_addscaled_new(p, rot_p90(current_obj.CD_n), current_obj.CD_l);
                             var p1 = v3_addscaled_new(p, rot_m90(current_obj.CD_n), current_obj.CD_l);
                             ctx.beginPath();
