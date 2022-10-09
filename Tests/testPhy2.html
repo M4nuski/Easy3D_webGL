@@ -278,7 +278,7 @@
             objList[lobi].pos = [ 0.0 ,-0.2, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
-            objList[lobi].CD_line_n = v3_normalize_new([-0.05, 1.0, 0.0]);
+            objList[lobi].CD_line_n = v3_normalize_new([-0.0, 1.0, 0.0]);
             objList[lobi].CD_line_l = 1.0;
 
             /*lobi = objList.push(new obj)-1;
@@ -572,7 +572,6 @@
 
                     }
 
-                    // TODO: resolve shortest t, dont recheck CD afterward
                     // TODO: resolve shortest t, recheck CD until no collisions or maxChecks
                     // TODO global hit list with source and target
                     // sort by t
@@ -586,9 +585,9 @@
                         //if (entity.CD_mode == CD_modes.CONTROLLED) return;
                         let h = entity.hits[0];
 
-                        if (h.pre) {
+                        if (h.pre) { // t of 0 or less
                             console.log("pre t" + h.t);
-                            
+
                             // TODO: specific case for CD type, should be in CD test function
                             let h_pos = v3_add_new(h.other.pos, h.other.CD_line_p);
                             v3_offset_proj_mod(entity.pos, h_pos, h.n);
@@ -598,17 +597,14 @@
 
                         } else {
                             if (h.t < 0) throw new Error("impossible t < 0");
-                            //if (h.t > 1) throw new Error("impossible t > 1");
-                            v3_copy(entity.pos, h.p);
                             if (h.t < 1.0) {
                                 let t_pre = h.t * timeDelta;
                                 let t_post = (1.0 - h.t) * timeDelta;
-                            //    o.pSpeed[1] += g_iss * timeDelta;
-                                let act_spd = v3_sub_new(entity.pos, entity.pLast);
+                                let act_spd = v3_sub_new(h.p, entity.pLast);
                                 v3_invscale_res(entity.pSpeed, act_spd, t_pre);
-                                if (v3_dot(entity.pSpeed, h.n) < 0.0) v3_reflect_mod(entity.pSpeed, h.n);
-                                entity.pSpeed[1] -= g_iss * t_post * 0.999; // regression to avoid float error boost-up
-                                v3_addscaled_mod(entity.pos, entity.pSpeed, t_post);
+                                if (v3_dot(entity.pSpeed, h.n) < 0.0) v3_reflect_mod(entity.pSpeed, h.n); // bounce if face to face hit
+                                entity.pSpeed[1] -= g_iss * t_post * 0.99; // regression to avoid float error "boost-up"
+                                v3_addscaled_res(entity.pos, h.p, entity.pSpeed, t_post);
 
                                 if (v3_NaN(entity.pos)) throw("broken pos");
                                 if (v3_NaN(entity.pSpeed)) throw("broken pSpeed");
