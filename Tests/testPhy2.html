@@ -318,7 +318,7 @@
 
             let CTRL_obj = objList.push(new obj)-1;
             objList[CTRL_obj].pos = [ -0.5, -0.5, 0];
-            objList[CTRL_obj].pLast = v3_clone(objList[lobi].pos);
+            objList[CTRL_obj].pLast = v3_clone(objList[CTRL_obj].pos);
             objList[CTRL_obj].CD_mode = CD_modes.CONTROLLED;
             objList[CTRL_obj].CD_type = CD_types.CIRCLE;
             objList[CTRL_obj].CD_r = 0.1;
@@ -607,13 +607,15 @@
                       //  let h = hits[0];
                         //if (h.source.CD_mode == CD_modes.CONTROLLED) return;
 
-                        if (h.pre) { // t of 0 or less
+                        if (h.pre) {
                             //console.log("pre t" + h.t);
 
                             // TODO: specific case for CD type, should be in CD test function
-                            let h_pos = v3_add_new(h.target.pos, h.target.CD_p);
-                            v3_offset_proj_mod(h.source.pos, h_pos, h.n);
+                            let tgt_pos = v3_add_new(h.target.pos, h.target.CD_p);
+                            v3_offset_proj_mod(h.source.pos, tgt_pos, h.n);
                             v3_addscaled_mod(h.source.pos, h.n, h.source.CD_r);
+
+                            v3_scale_mod(h.source.pSpeed, 0.99);
 
                             if (v3_NaN(h.source.pos)) throw("broken pos");
 
@@ -623,23 +625,26 @@
                                 let t_pre = h.t * timeDelta;
                                 let t_post = (1.0 - h.t) * timeDelta;
                                 let act_spd = v3_sub_new(h.p, h.source.pLast);
-                                let f2f = v3_dot(act_spd, h.n) < 0.0;
-                                v3_invscale_res(h.source.pSpeed, act_spd, t_pre);
-                                if (f2f) v3_reflect_mod(h.source.pSpeed, h.n);
 
-                                let g_reset = g_iss * t_post * 0.99; // regression to avoid float error "boost-up"
-                                h.source.pSpeed[1] -= g_reset;
+                                let g_reset = g_iss * timeDelta;// * 0.99; // regression to avoid float error "boost-up"
+
+                                v3_invscale_res(h.source.pSpeed, act_spd, t_pre);
+
+                                h.source.pSpeed[1] += g_reset;
+                                v3_reflect_mod(h.source.pSpeed, h.n);
                                 v3_addscaled_res(h.source.pos, h.p, h.source.pSpeed, t_post);
-                                v3_sub_res(act_spd, h.source.pos, h.p);
-                                f2f = v3_dot(act_spd, h.n) < 0.0;
-                                if (f2f) {
+
+                                if (v3_offset_dot(h.source.pos, h.p, h.n) < 0.0) {
                                     h.source.pSpeed[1] += g_reset;
                                     v3_addscaled_res(h.source.pos, h.p, h.source.pSpeed, t_post);
                                 }
-                                if (v3_NaN(h.source.pos)) throw("broken pos");
-                                if (v3_NaN(h.source.pSpeed)) throw("broken pSpeed");
-                                if (v3_NaN(h.source.pLast)) throw("broken pLast");
-                            }
+
+                                v3_scale_mod(h.source.pSpeed, 0.99);
+
+                                if (v3_NaN(h.source.pos)) throw new Error("broken pos");
+                                if (v3_NaN(h.source.pSpeed)) throw new Error("broken pSpeed");
+                                if (v3_NaN(h.source.pLast)) throw new Error("broken pLast");
+                            } else throw new Error("huh? " + h.t);
                         }
 
                         //if (h.source.pos[1] < -0.205 + h.source.CD_r) throw("broekn CD");
@@ -695,8 +700,8 @@
 
                         let i = hits.push(new hit(source, target))-1;                            
                         hits[i].t = p0 / source.deltaLength; strListsetFloat("cp source.hit_t", hits[i].t);
-                        hits[i].p = v3_lerp_new(source.pLast, source.pos, hits[i].t);
-                        hits[i].n = v3_normalize_new(v3_sub_new(hits[i].p, tgt_p));
+                        v3_lerp_res(hits[i].p, source.pLast, source.pos, hits[i].t);
+                        v3_normalize_res(hits[i].n, v3_sub_new(hits[i].p, tgt_p));
 
                         hits[i].pre = (p0 > v_dot);
                     }
@@ -721,8 +726,11 @@
                     let i = hits.push(new hit(source, target))-1;
                     
                     hits[i].t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", hits[i].t);
-                    hits[i].p = v3_lerp_new(source.pLast, source.pos, hits[i].t);
-                    hits[i].n = v3_clone(target.CD_n);
+                    if (isNaN(hits[i].t)) throw new Error("broken t NaN");
+                   // if (hits[i].t <  0.0) throw new Error("broken t < 0.0");
+                    if (hits[i].t >= 1.0) throw new Error("broken t > 1.0");
+                    v3_lerp_res(hits[i].p, source.pLast, source.pos, hits[i].t);
+                    v3_copy(hits[i].n, target.CD_n);
 
                     hits[i].pre = hits[i].t <= 0.01;  strListset("cl pre", hits[i].pre);
                 }
@@ -755,8 +763,8 @@
 
                         let i = hits.push(new hit(source, target))-1;                            
                         hits[i].t = p0 / source.deltaLength; strListsetFloat("cci source.hit_t", hits[i].t);
-                        hits[i].p = v3_lerp_new(source.pLast, source.pos, hits[i].t);
-                        hits[i].n = v3_normalize_new(v3_sub_new(hits[i].p, tgt_p));
+                        v3_lerp_res(hits[i].p, source.pLast, source.pos, hits[i].t);
+                        v3_normalize_res(hits[i].n, v3_sub_new(hits[i].p, tgt_p));
 
                         hits[i].pre = (p0 > v_dot);
                     }
