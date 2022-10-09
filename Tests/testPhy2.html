@@ -150,6 +150,21 @@
                         objList[CTRL_obj].pLast = [currentX, currentY, 0];
                     }
                 }
+                if (event.key == "s") {
+                    console.log(JSON.stringify(lastParams, null, 1));
+                }
+                if (event.key == "l") {
+                    var obi = objList.push(new obj) - 1;
+                    objList[obi].CD_mode = CD_modes.DYNAMIC;
+                    objList[obi].CD_type = CD_types.CIRCLE;
+
+                    v3_copy(objList[obi].pos, testParams.pos);
+                    v3_copy(objList[obi].pLast, testParams.pLast);
+                    v3_copy(objList[obi].pSpeed, testParams.pSpeed);
+
+                    objList[obi].rad = testParams.rad;
+                    objList[obi].CD_r = testParams.rad;
+                }
             }
 
             function resizeViewport() {
@@ -256,6 +271,26 @@
                 }
             }
 
+            var lastParams = {};
+            var testParams = {
+
+ "pos": [
+  -0.5625,
+  0.27041666666666675,
+  0
+ ],
+ "pLast": [
+  -0.5625,
+  0.27041666666666675,
+  0
+ ],
+ "pSpeed": [
+  6.5648203160807417,
+  3.395066967695944,
+  0
+ ],
+ "rad": 0.10689565869283417
+}
             var strList = new Map();
             var hits = [];
             var objList = [];
@@ -299,12 +334,12 @@
             objList[lobi].CD_r = 0.05;
             objList[lobi].CD_n = v3_normalize_new([1, 0.2, 0]);*/
 
-            lobi = objList.push(new obj)-1;
+           /* lobi = objList.push(new obj)-1;
             objList[lobi].pos = [ 0.8, 0.0, 0];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];
-            objList[lobi].CD_n = v3_normalize_new([-0.25, 1.0, 0]);
+            objList[lobi].CD_n = v3_normalize_new([-0.25, 1.0, 0]);*/
 
 
             function rot_p90(v) {
@@ -317,7 +352,7 @@
             var time = 0;
             var timeLast = 0;
             var timeDelta = 0;
-            var timeScale = 0.25;
+            var timeScale = 0.2;
             var frame = 0;
             var frameInterval = 5; // update scene every "frameInterval" frames
 
@@ -389,6 +424,11 @@
                         //if (abs(td) < 0.0001) td = timeDelta;
                         objList[currentI].pSpeed[0] = (currentX - lastX) / td;
                         objList[currentI].pSpeed[1] = (currentY - lastY) / td;
+                        lastParams.pos = v3_clone(objList[currentI].pos);
+                        lastParams.pLast = v3_clone(objList[currentI].pLast);
+                        lastParams.pSpeed = v3_clone(objList[currentI].pSpeed);
+                        lastParams.rad = objList[currentI].rad;
+                      //  lastParams.rad = objList[currentI].CD_r;
                         currentI = -1;
                     }
                 }                
@@ -557,19 +597,18 @@
                     }
 
                     // TODO: resolve shortest t, recheck CD until no collisions or maxChecks
-                    // TODO global hit list with source and target
-                    // sort by t
-                    // recalc pos and checkhits
+                    // maxIter = Math.ceil(10 * Math.log(objList.length + 1)) ?
+                    // TODO: advance t by at least 1/maxIter at every steps
 
                     // sort by earliest hit
                     hits.sort( (a, b) => a.t - b.t );
-
-                    // resolve each object individually
                     for (let h of hits) {
+                    //if (hits.length > 0) { 
+                      //  let h = hits[0];
                         //if (h.source.CD_mode == CD_modes.CONTROLLED) return;
 
                         if (h.pre) { // t of 0 or less
-                            console.log("pre t" + h.t);
+                            //console.log("pre t" + h.t);
 
                             // TODO: specific case for CD type, should be in CD test function
                             let h_pos = v3_add_new(h.target.pos, h.target.CD_p);
@@ -584,16 +623,26 @@
                                 let t_pre = h.t * timeDelta;
                                 let t_post = (1.0 - h.t) * timeDelta;
                                 let act_spd = v3_sub_new(h.p, h.source.pLast);
+                                let f2f = v3_dot(act_spd, h.n) < 0.0;
                                 v3_invscale_res(h.source.pSpeed, act_spd, t_pre);
-                                if (v3_dot(h.source.pSpeed, h.n) < 0.0) v3_reflect_mod(h.source.pSpeed, h.n); // bounce if face to face hit
-                                h.source.pSpeed[1] -= g_iss * t_post * 0.99; // regression to avoid float error "boost-up"
-                                v3_addscaled_res(h.source.pos, h.p, h.source.pSpeed, t_post);
+                                if (f2f) v3_reflect_mod(h.source.pSpeed, h.n);
 
+                                let g_reset = g_iss * t_post * 0.99; // regression to avoid float error "boost-up"
+                                h.source.pSpeed[1] -= g_reset;
+                                v3_addscaled_res(h.source.pos, h.p, h.source.pSpeed, t_post);
+                                v3_sub_res(act_spd, h.source.pos, h.p);
+                                f2f = v3_dot(act_spd, h.n) < 0.0;
+                                if (f2f) {
+                                    h.source.pSpeed[1] += g_reset;
+                                    v3_addscaled_res(h.source.pos, h.p, h.source.pSpeed, t_post);
+                                }
                                 if (v3_NaN(h.source.pos)) throw("broken pos");
                                 if (v3_NaN(h.source.pSpeed)) throw("broken pSpeed");
                                 if (v3_NaN(h.source.pLast)) throw("broken pLast");
                             }
                         }
+
+                        //if (h.source.pos[1] < -0.205 + h.source.CD_r) throw("broekn CD");
                     }
 
                     // recalc actual accel and/or speed
@@ -887,6 +936,12 @@
                     }
                 } //for objects
 
+                for (h of hits) {
+                    ctx.strokeStyle = h.pre ? "#FF0" : "#F00";
+                    ctx.beginPath();
+                        circle(h.p[0], h.p[1], h.source.CD_r - 0.001); 
+                    ctx.stroke();
+                }
 
                 ctx.lineWidth = 1.0;
             }
