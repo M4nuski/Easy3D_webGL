@@ -622,7 +622,9 @@
 
                         if (h.pre) {
                             v3_copy(h.source.pos, h.p);
-                            v3_scale_mod(h.source.pSpeed, 0.999);
+                            v3_sub_res(h.source.pDelta, h.p, h.source.pLast);
+                            h.source.deltaLength = v3_length(h.source.pDelta);
+                            v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta / 0.99 );
 
                             if (v3_NaN(h.source.pos)) throw("broken pos");
                         } else {
@@ -633,10 +635,10 @@
 
                             //v3_invscale_res(h.source.pSpeed, act_spd, t_pre);
                             //v3_scale_midres(h.source.pSpeed, act_spd, t_pre);
-                            // h.source.pSpeed[1] += g_iss * t_pre;
+                            h.source.pSpeed[1] += g_iss * timeDelta;
                             // TODO if delta Y due to gravity and reflect under h.p.y 
                             v3_reflect_mod(h.source.pSpeed, h.n); // scale n for bounce / lateral
-                            v3_scale_mod(h.source.pSpeed, 0.999);// scale for lateral
+                            v3_scale_mod(h.source.pSpeed, 0.99);// scale for lateral
                             v3_copy(h.source.pos, h.p);
                             //h.source.pSpeed[1] -= g_iss * t_post;
                         /*    v3_addscaled_res(h.source.pos, h.p, h.source.pSpeed, t_post);
@@ -750,7 +752,7 @@
                     // on the line, from the back
                     let nh = newHit(source, target);
                     
-                    nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
+                    nh.t = 1.0; strListsetFloat("cl source.hit_t", nh.t);
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
                     v3_addscaled_res(nh.p, source.pos, target.CD_n, -pos1_dot);
@@ -759,11 +761,11 @@
 
                     nh.pre = true;
                     strListset("cl pre", "back");
-                } else if ((pos0_dot > pos1_dot) && (pos0_dot >= -source.CD_r)) {
+                } else if ((pos0_dot > pos1_dot) && (pos0_dot <= 0.0) && (pos0_dot >= -source.CD_r)) {
                     // on the line, from the front
                     let nh = newHit(source, target);
                     
-                    nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
+                    nh.t = 0.0; strListsetFloat("cl source.hit_t", nh.t);
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
                     v3_offset_proj_res(nh.p, src_p1, tgt_p, target.CD_n);
