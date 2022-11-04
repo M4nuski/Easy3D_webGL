@@ -224,6 +224,39 @@ function v3_subsub_res(res, a, b, c) {
     res[2] = a[2] - b[2] - c[2];
 }
 
+// = a - (b * f)
+function v3_subscaled_new(a, b, f) {
+    return [ a[0] - (b[0] * f),
+             a[1] - (b[1] * f),
+             a[2] - (b[2] * f) ];
+}
+function v3_subscaled_mod(a, b, f) {
+    a[0] = a[0] - (b[0] * f);
+    a[1] = a[1] - (b[1] * f);
+    a[2] = a[2] - (b[2] * f);
+}
+function v3_subscaled_res(res, a, b, f) {
+    res[0] = a[0] - (b[0] * f);
+    res[1] = a[1] - (b[1] * f);
+    res[2] = a[2] - (b[2] * f);
+}
+
+// = a - (b / f)
+function v3_subinvscaled_new(a, b, f) {
+    return [ a[0] - (b[0] / f),
+             a[1] - (b[1] / f),
+             a[2] - (b[2] / f) ];
+}
+function v3_subinvscaled_mod(a, b, f) {
+    a[0] = a[0] - (b[0] / f);
+    a[1] = a[1] - (b[1] / f);
+    a[2] = a[2] - (b[2] / f);
+}
+function v3_subinvscaled_res(res, a, b, f) {
+    res[0] = a[0] - (b[0] / f);
+    res[1] = a[1] - (b[1] / f);
+    res[2] = a[2] - (b[2] / f);
+}
 
 // Vector addition
 // = a + b

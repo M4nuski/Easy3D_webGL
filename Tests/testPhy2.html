@@ -154,7 +154,9 @@
                     if (event.shiftKey) {
                         objList[CTRL_obj].pos = [currentX, currentY, 0];
                     } else {
+
                         objList[CTRL_obj].pLast = [currentX, currentY, 0];
+                        objList[CTRL_obj].ctrlPos = [currentX, currentY, 0];
                     }
                 }
                 if (event.code == "Digit2") {
@@ -234,9 +236,9 @@
             class hit {
                 constructor(src, tgt) {
                     this.t = 0.0;
-                    this.n = [0, 1, 0];
-                    this.p0 = [0, 0, 0];
-                    this.p1 = [0, 0, 0];
+                    this.n = [0.0, 1.0, 0.0];
+                    this.p0 = [0.0, 0.0, 0.0];
+                    this.p1 = [0.0, 0.0, 0.0];
                     this.source = src;
                     this.target = tgt;
                     this.pre = false;
@@ -253,16 +255,19 @@
                     //todo callback function for aero or approximation
                     //this.area = [0.577, 0.577, 0.577]; // aerodynamic area in 3 axis
 
-                    this.p1 = [0, 0, 0]; // original pos before CD
+                    this.p1 = [0.0, 0.0, 0.0]; // original pos before CD
                     this.pos = v3_new(); // should not be set directly, affect accel and speed
                     //this.pAccel = v3_new();
                     this.pSpeed = v3_new(); // should always be calculated, not set
                     
                     
-                    this.p0 = [0, 0, 0]; // original pLast before CD
+                    this.p0 = [0.0, 0.0, 0.0]; // original pLast before CD
                     this.pLast = v3_new();
                     this.pDelta = v3_new(); //pLast to next pos, updated by hits and other interactions
                     this.deltaLength = 0.0;
+                    this.totalLength = 0.0;
+                    this.odeltaLength = 0.0;
+                    this.ctrlPos = [0.0, 0.0, 0.0];
 
                     this.ang = v3_new();
                     //this.aAccel = v3_new();
@@ -283,8 +288,8 @@
                     // TODO body object
                     this.CD_type = CD_types.NONE;
                     this.CD_mode = CD_modes.STATIC;
-                    this.CD_p = [0, 0, 0];
-                    this.CD_n = [1, 0, 0];
+                    this.CD_p = [0.0, 0.0, 0.0];
+                    this.CD_n = [1.0, 0.0, 0.0];
                     this.CD_l = 1.0;
                     this.CD_r = 0.5;
 
@@ -318,7 +323,7 @@
             var objList = [];
 
             var lobi = objList.push(new obj)-1;
-            objList[lobi].pos = [ 0.0 ,-3.0, 0.0 ];
+            objList[lobi].pos = [ 0.0 ,-2.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
             objList[lobi].CD_n = v3_normalize_new([-0.2, 1.0, 0.0]);
@@ -357,7 +362,7 @@
             objList[lobi].CD_n = v3_normalize_new([1, 0.2, 0]);*/
 
             lobi = objList.push(new obj)-1;
-            objList[lobi].pos = [ -9.0, -3.0, 0];
+            objList[lobi].pos = [ -7.0, -3.0, 0];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];
@@ -515,7 +520,9 @@
                     // update position
                     for (let entity of objList) {
 
+                        entity.totalLength = 0.0;
                         if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
+
                             v3_copy(entity.pLast, entity.pos);
                             v3_copy(entity.p0, entity.pos);
 
@@ -534,7 +541,7 @@
                             v3_addscaled_mod(entity.pos, entity.pSpeed, timeDelta);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
-
+                            
                             v3_copy(entity.p1, entity.pos);
 
                             //v3_addscaled_mod(entity.aSpeed, entity.aAccel, timeDelta);
@@ -555,6 +562,7 @@
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
                         }
                         if (entity.CD_mode == CD_modes.CONTROLLED) {
+                            v3_copy(entity.pLast, entity.ctrlPos);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
@@ -563,6 +571,7 @@
                             v3_copy(entity.p1, entity.pos);
 
                         }
+                        entity.odeltaLength = entity.deltaLength;
                     }
 
                     hitList = [];
@@ -587,7 +596,7 @@
                         last_tgt = current_hit.target;
                         CD_static();
                     }
-                    strListset("iter", iter);
+                    strListset("iter", 10-iter);
                     
                     // first pass all pre
                     // do CD, from 0 to 0.1 all advance
@@ -607,6 +616,8 @@
 
                     if (!objList[1]) return;
                     strListsetFloat("speed", v3_distance(objList[1].pLast, objList[1].pos) / timeDelta);
+                    strListsetFloat("delta", objList[1].odeltaLength);
+                    strListsetFloat("total", objList[1].totalLength);
                     if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
                     strListset("break", breakAtHit);
             }
@@ -675,12 +686,14 @@
 
                /* if (h.pre) {*/
                     //v3_copy(h.source.pLast, h.source.pos);
-                    if (h.source.CD_mode == CD_modes.DYNAMIC) (h.source.pLast, h.p0);
-                    v3_copy(h.source.pos, h.p0);
+                    h.source.totalLength += v3_distance(h.p0, h.source.pLast);
+                    v3_copy(h.source.pLast, h.p0);
+                    v3_copy(h.source.pos, h.p1);
                     h.source.lastHitTarget = h.target;
 
                     v3_sub_res(h.source.pDelta, h.source.pos, h.source.pLast);
                     h.source.deltaLength = v3_length(h.source.pDelta);
+                    h.source.totalLength += h.source.deltaLength;
                     v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta * 1.0);
                    // h.source.pSpeed[1] += g_iss * timeDelta;
                    
@@ -781,8 +794,8 @@
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
                     v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
-                    v3_addscaled_mod(nh.p0, target.CD_n, -0.001);
-                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
+                    v3_addscaled_mod(nh.p0, target.CD_n, 0.001);
+                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot + 0.001);
                     repos(nh.p1, nh.p0, source.deltaLength * (1.0 - nh.t));
 
                     v3_copy(nh.n, target.CD_n);
