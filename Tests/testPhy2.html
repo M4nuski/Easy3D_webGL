@@ -147,6 +147,9 @@
                 if (event.key == "w") {
                     wobble = !wobble;
                 } 
+                if (event.key == "z") {
+                    drawCD = !drawCD;
+                }
 
                 if (event.code == "Digit1") {
                     clear = true;
@@ -247,7 +250,7 @@
 
             class obj {
                 constructor() {
-                    //this.mass = 1.0;
+                    this.mass = 1.0;
                     //this.moment = 1.0; //  – I = 2/5MR²
                     //this.cg = [0, 0, 0]; // center of mass, relative to entity origin
                     //this.cp = [0, 0, 0]; // aerodynamic center
@@ -257,7 +260,6 @@
 
                     this.p1 = [0.0, 0.0, 0.0]; // original pos before CD
                     this.pos = v3_new(); // should not be set directly, affect accel and speed
-                    //this.pAccel = v3_new();
                     this.pSpeed = v3_new(); // should always be calculated, not set
                     
                     
@@ -265,8 +267,7 @@
                     this.pLast = v3_new();
                     this.pDelta = v3_new(); //pLast to next pos, updated by hits and other interactions
                     this.deltaLength = 0.0;
-                    this.totalLength = 0.0;
-                    this.odeltaLength = 0.0;
+
                     this.ctrlPos = [0.0, 0.0, 0.0];
 
                     this.ang = v3_new();
@@ -321,6 +322,7 @@
             var hits = [];
             var hitList = [];
             var objList = [];
+            var drawCD = true;
 
             var lobi = objList.push(new obj)-1;
             objList[lobi].pos = [ 0.0 ,-2.0, 0.0 ];
@@ -505,11 +507,10 @@
             function updateScene() {            
                     // remove out of frame object
                     if (currentI == -1) for (var i = objList.length - 1; i >= 0; --i) if (i != CTRL_obj) {
-                       // objList[i].potentialHit = false;
-                        if (v3_length(objList[i].pos) > 48) objList.splice(i, 1);
+                        if (v3_length(objList[i].pos) > 1000) objList.splice(i, 1);
                     }
 
-                    if (wobble) objList[0].CD_n = v3_normalize_new([Math.sin(time), 30.0, 0.0]);
+                    if (wobble) objList[0].CD_n = v3_normalize_new([Math.sin(time*2), 5.0, 0.0]);
 
                     // stats and shit
                     strListset("time", time.toFixed(2));
@@ -520,7 +521,6 @@
                     // update position
                     for (let entity of objList) {
 
-                        entity.totalLength = 0.0;
                         if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
 
                             v3_copy(entity.pLast, entity.pos);
@@ -535,16 +535,14 @@
 
                         // Gravity
                         // TODO add scaling factor for g, both globally and per object
-                            //entity.pAccel[1] -= g_iss;// * timeDelta
+
                             entity.pSpeed[1] -= g_iss * timeDelta;
-                            //v3_addscaled_mod(entity.pSpeed, entity.pAccel, timeDelta);
                             v3_addscaled_mod(entity.pos, entity.pSpeed, timeDelta);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
                             
                             v3_copy(entity.p1, entity.pos);
 
-                            //v3_addscaled_mod(entity.aSpeed, entity.aAccel, timeDelta);
                             v3_addscaled_mod(entity.ang, entity.aSpeed, timeDelta);
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
 
@@ -571,16 +569,17 @@
                             v3_copy(entity.p1, entity.pos);
 
                         }
-                        entity.odeltaLength = entity.deltaLength;
                     }
 
+                    strListset("cl pre", "");
                     hitList = [];
                     CD_static();
                     // all single batch
                     //for (let current_hit of hits) resolve_slide(current_hit);
 
                     // iter
-                    let iter = 10;
+                    const max_iter = 10;
+                    let iter = max_iter;
                     let current_hit = null;
                     let last_src = null;
                     let last_tgt = null;
@@ -596,7 +595,7 @@
                         last_tgt = current_hit.target;
                         CD_static();
                     }
-                    strListset("iter", 10-iter);
+                    strListset("iter", max_iter-iter);
                     
                     // first pass all pre
                     // do CD, from 0 to 0.1 all advance
@@ -610,14 +609,12 @@
                     
                     //post
                     for (entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
-                      //  v3_subinvscaled_res(entity.pSpeed, entity.pos, entity.p0, timeDelta);
+                      entity.pSpeed[1] = (entity.pos[1] - entity.pLast[1]) / timeDelta; 
                     }
 
-
-                    if (!objList[1]) return;
-                    strListsetFloat("speed", v3_distance(objList[1].pLast, objList[1].pos) / timeDelta);
-                    strListsetFloat("delta", objList[1].odeltaLength);
-                    strListsetFloat("total", objList[1].totalLength);
+                    var firstDynamic = -1;
+                    for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.DYNAMIC) { firstDynamic = i; break; }
+                    if (firstDynamic != -1) strListsetFloat("speed", v3_distance(objList[firstDynamic].pLast, objList[firstDynamic].pos) / timeDelta);
                     if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
                     strListset("break", breakAtHit);
             }
@@ -681,44 +678,39 @@
 
             function resolve_stick(h) { };
             function resolve_bounce(h) { };
+
             function resolve_slide(h) {
-               //v3_copy(h.source.ep, h.source.pos);
+                h.source.lastHitTarget = h.target;
 
-               /* if (h.pre) {*/
-                    //v3_copy(h.source.pLast, h.source.pos);
-                    h.source.totalLength += v3_distance(h.p0, h.source.pLast);
+                if (h.pre) {
                     v3_copy(h.source.pLast, h.p0);
-                    v3_copy(h.source.pos, h.p1);
-                    h.source.lastHitTarget = h.target;
+                    v3_sub_res(h.source.pDelta, h.p1, h.p0);
+                    shorten(h.source.pDelta, 5.0 * timeDelta);
+                    v3_scale_mod(h.source.pDelta, 0.95);
+                    v3_add_res(h.source.pos, h.p0, h.source.pDelta);
+                    v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta);
+                } else {
+                    v3_copy(h.source.pLast, h.p0);
+                    v3_sub_res(h.source.pDelta, h.p1, h.p0);
+                    shorten(h.source.pDelta, 5.0 * timeDelta);
+                    v3_scale_mod(h.source.pDelta, 0.95);
+                    v3_add_res(h.source.pos, h.p0, h.source.pDelta);
+                    v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta * (1.0 - h.t));
+                }
+                
+                h.source.deltaLength = v3_length(h.source.pDelta);
 
-                    v3_sub_res(h.source.pDelta, h.source.pos, h.source.pLast);
-                    h.source.deltaLength = v3_length(h.source.pDelta);
-                    h.source.totalLength += h.source.deltaLength;
-                    v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta * 1.0);
-                   // h.source.pSpeed[1] += g_iss * timeDelta;
-                   
-                    //v3_sub_res(h.source.pDelta, h.p, h.source.pLast);
-                    //h.source.deltaLength = v3_length(h.source.pDelta);
-                    //v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta / 0.99 );
-
-                    if (v3_NaN(h.source.pos)) throw("broken pos");
-             /*   } else {
-                    if (h.t < 0) throw new Error("impossible t < 0");
-              //      v3_copy(h.source.pos, h.p);
-                    h.source.pSpeed[1] += g_iss * timeDelta;
-                    v3_reflect_mod(h.source.pSpeed, h.n); //TODO scale n for bounce / lateral
-                    v3_scale_mod(h.source.pSpeed, 0.99);// scale for lateral
-
-                    v3_addscaled_res(h.source.pos, h.p, h.source.pSpeed, (1.0 - h.t) * timeDelta);
-
-                    if (v3_offset_dot(h.source.pos, h.p, h.n) < 0) v3_copy(h.source.pos, h.p); //TODO fallback to pre mode
-
-                    if (v3_NaN(h.source.pos)) throw new Error("broken pos");
-                    if (v3_NaN(h.source.pSpeed)) throw new Error("broken pSpeed");
-                    if (v3_NaN(h.source.pLast)) throw new Error("broken pLast");
-                }*/
+                if (v3_NaN(h.source.pos)) throw("broken pos");
+                if (v3_NaN(h.source.pSpeed)) throw new Error("broken pSpeed");
+                if (v3_NaN(h.source.pLast)) throw new Error("broken pLast");
             }
 
+            function shorten(v, f) {
+                var l = v3_length(v);
+                var l2 = l - f;
+                if (l2 < 0.0) l2 = 0.0;
+                v3_scale_mod(v, l2/l);
+            }
 
             function newHit(source, target) {
                 let nh = new hit(source, target);
@@ -786,7 +778,7 @@
                 let pos0_dot = v3_offset_dot(src_p0, tgt_p, target.CD_n); strListsetFloat("cl pos0_dot", pos0_dot);
                 let pos1_dot = v3_offset_dot(src_p1, tgt_p, target.CD_n); strListsetFloat("cl pos1_dot", pos1_dot);
 
-                strListset("cl pre", "");
+
                 if ((pos0_dot > 0.0) && (pos1_dot < 0.0)) {
                     // face to face, from the front
                     let nh = newHit(source, target);
@@ -796,7 +788,6 @@
                     v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
                     v3_addscaled_mod(nh.p0, target.CD_n, 0.001);
                     v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot + 0.001);
-                    repos(nh.p1, nh.p0, source.deltaLength * (1.0 - nh.t));
 
                     v3_copy(nh.n, target.CD_n);
 
@@ -811,8 +802,6 @@
                     v3_addscaled_res(nh.p0, source.pLast, target.CD_n, -pos0_dot - 0.001);
                     v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
 
-                    repos(nh.p1, nh.p0, source.deltaLength);
-
                     v3_copy(nh.n, target.CD_n);
 
                     nh.pre = true;
@@ -825,7 +814,6 @@
 
                     v3_addscaled_res(nh.p0, source.pLast, target.CD_n, -pos0_dot - 0.001);
                     v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
-                    repos(nh.p1, nh.p0, source.deltaLength);
 
                     v3_copy(nh.n, target.CD_n);
 
@@ -948,7 +936,7 @@
                 // draw objects
                 ctx.setLineDash([1]); //solid line
 
-                for (h of hitList) {
+                if (drawCD) for (h of hitList) {
                     ctx.strokeStyle = h.pre ? "#FF0" : "#F00";
                     ctx.beginPath();
                         circle(h.p0[0], h.p0[1], h.source.CD_r - 0.001); 
@@ -1013,12 +1001,7 @@
                                     circle(p0[0], p0[1], current_obj.CD_r - 0.001); 
                                 ctx.stroke();
                             }
-                            /*for (var hit of current_obj.hits) {
-                                ctx.strokeStyle = hit.pre ? "#FF0" : "#F00";
-                                ctx.beginPath();
-                                    circle(hit.p[0], hit.p[1], current_obj.CD_r - 0.001); 
-                                ctx.stroke();
-                            }*/
+
                             break;
                         case CD_types.POINT:
                             var p = v3_add_new(current_obj.pos, current_obj.CD_p);
