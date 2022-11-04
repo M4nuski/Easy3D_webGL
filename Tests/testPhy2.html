@@ -235,7 +235,8 @@
                 constructor(src, tgt) {
                     this.t = 0.0;
                     this.n = [0, 1, 0];
-                    this.p = [0, 0, 0];
+                    this.p0 = [0, 0, 0];
+                    this.p1 = [0, 0, 0];
                     this.source = src;
                     this.target = tgt;
                     this.pre = false;
@@ -252,6 +253,7 @@
                     //todo callback function for aero or approximation
                     //this.area = [0.577, 0.577, 0.577]; // aerodynamic area in 3 axis
 
+                    this.p1 = [0, 0, 0]; // original pos before CD
                     this.pos = v3_new(); // should not be set directly, affect accel and speed
                     //this.pAccel = v3_new();
                     this.pSpeed = v3_new(); // should always be calculated, not set
@@ -285,6 +287,8 @@
                     this.CD_n = [1, 0, 0];
                     this.CD_l = 1.0;
                     this.CD_r = 0.5;
+
+                    this.lastHitTarget = null;
                 }
             }
 
@@ -310,6 +314,7 @@
 }
             var strList = new Map();
             var hits = [];
+            var hitList = [];
             var objList = [];
 
             var lobi = objList.push(new obj)-1;
@@ -506,11 +511,14 @@
                     strListset("nb Obj", objList.length);
                     strListset("current i", currentI);
 
+                    // pre
                     // update position
                     for (let entity of objList) {
 
                         if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
                             v3_copy(entity.pLast, entity.pos);
+                            v3_copy(entity.p0, entity.pos);
+
                             v3_copy(entity.aLast, entity.ang);
 
                         // at the begining accel += gravity
@@ -520,18 +528,20 @@
 
                         // Gravity
                         // TODO add scaling factor for g, both globally and per object
-                            entity.pAccel[1] -= g_iss;// * timeDelta
-
-                            v3_addscaled_mod(entity.pSpeed, entity.pAccel, timeDelta);
+                            //entity.pAccel[1] -= g_iss;// * timeDelta
+                            entity.pSpeed[1] -= g_iss * timeDelta;
+                            //v3_addscaled_mod(entity.pSpeed, entity.pAccel, timeDelta);
                             v3_addscaled_mod(entity.pos, entity.pSpeed, timeDelta);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
 
-                            v3_addscaled_mod(entity.aSpeed, entity.aAccel, timeDelta);
+                            v3_copy(entity.p1, entity.pos);
+
+                            //v3_addscaled_mod(entity.aSpeed, entity.aAccel, timeDelta);
                             v3_addscaled_mod(entity.ang, entity.aSpeed, timeDelta);
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
 
-                            v3_copy(entity.pAccel, _v3_null); 
+                            //v3_copy(entity.pAccel, _v3_null); 
 
                         // is this the correct place ?
                         // entity.pSpeed[1] += 32 * timeDelta;
@@ -548,10 +558,14 @@
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
+
+                            v3_copy(entity.p0, entity.pLast);
+                            v3_copy(entity.p1, entity.pos);
+
                         }
                     }
 
-                    
+                    hitList = [];
                     CD_static();
                     // all single batch
                     //for (let current_hit of hits) resolve_slide(current_hit);
@@ -575,21 +589,26 @@
                     }
                     strListset("iter", iter);
                     
+                    // first pass all pre
+                    // do CD, from 0 to 0.1 all advance
+
+                    // CD
+                    // resolve
 
                     // TODO: resolve shortest t, recheck CD until no collisions or maxChecks
                     // maxIter = Math.ceil(10 * Math.log(objList.length + 1)) ?
                     // TODO: advance t by at least 1/maxIter at every steps
+                    
+                    //post
+                    for (entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
+                      //  v3_subinvscaled_res(entity.pSpeed, entity.pos, entity.p0, timeDelta);
+                    }
 
 
                     if (!objList[1]) return;
                     strListsetFloat("speed", v3_distance(objList[1].pLast, objList[1].pos) / timeDelta);
                     if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
                     strListset("break", breakAtHit);
-
-                    //post
-                    for (entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
-                            entity.pSpeed[1] = (entity.pos[1] - entity.pLast[1]) / timeDelta;
-                    }
             }
 
             function CD_static() {
@@ -646,21 +665,25 @@
                         }
                     }
                 }
+                hitList = hitList.concat(hits);
             }
 
             function resolve_stick(h) { };
             function resolve_bounce(h) { };
             function resolve_slide(h) {
-                v3_copy(h.source.ep, h.source.pos);
+               //v3_copy(h.source.ep, h.source.pos);
 
                /* if (h.pre) {*/
                     //v3_copy(h.source.pLast, h.source.pos);
-                    v3_copy(h.source.pos, h.p);
+                    if (h.source.CD_mode == CD_modes.DYNAMIC) (h.source.pLast, h.p0);
+                    v3_copy(h.source.pos, h.p0);
+                    h.source.lastHitTarget = h.target;
+
                     v3_sub_res(h.source.pDelta, h.source.pos, h.source.pLast);
                     h.source.deltaLength = v3_length(h.source.pDelta);
-                    v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta);
+                    v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta * 1.0);
                    // h.source.pSpeed[1] += g_iss * timeDelta;
-                    v3_scale_mod(h.source.pSpeed, 0.9);// scale for lateral
+                   
                     //v3_sub_res(h.source.pDelta, h.p, h.source.pLast);
                     //h.source.deltaLength = v3_length(h.source.pDelta);
                     //v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta / 0.99 );
@@ -741,9 +764,7 @@
             function CD_dyn_sta_circle_line(source, target) {
 
                 let src_p0 = v3_add_new(source.pLast, source.CD_p);
-                if (v3_NaN(source.pLast)) throw("pLast NaN");
                 let src_p1 = v3_add_new(source.pos, source.CD_p);
-                if (v3_NaN(source.pos)) throw("pos NaN");
                 let tgt_p = v3_add_new(target.pos, target.CD_p);
 
                 // offset for radius
@@ -759,8 +780,10 @@
                     nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
-                    v3_addscaled_res(nh.p, source.pos, target.CD_n, -pos1_dot*1.01);
-                    //v3_lerp_res(nh.p, source.pLast, source.pos, nh.t);
+                    v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
+                    v3_addscaled_mod(nh.p0, target.CD_n, -0.001);
+                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
+                    repos(nh.p1, nh.p0, source.deltaLength * (1.0 - nh.t));
 
                     v3_copy(nh.n, target.CD_n);
 
@@ -768,12 +791,14 @@
                     strListset("cl pre", nh.pre);
                 } else if ((pos0_dot < pos1_dot) && (pos1_dot >= (-2 * source.CD_r)) && (pos1_dot < 0.0)) {
                     // on the line, from the back
-                    let nh = newHit(source, target);
-                    
+                    let nh = newHit(source, target);                    
                     nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
-                    v3_addscaled_res(nh.p, source.pos, target.CD_n, -pos1_dot*1.01);
+                    v3_addscaled_res(nh.p0, source.pLast, target.CD_n, -pos0_dot - 0.001);
+                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
+
+                    repos(nh.p1, nh.p0, source.deltaLength);
 
                     v3_copy(nh.n, target.CD_n);
 
@@ -781,19 +806,25 @@
                     strListset("cl pre", "back");
                 } else if ((pos0_dot > pos1_dot) && (pos0_dot <= 0.0) && (pos0_dot >= -source.CD_r)) {
                     // on the line, from the front
-                    let nh = newHit(source, target);
-                    
+                    let nh = newHit(source, target);                    
                     nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
-                    v3_addscaled_res(nh.p, source.pos, target.CD_n, -pos1_dot*1.01);
-                    //v3_offset_proj_res(nh.p, src_p1, tgt_p, target.CD_n);
+                    v3_addscaled_res(nh.p0, source.pLast, target.CD_n, -pos0_dot - 0.001);
+                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
+                    repos(nh.p1, nh.p0, source.deltaLength);
 
                     v3_copy(nh.n, target.CD_n);
 
                     nh.pre = true;
                     strListset("cl pre", "front");
                 }
+            }
+
+            function repos(p, orig, len) {
+                var n = v3_sub_new(p, orig);
+                var l = v3_length(n);
+                if (l > 0.001) v3_addscaled_res(p, orig, n, len / l);
             }
 
             function CD_dyn_sta_circle_circle(source, target) {
@@ -903,6 +934,21 @@
 
                 // draw objects
                 ctx.setLineDash([1]); //solid line
+
+                for (h of hitList) {
+                    ctx.strokeStyle = h.pre ? "#FF0" : "#F00";
+                    ctx.beginPath();
+                        circle(h.p0[0], h.p0[1], h.source.CD_r - 0.001); 
+                    ctx.stroke();
+                    ctx.beginPath();
+                        moveTo(h.p0[0], h.p0[1]);
+                        lineTo(h.p1[0], h.p1[1]);
+                    ctx.stroke();
+                    ctx.strokeStyle = h.pre ? "#0FF" : "#0F0";
+                    ctx.beginPath();
+                        circle(h.p1[0], h.p1[1], h.source.CD_r - 0.001); 
+                    ctx.stroke();
+                }
                 
                 for (let current_obj of objList) {
 
@@ -928,20 +974,23 @@
                             break;
                         case CD_types.CIRCLE:                        
                             ctx.strokeStyle = "#080";
-                            var p0 = v3_add_new(current_obj.pLast, current_obj.CD_p);
+                            var p0 = v3_add_new(current_obj.p0, current_obj.CD_p);
                             ctx.beginPath();
                                 circle(p0[0], p0[1], current_obj.CD_r); 
                             ctx.stroke();
 
                             ctx.strokeStyle = "#008";
-                            var p1 = v3_add_new(current_obj.pos, current_obj.CD_p);
+                            var p1 = v3_add_new(current_obj.p1, current_obj.CD_p);
                             ctx.beginPath();
                                 circle(p1[0], p1[1], current_obj.CD_r); 
                             ctx.stroke();
-
                             ctx.strokeStyle = "#000";
                             ctx.beginPath();
                                 line(p0[0], p0[1], p1[0], p1[1]);
+                            ctx.stroke();
+                            p1 = v3_add_new(current_obj.pos, current_obj.CD_p);
+                            ctx.beginPath();
+                                circle(p1[0], p1[1], current_obj.CD_r); 
                             ctx.stroke();
 
                             if (breakAtHit) {
@@ -1013,12 +1062,7 @@
                     }
                 } //for objects
 
-                for (h of hits) {
-                    ctx.strokeStyle = h.pre ? "#FF0" : "#F00";
-                    ctx.beginPath();
-                        circle(h.p[0], h.p[1], h.source.CD_r - 0.001); 
-                    ctx.stroke();
-                }
+
 
                 ctx.lineWidth = 1.0;
             }
