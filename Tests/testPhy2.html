@@ -34,6 +34,16 @@
             left: 0px;
             white-space: pre;
         }
+        #settings {
+            background-color: transparent;
+            font-size: 24px;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: 10;
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            white-space: pre;
+        }
     </style>
     <script type="text/javascript" src = "..\ver5\math.js"></script>
     <script type="text/javascript">
@@ -218,6 +228,12 @@
                 c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px"; 
             }
 
+            var amort = 5;
+            document.getElementById("range0").addEventListener("input", (event) => { amort = Number(event.target.value) / 2.0; strListsetFloat("amort", amort);} );
+
+            var damp = 0.9;
+            document.getElementById("range1").addEventListener("input", (event) => { damp = event.target.value / 100.0; strListsetFloat("damp", damp);} );
+
             // Enumerations
             const CD_types = {
                 NONE:       "none",
@@ -271,7 +287,6 @@
                     this.ctrlPos = [0.0, 0.0, 0.0];
 
                     this.ang = v3_new();
-                    //this.aAccel = v3_new();
                     this.aSpeed = v3_new();
                     
                     this.aLast = v3_new();
@@ -685,15 +700,15 @@
                 if (h.pre) {
                     v3_copy(h.source.pLast, h.p0);
                     v3_sub_res(h.source.pDelta, h.p1, h.p0);
-                    shorten(h.source.pDelta, 5.0 * timeDelta);
-                    v3_scale_mod(h.source.pDelta, 0.95);
+                    shorten(h.source.pDelta, amort * timeDelta);
+                    v3_scale_mod(h.source.pDelta, damp);
                     v3_add_res(h.source.pos, h.p0, h.source.pDelta);
                     v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta);
                 } else {
                     v3_copy(h.source.pLast, h.p0);
                     v3_sub_res(h.source.pDelta, h.p1, h.p0);
-                    shorten(h.source.pDelta, 5.0 * timeDelta);
-                    v3_scale_mod(h.source.pDelta, 0.95);
+                    shorten(h.source.pDelta, amort * timeDelta);
+                    v3_scale_mod(h.source.pDelta, damp);
                     v3_add_res(h.source.pos, h.p0, h.source.pDelta);
                     v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta * (1.0 - h.t));
                 }
@@ -1145,6 +1160,7 @@
     <div class="E3D_fullscreenContainer">
         <canvas id="canvas" width="1920" height="1080">Canvas</canvas>
         <div id="log"></div>
+        <div id="settings">Shorten<input type="range" id="range0" value="10" min="0" max="30">, Ammort <input type="range" id="range1" value="95" min="50" max="100"> </div>
     </div>
 </body>
 

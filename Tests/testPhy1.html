@@ -21,11 +21,40 @@
             right:0px;
             left:0px;
         }
+        #log {
+            background-color: transparent;
+            font-size: 24px;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: 10;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            white-space: pre;
+        }
+        #settings {
+            background-color: transparent;
+            font-size: 24px;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: 10;
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            white-space: pre;
+        }
 
     </style>
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() { 
+            var strList = new Map();
 
+            var f = 0.33;
+            document.getElementById("range0").addEventListener("input", (event) => { f = Number(event.target.value) / 100.0; strListsetFloat("f", f); } );
+            strListsetFloat("f", f);
+            var amort = 100;
+            document.getElementById("range1").addEventListener("input", (event) => { amort = Number(event.target.value) / 1.0; strListsetFloat("amort", amort); } );
+            strListsetFloat("amort", amort);
+
+            var log = document.getElementById("log");
             var c = document.getElementById("canvas");
             var ctx = c.getContext("2d");
             var width = 1600;
@@ -95,16 +124,21 @@
                 window.requestAnimationFrame(updateScene);
             }
 
+
+            function getF(f, step) {
+                var nf = Math.pow(1.0 - f, (step / 0.1)) - 1.0;
+                return (nf < 1.0) ? -nf : 1.0;
+            }
+
             function drawScene(){
+                strListsetFloat("time", time);
+                // text
+                log.innerText = "";
+                strList.forEach((a, b) => { log.innerText += (b + ": " + a) + "\n"; } );
                 
                 // clear
                // ctx.fillStyle = 'white';
                 ctx.clearRect(0, 0, width, height);
-                
-                // text
-                ctx.fillStyle = 'black';
-                ctx.font = "24px Arial";
-                ctx.fillText(time.toFixed(2), 10, 24);  
                 
                 ctx.setLineDash([1]);
                 ctx.strokeStyle = "#888";
@@ -136,7 +170,93 @@
                 ctx.lineTo( 1.0 * viewportScale + viewportOffsetX, 0.0 * viewportScale + viewportOffsetY);
                 ctx.stroke();
 
-                // TODO data and tracking
+
+                ctx.strokeStyle = "#F00";
+                ctx.setLineDash([1]);
+                ctx.beginPath();
+
+                var target = 0.6;
+                var y1 = 0.0;
+                var y2 = 0.0;
+                var step = 0.01;
+
+                var fact = getF(f, step) * (amort/100);
+                strListsetFloat("f 0.01", fact);
+
+                for (var i = 0.0; i < 2.0; i += step) {
+                    y2 = y1 + ((target - y1) * fact);
+                    line(i - 1.0, y1 - 0.3, i - 1.0 + step, y2 - 0.3);
+                    y1 = y2;
+                }
+                ctx.stroke();
+
+                ctx.strokeStyle = "#0F0";
+                ctx.beginPath();
+
+                target = 0.6;
+                y1 = 0.0;
+                y2 = 0.0;
+                step = 0.1;
+
+                fact = getF(f, step);
+                strListsetFloat("f 0.1 ", fact);
+
+                for (var i = 0.0; i < 2.0; i += step) {
+                    y2 = y1 + ((target - y1) * fact);
+                    line(i - 1.0, y1 - 0.3, i - 1.0 + step, y2 - 0.3);
+                    y1 = y2;
+                }
+                ctx.stroke();
+
+                ctx.strokeStyle = "#00F";
+                ctx.beginPath();
+
+                target = 0.6;
+                y1 = 0.0;
+                y2 = 0.0;
+                step = 0.2;
+
+                fact = getF(f, step);
+                strListsetFloat("f 0.2 ", fact);
+
+                for (var i = 0.0; i < 2.0; i += step) {
+                    y2 = y1 + ((target - y1) * fact);
+                    line(i - 1.0, y1 - 0.3, i - 1.0 + step, y2 - 0.3);
+                    y1 = y2;
+                }
+                ctx.stroke();
+
+            }
+
+            function moveTo(x, y) {
+                ctx.moveTo(x * viewportScale + viewportOffsetX, -y * viewportScale + viewportOffsetY);
+            }
+            function lineTo(x, y) {
+                ctx.lineTo(x * viewportScale + viewportOffsetX, -y * viewportScale + viewportOffsetY);
+            }
+            function line(x1, y1, x2, y2) {
+                ctx.moveTo(x1 * viewportScale + viewportOffsetX, -y1 * viewportScale + viewportOffsetY);
+                ctx.lineTo(x2 * viewportScale + viewportOffsetX, -y2 * viewportScale + viewportOffsetY);
+            }
+            function circle(x, y, r) {
+                ctx.arc(x * viewportScale + viewportOffsetX,
+                        -y * viewportScale + viewportOffsetY,
+                        r * viewportScale, 0, Math.PI * 2.0);
+            }
+            function arc(x, y, r, a0, a1) {
+                ctx.arc(x * viewportScale + viewportOffsetX,
+                        -y * viewportScale + viewportOffsetY,
+                        r * viewportScale, a0, a1);
+            }
+
+            function strListset(item, data) {
+                strList.set(item, data);
+            }
+            function strListsetFloat(item, data, dec = 3) {
+                strList.set(item, data.toFixed(dec));
+            }
+            function strListsetV3(item, data) {
+                strList.set(item, v3_string(data));
             }
 
         } );
@@ -146,7 +266,8 @@
 <body>
     <div class="E3D_fullscreenContainer">
         <canvas id="canvas" width="1600" height="900">Canvas</canvas>
-
+        <div id="log"></div>
+        <div id="settings">fact<input type="range" id="range0" value="33" min="0" max="100">, Ammort <input type="range" id="range1" value="100" min="-100" max="200"> </div>
     </div>
 </body>
 
