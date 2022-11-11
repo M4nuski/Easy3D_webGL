@@ -34,6 +34,17 @@
             left: 0px;
             white-space: pre;
         }
+        #config {
+            background-color: transparent;
+            font-size: 24px;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: 10;
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            text-align: right;
+            white-space: pre;
+        }
         #settings {
             background-color: transparent;
             font-size: 24px;
@@ -48,6 +59,7 @@
     <script type="text/javascript" src = "..\ver5\math.js"></script>
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() { 
+"use strict"
 
             var c = document.getElementById("canvas");
             var ctx = c.getContext("2d");
@@ -76,22 +88,23 @@
             var currentT = 0;
             var lastX = 0;
             var lastY = 0;
+            var lastT = 0;
 
             var cX = 0;
             var cY = 0;
             var lX = 0;
             var lY = 0;
 
-            mouseDn0 = false;
-            mouseDn1 = false;
-            mouseDn2 = false;
-            mouseDg0 = false;
-            mouseDg1 = false;
-            mouseDg2 = false;
-            mouseUp0 = false;
-            mouseUp1 = false;
-            mouseUp2 = false;
-            mouseW = 0;
+            var mouseDn0 = false;
+            var mouseDn1 = false;
+            var mouseDn2 = false;
+            var mouseDg0 = false;
+            var mouseDg1 = false;
+            var mouseDg2 = false;
+            var mouseUp0 = false;
+            var mouseUp1 = false;
+            var mouseUp2 = false;
+            var mouseW = 0;
 
             function canvasMouseDown(event) {
                 if (event.button == 0) mouseDn0 = true;
@@ -159,6 +172,9 @@
                 } 
                 if (event.key == "z") {
                     drawCD = !drawCD;
+                }
+                if (event.key == "j") {
+                    timeJitter = !timeJitter;
                 }
 
                 if (event.code == "Digit1") {
@@ -426,7 +442,9 @@
 
             function timeKeeping(newTime) {
                 var jitter = Math.random();
-                if (jitter < 0.125) jitter = 0.5; else if (jitter > 0.875) jitter = 1.5; else jitter = 1.0;
+                if (timeJitter) {
+                    if (jitter < 0.125) jitter = 0.5; else if (jitter > 0.875) jitter = 1.5; else jitter = 1.0;
+                } else jitter = 1.0;
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0 * jitter;
                 if (run || step) time += timeDelta;
                 timeLast = newTime;
@@ -602,6 +620,7 @@
                     strListset("cl pre", "");
                     hitList = [];
                     CD_static();
+                    if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
                     // all single batch
                     //for (let current_hit of hits) resolve_slide(current_hit);
 
@@ -612,7 +631,7 @@
                     let last_src = null;
                     let last_tgt = null;
                     while ((hits.length > 0) && (--iter > 0)) {
-                        if ((hits.length == 1) && (last_src != hits[0].source)) current_hit = hits[0]; else {
+                        if (hits.length == 1) current_hit = hits[0]; else {
                             hits.sort( (a, b) => a.t - b.t );
                             // different target
                             // different source
@@ -636,17 +655,15 @@
                     // TODO: advance t by at least 1/maxIter at every steps
                     
                     //post
-                    for (entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
+                    for (let entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
                         entity.pSpeed[1] = (entity.pos[1] - entity.pLast[1]) / timeDelta; 
-                      //  v3_subinvscaled_res(entity.effectiveSpeed, entity.pos, entity.pLast, entity.effectiveTimeDelta);
+                        //v3_subinvscaled_res(entity.effectiveSpeed, entity.pos, entity.p0, timeDelta);
                         v3_copy(entity.effectiveSpeed, entity.pSpeed);
                     }
 
                     var firstDynamic = -1;
                     for (var i = 0; i < objList.length; ++i) if (objList[i].CD_mode == CD_modes.DYNAMIC) { firstDynamic = i; break; }
                     if (firstDynamic != -1) strListsetFloat("speed", v3_distance(objList[firstDynamic].pLast, objList[firstDynamic].pos) / timeDelta);
-                    if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
-                    strListset("break", breakAtHit);
             }
 
             function CD_static() {
@@ -721,7 +738,7 @@
                 h.source.lastHitTarget = h.target;
                 h.source.nt++;
                 let local_t = h.source.t + ((1.0 - h.source.t) * h.t);
-                strListset("res.b", "in");
+                strListset("res.b", "bounce");
                 if (h.pre) {
                     v3_copy(h.source.pLast, h.p0);
                     var deltaY = h.p1[1] - h.source.pLast[1];
@@ -740,14 +757,9 @@
                     let remainingTimeDelta = timeDelta * (1.0 - local_t);
 
                     v3_copy(h.source.pLast, h.p0);
-                    //let remDelta = v3_sub_new(h.source.pos, h.p0);
-                    //v3_reflect_mod(remDelta, h.n);
                     v3_reflect_res(h.source.pSpeed, h.source.effectiveSpeed, h.n);
                     h.source.pSpeed[1] -= g_iss * remainingTimeDelta;
-
-                  //  v3_invscale_res(h.source.pSpeed, remDelta, remainingTimeDelta);
                     v3_addscaled_res(h.source.pos, h.p0, h.source.pSpeed, remainingTimeDelta);
-                    h.source.effectiveTimeDelta = remainingTimeDelta;
 
                     if (v3_offset_dot(h.source.pos, h.p0, h.n) < 0.0) { //sanity check
                         v3_copy(h.source.pLast, h.p0);
@@ -769,7 +781,7 @@
                 }                
                 h.source.t = local_t;
                 
-                if (h.source == objList[CTRL_obj]) strListset("h[" + h.source.nt + "]", h.source.t.toFixed(3) + " " + h.pre);
+                if (h.source == objList[CTRL_obj]) strListset("h[" + h.source.nt + "]", h.source.t.toFixed(3) + " " + strList.get("res.b"));
                 if (v3_isNaN(h.source.pos)) throw new Error("broken pos");
                 if (v3_isNaN(h.source.pSpeed)) throw new Error("broken pSpeed");
                 if (v3_isNaN(h.source.pLast)) throw new Error("broken pLast");
@@ -1023,6 +1035,7 @@
             var anim = true;
             var breakAtHit = false;
             var wobble = false;
+            var timeJitter = true;
             function drawScene(){
                 
                 // clear
@@ -1033,6 +1046,13 @@
                 // text
                 log.innerText = "";
                 strList.forEach((a, b) => { log.innerText += (b + ": " + a) + "\n"; } );
+                config.innerText = "";
+                config.innerText += "run (space): " + run + "\n";
+                config.innerText += "anim (a): " + anim + "\n";
+                config.innerText += "breakAtHit (b): " + breakAtHit + "\n";
+                config.innerText += "wobble (w): " + wobble + "\n";
+                config.innerText += "timeJitter (j): " + timeJitter + "\n";
+                config.innerText += "drawCD (z): " + drawCD + "\n";
                 
                 ctx.setLineDash([1]);
                 ctx.strokeStyle = "#888";
@@ -1118,7 +1138,7 @@
 
                             if (breakAtHit) {
                                 ctx.strokeStyle = "666";
-                                v3_add_res(p0, current_obj.ep, current_obj.CD_p);
+                                v3_add_res(p0, current_obj.p1, current_obj.CD_p);
                                 ctx.beginPath();
                                     circle(p0[0], p0[1], current_obj.CD_r - 0.001); 
                                 ctx.stroke();
@@ -1267,6 +1287,7 @@
     <div class="E3D_fullscreenContainer">
         <canvas id="canvas" width="1920" height="1080">Canvas</canvas>
         <div id="log"></div>
+        <div id="config"></div>
         <div id="settings">Short<input type="range" id="range0" value="10" min="0" max="30">, Smooth <input type="range" id="range1" value="90" min="50" max="100"> </div>
     </div>
 </body>
