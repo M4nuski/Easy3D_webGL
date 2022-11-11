@@ -228,11 +228,11 @@
                 c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px"; 
             }
 
-            var amort = 5;
-            document.getElementById("range0").addEventListener("input", (event) => { amort = Number(event.target.value) / 2.0; strListsetFloat("amort", amort);} );
+            var short = 5;
+            document.getElementById("range0").addEventListener("input", (event) => { short = Number(event.target.value) / 2.0; strListsetFloat("short", short);} );
 
-            var damp = 0.9;
-            document.getElementById("range1").addEventListener("input", (event) => { damp = event.target.value / 100.0; strListsetFloat("damp", damp);} );
+            var smooth = 0.9;
+            document.getElementById("range1").addEventListener("input", (event) => { smooth = event.target.value / 100.0; strListsetFloat("smooth", smooth);} );
 
             // Enumerations
             const CD_types = {
@@ -278,6 +278,7 @@
                     this.pos = v3_new(); // should not be set directly, affect accel and speed
                     this.pSpeed = v3_new(); // should always be calculated, not set
                     
+                    this.effectiveSpeed = [0.0, 0.0, 0.0];
                     
                     this.p0 = [0.0, 0.0, 0.0]; // original pLast before CD
                     this.pLast = v3_new();
@@ -309,6 +310,9 @@
                     this.CD_l = 1.0;
                     this.CD_r = 0.5;
 
+
+                    this.t = 0.0;
+                    this.nt = 0;
                     this.lastHitTarget = null;
                 }
             }
@@ -420,10 +424,11 @@
             }
 
             function timeKeeping(newTime) {
-                timeDelta = ((newTime - timeLast) * timeScale) / 1000.0;
-                if (run || (step)) time += timeDelta;
+                var jitter = Math.random();
+                if (jitter < 0.125) jitter = 0.5; else if (jitter > 0.875) jitter = 1.5; else jitter = 1.0;
+                timeDelta = ((newTime - timeLast) * timeScale) / 1000.0 * jitter;
+                if (run || step) time += timeDelta;
                 timeLast = newTime;
-                // TODO: add time jitter to verify physics
             }
 
             function updateInputs() {
@@ -529,12 +534,16 @@
 
                     // stats and shit
                     strListset("time", time.toFixed(2));
+                    strListsetFloat("timeDelta", timeDelta);
                     strListset("nb Obj", objList.length);
                     strListset("current i", currentI);
 
                     // pre
                     // update position
                     for (let entity of objList) {
+                        entity.t = 0.0;
+                        entity.nt = 0;
+                        entity.lastHitTarget = null;
 
                         if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
 
@@ -553,6 +562,7 @@
 
                             entity.pSpeed[1] -= g_iss * timeDelta;
                             v3_addscaled_mod(entity.pos, entity.pSpeed, timeDelta);
+                            //entity.pos[1] = entity.pos[1] - (g_iss * timeDelta * timeDelta);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
                             
@@ -624,7 +634,8 @@
                     
                     //post
                     for (entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
-                      entity.pSpeed[1] = (entity.pos[1] - entity.pLast[1]) / timeDelta; 
+                        entity.pSpeed[1] = (entity.pos[1] - entity.pLast[1]) / timeDelta; 
+                        v3_subinvscaled_res(entity.effectiveSpeed, entity.pos, entity.pLast, timeDelta);
                     }
 
                     var firstDynamic = -1;
@@ -691,37 +702,72 @@
                 hitList = hitList.concat(hits);
             }
 
-            function resolve_stick(h) { };
+            function resolve_stick(h) { 
+
+
+
+            };
+
             function resolve_bounce(h) { };
 
             function resolve_slide(h) {
                 h.source.lastHitTarget = h.target;
+                h.source.nt++;
+                let local_t = h.source.t + ((1.0 - h.source.t) * h.t);
 
                 if (h.pre) {
                     v3_copy(h.source.pLast, h.p0);
-                    v3_sub_res(h.source.pDelta, h.p1, h.p0);
-                    shorten(h.source.pDelta, amort * timeDelta);
-                    v3_scale_mod(h.source.pDelta, damp);
-                    v3_add_res(h.source.pos, h.p0, h.source.pDelta);
-                    v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta);
+                    v3_copy(h.source.pos, h.p1);
+                    //v3_sub_res(h.source.pDelta, h.p1, h.p0);
+                    //shorten(h.source.pDelta, short * timeDelta);
+                    //v3_scale_mod(h.source.pDelta, getF(smooth, timeDelta));
+                    //v3_sub_res(h.source.pLast, h.p1, h.source.pDelta);
+                    //v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta);
+                    //h.source.deltaLength = v3_length(h.source.pDelta);
+                    var deltaY = h.p1[1] - h.source.pLast[1];
+                    if (deltaY / timeDelta < -10) { // slide limit
+                        v3_copy(h.source.pos, h.p0);
+                        v3_copy(h.source.pLast, h.p0);
+                        v3_reset(h.source.pDelta);
+                        v3_reset(h.source.pSpeed);
+                        h.source.deltaLength = 0.0;
+                    }
                 } else {
-                    v3_copy(h.source.pLast, h.p0);
-                    v3_sub_res(h.source.pDelta, h.p1, h.p0);
-                    shorten(h.source.pDelta, amort * timeDelta);
-                    v3_scale_mod(h.source.pDelta, damp);
-                    v3_add_res(h.source.pos, h.p0, h.source.pDelta);
-                    v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta * (1.0 - h.t));
-                }
-                
-                h.source.deltaLength = v3_length(h.source.pDelta);
+                    let remainingTimeDelta = timeDelta * (1.0 - local_t);
 
-                if (v3_NaN(h.source.pos)) throw("broken pos");
+                    var deltaY = h.p1[1] - h.source.pLast[1];
+                    if ((deltaY / remainingTimeDelta) < -10) { // slide limit
+                        v3_copy(h.source.pLast, h.p0);
+                        v3_copy(h.source.pos, h.p1);
+                        v3_sub_res(h.source.pDelta, h.p1, h.p0);
+                        v3_invscale_res(h.source.pSpeed, h.source.pDelta, remainingTimeDelta);
+                        h.source.deltaLength = v3_length(h.source.pDelta);
+                    } else { //stick
+                        v3_copy(h.source.pos, h.p0);
+                        v3_copy(h.source.pLast, h.p0);
+                        v3_reset(h.source.pDelta);
+                        v3_reset(h.source.pSpeed);
+                        h.source.deltaLength = 0.0;
+                    }
+                    //if (h.t > 1.0) throw new Error("broken t >1");
+                    //if (h.t < 0.0) throw new Error("broken t <0");
+                }                
+                h.source.t = local_t;
+
+                
+                if (h.source == objList[CTRL_obj]) strListset("h[" + h.source.nt + "]", h.source.t.toFixed(3) + " " + h.pre);
+                if (v3_NaN(h.source.pos)) throw new Error("broken pos");
                 if (v3_NaN(h.source.pSpeed)) throw new Error("broken pSpeed");
                 if (v3_NaN(h.source.pLast)) throw new Error("broken pLast");
             }
 
+            function getF(f, step) {
+                var nf = Math.pow(1.0 - f, (step / 0.1)) - 1.0;
+                return (nf < 1.0) ? -nf : 1.0;
+            }
             function shorten(v, f) {
                 var l = v3_length(v);
+                if (l < _v3_epsilon) return;
                 var l2 = l - f;
                 if (l2 < 0.0) l2 = 0.0;
                 v3_scale_mod(v, l2/l);
@@ -793,11 +839,13 @@
                 let pos0_dot = v3_offset_dot(src_p0, tgt_p, target.CD_n); strListsetFloat("cl pos0_dot", pos0_dot);
                 let pos1_dot = v3_offset_dot(src_p1, tgt_p, target.CD_n); strListsetFloat("cl pos1_dot", pos1_dot);
 
+                let t = pos0_dot / (pos0_dot - pos1_dot);
+                if (Math.abs(pos0_dot - pos1_dot) < _v3_epsilon) t = 1.0;
 
                 if ((pos0_dot > 0.0) && (pos1_dot < 0.0)) {
                     // face to face, from the front
                     let nh = newHit(source, target);
-                    nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
+                    nh.t = t; strListsetFloat("cl source.hit_t", nh.t);
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
                     v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
@@ -810,8 +858,8 @@
                     strListset("cl pre", nh.pre);
                 } else if ((pos0_dot < pos1_dot) && (pos1_dot >= (-2 * source.CD_r)) && (pos1_dot < 0.0)) {
                     // on the line, from the back
-                    let nh = newHit(source, target);                    
-                    nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
+                    /*let nh = newHit(source, target);                    
+                    nh.t = 0.0; strListsetFloat("cl source.hit_t", nh.t);
                     if (isNaN(nh.t)) throw new Error("broken t NaN");
 
                     v3_addscaled_res(nh.p0, source.pLast, target.CD_n, -pos0_dot - 0.001);
@@ -819,20 +867,19 @@
 
                     v3_copy(nh.n, target.CD_n);
 
-                    nh.pre = true;
-                    strListset("cl pre", "back");
+                    nh.pre = "back";
+                    strListset("cl pre", "back");*/
                 } else if ((pos0_dot > pos1_dot) && (pos0_dot <= 0.0) && (pos0_dot >= -source.CD_r)) {
                     // on the line, from the front
                     let nh = newHit(source, target);                    
-                    nh.t = pos0_dot / (pos0_dot - pos1_dot); strListsetFloat("cl source.hit_t", nh.t);
-                    if (isNaN(nh.t)) throw new Error("broken t NaN");
+                    nh.t = 0.0; strListsetFloat("cl source.hit_t", nh.t);
+                    if (isNaN(nh.t) || (nh.t > 100.0) || (nh.t < -100.0)) throw new Error("broken t " + nh.t);
 
                     v3_addscaled_res(nh.p0, source.pLast, target.CD_n, -pos0_dot - 0.001);
-                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
+                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos0_dot - 0.001);
 
                     v3_copy(nh.n, target.CD_n);
-
-                    nh.pre = true;
+                    nh.pre = "front";
                     strListset("cl pre", "front");
                 }
             }
@@ -913,7 +960,7 @@
             var clear = true;
             var run = true;
             var step = false;
-            var anim = false;
+            var anim = true;
             var breakAtHit = false;
             var wobble = false;
             function drawScene(){
@@ -951,7 +998,7 @@
                 // draw objects
                 ctx.setLineDash([1]); //solid line
 
-                if (drawCD) for (h of hitList) {
+                if (drawCD) for (let h of hitList) {
                     ctx.strokeStyle = h.pre ? "#FF0" : "#F00";
                     ctx.beginPath();
                         circle(h.p0[0], h.p0[1], h.source.CD_r - 0.001); 
@@ -1160,7 +1207,7 @@
     <div class="E3D_fullscreenContainer">
         <canvas id="canvas" width="1920" height="1080">Canvas</canvas>
         <div id="log"></div>
-        <div id="settings">Shorten<input type="range" id="range0" value="10" min="0" max="30">, Ammort <input type="range" id="range1" value="95" min="50" max="100"> </div>
+        <div id="settings">Short<input type="range" id="range0" value="10" min="0" max="30">, Smooth <input type="range" id="range1" value="90" min="50" max="100"> </div>
     </div>
 </body>
 
