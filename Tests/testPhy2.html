@@ -304,7 +304,6 @@
                     this.pSpeed = v3_new(); // should always be calculated, not set
                     
                     this.effectiveSpeed = [0.0, 0.0, 0.0];
-                    this.effectiveTimeDelta = 0.0;
                     
                     this.p0 = [0.0, 0.0, 0.0]; // original pLast before CD
                     this.pLast = v3_new();
@@ -429,6 +428,7 @@
             var timeLast = 0;
             var timeDelta = 0;
             var timeScale = 1.0;
+            var timeAverage = 0.01;
             var frame = 0;
             var frameInterval = 5; // update scene every "frameInterval" frames
 
@@ -458,6 +458,8 @@
                     if (jitter < 0.125) jitter = 0.5; else if (jitter > 0.875) jitter = 1.5; else jitter = 1.0;
                 } else jitter = 1.0;
                 timeDelta = ((newTime - timeLast) * timeScale) / 1000.0 * jitter;
+                timeAverage = (0.9 * timeAverage) + (0.1 * timeDelta);
+                if (timeDelta > (3.0 * timeAverage)) timeDelta = timeAverage;                
                 if (run || step) time += timeDelta;
                 timeLast = newTime;
             }
@@ -566,8 +568,9 @@
                     // stats and shit
                     strListset("time", time.toFixed(2));
                     strListsetFloat("timeDelta", timeDelta);
+                    strListsetFloat("timeAverage", timeAverage);
                     strListset("nb Obj", objList.length);
-                    strListset("current i", currentI);
+                    //strListset("current i", currentI);
 
                     // pre
                     // update position
@@ -633,8 +636,15 @@
                     hitList = [];
                     CD_static();
                     if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
+
                     // all single batch
                     //for (let current_hit of hits) resolve_slide(current_hit);
+
+                    // first pass all "pre"
+                    // iter passes of shortest "t" if different source
+
+                    // first pass all "pre"
+                    // iter passes of shortest "t", walking every object by at least "step" "t"
 
                     // iter
                     const max_iter = 10;
