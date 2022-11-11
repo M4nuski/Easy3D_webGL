@@ -615,7 +615,7 @@
                             // different source
                             current_hit = hits[0];
                         }
-                        resolve_slide(current_hit);
+                        resolve_stick(current_hit);
                         last_src = current_hit.source;
                         last_tgt = current_hit.target;
                         CD_static();
@@ -703,9 +703,14 @@
             }
 
             function resolve_stick(h) { 
-
-
-
+                h.source.lastHitTarget = h.target;
+                h.source.nt++;
+                h.source.t = h.source.t + ((1.0 - h.source.t) * h.t);
+                v3_copy(h.source.pos, h.p0);
+                v3_copy(h.source.pLast, h.p0);
+                v3_reset(h.source.pDelta);
+                v3_reset(h.source.pSpeed);
+                h.source.deltaLength = 0.0;
             };
 
             function resolve_bounce(h) { };
@@ -717,20 +722,14 @@
 
                 if (h.pre) {
                     v3_copy(h.source.pLast, h.p0);
-                    v3_copy(h.source.pos, h.p1);
-                    //v3_sub_res(h.source.pDelta, h.p1, h.p0);
-                    //shorten(h.source.pDelta, short * timeDelta);
-                    //v3_scale_mod(h.source.pDelta, getF(smooth, timeDelta));
-                    //v3_sub_res(h.source.pLast, h.p1, h.source.pDelta);
-                    //v3_invscale_res(h.source.pSpeed, h.source.pDelta, timeDelta);
-                    //h.source.deltaLength = v3_length(h.source.pDelta);
                     var deltaY = h.p1[1] - h.source.pLast[1];
                     if (deltaY / timeDelta < -10) { // slide limit
                         v3_copy(h.source.pos, h.p0);
-                        v3_copy(h.source.pLast, h.p0);
                         v3_reset(h.source.pDelta);
                         v3_reset(h.source.pSpeed);
                         h.source.deltaLength = 0.0;
+                    } else {
+                        v3_copy(h.source.pos, h.p1);
                     }
                 } else {
                     let remainingTimeDelta = timeDelta * (1.0 - local_t);
