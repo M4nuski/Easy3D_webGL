@@ -156,13 +156,14 @@
                     ctx.clearRect(0, 0, width, height);
                     currentI = -1;
                     strList.clear();
+                    makeControlledObj();
                 }
                 if (event.key == "Enter") {
                     run = false;
                     step = true;
                 }
-                if (event.key == "a") {
-                    anim = !anim;
+                if (event.key == "t") {
+                    trace = !trace;
                 } 
                 if (event.key == "b") {
                     breakAtHit = !breakAtHit;
@@ -173,8 +174,16 @@
                 if (event.key == "z") {
                     drawCD = !drawCD;
                 }
+                if (event.key == "p") {
+                    drawPath = !drawPath;
+                }
                 if (event.key == "j") {
                     timeJitter = !timeJitter;
+                }
+                if (event.key == "m") {
+                    if (mode == "stick") mode = "slide";
+                    else if (mode == "slide") mode = "bounce";
+                    else if (mode == "bounce") mode = "stick";
                 }
 
                 if (event.code == "Digit1") {
@@ -244,7 +253,7 @@
                 c.style.left = (canvasOffsetX - (c.offsetWidth  - c.width)  / 2 ) + "px"; 
             }
 
-            var short = 5;
+            var short = 2.5;
             document.getElementById("range0").addEventListener("input", (event) => { short = Number(event.target.value) / 2.0; strListsetFloat("short", short);} );
 
             var smooth = 0.9;
@@ -358,22 +367,21 @@
             var hits = [];
             var hitList = [];
             var objList = [];
-            var drawCD = true;
 
-            var lobi = objList.push(new obj)-1;
+            var lobi = objList.push(new obj())-1;
             objList[lobi].pos = [ 0.0 ,-2.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
             objList[lobi].CD_n = v3_normalize_new([-0.2, 1.0, 0.0]);
             objList[lobi].CD_l = 10.0;
 
-            /*lobi = objList.push(new obj)-1;
+            /*lobi = objList.push(new obj())-1;
             objList[lobi].pos = [ 0.8, 0.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.POINT;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];*/
 
-            /*lobi = objList.push(new obj)-1;
+            /*lobi = objList.push(new obj())-1;
             objList[lobi].pos = [ -0.5, 0.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.CIRCLE;
@@ -381,16 +389,19 @@
             objList[lobi].CD_r = 0.05;*/
 
 
-            let CTRL_obj = objList.push(new obj)-1;
-            objList[CTRL_obj].pos = [ -0.5, -0.5, 0];
-            objList[CTRL_obj].pLast = v3_clone(objList[CTRL_obj].pos);
-            objList[CTRL_obj].CD_mode = CD_modes.CONTROLLED;
-            objList[CTRL_obj].CD_type = CD_types.CIRCLE;
-            objList[CTRL_obj].CD_r = 0.5;
-            objList[CTRL_obj].CD_p = [0, 0, 0];
-
+            let CTRL_obj = 0;
+            function makeControlledObj() {
+                CTRL_obj = objList.push(new obj())-1;
+                objList[CTRL_obj].pos = [ -0.5, -0.5, 0];
+                objList[CTRL_obj].pLast = v3_clone(objList[CTRL_obj].pos);
+                objList[CTRL_obj].CD_mode = CD_modes.CONTROLLED;
+                objList[CTRL_obj].CD_type = CD_types.CIRCLE;
+                objList[CTRL_obj].CD_r = 0.5;
+                objList[CTRL_obj].CD_p = [0, 0, 0];
+            }
+            makeControlledObj();
 /*
-            lobi = objList.push(new obj)-1;
+            lobi = objList.push(new obj())-1;
             objList[lobi].pos = [0.1, 0.125, 0 ];
             objList[lobi].pLast = [0.1, 0.125, 0 ];
             objList[lobi].CD_type = CD_types.CAPSULE;
@@ -399,7 +410,7 @@
             objList[lobi].CD_r = 0.05;
             objList[lobi].CD_n = v3_normalize_new([1, 0.2, 0]);*/
 
-            lobi = objList.push(new obj)-1;
+            lobi = objList.push(new obj())-1;
             objList[lobi].pos = [ -7.0, -3.0, 0];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
@@ -430,6 +441,7 @@
                     timeKeeping(t);
 
                     updateInputs();
+                    updateConfig();
                     if (run || (step)) {
                         updateScene();
                         drawScene();
@@ -637,7 +649,10 @@
                             // different source
                             current_hit = hits[0];
                         }
-                        resolve_bounce(current_hit);
+                        if (mode == "stick") resolve_stick(current_hit);
+                        if (mode == "slide") resolve_slide(current_hit);
+                        if (mode == "bounce") resolve_bounce(current_hit);
+
                         last_src = current_hit.source;
                         last_tgt = current_hit.target;
                         CD_static();
@@ -727,8 +742,10 @@
                 h.source.lastHitTarget = h.target;
                 h.source.nt++;
                 h.source.t = h.source.t + ((1.0 - h.source.t) * h.t);
-                v3_copy(h.source.pos, h.p0);
+                strListset("res", "stick");
+
                 v3_copy(h.source.pLast, h.p0);
+                v3_copy(h.source.pos, h.p0);
                 v3_reset(h.source.pDelta);
                 v3_reset(h.source.pSpeed);
                 h.source.deltaLength = 0.0;
@@ -737,48 +754,45 @@
             function resolve_bounce(h) { 
                 h.source.lastHitTarget = h.target;
                 h.source.nt++;
-                let local_t = h.source.t + ((1.0 - h.source.t) * h.t);
-                strListset("res.b", "bounce");
-                if (h.pre) {
+                let local_t = h.source.t + ((1.0 - h.source.t) * h.t);              
+
+                if (h.pre) { // stick
                     v3_copy(h.source.pLast, h.p0);
-                    var deltaY = h.p1[1] - h.source.pLast[1];
-                    
-                    if (deltaY / timeDelta < -10) { // slide limit
-                        v3_copy(h.source.pos, h.p0);
-                        v3_reset(h.source.pDelta);
-                        v3_reset(h.source.pSpeed);
-                        h.source.deltaLength = 0.0;
-                        strListset("res.b", "pre u/l");
-                    } else {
-                        v3_copy(h.source.pos, h.p1);
-                        strListset("res.b", "pre slide");
-                    }
+                    v3_copy(h.source.pos, h.p0); 
+                    v3_reset(h.source.pDelta);
+                    v3_reset(h.source.pSpeed);
+                    h.source.deltaLength = 0.0;
+                    strListset("res", "bounce.pre");
                 } else {
                     let remainingTimeDelta = timeDelta * (1.0 - local_t);
-
                     v3_copy(h.source.pLast, h.p0);
+
                     v3_reflect_res(h.source.pSpeed, h.source.effectiveSpeed, h.n);
                     h.source.pSpeed[1] -= g_iss * remainingTimeDelta;
                     v3_addscaled_res(h.source.pos, h.p0, h.source.pSpeed, remainingTimeDelta);
 
-                    if (v3_offset_dot(h.source.pos, h.p0, h.n) < 0.0) { //sanity check
-                        v3_copy(h.source.pLast, h.p0);
-                        var deltaY = h.p1[1] - h.source.pLast[1];
-                        if (deltaY / remainingTimeDelta < -10) { // slide limit
-                            v3_copy(h.source.pos, h.p0);
+                    if (v3_offset_dot(h.source.pos, h.p0, h.n) < 0.0) { // sanity check
+                        var deltaY = h.p1[1] - h.p0[1];
+                        if (deltaY / remainingTimeDelta < -short) { // slide limit
+                            v3_copy(h.source.pos, h.p1); // slide
+                            v3_sub_res(h.source.pDelta, h.p1, h.p0);
+                            v3_invscale_res(h.source.pSpeed, h.source.pDelta, remainingTimeDelta);
+                            h.source.deltaLength = v3_length(h.source.pDelta);
+                            strListset("res", "bounce.check.slide");
+                        } else {
+                            v3_copy(h.source.pos, h.p0); // stick
                             v3_reset(h.source.pDelta);
                             v3_reset(h.source.pSpeed);
                             h.source.deltaLength = 0.0;
-                            strListset("res.b", "san f u/l");
-                        } else {
-                            v3_copy(h.source.pos, h.p1);
-                            strListset("res.b", "san f slide");
+                            strListset("res", "bounce.check.stick");
                         }
+                    } else {
+                        v3_sub_res(h.source.pDelta, h.source.pos, h.source.pLast);
+                        h.source.deltaLength = v3_length(h.source.pDelta);
+                        strListset("res", "bounce");
                     }
+                }
 
-                    //if (h.t > 1.0) throw new Error("broken t >1");
-                    //if (h.t < 0.0) throw new Error("broken t <0");
-                }                
                 h.source.t = local_t;
                 
                 if (h.source == objList[CTRL_obj]) strListset("h[" + h.source.nt + "]", h.source.t.toFixed(3) + " " + strList.get("res.b"));
@@ -793,39 +807,32 @@
                 let local_t = h.source.t + ((1.0 - h.source.t) * h.t);
 
                 if (h.pre) {
-                    v3_copy(h.source.pLast, h.p0);
-                    var deltaY = h.p1[1] - h.source.pLast[1];
-                    if (deltaY / timeDelta < -10) { // slide limit
-                        v3_copy(h.source.pos, h.p0);
-                        v3_reset(h.source.pDelta);
-                        v3_reset(h.source.pSpeed);
-                        h.source.deltaLength = 0.0;
-                    } else {
-                        v3_copy(h.source.pos, h.p1);
-                    }
+                    v3_copy(h.source.pLast, h.p0); // fix origin
+                    v3_copy(h.source.pos, h.p0); // stick
+                    v3_reset(h.source.pDelta);
+                    v3_reset(h.source.pSpeed);
+                    h.source.deltaLength = 0.0;
+                    strListset("res", "slide.pre");
                 } else {
                     let remainingTimeDelta = timeDelta * (1.0 - local_t);
-
                     var deltaY = h.p1[1] - h.source.pLast[1];
-                    if ((deltaY / remainingTimeDelta) < -10) { // slide limit
-                        v3_copy(h.source.pLast, h.p0);
-                        v3_copy(h.source.pos, h.p1);
+                    v3_copy(h.source.pLast, h.p0);
+                    if ((deltaY / remainingTimeDelta) < -short) { // slide limit
+                        v3_copy(h.source.pos, h.p1); // slide
                         v3_sub_res(h.source.pDelta, h.p1, h.p0);
                         v3_invscale_res(h.source.pSpeed, h.source.pDelta, remainingTimeDelta);
-                        h.source.effectiveTimeDelta = remainingTimeDelta;
                         h.source.deltaLength = v3_length(h.source.pDelta);
-                    } else { //stick
-                        v3_copy(h.source.pos, h.p0);
-                        v3_copy(h.source.pLast, h.p0);
+                        strListset("res", "slide");
+                    } else {
+                        v3_copy(h.source.pos, h.p0);  // stick
                         v3_reset(h.source.pDelta);
                         v3_reset(h.source.pSpeed);
                         h.source.deltaLength = 0.0;
+                        strListset("res", "slide.stick");
                     }
-                    //if (h.t > 1.0) throw new Error("broken t >1");
-                    //if (h.t < 0.0) throw new Error("broken t <0");
-                }                
-                h.source.t = local_t;
+                }
 
+                h.source.t = local_t;
                 
                 if (h.source == objList[CTRL_obj]) strListset("h[" + h.source.nt + "]", h.source.t.toFixed(3) + " " + h.pre);
                 if (v3_isNaN(h.source.pos)) throw new Error("broken pos");
@@ -1032,27 +1039,24 @@
             var clear = true;
             var run = true;
             var step = false;
-            var anim = true;
+            var trace = true;
             var breakAtHit = false;
             var wobble = false;
             var timeJitter = true;
+            var drawCD = true;
+            var drawPath = true;
+            var mode = "slide";
+
             function drawScene(){
                 
                 // clear
                 // ctx.fillStyle = 'white';
-                if (clear || anim) ctx.clearRect(0, 0, width, height);
+                if (clear || trace) ctx.clearRect(0, 0, width, height);
                 clear = false;
 
                 // text
                 log.innerText = "";
                 strList.forEach((a, b) => { log.innerText += (b + ": " + a) + "\n"; } );
-                config.innerText = "";
-                config.innerText += "run (space): " + run + "\n";
-                config.innerText += "anim (a): " + anim + "\n";
-                config.innerText += "breakAtHit (b): " + breakAtHit + "\n";
-                config.innerText += "wobble (w): " + wobble + "\n";
-                config.innerText += "timeJitter (j): " + timeJitter + "\n";
-                config.innerText += "drawCD (z): " + drawCD + "\n";
                 
                 ctx.setLineDash([1]);
                 ctx.strokeStyle = "#888";
@@ -1115,34 +1119,39 @@
                                 lineTo(p1[0], p1[1]);
                             ctx.stroke();
                             break;
-                        case CD_types.CIRCLE:                        
-                            ctx.strokeStyle = "#080";
-                            var p0 = v3_add_new(current_obj.p0, current_obj.CD_p);
-                            ctx.beginPath();
-                                circle(p0[0], p0[1], current_obj.CD_r); 
-                            ctx.stroke();
-
-                            ctx.strokeStyle = "#008";
-                            var p1 = v3_add_new(current_obj.p1, current_obj.CD_p);
-                            ctx.beginPath();
-                                circle(p1[0], p1[1], current_obj.CD_r); 
-                            ctx.stroke();
-                            ctx.strokeStyle = "#000";
-                            ctx.beginPath();
-                                line(p0[0], p0[1], p1[0], p1[1]);
-                            ctx.stroke();
-                            p1 = v3_add_new(current_obj.pos, current_obj.CD_p);
-                            ctx.beginPath();
-                                circle(p1[0], p1[1], current_obj.CD_r); 
-                            ctx.stroke();
-
-                            if (breakAtHit) {
-                                ctx.strokeStyle = "666";
-                                v3_add_res(p0, current_obj.p1, current_obj.CD_p);
+                        case CD_types.CIRCLE:       
+                            if (drawPath) {
+                                ctx.strokeStyle = "#080";
+                                var p0 = v3_add_new(current_obj.p0, current_obj.CD_p);
                                 ctx.beginPath();
-                                    circle(p0[0], p0[1], current_obj.CD_r - 0.001); 
+                                circle(p0[0], p0[1], current_obj.CD_r); 
                                 ctx.stroke();
+                                
+                                ctx.strokeStyle = "#008";
+                                var p1 = v3_add_new(current_obj.p1, current_obj.CD_p);
+                                ctx.beginPath();
+                                circle(p1[0], p1[1], current_obj.CD_r); 
+                                ctx.stroke();
+                                
+                                ctx.strokeStyle = "#000";
+                                ctx.beginPath();
+                                    line(p0[0], p0[1], p1[0], p1[1]);
+                                ctx.stroke();
+
+                                /*if (breakAtHit) {
+                                    ctx.strokeStyle = "666";
+                                    v3_add_res(p0, current_obj.p1, current_obj.CD_p);
+                                    ctx.beginPath();
+                                        circle(p0[0], p0[1], current_obj.CD_r - 0.001); 
+                                    ctx.stroke();
+                                }*/
                             }
+
+                            ctx.strokeStyle = "#000";
+                            var p1 = v3_add_new(current_obj.pos, current_obj.CD_p);
+                            ctx.beginPath();
+                                circle(p1[0], p1[1], current_obj.CD_r); 
+                            ctx.stroke();
 
                             break;
                         case CD_types.POINT:
@@ -1212,9 +1221,21 @@
             }
 
 
+            function updateConfig(){
+                config.innerText = "";
+                config.innerText += "run (space): " + fmtBool(run);
+                config.innerText += "trace (t): " + fmtBool(trace);
+                config.innerText += "breakAtHit (b): " + fmtBool(breakAtHit);
+                config.innerText += "wobble (w): " + fmtBool(wobble);
+                config.innerText += "timeJitter (j): " + fmtBool(timeJitter);
+                config.innerText += "drawCD (z): " + fmtBool(drawCD);
+                config.innerText += "drawPath (p): " + fmtBool(drawPath);
+                config.innerText += "resolve (m): " + mode.padEnd(6, " ");
+            }
 
-
-
+            function fmtBool(b) {
+                return (b) ? "true  \n" : "false \n";
+            }
 
 
 
@@ -1288,7 +1309,7 @@
         <canvas id="canvas" width="1920" height="1080">Canvas</canvas>
         <div id="log"></div>
         <div id="config"></div>
-        <div id="settings">Short<input type="range" id="range0" value="10" min="0" max="30">, Smooth <input type="range" id="range1" value="90" min="50" max="100"> </div>
+        <div id="settings">Short<input type="range" id="range0" value="5" min="0" max="30">, Smooth <input type="range" id="range1" value="90" min="50" max="100"> </div>
     </div>
 </body>
 
