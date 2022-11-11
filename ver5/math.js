@@ -34,7 +34,7 @@ THE SOFTWARE. */
 
 // General mathematical constants
 const PIdiv2 = Math.PI / 2.0;
-const PIx2 = Math.PI * 2.0;
+const PIx2   = Math.PI * 2.0;
 
 const RadToDeg = (180.0 / Math.PI);
 const DegToRad = (Math.PI / 180.0);
@@ -45,22 +45,22 @@ const g_mss = 9.81;
 
 // Premade v3 and m4 to avoid inline creation of instances
 const _v3_origin = [ 0.0,  0.0,  0.0];
-const _v3_null =   [ 0.0,  0.0,  0.0];
-const _v3_x =      [ 1.0,  0.0,  0.0];
-const _v3_y =      [ 0.0,  1.0,  0.0];
-const _v3_z =      [ 0.0,  0.0,  1.0];
-const _v3_nx =     [-1.0,  0.0,  0.0];
-const _v3_ny =     [ 0.0, -1.0,  0.0];
-const _v3_nz =     [ 0.0,  0.0, -1.0];
-const _v3_unit =   [ 1.0,  1.0,  1.0];
-const _v3_nunit =  [-1.0, -1.0, -1.0];
+const _v3_null   = [ 0.0,  0.0,  0.0];
+const _v3_x      = [ 1.0,  0.0,  0.0];
+const _v3_y      = [ 0.0,  1.0,  0.0];
+const _v3_z      = [ 0.0,  0.0,  1.0];
+const _v3_nx     = [-1.0,  0.0,  0.0];
+const _v3_ny     = [ 0.0, -1.0,  0.0];
+const _v3_nz     = [ 0.0,  0.0, -1.0];
+const _v3_unit   = [ 1.0,  1.0,  1.0];
+const _v3_nunit  = [-1.0, -1.0, -1.0];
 
-const _v3_90x     = [ PIdiv2, 0.0, 0.0];
-const _v3_90y     = [ 0.0, PIdiv2, 0.0];
-const _v3_90z     = [ 0.0, 0.0, PIdiv2];
-const _v3_n90x    = [-PIdiv2, 0.0, 0.0];
-const _v3_n90y    = [ 0.0,-PIdiv2, 0.0];
-const _v3_n90z    = [ 0.0, 0.0,-PIdiv2];
+const _v3_90x  = [ PIdiv2, 0.0, 0.0];
+const _v3_90y  = [ 0.0, PIdiv2, 0.0];
+const _v3_90z  = [ 0.0, 0.0, PIdiv2];
+const _v3_n90x = [-PIdiv2, 0.0, 0.0];
+const _v3_n90y = [ 0.0,-PIdiv2, 0.0];
+const _v3_n90z = [ 0.0, 0.0,-PIdiv2];
 
 const _v3_epsilon = 0.00001;
 
@@ -68,23 +68,28 @@ const _m4_identity = m4_new();
 
 // Colors
 const _v3_white      = [ 1.0,  1.0,  1.0];
+const _v3_lightgray  = [ 0.75,  0.75,  0.75];
+const _v3_gray       = [ 0.50,  0.50,  0.50];
+const _v3_darkgray   = [ 0.25,  0.25,  0.25];
 const _v3_black      = [ 0.0,  0.0,  0.0];
+
 const _v3_red        = [ 1.0,  0.0,  0.0];
 const _v3_lightred   = [ 1.0,  0.5,  0.5];
 const _v3_darkred    = [ 0.5,  0.0,  0.0];
+
 const _v3_green      = [ 0.0,  1.0,  0.0];
 const _v3_lightgreen = [ 0.5,  1.0,  0.5];
 const _v3_darkgreen  = [ 0.0,  0.5,  0.0];
+
 const _v3_blue       = [ 0.0,  0.0,  1.0];
 const _v3_lightblue  = [ 0.5,  0.5,  1.0];
 const _v3_darkblue   = [ 0.0,  0.0,  0.5];
+
 const _v3_cyan       = [ 0.0,  1.0,  1.0];
 const _v3_magenta    = [ 1.0,  0.0,  1.0];
 const _v3_yellow     = [ 1.0,  1.0,  0.0];
 const _v3_orange     = [ 1.0,  0.5,  0.0];
-const _v3_gray       = [ 0.50,  0.50,  0.50];
-const _v3_lightgray  = [ 0.75,  0.75,  0.75];
-const _v3_darkgray   = [ 0.25,  0.25,  0.25];
+
 
 
 
@@ -466,7 +471,7 @@ function v3_offset_dot(point, origin, normal) {
 
 // Cross product
 function v3_cross_new(a, b) { 
-    var r =  [0, 0, 0];    
+    var r =  [0.0, 0.0, 0.0];    
     r[0] = a[1] * b[2] - a[2] * b[1];
     r[1] = a[2] * b[0] - a[0] * b[2];
     r[2] = a[0] * b[1] - a[1] * b[0];
@@ -485,11 +490,13 @@ function v3_cross_res(res, a, b) {
     res[2] = a[0] * b[1] - a[1] * b[0];
 }
 
+var __v3_angle_na = v3_new();
+var __v3_angle_nb = v3_new();
 function v3_angle(a, b) {
-    var na = v3_normalize_new(a);
-    var nb = v3_normalize_new(b);
+    v3_normalize_res(__v3_angle_na, a);
+    v3_normalize_res(__v3_angle_nb, b);
 
-    var cosine = v3_dot(na, nb);
+    var cosine = v3_dot(__v3_angle_na, __v3_angle_nb);
   
     if (cosine > 1.0) {
       return 0.0;
@@ -539,7 +546,7 @@ var __v3_normal_p21 = v3_new();
 var __v3_normal_p31 = v3_new();
 
 function v3_normal_new(p1, p2, p3) {        
-    var n = v3_new();
+    var n = [0.0, 0.0, 0.0];
 
     v3_sub_res(__v3_normal_p21, p2, p1);
     v3_sub_res(__v3_normal_p31, p3, p1);
@@ -956,7 +963,7 @@ function v3_huesweep_new(pos, max) {
     var section = Math.floor(6.0 * pos / max);
     var base = (section / 6.0) * max;
     max /= 6.0;
-    var res = v3_new();
+    var res = [0.0, 0.0, 0.0];
     switch(section) {
         case 0: // red 1, green 0-1, blue 0
             res[0] = 1.0;
@@ -1046,7 +1053,7 @@ function v3a_copy(res, a) {
 // Create new array of empty v3
 function v3a_new(n) {
     var res = new Array(n);
-    for (var i = 0; i < n; ++i) res[i] = v3_new();
+    for (var i = 0; i < n; ++i) res[i] = [0.0, 0.0, 0.0];
     return res;
 }
 
@@ -1180,7 +1187,7 @@ function v3_string(v) {
 
 // validate
 
-function v3_NaN(v) {
+function v3_isNaN(v) {
     return isNaN(v[0]) || isNaN(v[1]) || isNaN(v[2]);
 }
 

@@ -279,6 +279,7 @@
                     this.pSpeed = v3_new(); // should always be calculated, not set
                     
                     this.effectiveSpeed = [0.0, 0.0, 0.0];
+                    this.effectiveTimeDelta = 0.0;
                     
                     this.p0 = [0.0, 0.0, 0.0]; // original pLast before CD
                     this.pLast = v3_new();
@@ -544,6 +545,7 @@
                         entity.t = 0.0;
                         entity.nt = 0;
                         entity.lastHitTarget = null;
+                        entity.effectiveTimeDelta = timeDelta;
 
                         if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
 
@@ -587,6 +589,7 @@
                         if (entity.CD_mode == CD_modes.CONTROLLED) {
                             v3_copy(entity.pLast, entity.ctrlPos);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
+                            v3_invscale_res(entity.effectiveSpeed, entity.pDelta, timeDelta);
                             entity.deltaLength = v3_length(entity.pDelta);
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
 
@@ -615,7 +618,7 @@
                             // different source
                             current_hit = hits[0];
                         }
-                        resolve_stick(current_hit);
+                        resolve_bounce(current_hit);
                         last_src = current_hit.source;
                         last_tgt = current_hit.target;
                         CD_static();
@@ -635,7 +638,8 @@
                     //post
                     for (entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
                         entity.pSpeed[1] = (entity.pos[1] - entity.pLast[1]) / timeDelta; 
-                        v3_subinvscaled_res(entity.effectiveSpeed, entity.pos, entity.pLast, timeDelta);
+                      //  v3_subinvscaled_res(entity.effectiveSpeed, entity.pos, entity.pLast, entity.effectiveTimeDelta);
+                        v3_copy(entity.effectiveSpeed, entity.pSpeed);
                     }
 
                     var firstDynamic = -1;
@@ -713,7 +717,63 @@
                 h.source.deltaLength = 0.0;
             };
 
-            function resolve_bounce(h) { };
+            function resolve_bounce(h) { 
+                h.source.lastHitTarget = h.target;
+                h.source.nt++;
+                let local_t = h.source.t + ((1.0 - h.source.t) * h.t);
+                strListset("res.b", "in");
+                if (h.pre) {
+                    v3_copy(h.source.pLast, h.p0);
+                    var deltaY = h.p1[1] - h.source.pLast[1];
+                    
+                    if (deltaY / timeDelta < -10) { // slide limit
+                        v3_copy(h.source.pos, h.p0);
+                        v3_reset(h.source.pDelta);
+                        v3_reset(h.source.pSpeed);
+                        h.source.deltaLength = 0.0;
+                        strListset("res.b", "pre u/l");
+                    } else {
+                        v3_copy(h.source.pos, h.p1);
+                        strListset("res.b", "pre slide");
+                    }
+                } else {
+                    let remainingTimeDelta = timeDelta * (1.0 - local_t);
+
+                    v3_copy(h.source.pLast, h.p0);
+                    //let remDelta = v3_sub_new(h.source.pos, h.p0);
+                    //v3_reflect_mod(remDelta, h.n);
+                    v3_reflect_res(h.source.pSpeed, h.source.effectiveSpeed, h.n);
+                    h.source.pSpeed[1] -= g_iss * remainingTimeDelta;
+
+                  //  v3_invscale_res(h.source.pSpeed, remDelta, remainingTimeDelta);
+                    v3_addscaled_res(h.source.pos, h.p0, h.source.pSpeed, remainingTimeDelta);
+                    h.source.effectiveTimeDelta = remainingTimeDelta;
+
+                    if (v3_offset_dot(h.source.pos, h.p0, h.n) < 0.0) { //sanity check
+                        v3_copy(h.source.pLast, h.p0);
+                        var deltaY = h.p1[1] - h.source.pLast[1];
+                        if (deltaY / remainingTimeDelta < -10) { // slide limit
+                            v3_copy(h.source.pos, h.p0);
+                            v3_reset(h.source.pDelta);
+                            v3_reset(h.source.pSpeed);
+                            h.source.deltaLength = 0.0;
+                            strListset("res.b", "san f u/l");
+                        } else {
+                            v3_copy(h.source.pos, h.p1);
+                            strListset("res.b", "san f slide");
+                        }
+                    }
+
+                    //if (h.t > 1.0) throw new Error("broken t >1");
+                    //if (h.t < 0.0) throw new Error("broken t <0");
+                }                
+                h.source.t = local_t;
+                
+                if (h.source == objList[CTRL_obj]) strListset("h[" + h.source.nt + "]", h.source.t.toFixed(3) + " " + h.pre);
+                if (v3_isNaN(h.source.pos)) throw new Error("broken pos");
+                if (v3_isNaN(h.source.pSpeed)) throw new Error("broken pSpeed");
+                if (v3_isNaN(h.source.pLast)) throw new Error("broken pLast");
+            };
 
             function resolve_slide(h) {
                 h.source.lastHitTarget = h.target;
@@ -740,6 +800,7 @@
                         v3_copy(h.source.pos, h.p1);
                         v3_sub_res(h.source.pDelta, h.p1, h.p0);
                         v3_invscale_res(h.source.pSpeed, h.source.pDelta, remainingTimeDelta);
+                        h.source.effectiveTimeDelta = remainingTimeDelta;
                         h.source.deltaLength = v3_length(h.source.pDelta);
                     } else { //stick
                         v3_copy(h.source.pos, h.p0);
@@ -755,9 +816,9 @@
 
                 
                 if (h.source == objList[CTRL_obj]) strListset("h[" + h.source.nt + "]", h.source.t.toFixed(3) + " " + h.pre);
-                if (v3_NaN(h.source.pos)) throw new Error("broken pos");
-                if (v3_NaN(h.source.pSpeed)) throw new Error("broken pSpeed");
-                if (v3_NaN(h.source.pLast)) throw new Error("broken pLast");
+                if (v3_isNaN(h.source.pos)) throw new Error("broken pos");
+                if (v3_isNaN(h.source.pSpeed)) throw new Error("broken pSpeed");
+                if (v3_isNaN(h.source.pLast)) throw new Error("broken pLast");
             }
 
             function getF(f, step) {
