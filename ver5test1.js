@@ -30,10 +30,28 @@ let o = v3_val_new(10, 0, 20);
 let n = v3_normalize_new([ 0.0, 1.0, 1.0]);
 let v = v3_val_new(100.0, 42.0, 20.0);
 let p = v3_projection_new(v, n);
+let p2 = v3_projection3_new(v, v3_scale_new(n, 10));
 
 entity.addLineByPosNormLen(o, n, 10, false, _v3_white);
 entity.addLine(_v3_origin, v, false, _v3_red);
 entity.addLine(v, p, false, _v3_yellow);
+entity.addLine(v, p2, false, _v3_cyan);
+
+
+let capsule = {
+    l: 10.0,
+    r: 0.5,
+    p: [ 0.0, 0.0, -2.0],
+    n: v3_normal_new( [ 0.2, 1.0, 0.2] )
+}
+
+let vect = {
+    l: 20.0,
+    r: 0.5,
+    p: [ 10.0, 5.0, -2.0],
+    n: v3_normal_new( [ 0.2, 2.0, -2.0] )
+}
+
 
 entity.isVisible = true;
 E3D_addEntity(entity);
@@ -52,6 +70,7 @@ CB_tick = function() {
     }
 }
 
+// project point on plane of n
 function v3_projection_new(p, n) {
     let d = v3_dot(n, p);
     return v3_addscaled_new(p, n, -d);
@@ -65,3 +84,31 @@ function v3_projection_res(r, p, n) {
     v3_addscaled_res(r, p, n, -d);
 }
 
+//a.project(b) = b * (a.dot(b) * b.length_squared())
+//a.project(n) = n * a.dot(n)
+// project point on n
+function v3_projection2_new(p, n) {
+    let d = v3_dot(p, n);
+    return v3_scale_new(n, d);
+}
+function v3_projection2_mod(p, n) {
+    let d = v3_dot(p, n);
+    v3_scale_mod(n, d);
+}
+function v3_projection2_res(res, p, n) {
+    let d = v3_dot(p, n);
+    v3_scale_res(res, n, d);
+}
+
+function v3_projection3_new(p, v) {
+    let d = v3_dot(p, v) / v3_lengthsquared(v);
+    return v3_scale_new(v, d);
+}
+function v3_projection3_mod(p, v) {
+    let d = v3_dot(p, v) / v3_lengthsquared(v);
+    v3_scale_mod(v, d);
+}
+function v3_projection3_res(res, p, v) {
+    let d = v3_dot(p, v) / v3_lengthsquared(v);
+    v3_scale_res(res, v, d);
+}

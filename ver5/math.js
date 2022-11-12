@@ -173,7 +173,7 @@ function v3_equals(a, b, epsilon = _v3_epsilon) {
 
 // Clamp each components to min and max
 function v3_clamp_new(a, min, max) {
-    var res = v3_clone(a); // TODO inline
+    var res = [a[0], a[1], a[2]]; 
     if (res[0] < min) res[0] = min;
     if (res[0] > max) res[0] = max;
     if (res[1] < min) res[1] = min;

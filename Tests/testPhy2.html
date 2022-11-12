@@ -895,34 +895,33 @@
 
                 let v_dot = v3_offset_dot(tgt_p, src_p0, source.pDelta) / source.deltaLength; strListsetFloat("cp v_dot", v_dot);                
 
-                if ((v_dot >= 0.0) && (v_dot <= (source.CD_r + source.deltaLength))) {
+                if ((v_dot < 0.0) || (v_dot > (source.CD_r + source.deltaLength))) return;
 
-                    let hypSq = v3_distancesquared(tgt_p, src_p0);
-                    let distSq = hypSq - (v_dot * v_dot); strListsetFloat("cp distSq", distSq);
-                    if (distSq < 0) return;
+                let hypSq = v3_distancesquared(tgt_p, src_p0);
+                let distSq = hypSq - (v_dot * v_dot); strListsetFloat("cp distSq", distSq);
+                if (distSq < 0) return;
 
-                    let circle_rSq = source.CD_r * source.CD_r;
-                    if (distSq > circle_rSq) return;
+                let circle_rSq = source.CD_r * source.CD_r;
+                if (distSq > circle_rSq) return;
 
-                    var offset = Math.sqrt(circle_rSq - distSq);
-                    if (isNaN(offset)) return;
+                var offset = Math.sqrt(circle_rSq - distSq);
+                if (isNaN(offset)) return;
 
-                    let t0 = v_dot - offset; strListsetFloat("cp v_dot-o", t0);
-                    let t1 = v_dot + offset; strListsetFloat("cp v_dot+o", t1);
-                    if (t1 < 0.0) return;
+                let t1 = v_dot + offset; strListsetFloat("cp v_dot+o", t1);
+                if (t1 < 0.0) return;
+                let t0 = v_dot - offset; strListsetFloat("cp v_dot-o", t0);
 
-                    let nh = newHit(source, target);
-                    nh.t = t0 / source.deltaLength; strListsetFloat("cp source.hit_t", nh.t);
-                    v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
-                    v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
-                    v3_addscaled_mod(nh.p0, nh.n, 0.001);
-                    v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
-                    let projvect = v3_sub_new(nh.p1, nh.p0);
-                    v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
-                    v3_add_res(nh.p1, nh.p0, projvect);
+                let nh = newHit(source, target);
+                nh.t = t0 / source.deltaLength; strListsetFloat("cp source.hit_t", nh.t);
+                v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
+                v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
+                v3_addscaled_mod(nh.p0, nh.n, 0.001);
+                v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                let projvect = v3_sub_new(nh.p1, nh.p0);
+                v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
+                v3_add_res(nh.p1, nh.p0, projvect);
 
-                    nh.pre = (v_dot < 0.0);
-                }
+                nh.pre = (v_dot < 0.0);
             }
 
             function CD_dyn_sta_circle_line(source, target) {
@@ -978,82 +977,90 @@
 
                 let v_dot = v3_offset_dot(tgt_p, src_p0, source.pDelta) / source.deltaLength; strListsetFloat("cci v_dot", v_dot);                
 
-                if ((v_dot >= 0.0) && (v_dot <= (radSum + source.deltaLength))) {
+                if ((v_dot < 0.0) || (v_dot > (radSum + source.deltaLength))) return;
 
-                    let hypSq = v3_distancesquared(tgt_p, src_p0);
-                    let distSq = hypSq - (v_dot * v_dot); strListsetFloat("cci distSq", distSq);
-                    if (distSq < 0) return;
+                let hypSq = v3_distancesquared(tgt_p, src_p0);
+                let distSq = hypSq - (v_dot * v_dot); strListsetFloat("cci distSq", distSq);
+                if (distSq < 0) return;
 
-                    radSum = radSum * radSum;
-                    if (distSq > radSum) return; 
+                radSum = radSum * radSum;
+                if (distSq > radSum) return; 
 
-                    var offset = Math.sqrt(radSum - distSq);
-                    if (isNaN(offset)) return;
+                var offset = Math.sqrt(radSum - distSq);
+                if (isNaN(offset)) return;
 
-                    let t0 = v_dot - offset; strListsetFloat("cci v_dot-o", t0);
-                    let t1 = v_dot + offset; strListsetFloat("cci v_dot+o", t1);
-                    if (t1 < 0.0) return;
+                let t1 = v_dot + offset; strListsetFloat("cci v_dot+o", t1);
+                if (t1 < 0.0) return;
+                let t0 = v_dot - offset; strListsetFloat("cci v_dot-o", t0);
 
+                let nh = newHit(source, target);                          
+                nh.t = t0 / source.deltaLength; strListsetFloat("cci source.hit_t", nh.t);
+                v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
+                v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
+                v3_addscaled_mod(nh.p0, nh.n, 0.001);
+                v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                let projvect = v3_sub_new(nh.p1, nh.p0);
+                v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
+                v3_add_res(nh.p1, nh.p0, projvect);
+
+                nh.pre = (v_dot < 0.0);
+            }
+
+            function CD_dyn_sta_circle_capsule(source, target) {
+                strListset("cca check", 0);
+                let src_p0 = v3_add_new(source.pLast, source.CD_p);
+                let src_p1 = v3_add_new(source.pos, source.CD_p);
+                let tgt_p0 = v3_add_new(target.pos, target.CD_p);
+
+                // shift perspective along capsule n
+                let src_p0p = v3_offset_proj_new(src_p0, tgt_p0, target.CD_n);
+                let src_p1p = v3_offset_proj_new(src_p1, tgt_p0, target.CD_n);
+
+                let src_deltapn = v3_sub_new(src_p1p, src_p0p);
+                let src_deltaLengthp = v3_length(src_deltapn); strListsetFloat("cca src_deltaLengthp", src_deltaLengthp);
+                v3_invscale_mod(src_deltapn, src_deltaLengthp);
+
+                let prj_dot0 = v3_offset_dot(tgt_p0, src_p0p, src_deltapn); strListsetFloat("cca p_dot0 r", prj_dot0);
+                                                                           v3_addscaled_res(marker0, src_p0, source.pDelta, prj_dot0 / src_deltaLengthp);
+                let radSum = source.CD_r + target.CD_r;
+                if ((prj_dot0 < -radSum) || (prj_dot0 > radSum + src_deltaLengthp)) return;
+                strListset("cca check", 1); // pDelta intersect projection of capsule as circle
+
+                let closest_p = v3_addscaled_new(src_p0p, src_deltapn, prj_dot0);
+                let closest_distSq = v3_distancesquared(closest_p, tgt_p0);
+                let radSumSq = radSum * radSum;
+                if (closest_distSq > radSumSq) return; 
+                strListset("cca check", 2);  // closest point is closer than sum of radii
+
+                // get t0 and t1
+                let offset = Math.sqrt(radSumSq - closest_distSq);
+                let t1 = prj_dot0 + offset; strListsetFloat("ca v_dot+o", t1);
+                if (t1 < 0.0) return;
+                let t0 = prj_dot0 - offset; strListsetFloat("ca v_dot-o", t0);
+
+                strListset("cca check", 3); // at least 1 hit along the line
+
+                let cyl_hit_p = v3_addscaled_new(src_p0, source.pDelta, t0 / src_deltaLengthp); v3_copy(marker1, cyl_hit_p);
+                let cap_dot0 = v3_offset_dot(cyl_hit_p, tgt_p0, target.CD_n);
+
+                if (cap_dot0 <= 0) { // test first endcap
+                    strListset("cca check", "cap0");
+                } else if (cap_dot0 >= target.CD_l) { // test second endcap
+                    strListset("cca check", "cap1");
+                } else { // hit along side
+                    strListset("cca check", "mid");
                     let nh = newHit(source, target);                          
-                    nh.t = t0 / source.deltaLength; strListsetFloat("cci source.hit_t", nh.t);
+                    nh.t = t0 / src_deltaLengthp;
                     v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
-                    v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
+                    v3_addscaled_res(closest_p, tgt_p0, target.CD_n, cap_dot0);
+                    v3_normalize_res(nh.n, v3_sub_new(cyl_hit_p, closest_p));
                     v3_addscaled_mod(nh.p0, nh.n, 0.001);
                     v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
                     let projvect = v3_sub_new(nh.p1, nh.p0);
                     v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
                     v3_add_res(nh.p1, nh.p0, projvect);
 
-                    nh.pre = (v_dot < 0.0);
-                }
-            }
-            function CD_dyn_sta_circle_capsule(source, target) {
-                // TODO with sph-line logic...
-                strListset("cca check", 0);
-                let src_p0 = v3_add_new(source.pLast, source.CD_p);
-                let src_p1 = v3_add_new(source.pos, source.CD_p);
-                let tgt_p0 = v3_add_new(target.pos, target.CD_p);
-                let tgt_p1 = v3_addscaled_new(tgt_p0, target.CD_n, target.CD_l);
-
-                // shift perspective along pDelta vector
-                let src_n = v3_normalizedelta_new(src_p1, src_p0);
-                let tgt_p0p = v3_offset_proj_new(tgt_p0, src_p0, src_n);
-                let tgt_p1p = v3_offset_proj_new(tgt_p1, src_p0, src_n);
-
-                let tgt_np = v3_sub_new(tgt_p1p, tgt_p0p);
-                let l_np = v3_length(tgt_np);
-                v3_invscale_mod(tgt_np, l_np);
-                let prj_dot0 = v3_offset_dot(src_p0, tgt_p0p, tgt_np); strListsetFloat("cca p_dot0 r", prj_dot0);
-                let prj_dot1 = v3_offset_dot(src_p0, tgt_p1p, tgt_np); strListsetFloat("cca p_dot1 r", prj_dot1);
-
-                let radSum = source.CD_r + target.CD_r;
-                if ((prj_dot0 < -radSum) || (prj_dot1 > radSum)) return;
-                strListset("cca check", 1);
-
-                prj_dot0 = prj_dot0 / l_np * target.CD_l; strListsetFloat("cca p_dot0", prj_dot0);
-                prj_dot1 = prj_dot1 / l_np * target.CD_l; strListsetFloat("cca p_dot1", prj_dot1);
-
-                let intersect_p = v3_addscaled_new(tgt_p0, target.CD_n, prj_dot0); v3_copy(marker0, intersect_p);
-                let p0toIntersect_distSq = v3_distancesquared(src_p0, intersect_p);
-                let p0fromIntersect_dot = v3_offset_dot(src_p0, intersect_p, target.CD_n);
-                let dist = p0toIntersect_distSq - (p0fromIntersect_dot * p0fromIntersect_dot); strListsetFloat("cca dist", dist);
-                if (dist < 0) return;
-                strListset("cca check", 2);
-                dist = Math.sqrt(dist);
-
-                let tangential_p = prj_dot0 + p0fromIntersect_dot * (radSum / dist);
-                v3_addscaled_res(marker1, tgt_p0, target.CD_n, tangential_p); strListsetFloat("cca tangential_p", tangential_p);
-
-                if ((tangential_p < -radSum) || (tangential_p > radSum + target.CD_l)) return;
-                strListset("cca check", 3);
-
-                if ((tangential_p > 0.0) && (tangential_p < target.CD_l)) {
-                    // check for middle it
-                    strListset("cca check", "mid");
-
-                } else {
-                    // else check for endcap hit
-                    strListset("cca check", "cap");
+                    nh.pre = (prj_dot0 < radSum);
                 }
             }
 
