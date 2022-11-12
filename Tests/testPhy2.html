@@ -303,6 +303,7 @@
                     this.pos = v3_new(); // should not be set directly, affect accel and speed
                     this.pSpeed = v3_new(); // should always be calculated, not set
                     
+                    this.gFactor = 1.0;
                     this.effectiveSpeed = [0.0, 0.0, 0.0];
                     
                     this.p0 = [0.0, 0.0, 0.0]; // original pLast before CD
@@ -488,6 +489,7 @@
 
                     objList[currentI].rad = 0.2 + (Math.random() * 1.0);
                     objList[currentI].CD_r = objList[currentI].rad;
+                    objList[currentI].gFactor = Math.random() * 0.5 + 0.5;
 
                 }
                 if (mouseDn1) {
@@ -588,7 +590,7 @@
                             // position            
                             v3_copy(entity.pLast, entity.pos);
 
-                            entity.pSpeed[1] -= g_iss * timeDelta;
+                            entity.pSpeed[1] -= g_iss * timeDelta * entity.gFactor;
                             v3_addscaled_mod(entity.pos, entity.pSpeed, timeDelta);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
@@ -751,7 +753,7 @@
                     v3_copy(h.source.pLast, h.p0);
 
                     v3_reflect_res(h.source.pSpeed, h.source.effectiveSpeed, h.n);
-                    h.source.pSpeed[1] -= g_iss * remainingTimeDelta;
+                    h.source.pSpeed[1] -= g_iss * remainingTimeDelta * h.source.gFactor;
                     v3_addscaled_res(h.source.pos, h.p0, h.source.pSpeed, remainingTimeDelta);
 
                     if (v3_offset_dot(h.source.pos, h.p0, h.n) < 0.0) { // sanity check
