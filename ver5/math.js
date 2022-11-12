@@ -7,7 +7,9 @@
 //      _mod modifies the first parameter object: add(a, b) -> a = a + b
 //      _res writes the result in the supplied object: add(r, a, b) -> r = a + b
 
-// Emmanuel Charette 2017-2020
+// Emmanuel Charette 2017-2022
+
+// TODO profile and flatten most used functions
 
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 

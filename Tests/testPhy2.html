@@ -374,11 +374,11 @@
             objList[lobi].CD_n = v3_normalize_new([-0.2, 1.0, 0.0]);
             objList[lobi].CD_l = 10.0;
 
-            /*lobi = objList.push(new obj())-1;
-            objList[lobi].pos = [ 0.8, 0.0, 0.0 ];
+            lobi = objList.push(new obj())-1;
+            objList[lobi].pos = [ 2.0, 2.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.POINT;
-            objList[lobi].CD_p = [0.0, 0.0, 0.0];*/
+            objList[lobi].CD_p = [0.0, 0.0, 0.0];
 
             /*lobi = objList.push(new obj())-1;
             objList[lobi].pos = [ -0.5, 0.0, 0.0 ];
@@ -854,12 +854,40 @@
                 var nf = Math.pow(1.0 - f, (step / 0.1)) - 1.0;
                 return (nf < 1.0) ? -nf : 1.0;
             }
-            function shorten(v, f) {
-                var l = v3_length(v);
-                if (l < _v3_epsilon) return;
-                var l2 = l - f;
-                if (l2 < 0.0) l2 = 0.0;
-                v3_scale_mod(v, l2/l);
+            function v3_shorten_mod(v, len) {
+                let alen = v3_length(v);
+                if (alen < _v3_epsilon) return;
+                let tlen = alen - len;
+                if (tlen <= 0.0) {
+                    v[0] = 0.0;
+                    v[1] = 0.0;
+                    v[2] = 0.0;
+                } else {
+                    v[0] = v[0] * tlen / alen;
+                    v[1] = v[1] * tlen / alen;
+                    v[2] = v[2] * tlen / alen;
+                }
+            }
+            function v3_setlength_mod(v, len) {
+                let alen = v3_length(v);
+                if (alen < _v3_epsilon) return;
+                v[0] = v[0] * len / alen;
+                v[1] = v[1] * len / alen;
+                v[2] = v[2] * len / alen;
+            }
+            function v3_lengthen_mod(v, len) {
+                let alen = v3_length(v);
+                if (alen < _v3_epsilon) return;
+                let tlen = alen + len;
+                if (tlen <= 0.0) {
+                    v[0] = 0.0;
+                    v[1] = 0.0;
+                    v[2] = 0.0;
+                } else {
+                    v[0] = v[0] * tlen / alen;
+                    v[1] = v[1] * tlen / alen;
+                    v[2] = v[2] * tlen / alen;
+                }
             }
 
             function newHit(source, target) {
@@ -889,30 +917,37 @@
 
                 let v_dot = v3_offset_dot(tgt_p, src_p0, source.pDelta) / source.deltaLength; strListsetFloat("cp v_dot", v_dot);                
 
-                if ((v_dot >= -source.CD_r) && (v_dot <= (source.CD_r + source.deltaLength))) {
+                if ((v_dot >= 0.0) && (v_dot <= (source.CD_r + source.deltaLength))) {
 
                     let hypSq = v3_distancesquared(tgt_p, src_p0);
                     let radSq = hypSq - (v_dot * v_dot); strListsetFloat("cp radSq", radSq);
                     if (radSq < 0) return;
 
                     let circle_rSq = source.CD_r * source.CD_r;
-                    if (radSq <= circle_rSq) {
+                    if (radSq > circle_rSq) return;
 
-                        var offset = Math.sqrt(circle_rSq - radSq);
-                        if (isNaN(offset)) return;
+                    var offset = Math.sqrt(circle_rSq - radSq);
+                    if (isNaN(offset)) return;
 
-                        let p0 = v_dot - offset; strListsetFloat("cp v_dot-o", p0);
-                        let p1 = v_dot + offset; strListsetFloat("cp v_dot+o", p1);
-                        if ((p0 < 0.0) && (p1 < 0.0)) return;
-                        if (p0 < 0.0) p0 = p1;
+                    let t0 = v_dot - offset; strListsetFloat("cp v_dot-o", t0);
+                    let t1 = v_dot + offset; strListsetFloat("cp v_dot+o", t1);
 
-                        let nh = newHit(source, target);
-                        nh.t = p0 / source.deltaLength; strListsetFloat("cp source.hit_t", nh.t);
-                        v3_lerp_res(nh.p, source.pLast, source.pos, nh.t);
-                        v3_normalize_res(nh.n, v3_sub_new(nh.p, tgt_p));
+                    if ((t0 < 0.0) && (t1 < 0.0)) return;
+                    if (t1 < 0.0) return;
+                    if (t0 < 0.0) t0 = t1;
+                    if (v_dot < source.CD_r) t0 = v_dot - source.CD_r;
 
-                        nh.pre = (p0 > v_dot);
-                    }
+                    let nh = newHit(source, target);
+                    nh.t = t0 / source.deltaLength; strListsetFloat("cp source.hit_t", nh.t);
+                    v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
+                    v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
+                    v3_addscaled_mod(nh.p0, nh.n, 0.001);
+                    v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                    let projvect = v3_sub_new(nh.p1, nh.p0);
+                    v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
+                    v3_add_res(nh.p1, nh.p0, projvect);
+
+                    nh.pre = (v_dot < 0.0);
                 }
             }
 
@@ -945,19 +980,6 @@
 
                     nh.pre = false;
                     strListset("cl pre", nh.pre);
-                } else if ((pos0_dot < pos1_dot) && (pos1_dot >= (-2 * source.CD_r)) && (pos1_dot < 0.0)) {
-                    // on the line, from the back
-                    /*let nh = newHit(source, target);                    
-                    nh.t = 0.0; strListsetFloat("cl source.hit_t", nh.t);
-                    if (isNaN(nh.t)) throw new Error("broken t NaN");
-
-                    v3_addscaled_res(nh.p0, source.pLast, target.CD_n, -pos0_dot - 0.001);
-                    v3_addscaled_res(nh.p1, source.pos, target.CD_n, -pos1_dot - 0.001);
-
-                    v3_copy(nh.n, target.CD_n);
-
-                    nh.pre = "back";
-                    strListset("cl pre", "back");*/
                 } else if ((pos0_dot > pos1_dot) && (pos0_dot <= 0.0) && (pos0_dot >= -source.CD_r)) {
                     // on the line, from the front
                     let nh = newHit(source, target);                    
@@ -1006,8 +1028,8 @@
 
                         let nh = newHit(source, target);                          
                         nh.t = p0 / source.deltaLength; strListsetFloat("cci source.hit_t", nh.t);
-                        v3_lerp_res(nh.p, source.pLast, source.pos, nh.t);
-                        v3_normalize_res(nh.n, v3_sub_new(nh.p, tgt_p));
+                        v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
+                        v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
 
                         nh.pre = (p0 > v_dot);
                     }
