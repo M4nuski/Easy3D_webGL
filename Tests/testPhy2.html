@@ -1007,6 +1007,7 @@
                 }
             }
             function CD_dyn_sta_circle_capsule(source, target) {
+                // TODO with sph-line logic...
                 strListset("cca check", 0);
                 let src_p0 = v3_add_new(source.pLast, source.CD_p);
                 let src_p1 = v3_add_new(source.pos, source.CD_p);
@@ -1015,57 +1016,43 @@
 
                 // shift perspective along pDelta vector
                 let src_n = v3_normalizedelta_new(src_p1, src_p0);
-                let tgt_p0p = v3_offset_proj_new(tgt_p0, src_p0, src_n); v3_copy(marker0, tgt_p0p);
-                let tgt_p1p = v3_offset_proj_new(tgt_p1, src_p0, src_n); v3_copy(marker1, tgt_p1p);
+                let tgt_p0p = v3_offset_proj_new(tgt_p0, src_p0, src_n);
+                let tgt_p1p = v3_offset_proj_new(tgt_p1, src_p0, src_n);
 
                 let tgt_np = v3_sub_new(tgt_p1p, tgt_p0p);
-                let l_np = v3_length(tgt_np); strListsetFloat("cca l_np", l_np);
+                let l_np = v3_length(tgt_np);
                 v3_invscale_mod(tgt_np, l_np);
-                let p_dot0 = v3_offset_dot(src_p0, tgt_p0p, tgt_np); strListsetFloat("cca p_dot0", p_dot0);
-                let p_dot1 = v3_offset_dot(src_p0, tgt_p1p, tgt_np); strListsetFloat("cca p_dot1", p_dot1);
+                let prj_dot0 = v3_offset_dot(src_p0, tgt_p0p, tgt_np);
+                let prj_dot1 = v3_offset_dot(src_p0, tgt_p1p, tgt_np);
 
                 let radSum = source.CD_r + target.CD_r;
-                if ((p_dot0 < -radSum) || (p_dot0 > radSum)) return;
+                if ((prj_dot0 < -radSum) || (prj_dot1 > radSum)) return;
                 strListset("cca check", 1);
 
+                prj_dot0 = prj_dot0 / l_np * target.CD_l; strListsetFloat("cca p_dot0", prj_dot0);
+                prj_dot1 = prj_dot1 / l_np * target.CD_l; strListsetFloat("cca p_dot1", prj_dot1);
 
-                //p_dot = p_dot / l_np * target.CD_l;
-                /*
-                
-                let delta_n = v3_normalize_new(source.pDelta);
-                let closest_t = line_intersection_t(tgt_p0, target.CD_n, src_p0, delta_n); strListsetFloat("cca closest_t", closest_t);
+                let intersect_p = v3_addscaled_new(tgt_p0, target.CD_n, prj_dot0); v3_copy(marker0, intersect_p);
+                let p0toIntersect_distSq = v3_distancesquared(src_p0, intersect_p);
+                let p0fromIntersect_dot = v3_offset_dot(src_p0, intersect_p, target.CD_n);
+                let dist = p0toIntersect_distSq - (p0fromIntersect_dot * p0fromIntersect_dot);
+                if (dist < 0) return;
+                dist = Math.sqrt(dist);
 
-                v3_addscaled_res(marker0, tgt_p0, target.CD_n, closest_t);
-                
-                */
-               
-               //let src_n = v3_normalize_new(source.pDelta);
-/*
+                let tangential_p = prj_dot0 + p0fromIntersect_dot * (radSum / dist);
+                v3_addscaled_res(marker1, tgt_p0, target.CD_n, tangential_p); strListsetFloat("cca tangential_p", tangential_p);
 
-                let hypSq = v3_distancesquared(tgt_p0, src_p0);
-                let distSq = hypSq - (pos0_dot * pos0_dot); strListsetFloat("cca dist", Math.sqrt(distSq));
-                if (distSq < 0) return;
-                
-                radSum = radSum * radSum;
-                if (distSq > radSum) return; 
+                if ((tangential_p < -radSum) || (tangential_p > radSum + target.CD_l)) return;
                 strListset("cca check", 2);
 
-                var offset = Math.sqrt(radSum - distSq);
-                if (isNaN(offset)) return;
-                strListset("cca check", 3);*/
-//                if ((pos0_dot >= 0.0) && (pos0_dot <= (radSum + source.deltaLength))) {
+                if ((tangential_p > 0.0) && (tangential_p < target.CD_l)) {
+                    // check for middle it
+                    strListset("cca check", "mid");
 
-
-
-
-                //    let t0 = v_dot - offset; strListsetFloat("cca v_dot-o", t0);
-                //    let t1 = v_dot + offset; strListsetFloat("cca v_dot+o", t1);
-           //         if (t1 < 0.0) return;
-
-                /*    let nh = newHit(source, target);                          
-                    nh.t = t0 / source.deltaLength; strListsetFloat("cca source.hit_t", nh.t);*/
-  //              }
-
+                } else {
+                    // else check for endcap hit
+                    strListset("cca check", "cap");
+                }
             }
 
             
