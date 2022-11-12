@@ -877,36 +877,344 @@ function v3_avg3normalized_res(res, a, b, c) {
 }
 
 
-// projections on plane defined by normal
-function v3_projection_new(point, normal) {
+// projections
+let __v3_proj_vect = v3_new();
+let __v3_proj_offset = v3_new();
+
+// projection of point on plane
+function v3_proj_on_segmentplane_new(point, p0, p1) {
+    __v3_proj_vect[0] = p1[0] - p0[0];
+    __v3_proj_vect[1] = p1[1] - p0[1];
+    __v3_proj_vect[2] = p1[2] - p0[2];
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, __v3_proj_vect) / v3_lengthsquared(__v3_proj_vect);
+
+    return [
+        point[0] - __v3_proj_vect[0] * l,
+        point[1] - __v3_proj_vect[1] * l,
+        point[2] - __v3_proj_vect[2] * l
+    ];
+}
+function v3_proj_on_segmentplane_mod(point, p0, p1) {
+    __v3_proj_vect[0] = p1[0] - p0[0];
+    __v3_proj_vect[1] = p1[1] - p0[1];
+    __v3_proj_vect[2] = p1[2] - p0[2];
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, __v3_proj_vect) / v3_lengthsquared(__v3_proj_vect);
+
+    point[0] = point[0] - __v3_proj_vect[0] * l;
+    point[1] = point[1] - __v3_proj_vect[1] * l;
+    point[2] = point[2] - __v3_proj_vect[2] * l;
+}
+function v3_proj_on_segmentplane_res(res, point, p0, p1) {
+    __v3_proj_vect[0] = p1[0] - p0[0];
+    __v3_proj_vect[1] = p1[1] - p0[1];
+    __v3_proj_vect[2] = p1[2] - p0[2];
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, __v3_proj_vect) / v3_lengthsquared(__v3_proj_vect);
+
+    res[0] = point[0] - __v3_proj_vect[0] * l;
+    res[1] = point[1] - __v3_proj_vect[1] * l;
+    res[2] = point[2] - __v3_proj_vect[2] * l;
+}
+
+function v3_proj_on_vectorplane_new(point, origin, vector) {
+    __v3_proj_offset[0] = point[0] - origin[0];
+    __v3_proj_offset[1] = point[1] - origin[1];
+    __v3_proj_offset[2] = point[2] - origin[2];
+
+    let l = v3_dot(__v3_proj_offset, vector) / v3_lengthsquared(vector);
+
+    return [
+        point[0] - vector[0] * l,
+        point[1] - vector[1] * l,
+        point[2] - vector[2] * l
+    ];
+}
+function v3_proj_on_vectorplane_mod(point, origin, vector) {
+    __v3_proj_offset[0] = point[0] - origin[0];
+    __v3_proj_offset[1] = point[1] - origin[1];
+    __v3_proj_offset[2] = point[2] - origin[2];
+
+    let l = v3_dot(__v3_proj_offset, vector) / v3_lengthsquared(vector);
+
+    point[0] = point[0] - vector[0] * l;
+    point[1] = point[1] - vector[1] * l;
+    point[2] = point[2] - vector[2] * l;
+}
+function v3_proj_on_vectorplane_res(res, point, origin, vector) {
+    __v3_proj_offset[0] = point[0] - origin[0];
+    __v3_proj_offset[1] = point[1] - origin[1];
+    __v3_proj_offset[2] = point[2] - origin[2];
+
+    let l = v3_dot(__v3_proj_offset, vector) / v3_lengthsquared(vector);
+
+    res[0] = point[0] - vector[0] * l;
+    res[1] = point[1] - vector[1] * l;
+    res[2] = point[2] - vector[2] * l;
+}
+
+function v3_proj_on_plane_new(point, p0, pn) {
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, pn);
+
+    return [
+        point[0] - pn[0] * l,
+        point[1] - pn[1] * l,
+        point[2] - pn[2] * l
+    ];
+}
+function v3_proj_on_plane_mod(point, p0, pn) {
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, pn);
+    
+    point[0] = point[0] - pn[0] * l;
+    point[1] = point[1] - pn[1] * l;
+    point[2] = point[2] - pn[2] * l;
+}
+function v3_proj_on_plane_res(res, point, p0, pn) {
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, pn);
+    
+    res[0] = point[0] - pn[0] * l;
+    res[1] = point[1] - pn[1] * l;
+    res[2] = point[2] - pn[2] * l;
+}
+
+function v3_proj_on_normalplane_new(point, normal) {
+    let l = v3_dot(point, normal);
+
+    return [
+        point[0] - normal[0] * l,
+        point[1] - normal[1] * l,
+        point[2] - normal[2] * l
+    ];
+}
+function v3_proj_on_normalplane_mod(point, normal) {
+    let l = v3_dot(point, normal);
+
+    point[0] = point[0] - normal[0] * l;
+    point[1] = point[1] - normal[1] * l;
+    point[2] = point[2] - normal[2] * l;
+}
+function v3_proj_on_normalplane_res(res, point, normal) {
+    let l = v3_dot(point, normal);
+
+    res[0] = point[0] - normal[0] * l;
+    res[1] = point[1] - normal[1] * l;
+    res[2] = point[2] - normal[2] * l;
+}
+
+
+// projection of point on line
+function v3_proj_on_segment_new(point, p0, p1) {
+    __v3_proj_vect[0] = p1[0] - p0[0];
+    __v3_proj_vect[1] = p1[1] - p0[1];
+    __v3_proj_vect[2] = p1[2] - p0[2];
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, __v3_proj_vect) / v3_lengthsquared(__v3_proj_vect);
+
+    return [
+        p0[0] + __v3_proj_vect[0] * l,
+        p0[1] + __v3_proj_vect[1] * l,
+        p0[2] + __v3_proj_vect[2] * l
+    ];
+}
+function v3_proj_on_segment_mod(point, p0, p1) {
+    __v3_proj_vect[0] = p1[0] - p0[0];
+    __v3_proj_vect[1] = p1[1] - p0[1];
+    __v3_proj_vect[2] = p1[2] - p0[2];
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, __v3_proj_vect) / v3_lengthsquared(__v3_proj_vect);
+
+    point[0] = p0[0] + __v3_proj_vect[0] * l;
+    point[1] = p0[1] + __v3_proj_vect[1] * l;
+    point[2] = p0[2] + __v3_proj_vect[2] * l;
+}
+function v3_proj_on_segment_res(res, point, p0, p1) {
+    __v3_proj_vect[0] = p1[0] - p0[0];
+    __v3_proj_vect[1] = p1[1] - p0[1];
+    __v3_proj_vect[2] = p1[2] - p0[2];
+    __v3_proj_offset[0] = point[0] - p0[0];
+    __v3_proj_offset[1] = point[1] - p0[1];
+    __v3_proj_offset[2] = point[2] - p0[2];
+
+    let l = v3_dot(__v3_proj_offset, __v3_proj_vect) / v3_lengthsquared(__v3_proj_vect);
+
+    res[0] = p0[0] + __v3_proj_vect[0] * l;
+    res[1] = p0[1] + __v3_proj_vect[1] * l;
+    res[2] = p0[2] + __v3_proj_vect[2] * l;
+}
+
+function v3_proj_on_vector_new(point, origin, vector) {
+    __v3_proj_offset[0] = point[0] - origin[0];
+    __v3_proj_offset[1] = point[1] - origin[1];
+    __v3_proj_offset[2] = point[2] - origin[2];
+
+    let l = v3_dot(__v3_proj_offset, vector) / v3_lengthsquared(vector);
+
+    return [
+        origin[0] + vector[0] * l,
+        origin[1] + vector[1] * l,
+        origin[2] + vector[2] * l
+    ];
+}
+function v3_proj_on_vector_mod(point, origin, vector) {
+    __v3_proj_offset[0] = point[0] - origin[0];
+    __v3_proj_offset[1] = point[1] - origin[1];
+    __v3_proj_offset[2] = point[2] - origin[2];
+
+    let l = v3_dot(__v3_proj_offset, vector) / v3_lengthsquared(vector);
+
+    point[0] = origin[0] + vector[0] * l;
+    point[1] = origin[1] + vector[1] * l;
+    point[2] = origin[2] + vector[2] * l;
+}
+function v3_proj_on_vector_res(res, point, origin, vector) {
+    __v3_proj_offset[0] = point[0] - origin[0];
+    __v3_proj_offset[1] = point[1] - origin[1];
+    __v3_proj_offset[2] = point[2] - origin[2];
+
+    let l = v3_dot(__v3_proj_offset, vector) / v3_lengthsquared(vector);
+
+    res[0] = origin[0] + vector[0] * l;
+    res[1] = origin[1] + vector[1] * l;
+    res[2] = origin[2] + vector[2] * l;
+}
+
+function v3_proj_on_offsetnormal_new(point, offset, normal) {
+    __v3_proj_offset[0] = point[0] - offset[0];
+    __v3_proj_offset[1] = point[1] - offset[1];
+    __v3_proj_offset[2] = point[2] - offset[2];
+
+    let l = v3_dot(__v3_proj_offset, normal);
+
+    return [
+        offset[0] + normal[0] * l,
+        offset[1] + normal[1] * l,
+        offset[2] + normal[2] * l
+    ];
+}
+function v3_proj_on_offsetnormal_mod(point, offset, normal) {
+    __v3_proj_offset[0] = point[0] - offset[0];
+    __v3_proj_offset[1] = point[1] - offset[1];
+    __v3_proj_offset[2] = point[2] - offset[2];
+
+    let l = v3_dot(__v3_proj_offset, normal);
+
+    point[0] = offset[0] + normal[0] * l;
+    point[1] = offset[1] + normal[1] * l;
+    point[2] = offset[2] + normal[2] * l;
+}
+function v3_proj_on_offsetnormal_res(res, point, offset, normal) {
+    __v3_proj_offset[0] = point[0] - offset[0];
+    __v3_proj_offset[1] = point[1] - offset[1];
+    __v3_proj_offset[2] = point[2] - offset[2];
+
+    let l = v3_dot(__v3_proj_offset, normal);
+
+    res[0] = offset[0] + normal[0] * l;
+    res[1] = offset[1] + normal[1] * l;
+    res[2] = offset[2] + normal[2] * l;
+}
+
+function v3_proj_on_normal_new(point, normal) {
+    let l = v3_dot(point, normal);
+    return [
+        normal[0] * l,
+        normal[1] * l,
+        normal[2] * l
+    ];
+}
+function v3_proj_on_normal_mod(point, normal) {
+    let l = v3_dot(point, normal);
+
+    point[0] = normal[0] * l;
+    point[1] = normal[1] * l;
+    point[2] = normal[2] * l;
+}
+function v3_proj_on_normal_res(res, point, normal) {
+    let l = v3_dot(point, normal);
+
+    res[0] = normal[0] * l;
+    res[1] = normal[1] * l;
+    res[2] = normal[2] * l;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function v3_proj_n_new(point, normal) {
     let d = v3_dot(point, normal);
     return v3_subscaled_new(point, normal, d);
 }
-function v3_projection_mod(point, normal) {
+function v3_proj_n_mod(point, normal) {
     let d = v3_dot(point, normal);
     v3_subscaled_mod(point, normal, d);
 }
-function v3_projection_res(res, point, normal) {
+function v3_proj_n_res(res, point, normal) {
     let d = v3_dot(point, normal);
     v3_subscaled_res(res, point, normal, d);
 }
+// on plane
 
-let _v3_proj_offset = v3_new();
 function v3_offset_proj_new(point, origin, normal) {
-    v3_sub_res(_v3_proj_offset, point, origin);
-    let d = v3_dot(normal, _v3_proj_offset);
+    v3_sub_res(__v3_proj_offset, point, origin);
+    let d = v3_dot(normal, __v3_proj_offset);
     return v3_subscaled_new(point, normal, d);
 }
 function v3_offset_proj_mod(point, origin, normal) {
-    v3_sub_res(_v3_proj_offset, point, origin);
-    let d = v3_dot(normal, _v3_proj_offset);
+    v3_sub_res(__v3_proj_offset, point, origin);
+    let d = v3_dot(normal, __v3_proj_offset);
     v3_subscaled_mod(point, normal, d);
 }
 function v3_offset_proj_res(res, point, origin, normal) {
-    v3_sub_res(_v3_proj_offset, point, origin);
-    let d = v3_dot(normal, _v3_proj_offset);
+    v3_sub_res(__v3_proj_offset, point, origin);
+    let d = v3_dot(normal, __v3_proj_offset);
     v3_subscaled_res(res, point, normal, d);
 }
+
+
+
+
+
+
+
+
 
 // random noise
 function v3_addv3noise_new(a, range) {

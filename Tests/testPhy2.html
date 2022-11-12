@@ -334,26 +334,6 @@
                 }
             }
 
-            var lastParams = {};
-            var testParams = {
-
- "pos": [
-  -0.5625,
-  0.27041666666666675,
-  0
- ],
- "pLast": [
-  -0.5625,
-  0.27041666666666675,
-  0
- ],
- "pSpeed": [
-  6.5648203160807417,
-  3.395066967695944,
-  0
- ],
- "rad": 0.10689565869283417
-}
             var strList = new Map();
             var hits = [];
             var hitList = [];
@@ -504,11 +484,7 @@
                         //if (abs(td) < 0.0001) td = timeDelta;
                         objList[currentI].pSpeed[0] = (currentX - lastX) / td;
                         objList[currentI].pSpeed[1] = (currentY - lastY) / td;
-                        lastParams.pos = v3_clone(objList[currentI].pos);
-                        lastParams.pLast = v3_clone(objList[currentI].pLast);
-                        lastParams.pSpeed = v3_clone(objList[currentI].pSpeed);
-                        lastParams.rad = objList[currentI].rad;
-                      //  lastParams.rad = objList[currentI].CD_r;
+
                         currentI = -1;
                     }
                 }                
@@ -896,7 +872,7 @@
                 v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
                 v3_normalize_res(nh.n, v3_sub_new(nh.p0, sph_p0));
                 v3_addscaled_mod(nh.p0, nh.n, 0.001);
-                v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                v3_proj_on_plane_res(nh.p1, source.pos, nh.p0, nh.n);
                 let projvect = v3_sub_new(nh.p1, nh.p0);
                 v3_setlength_mod(projvect, line_length * (1.0 - nh.t));
                 v3_add_res(nh.p1, nh.p0, projvect);
@@ -972,8 +948,8 @@
                 let tgt_p0 = v3_add_new(target.pos, target.CD_p);
 
                 // shift perspective along capsule n
-                let src_p0p = v3_offset_proj_new(src_p0, tgt_p0, target.CD_n);
-                let src_p1p = v3_offset_proj_new(src_p1, tgt_p0, target.CD_n);
+                let src_p0p = v3_proj_on_plane_new(src_p0, tgt_p0, target.CD_n);
+                let src_p1p = v3_proj_on_plane_new(src_p1, tgt_p0, target.CD_n);
 
                 let src_deltapn = v3_sub_new(src_p1p, src_p0p);
                 let src_deltaLengthp = v3_length(src_deltapn);
@@ -1017,7 +993,7 @@
 
                     v3_normalize_res(nh.n, v3_sub_new(cyl_hit_p, closest_p));
                     v3_addscaled_mod(nh.p0, nh.n, 0.001);
-                    v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                    v3_proj_on_plane_res(nh.p1, source.pos, nh.p0, nh.n);
                     let projvect = v3_sub_new(nh.p1, nh.p0);
                     v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
                     v3_add_res(nh.p1, nh.p0, projvect);
