@@ -333,9 +333,14 @@ var newRotVect = v3_new();
 var _limitAxis = v3_new();
 var _target = v3_new();
 
+const CD_max = 10; // TODO rem after debug
+var CD_remainder = 0; // TODO rem after debug
+
 function prepRender() {
     // stats display
-    span_status.innerText =padStart(""+timer.usageSmoothed.toFixed(2), " ", 8) + "%";
+    //span_status.innerText = padStart(""+timer.usageSmoothed.toFixed(2), " ", 8) + "%"; // TODO rem after debug
+    span_status.innerText = "iter: " + CD_remainder + "/" + CD_max + "\n";
+    span_status.innerText += "in: " + CD_n_inside + " f2f: " + CD_n_face2face + " f2b: " + CD_n_face2butt;// TODO rem after debug
 
     if ((gameState == "run") || (gameState == "start")) {
         // move maze per inputs
@@ -348,7 +353,7 @@ function prepRender() {
 
         // Run Animations
         //cleanupDoneAnimations(animations, scn);
-        collisionDetectionAnimator(animations, scn, 8);
+        CD_remainder = collisionDetectionAnimator(animations, scn, CD_max);
 
 
         // create ball rotation effect
@@ -492,7 +497,7 @@ function genMaze(size = 5, seed = 2020) {
             ny = 0;
             if (nx == 0) { // 50% chance
                 ny = rng.nextInt(2); // 0 1
-               if (ny == 0) ny = -1; // 25% chance, other 25% is ny == 1
+                if (ny == 0) ny = -1; // 25% chance, other 25% is ny == 1
             }
 
             //new position

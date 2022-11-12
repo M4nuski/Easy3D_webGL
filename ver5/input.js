@@ -541,6 +541,14 @@ class E3D_input {
         }
     }
 
+    // Add or update command key binding
+    addCommand(cmd, key) {
+        this.keyMap.set(cmd, key);        
+    }
+    // Remove command and it's binding
+    removeCommand(cmd) {
+        return this.keyMap.delete(cmd);        
+    }
     // Check if a command has been triggered, and reset it if needed
     // Make sure that no 2 commands or button inputs conflicts otherwise they might reset each others
     checkCommand(cmd, reset = false) {

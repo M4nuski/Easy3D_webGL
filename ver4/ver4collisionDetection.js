@@ -984,10 +984,10 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
                 } else { // static
                     v3_sub_res(posOffset, scn.entities[targetIndex].CD_sph_p[j], sourcePts_p0);
-                    var hitRes = vector_sph_min_t(sourcePts_n, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
-                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= sourcePts_l)) {
+                    var hitRes = vector_sph_min_t(sourcePts_v, posOffset, scn.entities[targetIndex].CD_sph_rs[j]);  
+                    if ((hitRes != false) && (hitRes >= 0.0) && (hitRes <= 1.0)) {
 
-                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_n, hitRes);
+                        v3_addscaled_res(firstHit, sourcePts_p0, sourcePts_v, hitRes);
                         
                         var t0 = v3_distancesquared(firstHit, self.last_position) * Math.sign(hitRes);  
                         if ( t0 < _tempCDRes_t0) {    
@@ -1253,11 +1253,9 @@ for (var pointIndex = 0; pointIndex < self.target.CD_point; ++pointIndex) {
 
 
 
-// TODO refactor names to clarify result type
-// _tn 0.0-1.0 along n
-// _tv 0.0-1.0 along v
-// _ln 0.0-len along n
-//    pos / _res
+
+
+
 
 
 // Intersection of vector and sphere, as vector advance into static sphere, arrow like
@@ -1782,8 +1780,8 @@ function point_segment_distance(orig, norm, len, point) {
 }
 
 
-var _path_path_closest_t_Vdelta = [0, 0, 0];
-var _path_path_closest_t_Odelta = [0, 0, 0];
+var _path_path_closest_t_Vdelta = [0.0, 0.0, 0.0];
+var _path_path_closest_t_Odelta = [0.0, 0.0, 0.0];
 function path_path_closest_t(orig1, v1, orig2, v2) {
     // http://geomalgorithms.com/a07-_distance.html
     v3_sub_res(_path_path_closest_t_Vdelta, v1, v2);
@@ -1793,8 +1791,8 @@ function path_path_closest_t(orig1, v1, orig2, v2) {
     return -v3_dot(_path_path_closest_t_Odelta, _path_path_closest_t_Vdelta) / dvlen;
 }
 
-var _path_path_closest_distance_p1 = [0, 0, 0];
-var _path_path_closest_distance_p2 = [0, 0, 0];
+var _path_path_closest_distance_p1 = [0.0, 0.0, 0.0];
+var _path_path_closest_distance_p2 = [0.0, 0.0, 0.0];
 function path_path_closest_distance(orig1, v1, orig2, v2) {
     var t = path_path_closest_t(orig1, v1, orig2, v2);
     v3_addscaled_res(_path_path_closest_distance_p1, orig1, v1, t);
