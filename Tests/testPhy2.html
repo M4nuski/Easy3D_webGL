@@ -625,6 +625,7 @@
                     CD_static();
                     if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
 
+                    // TODO test various modes of CD/resolve iterations:
                     // all single batch
                     //for (let current_hit of hits) resolve_slide(current_hit);
 
@@ -1022,8 +1023,8 @@
                 let tgt_np = v3_sub_new(tgt_p1p, tgt_p0p);
                 let l_np = v3_length(tgt_np);
                 v3_invscale_mod(tgt_np, l_np);
-                let prj_dot0 = v3_offset_dot(src_p0, tgt_p0p, tgt_np);
-                let prj_dot1 = v3_offset_dot(src_p0, tgt_p1p, tgt_np);
+                let prj_dot0 = v3_offset_dot(src_p0, tgt_p0p, tgt_np); strListsetFloat("cca p_dot0 r", prj_dot0);
+                let prj_dot1 = v3_offset_dot(src_p0, tgt_p1p, tgt_np); strListsetFloat("cca p_dot1 r", prj_dot1);
 
                 let radSum = source.CD_r + target.CD_r;
                 if ((prj_dot0 < -radSum) || (prj_dot1 > radSum)) return;
@@ -1035,15 +1036,16 @@
                 let intersect_p = v3_addscaled_new(tgt_p0, target.CD_n, prj_dot0); v3_copy(marker0, intersect_p);
                 let p0toIntersect_distSq = v3_distancesquared(src_p0, intersect_p);
                 let p0fromIntersect_dot = v3_offset_dot(src_p0, intersect_p, target.CD_n);
-                let dist = p0toIntersect_distSq - (p0fromIntersect_dot * p0fromIntersect_dot);
+                let dist = p0toIntersect_distSq - (p0fromIntersect_dot * p0fromIntersect_dot); strListsetFloat("cca dist", dist);
                 if (dist < 0) return;
+                strListset("cca check", 2);
                 dist = Math.sqrt(dist);
 
                 let tangential_p = prj_dot0 + p0fromIntersect_dot * (radSum / dist);
                 v3_addscaled_res(marker1, tgt_p0, target.CD_n, tangential_p); strListsetFloat("cca tangential_p", tangential_p);
 
                 if ((tangential_p < -radSum) || (tangential_p > radSum + target.CD_l)) return;
-                strListset("cca check", 2);
+                strListset("cca check", 3);
 
                 if ((tangential_p > 0.0) && (tangential_p < target.CD_l)) {
                     // check for middle it
