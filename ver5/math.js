@@ -557,13 +557,26 @@ function v3_normal_new(p1, p2, p3) {
 
     return n;
 }
-function v3_normal_res(res, p1, p2, p3) {        
+function v3_normal_res(res, p1, p2, p3) {
     v3_sub_res(__v3_normal_p21, p2, p1);
     v3_sub_res(__v3_normal_p31, p3, p1);
     v3_cross_res(res, __v3_normal_p21, __v3_normal_p31);
     v3_normalize_mod(res);
 }
 
+var __v3_normaldelta = v3_new();
+function v3_normalizedelta_new(p, orig) {
+    v3_sub_res(__v3_normaldelta, p, orig);
+    return v3_normalize_new(__v3_normaldelta);
+}
+function v3_normalizedelta_mod(p, orig) {
+    v3_sub_mod(p, orig);
+    v3_normalize_mod(p);
+}
+function v3_normalizedelta_res(res, p, orig) {
+    v3_sub_res(res, p, orig);
+    v3_normalize_mod(res);
+}
 
 // Vector length
 function v3_length(a) {
@@ -866,33 +879,33 @@ function v3_avg3normalized_res(res, a, b, c) {
 
 // projections on plane defined by normal
 function v3_projection_new(point, normal) {
-    let d = v3_dot(normal, point);
-    return v3_addscaled_new(point, normal, -d);
+    let d = v3_dot(point, normal);
+    return v3_subscaled_new(point, normal, d);
 }
 function v3_projection_mod(point, normal) {
-    let d = v3_dot(normal, point);
-    v3_addscaled_mod(point, normal, -d);
+    let d = v3_dot(point, normal);
+    v3_subscaled_mod(point, normal, d);
 }
 function v3_projection_res(res, point, normal) {
-    let d = v3_dot(normal, point);
-    v3_addscaled_res(res, point, normal, -d);
+    let d = v3_dot(point, normal);
+    v3_subscaled_res(res, point, normal, d);
 }
 
 let _v3_proj_offset = v3_new();
 function v3_offset_proj_new(point, origin, normal) {
     v3_sub_res(_v3_proj_offset, point, origin);
     let d = v3_dot(normal, _v3_proj_offset);
-    return v3_addscaled_new(point, normal, -d);
+    return v3_subscaled_new(point, normal, d);
 }
 function v3_offset_proj_mod(point, origin, normal) {
     v3_sub_res(_v3_proj_offset, point, origin);
     let d = v3_dot(normal, _v3_proj_offset);
-    v3_addscaled_mod(point, normal, -d);
+    v3_subscaled_mod(point, normal, d);
 }
 function v3_offset_proj_res(res, point, origin, normal) {
     v3_sub_res(_v3_proj_offset, point, origin);
     let d = v3_dot(normal, _v3_proj_offset);
-    v3_addscaled_res(res, point, normal, -d);
+    v3_subscaled_res(res, point, normal, d);
 }
 
 // random noise
