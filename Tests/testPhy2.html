@@ -204,19 +204,7 @@
                     objList[0].deltaLength = v3_length(objList[0].pDelta);
                 }
                 if (event.key == "s") {
-                    console.log(JSON.stringify(lastParams, null, 1));
-                }
-                if (event.key == "l") {
-                    var obi = objList.push(new obj) - 1;
-                    objList[obi].CD_mode = CD_modes.DYNAMIC;
-                    objList[obi].CD_type = CD_types.CIRCLE;
-
-                    v3_copy(objList[obi].pos, testParams.pos);
-                    v3_copy(objList[obi].pLast, testParams.pLast);
-                    v3_copy(objList[obi].pSpeed, testParams.pSpeed);
-
-                    objList[obi].rad = testParams.rad;
-                    objList[obi].CD_r = testParams.rad;
+                    singleIter = !singleIter;
                 }
             }
 
@@ -639,7 +627,7 @@
                     // iter passes of shortest "t", walking every object by at least "step" "t"
 
                     // iter
-                    const max_iter = 1;
+                    const max_iter = (singleIter) ? 1 : 10;
                     let iter = max_iter;
                     let current_hit = null;
                     let last_src = null;
@@ -674,7 +662,7 @@
 
             function CD_static() {
                 hits = [];
-                for (let source of objList) if (source.CD_mode != CD_modes.STATIC) {
+                for (let source of objList) if ((source.CD_mode != CD_modes.STATIC) && (source.deltaLength > 0.0)) {
                     for (let target of objList) if ((source != target) && (target.CD_mode == CD_modes.STATIC)) {
 
                         switch (source.CD_type) {
@@ -906,8 +894,7 @@
 
                 var offset = Math.sqrt(circle_rSq - distSq);
 
-                let t1 = v_dot + offset; strListsetFloat("cp v_dot+o", t1);
-                if (t1 < 0.0) return;
+                if (v_dot + offset < 0.0) return;
                 let t0 = v_dot - offset; strListsetFloat("cp v_dot-o", t0);
 
                 let nh = newHit(source, target);
@@ -920,7 +907,7 @@
                 v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
                 v3_add_res(nh.p1, nh.p0, projvect);
 
-                nh.pre = (v_dot < source.CD_r);
+                nh.pre = hypSq < circle_rSq;
                 nh.check();
             }
 
@@ -1005,7 +992,7 @@
                 v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
                 v3_add_res(nh.p1, nh.p0, projvect);
 
-                nh.pre = (v_dot < radSum);
+                nh.pre = hypSq < radSumSq;
                 nh.check();
             }
 
@@ -1066,7 +1053,7 @@
                     v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
                     v3_add_res(nh.p1, nh.p0, projvect);
 
-                    nh.pre = (v_dot < radSum);
+                    nh.pre = hypSq < radSumSq;
                     nh.check();
                     strListset("cca check", "cap0 " + nh.pre);
 
@@ -1092,7 +1079,7 @@
                     v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
                     v3_add_res(nh.p1, nh.p0, projvect);
 
-                    nh.pre = (v_dot < radSum); strListsetFloat("cca cap0 v_dot", v_dot);
+                    nh.pre = hypSq < radSumSq;
                     nh.check();
                     strListset("cca check", "cap1 " + nh.pre);
 
@@ -1141,6 +1128,7 @@
             var drawCD = true;
             var drawPath = true;
             var mode = "slide";
+            var singleIter = false;
 
             var marker0 = [0.0, 0.0, 0.0];
             var marker1 = [0.0, 0.0, 0.0];
@@ -1326,6 +1314,7 @@
                 config.innerText += "timeJitter (j): " + fmtBool(timeJitter);
                 config.innerText += "drawCD (z): " + fmtBool(drawCD);
                 config.innerText += "drawPath (p): " + fmtBool(drawPath);
+                config.innerText += "singleIter (s): " + fmtBool(singleIter);
                 config.innerText += "resolve (m): " + mode.padEnd(6, " ");
             }
 
