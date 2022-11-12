@@ -187,7 +187,7 @@
                 }
 
                 if (event.code == "Digit1") {
-                    clear = true;
+                    //clear = true;
                     run = true;
                     if (event.shiftKey) {
                         objList[CTRL_obj].pos = [currentX, currentY, 0];
@@ -380,12 +380,12 @@
             objList[lobi].CD_type = CD_types.POINT;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];
 
-            /*lobi = objList.push(new obj())-1;
-            objList[lobi].pos = [ -0.5, 0.0, 0.0 ];
+            lobi = objList.push(new obj())-1;
+            objList[lobi].pos = [ 5.0, 1.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.CIRCLE;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];
-            objList[lobi].CD_r = 0.05;*/
+            objList[lobi].CD_r = 0.75;
 
 
             let CTRL_obj = 0;
@@ -647,7 +647,7 @@
                     // iter passes of shortest "t", walking every object by at least "step" "t"
 
                     // iter
-                    const max_iter = 10;
+                    const max_iter = 1;
                     let iter = max_iter;
                     let current_hit = null;
                     let last_src = null;
@@ -920,22 +920,18 @@
                 if ((v_dot >= 0.0) && (v_dot <= (source.CD_r + source.deltaLength))) {
 
                     let hypSq = v3_distancesquared(tgt_p, src_p0);
-                    let radSq = hypSq - (v_dot * v_dot); strListsetFloat("cp radSq", radSq);
-                    if (radSq < 0) return;
+                    let distSq = hypSq - (v_dot * v_dot); strListsetFloat("cp distSq", distSq);
+                    if (distSq < 0) return;
 
                     let circle_rSq = source.CD_r * source.CD_r;
-                    if (radSq > circle_rSq) return;
+                    if (distSq > circle_rSq) return;
 
-                    var offset = Math.sqrt(circle_rSq - radSq);
+                    var offset = Math.sqrt(circle_rSq - distSq);
                     if (isNaN(offset)) return;
 
                     let t0 = v_dot - offset; strListsetFloat("cp v_dot-o", t0);
                     let t1 = v_dot + offset; strListsetFloat("cp v_dot+o", t1);
-
-                    if ((t0 < 0.0) && (t1 < 0.0)) return;
                     if (t1 < 0.0) return;
-                    if (t0 < 0.0) t0 = t1;
-                    if (v_dot < source.CD_r) t0 = v_dot - source.CD_r;
 
                     let nh = newHit(source, target);
                     nh.t = t0 / source.deltaLength; strListsetFloat("cp source.hit_t", nh.t);
@@ -995,12 +991,6 @@
                 }
             }
 
-            function repos(p, orig, len) {
-                var n = v3_sub_new(p, orig);
-                var l = v3_length(n);
-                if (l > 0.001) v3_addscaled_res(p, orig, n, len / l);
-            }
-
             function CD_dyn_sta_circle_circle(source, target) {
 
                 let src_p0 = v3_add_new(source.pLast, source.CD_p);
@@ -1010,29 +1000,33 @@
 
                 let v_dot = v3_offset_dot(tgt_p, src_p0, source.pDelta) / source.deltaLength; strListsetFloat("cci v_dot", v_dot);                
 
-                if ((v_dot >= -radSum) && (v_dot <= (radSum + source.deltaLength))) {
+                if ((v_dot >= 0.0) && (v_dot <= (radSum + source.deltaLength))) {
 
                     let hypSq = v3_distancesquared(tgt_p, src_p0);
-                    let radSq = hypSq - (v_dot * v_dot); strListsetFloat("cci radSq", radSq);
-                    if (radSq < 0) return;
+                    let distSq = hypSq - (v_dot * v_dot); strListsetFloat("cci distSq", distSq);
+                    if (distSq < 0) return;
+
                     radSum = radSum * radSum;
-                    if (radSq <= radSum) {
+                    if (distSq > radSum) return; 
 
-                        var offset = Math.sqrt(radSum - radSq);
-                        if (isNaN(offset)) return;
+                    var offset = Math.sqrt(radSum - distSq);
+                    if (isNaN(offset)) return;
 
-                        let p0 = v_dot - offset; strListsetFloat("cci v_dot-o", p0);
-                        let p1 = v_dot + offset; strListsetFloat("cci v_dot+o", p1);
-                        if ((p0 < 0.0) && (p1 < 0.0)) return;
-                        if (p0 < 0.0) p0 = p1;
+                    let t0 = v_dot - offset; strListsetFloat("cci v_dot-o", t0);
+                    let t1 = v_dot + offset; strListsetFloat("cci v_dot+o", t1);
+                    if (t1 < 0.0) return;
 
-                        let nh = newHit(source, target);                          
-                        nh.t = p0 / source.deltaLength; strListsetFloat("cci source.hit_t", nh.t);
-                        v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
-                        v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
+                    let nh = newHit(source, target);                          
+                    nh.t = t0 / source.deltaLength; strListsetFloat("cci source.hit_t", nh.t);
+                    v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
+                    v3_normalize_res(nh.n, v3_sub_new(nh.p0, tgt_p));
+                    v3_addscaled_mod(nh.p0, nh.n, 0.001);
+                    v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                    let projvect = v3_sub_new(nh.p1, nh.p0);
+                    v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
+                    v3_add_res(nh.p1, nh.p0, projvect);
 
-                        nh.pre = (p0 > v_dot);
-                    }
+                    nh.pre = (v_dot < 0.0);
                 }
             }
             function CD_dyn_sta_circle_capsule(source, target) {
