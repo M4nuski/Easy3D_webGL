@@ -383,10 +383,11 @@
             lobi = objList.push(new obj())-1;
             objList[lobi].pos = [ 5.0, 1.0, 0.0 ];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
+            objList[lobi].p0 = v3_clone(objList[lobi].pos);
+            objList[lobi].p1 = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.CIRCLE;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];
             objList[lobi].CD_r = 0.75;
-
 
             let CTRL_obj = 0;
             function makeControlledObj() {
@@ -402,7 +403,9 @@
 /*
             lobi = objList.push(new obj())-1;
             objList[lobi].pos = [0.1, 0.125, 0 ];
-            objList[lobi].pLast = [0.1, 0.125, 0 ];
+            objList[lobi].pLast = v3_clone(objList[lobi].pos);
+            objList[lobi].p0 = v3_clone(objList[lobi].pos);
+            objList[lobi].p1 = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.CAPSULE;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];
             objList[lobi].CD_l = 0.2;
@@ -412,6 +415,8 @@
             lobi = objList.push(new obj())-1;
             objList[lobi].pos = [ -7.0, -3.0, 0];
             objList[lobi].pLast = v3_clone(objList[lobi].pos);
+            objList[lobi].p0 = v3_clone(objList[lobi].pos);
+            objList[lobi].p1 = v3_clone(objList[lobi].pos);
             objList[lobi].CD_type = CD_types.LINE;
             objList[lobi].CD_p = [0.0, 0.0, 0.0];
             objList[lobi].CD_n = v3_normalize_new([1.0, 1.0, 0]);
@@ -570,7 +575,6 @@
                     strListsetFloat("timeDelta", timeDelta);
                     strListsetFloat("timeAverage", timeAverage);
                     strListset("nb Obj", objList.length);
-                    //strListset("current i", currentI);
 
                     // pre
                     // update position
@@ -581,42 +585,21 @@
                         entity.effectiveTimeDelta = timeDelta;
 
                         if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
-
+                            // position            
                             v3_copy(entity.pLast, entity.pos);
-                            v3_copy(entity.p0, entity.pos);
-
-                            v3_copy(entity.aLast, entity.ang);
-
-                        // at the begining accel += gravity
-                        // at the end accel = 0
-                        // as animation (ie rocket) set accel before position phase
-                        // as control set next position and recalc accel
-
-                        // Gravity
-                        // TODO add scaling factor for g, both globally and per object
 
                             entity.pSpeed[1] -= g_iss * timeDelta;
                             v3_addscaled_mod(entity.pos, entity.pSpeed, timeDelta);
-                            //entity.pos[1] = entity.pos[1] - (g_iss * timeDelta * timeDelta);
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             entity.deltaLength = v3_length(entity.pDelta);
                             
+                            v3_copy(entity.p0, entity.pLast);
                             v3_copy(entity.p1, entity.pos);
 
+                            // angle
+                            v3_copy(entity.aLast, entity.ang);
+
                             v3_addscaled_mod(entity.ang, entity.aSpeed, timeDelta);
-                            v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
-
-                            //v3_copy(entity.pAccel, _v3_null); 
-
-                        // is this the correct place ?
-                        // entity.pSpeed[1] += 32 * timeDelta;
-                        // at the start it inhibit all move that are smaller than gravity
-                        // at the end it can mess up the CD calculations as the speed changed
-                        // between the pos calc and the CD calc
-                        }
-                        if (entity.CD_mode == CD_modes.DYNAMIC) {
-                            v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
-                            entity.deltaLength = v3_length(entity.pDelta);
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
                         }
                         if (entity.CD_mode == CD_modes.CONTROLLED) {
@@ -624,15 +607,16 @@
                             v3_sub_res(entity.pDelta, entity.pos, entity.pLast);
                             v3_invscale_res(entity.effectiveSpeed, entity.pDelta, timeDelta);
                             entity.deltaLength = v3_length(entity.pDelta);
+
                             v3_sub_res(entity.aDelta, entity.ang, entity.aLast);
 
                             v3_copy(entity.p0, entity.pLast);
                             v3_copy(entity.p1, entity.pos);
-
                         }
                     }
 
                     strListset("cl pre", "");
+
                     hitList = [];
                     CD_static();
                     if ((hits.length > 0) && breakAtHit) { run = false; step = true; };
@@ -647,7 +631,7 @@
                     // iter passes of shortest "t", walking every object by at least "step" "t"
 
                     // iter
-                    const max_iter = 1;
+                    const max_iter = 20;
                     let iter = max_iter;
                     let current_hit = null;
                     let last_src = null;
@@ -669,20 +653,9 @@
                     }
                     strListset("iter", max_iter-iter);
                     
-                    // first pass all pre
-                    // do CD, from 0 to 0.1 all advance
-
-                    // CD
-                    // resolve
-
-                    // TODO: resolve shortest t, recheck CD until no collisions or maxChecks
-                    // maxIter = Math.ceil(10 * Math.log(objList.length + 1)) ?
-                    // TODO: advance t by at least 1/maxIter at every steps
-                    
                     //post
                     for (let entity of objList) if ((entity != objList[currentI]) && (entity.CD_mode == CD_modes.DYNAMIC)) {
                         entity.pSpeed[1] = (entity.pos[1] - entity.pLast[1]) / timeDelta; 
-                        //v3_subinvscaled_res(entity.effectiveSpeed, entity.pos, entity.p0, timeDelta);
                         v3_copy(entity.effectiveSpeed, entity.pSpeed);
                     }
 
@@ -1163,14 +1136,6 @@
                                 ctx.beginPath();
                                     line(p0[0], p0[1], p1[0], p1[1]);
                                 ctx.stroke();
-
-                                /*if (breakAtHit) {
-                                    ctx.strokeStyle = "666";
-                                    v3_add_res(p0, current_obj.p1, current_obj.CD_p);
-                                    ctx.beginPath();
-                                        circle(p0[0], p0[1], current_obj.CD_r - 0.001); 
-                                    ctx.stroke();
-                                }*/
                             }
 
                             ctx.strokeStyle = "#000";
