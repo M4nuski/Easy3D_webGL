@@ -864,7 +864,7 @@ function v3_avg3normalized_res(res, a, b, c) {
 }
 
 
-// projections
+// projections on plane defined by normal
 function v3_projection_new(point, normal) {
     let d = v3_dot(normal, point);
     return v3_addscaled_new(point, normal, -d);

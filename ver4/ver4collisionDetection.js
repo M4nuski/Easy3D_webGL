@@ -1780,8 +1780,8 @@ function point_segment_distance(orig, norm, len, point) {
 }
 
 
-var _path_path_closest_t_Vdelta = [0, 0, 0];
-var _path_path_closest_t_Odelta = [0, 0, 0];
+var _path_path_closest_t_Vdelta = [0.0, 0.0, 0.0];
+var _path_path_closest_t_Odelta = [0.0, 0.0, 0.0];
 function path_path_closest_t(orig1, v1, orig2, v2) {
     // http://geomalgorithms.com/a07-_distance.html
     v3_sub_res(_path_path_closest_t_Vdelta, v1, v2);
@@ -1791,8 +1791,8 @@ function path_path_closest_t(orig1, v1, orig2, v2) {
     return -v3_dot(_path_path_closest_t_Odelta, _path_path_closest_t_Vdelta) / dvlen;
 }
 
-var _path_path_closest_distance_p1 = [0, 0, 0];
-var _path_path_closest_distance_p2 = [0, 0, 0];
+var _path_path_closest_distance_p1 = [0.0, 0.0, 0.0];
+var _path_path_closest_distance_p2 = [0.0, 0.0, 0.0];
 function path_path_closest_distance(orig1, v1, orig2, v2) {
     var t = path_path_closest_t(orig1, v1, orig2, v2);
     v3_addscaled_res(_path_path_closest_distance_p1, orig1, v1, t);
