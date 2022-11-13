@@ -1246,7 +1246,7 @@ function v3_addnoise_res(res, a, range) {
 
 // Color sweeps
 const _v3_sweep_RGB = [ _v3_red, _v3_green, _v3_blue ];
-const _v3_sweep_RGBCMY = [ _v3_red, _v3_green, _v3_blue, _v3_cyan, _v3_magenta, _v3_yellow ];
+const _v3_sweep_RGBCMY = [ _v3_red, _v3_yellow, _v3_green, _v3_cyan, _v3_blue, _v3_magenta ];
 
 // v3
 function v3_colorsweep_RGB_new(index) {

@@ -27,6 +27,11 @@ grid.addPlane(_v3_origin, _v3_90z, 1000, 1000, 19, _v3_lightblue);
 grid.isVisible = true;
 E3D_addEntity(grid);
 
+var obj1 = new E3D_entity_wireframe_canvas("entity_solid");
+obj1.addCylinder(_v3_null, [ 0.707, 0.50, 0.1], 10, 50, _v3_white, 16, 2, 4, false);
+obj1.addWireSphere([0.0, 0.0, 20.0], 5.0, _v3_white, 16, false, 4);
+obj1.isVisible = true;
+E3D_addEntity(obj1);
 
 CB_tick = function() {
    /* if (INPUTS.checkCommand("action1", true)) {

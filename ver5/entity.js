@@ -83,7 +83,8 @@ class E3D_entity {
         // int32Array
         this.strokeIndexArray;
 
-        // TODO this.textureID = ""; 
+        // TODO this.textureID = "";
+        // TODO material other than texture
         // TODO isTransparent // z-sort before render, dont write to depth buffer
         // this.zPos = 0; relative to fustrum, for z-sort
 
@@ -351,7 +352,6 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.colorArray = new Float32Array(this.arraySize*3);
         this.normalArray = new Float32Array(this.arraySize*3);
 
-        this.colSweep =  [ [1,0,0], [1,1,0] ,[0,1,0] ,[0,1,1] ,[0,0,1], [1,0,1] ];
         this.colSweepIndex = 0;
         this.currentColor = _v3_white;
 
@@ -552,7 +552,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         }
     }
 
-    addCylinder(location, dia, height, color, sides = 8, sideLineStep = 1, sections = 1, addCD = false) {
+    addCylinder(pos, rot, dia, height, color, sides = 8, sideLineStep = 1, sections = 1, addCD = false) {
         this.currentColor = color;
         dia = dia / 2;
         if (sections < 1) sections = 1;
@@ -561,6 +561,11 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         var ci = Math.cos(0) * dia;
 
         var newLoc = v3_new();
+
+        let m = m4_translation_new(pos);
+        m4_rotateZ_mod(m, rot[2]);
+        m4_rotateX_mod(m, rot[0]);
+        m4_rotateY_mod(m, rot[1]);
           
         for (var i = 0; i < sides; ++i) { 
 
@@ -569,44 +574,52 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
             // base
             var v = [si, 0, ci];
-            v3_add_res(newLoc, v, location);
-            this.addV(newLoc);
+            //v3_add_res(newLoc, v, location);
+            v3_applym4_mod(v, m);
+            this.addV(v);
 
             v = [sip, 0, cip];
-            v3_add_res(newLoc, v, location);
-            this.addV(newLoc);
+            //v3_add_res(newLoc, v, location);
+            v3_applym4_mod(v, m);
+            this.addV(v);
  
             
             // top
             v = [si, height, ci];  
-            v3_add_res(newLoc, v, location);
-            this.addV(newLoc);  
+            //v3_add_res(newLoc, v, location);
+            v3_applym4_mod(v, m);
+            this.addV(v);  
 
             v = [sip, height, cip];            
-            v3_add_res(newLoc, v, location);
-            this.addV(newLoc);
+            //v3_add_res(newLoc, v, location);
+            v3_applym4_mod(v, m);
+            this.addV(v);
     
 
             if ( (sideLineStep > 0) && ((i % sideLineStep) == 0) ) {
                 // side
                 v = [si, 0, ci];    
-                v3_add_res(newLoc, v, location);
-                this.addV(newLoc);
+                //v3_add_res(newLoc, v, location);
+                v3_applym4_mod(v, m);
+                this.addV(v);
 
                 v = [si, height, ci];
-                v3_add_res(newLoc, v, location);
-                this.addV(newLoc);
+                //v3_add_res(newLoc, v, location);
+                v3_applym4_mod(v, m);
+                this.addV(v);
             }
 
             for (var j = 1; j < sections; ++j) {
 
                 var v = [si, j * height / sections, ci];
-                v3_add_res(newLoc, v, location);
-                this.addV(newLoc);
+                //v3_add_res(newLoc, v, location);
+                v3_applym4_mod(v, m);
+                this.addV(v);
 
                 v = [sip, j * height / sections, cip];
-                v3_add_res(newLoc, v, location);
-                this.addV(newLoc);
+                //v3_add_res(newLoc, v, location);
+                v3_applym4_mod(v, m);
+                this.addV(v);
             }
 
             si = sip;
@@ -619,8 +632,8 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
     getNextSweepColor() {
         this.colSweepIndex++;
-        if (this.colSweepIndex >= this.colSweep.length)  this.colSweepIndex = 0;
-        return this.colSweep[this.colSweepIndex];
+       // if (this.colSweepIndex >= this.colSweep.length)  this.colSweepIndex = 0;
+        return v3_colorsweep_RGBCMY_new(this.colSweepIndex);//  this.colSweep[this.colSweepIndex];
     }
 
     moveCursorTo (p) {
