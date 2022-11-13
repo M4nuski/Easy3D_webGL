@@ -1219,7 +1219,7 @@ function VectSphHit(v, so, sr2) { // translated to v origin
 
     E3D_DEBUG_DATA_CD.set("v-s tca", tca);
 
-if (isNaN(tca)) throw "VectSphHit tca NaN";
+if (isNaN(tca)) throw new Error("VectSphHit tca NaN");
     if  (tca < 0) return false;
     // sph behind origin
 
@@ -1233,7 +1233,7 @@ if (isNaN(tca)) throw "VectSphHit tca NaN";
     t1 = tca + thc;
     E3D_DEBUG_DATA_CD.set("v-s t0" , t0);
     E3D_DEBUG_DATA_CD.set("v-s t1" , t1);
-if (isNaN(thc)) throw "VectSphHit thc NaN";
+if (isNaN(thc)) throw new Error("VectSphHit thc NaN");
     return (t0 < t1) ? t0 : t1;
 }
 
@@ -1242,7 +1242,7 @@ function vector_sph_t(n, sphO_minus_vectO, sphRadSquared) { // translated to v o
     var t1 = 0;
     var tca = v3_dot(sphO_minus_vectO, n);
 
-if (isNaN(tca)) throw "vector_sph_t tca NaN";
+if (isNaN(tca)) throw new Error("vector_sph_t tca NaN");
 
   //  if  (tca < 0) return false;
 
@@ -1250,7 +1250,7 @@ if (isNaN(tca)) throw "vector_sph_t tca NaN";
     if (d2 > sphRadSquared) return false;
     var thc = Math.sqrt(sphRadSquared - d2);
 
-if (isNaN(thc)) throw "vector_sph_t thc NaN";
+if (isNaN(thc)) throw new Error("vector_sph_t thc NaN");
 
     t0 = tca - thc;
     t1 = tca + thc;

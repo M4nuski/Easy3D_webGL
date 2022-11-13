@@ -48,7 +48,7 @@ class E3D_entity {
         this.numElements = 0; // Actual number of vertices to draw.
         this.drawMode = CONTEXT.TRIANGLES;
 
-        // To draw line overlay on model
+        // To draw lines or overlay on model
         this.numStrokeElements = 0;
         this.drawStrokes = false;
 
@@ -96,47 +96,6 @@ class E3D_entity {
     collisionDetection() {
         return this.isVisible && this.hasBody;
     }
-/*
-    clear() {
-        this.isVisible = false;
-        this.dataContentChanged = true; // GPU buffers will be updated  
-        this.dataSizeChanged = true; // GPU buffers will be reset and updated
-
-        // Properties
-        this.position = v3_new();
-        this.rotation = v3_new();
-
-        this.isVisibiltyCullable = true;
-        this.visibilityDistance = 0;
-        
-        // Computed matrix
-        this.modelMatrix = m4_new();
-        this.normalMatrix = m4_new();
-
-        // Data
-        this.numElements = 0; // Actual number of vertices to draw.
-        this.drawMode = CONTEXT.TRIANGLES; // Triangles
-
-        if (this.vertexBuffer) CONTEXT.deleteBuffer(this.vertexBuffer);
-        if (this.normalBuffer) CONTEXT.deleteBuffer(this.normalBuffer);
-        if (this.colorBuffer) CONTEXT.deleteBuffer(this.colorBuffer);
-        if (this.strokeIndexBuffer) CONTEXT.deleteBuffer(this.strokeIndexBuffer);
-
-        this.vertexArray = null; 
-        this.normalArray = null;
-        this.colorArray = null;
-        this.strokeIndexArray = null
-
-        this.drawStrokes = false;
-        this.numStrokeElements = 0;
-
-        this.isAnimated = false;
-        this.animation = new E3D_animationData();
-
-        this.isCollisionSource = false;
-        this.isCollisionTarget = false;
-        this.collision = new E3D_body();
-    }*/
 
 
     // Base transform properties
@@ -194,7 +153,7 @@ class E3D_entity {
     }
 
     increaseSize(by = 1) {
-        if (by < 0) throw "Cannot increase size by negative value";
+        if (by < 0) throw new Error("Cannot increase size by negative value");
 
         if (this.arraySize >= (this.numElements + by)) {
             this.numElements += by;
@@ -235,9 +194,6 @@ class E3D_entity {
         
         this.numStrokeElements = 0;
         this.drawStrokes = false;
-
-        this.isCollisionSource = false;
-        this.isCollisionTarget = false;
 
         this.arrayIndex = 0;
     }
@@ -328,9 +284,8 @@ class E3D_entity_axis extends E3D_entity {
 
     updateVector(vec) {
         let nv = v3_clone(vec);
-        if (this.normalize) {
-            v3_normalize_mod(nv);
-        }
+        if (this.normalize) v3_normalize_mod(nv);
+
         v3_scale_mod(nv, this.vectorScale);
         this.vertexArray[21] = nv[0];
         this.vertexArray[22] = nv[1];
@@ -445,16 +400,17 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.addV( [ location[0], location[1], location[2] - size ] );
     }
 
-    addPlane(pos, rot, width, height, numSubdiv, color = [1,1,1], addCD = false) {
+    // on X Z plane
+    addPlane(pos, rot, width, depth, numSubdiv = 1, color = [1,1,1], addCD = false) {
         this.currentColor = color;
 
         width = width / 2;
-        height = height / 2;
+        depth = depth / 2;
 
-        let p0 = [ width, height, 0];
-        let p1 = [ width,-height, 0];
-        let p2 = [-width,-height, 0];
-        let p3 = [-width, height, 0];
+        let p0 = [ width, 0.0,  depth];
+        let p1 = [ width, 0.0, -depth];
+        let p2 = [-width, 0.0, -depth];
+        let p3 = [-width, 0.0,  depth];
         
         let m = m4_translation_new(pos);
         m4_rotateZ_mod(m, rot[2]);
@@ -488,16 +444,16 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.addV(p1);
             this.addV(p3);
         }
-
+        numSubdiv--;
         if (numSubdiv > 0) {
             let a = [0,0,0];
             let b = [0,0,0];
             let c = [0,0,0];
             let d = [0,0,0];
 
-            for (var i = 0; i < numSubdiv; ++i){
+            for (var i = 1; i <= numSubdiv; ++i){
 
-                let t = (i + 1) / (numSubdiv + 1);
+                let t = i / (numSubdiv + 1);
 
                 v3_lerp_res(a, p1, p0, t);
                 v3_lerp_res(b, p2, p3, t);
@@ -515,45 +471,23 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
         if (addCD) {
 
-            let n = [0, 0, 1];
-            let w = [1, 0, 0];
-            let h = [0, 1, 0];
+            let up = [0, 1, 0];
+            let rg = [1, 0, 0];
+            let fr = [0, 0, 1];
 
             let rm = m4_rotationZ_new(rot[2]);
             m4_rotateX_mod(rm, rot[0]);
             m4_rotateY_mod(rm, rot[1]);
 
-            v3_applym4_mod(n, rm);
-            v3_applym4_mod(w, rm);
-            v3_applym4_mod(h, rm);
+            v3_applym4_mod(up, rm);
+            v3_applym4_mod(rg, rm);
+            v3_applym4_mod(fr, rm);
 
-            this.collision.pushCD_plane(pos, n, w, h, width, height);
-
-            let p = [-width, height, 0];
-            n = [1, 0, 0];
-            v3_applym4_mod(p, m);
-            v3_applym4_mod(n, rm);
-
-            this.collision.pushCD_edge(p, n, width * 2);
-
-            p = [-width, -height, 0];
-            v3_applym4_mod(p, m);
-
-            this.collision.pushCD_edge(p, n, width * 2);
-
-            p = [-width, -height, 0];
-            n = [0, 1, 0];
-            v3_applym4_mod(p, m);
-            v3_applym4_mod(n, rm);
-            this.collision.pushCD_edge(p, n, height * 2);
-
-            p = [width, -height, 0];
-            v3_applym4_mod(p, m);
-            this.collision.pushCD_edge(p, n, height * 2);
-
+            this.collision.pushCD_plane(pos, up, rg, fr, width * 2.0, depth * 2.0, true);
         }
     }
 
+    // upward along Y
     addCylinder(pos, rot, dia, height, color, sides = 8, sideLineStep = 1, sections = 1, addCD = false) {
         this.currentColor = color;
         dia = dia / 2;
@@ -561,8 +495,6 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
         var si = Math.sin(0) * dia;
         var ci = Math.cos(0) * dia;
-
-        var newLoc = v3_new();
 
         let m = m4_translation_new(pos);
         m4_rotateZ_mod(m, rot[2]);
@@ -573,27 +505,23 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
             var sip = Math.sin((i+1) * PIx2 / sides) * dia;
             var cip = Math.cos((i+1) * PIx2 / sides) * dia;
-
+            
             // base
             var v = [si, 0, ci];
-            //v3_add_res(newLoc, v, location);
             v3_applym4_mod(v, m);
             this.addV(v);
 
             v = [sip, 0, cip];
-            //v3_add_res(newLoc, v, location);
             v3_applym4_mod(v, m);
             this.addV(v);
  
             
             // top
             v = [si, height, ci];  
-            //v3_add_res(newLoc, v, location);
             v3_applym4_mod(v, m);
             this.addV(v);  
 
             v = [sip, height, cip];            
-            //v3_add_res(newLoc, v, location);
             v3_applym4_mod(v, m);
             this.addV(v);
     
@@ -601,12 +529,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             if ( (sideLineStep > 0) && ((i % sideLineStep) == 0) ) {
                 // side
                 v = [si, 0, ci];    
-                //v3_add_res(newLoc, v, location);
                 v3_applym4_mod(v, m);
                 this.addV(v);
 
                 v = [si, height, ci];
-                //v3_add_res(newLoc, v, location);
                 v3_applym4_mod(v, m);
                 this.addV(v);
             }
@@ -614,12 +540,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             for (var j = 1; j < sections; ++j) {
 
                 var v = [si, j * height / sections, ci];
-                //v3_add_res(newLoc, v, location);
                 v3_applym4_mod(v, m);
                 this.addV(v);
 
                 v = [sip, j * height / sections, cip];
-                //v3_add_res(newLoc, v, location);
                 v3_applym4_mod(v, m);
                 this.addV(v);
             }
@@ -645,7 +569,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         v3_add_mod(this.currentPos, p);
     }
 
-    addLineTo(p, sweep, col= [1,1,1]) {
+    addLineTo(p, sweep, col = [1,1,1]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(this.currentPos, color);
@@ -654,7 +578,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         v3_copy(this.currentPos, p);
     }
 
-    addLine(p0, p1, sweep, col= [1,1,1]) {
+    addLine(p0, p1, sweep, col = [1,1,1]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(p0, color);
@@ -662,7 +586,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
 
-    addLineByOffset(p, sweep, col= [1,1,1]) {
+    addLineByOffset(p, sweep, col = [1,1,1]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(this.currentPos, color);
@@ -672,7 +596,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.addVC(this.currentPos, color);  
     }
 
-    addLineByNormalAndLength(n, l, sweep, col= [1,1,1]) {
+    addLineByNormalAndLength(n, l, sweep, col = [1,1,1]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(this.currentPos, color);
@@ -683,7 +607,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     
-    addLineByPosNormLen(p, n, l, sweep, col= [1,1,1]) {
+    addLineByPosNormLen(p, n, l, sweep, col = [1,1,1]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         v3_copy(this.currentPos, p);
@@ -694,7 +618,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.addVC(this.currentPos, color);
     }
 
-    addWireCube(loc, rot, size, color, addBoxCD = false, centerCross = false, sideCross = false) {
+    addWireCube(loc, rot, size, color, addBoxCD = false, centerCross = false, sideCross = false, bottom = true) {
         if (!Array.isArray(size)) size = [size, size, size];
         size[0] = Math.abs(size[0]) / 2;
         size[1] = Math.abs(size[1]) / 2;
@@ -726,20 +650,21 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         v3_applym4_mod(brr, m);
         v3_applym4_mod(brl, m);
 
-         this.addLine(tfr, tfl, false, color);
-         this.addLine(tfl, trl, false, color);
-         this.addLine(trl, trr, false, color);
-         this.addLine(trr, tfr, false, color);
+        this.addLine(tfr, tfl, false, color);
+        this.addLine(tfl, trl, false, color);
+        this.addLine(trl, trr, false, color);
+        this.addLine(trr, tfr, false, color);
 
-         this.addLine(bfr, bfl, false, color);
-         this.addLine(bfl, brl, false, color);
-         this.addLine(brl, brr, false, color);
-         this.addLine(brr, bfr, false, color);
+        this.addLine(bfr, bfl, false, color);
+        this.addLine(bfl, brl, false, color);
+        this.addLine(brl, brr, false, color);
+        this.addLine(brr, bfr, false, color);
 
-         this.addLine(tfr, bfr, false, color);
-         this.addLine(tfl, bfl, false, color);
-         this.addLine(trl, brl, false, color);
-         this.addLine(trr, brr, false, color);
+
+        this.addLine(tfr, bfr, false, color);
+        this.addLine(tfl, bfl, false, color);
+        this.addLine(trl, brl, false, color);
+        this.addLine(trr, brr, false, color);
 
         if (centerCross) {
             this.addLine(tfr, brl, false, color);
@@ -762,9 +687,10 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
             this.addLine(tfr, trl, false, color);//t
             this.addLine(tfl, trr, false, color);
-
-            this.addLine(brl, bfr, false, color); //b
-            this.addLine(brr, bfl, false, color);
+            if (bottom) {
+                this.addLine(brl, bfr, false, color); //b
+                this.addLine(brr, bfl, false, color);
+            }
         }
         if (addBoxCD) {
 
@@ -780,7 +706,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             v3_applym4_mod(y, m);
             v3_applym4_mod(z, m);
 
-            this.collision.pushCD_box(loc, x, y, z, size[0], size[1], size[2], true); 
+            this.collision.pushCD_box(loc, x, y, z, size[0], size[1], size[2], bottom); 
         }
     }
 
@@ -797,13 +723,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.addV(p3);
         this.addV(p1);
 
-        if (addCD) {
-            var da = v3_sub_new(p2, p1);
-            var db = v3_sub_new(p3, p1);
-            var n  = v3_cross_new(da, db);
-            v3_normalize_mod(n);
-            this.collision.pushCD_triangle(n, p1, p2, p3);
-        }
+        if (addCD) this.collision.pushCD_triangle(p1, p2, p3, true);
     }
 
 

@@ -21,15 +21,21 @@ CAMERA.moveBy(0, 0, 200);
 // Create a new entity
 var grid = new E3D_entity_wireframe_canvas("entity_grid");
 // Large axis planes
-grid.addPlane(_v3_origin, _v3_90x, 1000, 1000, 19, _v3_lightgreen);
-grid.addPlane(_v3_origin, _v3_90y, 1000, 1000, 19, _v3_lightred);
-grid.addPlane(_v3_origin, _v3_90z, 1000, 1000, 19, _v3_lightblue);
+grid.addPlane(_v3_origin, _v3_90x, 1000, 1000, 20, _v3_lightgreen);
+grid.addPlane(_v3_origin, _v3_90y, 1000, 1000, 20, _v3_lightred);
+grid.addPlane(_v3_origin, _v3_90z, 1000, 1000, 20, _v3_lightblue);
 grid.isVisible = true;
 E3D_addEntity(grid);
 
 var obj1 = new E3D_entity_wireframe_canvas("entity_solid");
-obj1.addCylinder(_v3_null, [ 0.707, 0.50, 0.1], 10, 50, _v3_white, 16, 2, 4, false);
-obj1.addWireSphere([0.0, 0.0, 20.0], 15.0, _v3_white, 16, false, 4);
+obj1.addWireSphere([0.0, 0.0, 0.0], 15.0, _v3_white, 16, false, 4);
+obj1.addWireCross( [0.0, 0.0, 25.0], 5.0);
+obj1.addPlane([0.0, -20.0, 50.0], _v3_null, 64, 48, 12);
+obj1.addCylinder([0.0, 0.0, 75.0], _v3_null, 10, 50, _v3_white, 16, 2, 4, false);
+obj1.moveCursorTo([25.0, 25.0, 0.0]); $n(24, () => obj1.addLineByOffset([5.0, 0.0, 0.0], true) );
+obj1.addWireCube([25.0, 0.0, 25.0], _v3_null, 12.0, _v3_white, false, true, true, true);
+obj1.addTriangle([25.0, 0.0, 75.0], [25.0, 25.0, 50.0], [50.0, 0.0, 50.0]);
+
 obj1.isVisible = true;
 E3D_addEntity(obj1);
 

@@ -78,7 +78,7 @@ class E3D_animation {
     }
 
     cloneData(target) {
-        throw "NOT IMPLEMENTED: E3D_animation.cloneData(target)";
+        throw new Error("NOT IMPLEMENTED: E3D_animation.cloneData(target)");
     }
 
 }
@@ -358,7 +358,7 @@ function collisionResult_asSource_bounce(){
         }*/
         
         
-        //if (firstCol.t0 < 0.0) { //throw "collision behind initial position: " + firstCol.marker + "@" + firstCol.t0;
+        //if (firstCol.t0 < 0.0) { //throw new Error("collision behind initial position: " + firstCol.marker + "@" + firstCol.t0);
         
        // }
         firstCol.t0 = Math.sqrt(Math.abs(firstCol.t0));

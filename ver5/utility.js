@@ -70,6 +70,9 @@ function $forEach(selector, lambda) {
     document.querySelectorAll(selector).forEach(lambda);
 }
 
+function $n(n, lambda) {
+    for (let i = 0; i < n; ++i) lambda(i, n);
+}
 
 function downloadBlob(filename, data) {
     const blob = new Blob([data], {type: 'text/plain'});
