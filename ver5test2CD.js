@@ -28,12 +28,12 @@ grid.isVisible = true;
 E3D_addEntity(grid);
 
 var obj1 = new E3D_entity_wireframe_canvas("entity_solid");
-obj1.addWireSphere([0.0, 0.0, 0.0], 15.0, _v3_white, 16, false, 4);
-obj1.addWireCross( [0.0, 0.0, 25.0], 5.0);
+obj1.addSphere([0.0, 0.0, 0.0], 15.0, _v3_white, 16, false, 4);
+obj1.addCross( [0.0, 0.0, 25.0], 5.0);
 obj1.addPlane([0.0, -20.0, 50.0], _v3_null, 64, 48, 12);
 obj1.addCylinder([0.0, 0.0, 75.0], _v3_null, 10, 50, _v3_white, 16, 2, 4, false);
 obj1.moveCursorTo([25.0, 25.0, 0.0]); $n(24, () => obj1.addLineByOffset([5.0, 0.0, 0.0], true) );
-obj1.addWireCube([25.0, 0.0, 25.0], _v3_null, 12.0, _v3_white, false, true, true, true);
+obj1.addCube([25.0, 0.0, 25.0], _v3_null, 12.0, _v3_white, false, true, true, true);
 obj1.addTriangle([25.0, 0.0, 75.0], [25.0, 25.0, 50.0], [50.0, 0.0, 50.0]);
 
 obj1.isVisible = true;

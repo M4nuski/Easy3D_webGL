@@ -23,10 +23,10 @@ function E3D_DEBUG_SHOW_CD() {
     for (let i = 0; i < ENTITIES.length; ++i) {
 
         // vis culling
-        if (ENTITIES[i].isVisibiltyCullable) E3D_DEBUG_SHOW_CD_ENTITY.addWireSphere(ENTITIES[i].position, ENTITIES[i].cull_dist * 2, _v3_orange, 24, false);
+        if (ENTITIES[i].isVisibiltyCullable) E3D_DEBUG_SHOW_CD_ENTITY.addSphere(ENTITIES[i].position, ENTITIES[i].cull_dist * 2, _v3_orange, 24, false);
 
         // sph
-        for (let j = 0; j < ENTITIES[i].CD_sph; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addWireSphere(ENTITIES[i].CD_sph_p[j], ENTITIES[i].CD_sph_r[j] * 2, _v3_lightred, 4, false);
+        for (let j = 0; j < ENTITIES[i].CD_sph; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addSphere(ENTITIES[i].CD_sph_p[j], ENTITIES[i].CD_sph_r[j] * 2, _v3_lightred, 4, false);
 
         // plane
         for (let j = 0; j < ENTITIES[i].CD_plane; ++j) {
@@ -117,7 +117,7 @@ function E3D_DEBUG_SHOW_HITTEST() {
     _E3D_DEBUG_SHOW_HITTEST = true;
 }
 // TODO function E3D_DEBUG_HITTEST_SPHERE(...) _LINE _CROSS
-// if (_E3D_DEBUG_SHOW_HITTEST) {E3D_DEBUG_SHOW_HITTEST_ENTITY.addWireSphere(...)}
+// if (_E3D_DEBUG_SHOW_HITTEST) {E3D_DEBUG_SHOW_HITTEST_ENTITY.addSphere(...)}
 
 // Collision detection detected hits markers
 var E3D_DEBUG_SHOW_HIT_ENTITY = null;
@@ -140,7 +140,7 @@ function E3D_DEBUG_SHOW_HIT() {
     _E3D_DEBUG_SHOW_HIT = true;
 }
 // TODO function E3D_DEBUG_HIT_SPHERE(...) _LINE _CROSS
-// if (_E3D_DEBUG_SHOW_HIT) {E3D_DEBUG_SHOW_HIT_ENTITY.addWireSphere(...)}
+// if (_E3D_DEBUG_SHOW_HIT) {E3D_DEBUG_SHOW_HIT_ENTITY.addSphere(...)}
 
 // Animation path markers
 var E3D_DEBUG_SHOW_PATH_ENTITY = null;

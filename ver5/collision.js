@@ -63,8 +63,8 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
     v3_invscale_res(sourceSph_n, sourceBody.delta, sourceSph_l);  
 
     //if (E3D_DEBUG_SHOW_HIT_TEST && (dev_Hits != undefined)) {
-    //    dev_Hits.addWireSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
-     //   dev_Hits.addWireSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
+    //    dev_Hits.addSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
+     //   dev_Hits.addSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
     //}
 
     // temporary CD result data
@@ -147,7 +147,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                         //point_segment_point_res(posOffset, targetBody.CD_edge_p[targetCDindex], targetBody.CD_edge_n[targetCDindex], targetBody.CD_edge_l[targetCDindex], firstHit);
                         v3_sub_res(hitNormal, firstHit, posOffset);   
                         
-                        if (E3D_DEBUG_SHOW_HIT_TEST) dev_Hits.addWireSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
+                        if (E3D_DEBUG_SHOW_HIT_TEST) dev_Hits.addSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
 
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
@@ -190,7 +190,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
 
                         var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
                         if ( t0 <= _tempCDRes_t0 ) {
-                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -344,12 +344,12 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_y[targetCDindex]);
                                 closestHit = hitRes;                                       
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_TopRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_TopLeft] = true;
@@ -380,13 +380,13 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_y[targetCDindex]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_BottomRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BottomLeft] = true;
@@ -423,12 +423,12 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_z[targetCDindex]);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_FrontLeft] = true;
@@ -461,13 +461,13 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_z[targetCDindex]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_BackRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
@@ -506,12 +506,12 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_x[targetCDindex]);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackRight] = true;
@@ -545,13 +545,13 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_x[targetCDindex]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontLeft] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
@@ -775,7 +775,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                         var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
 
-                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -812,7 +812,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                     var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
 
                     if ( t0 <= _tempCDRes_t0 ) {          
-                        if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                        if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
                         v3_copy(_tempCDRes_n, target.CD_triangle_n[targetCDindex]);
@@ -918,7 +918,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                         var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes); 
                         if ( t0 < _tempCDRes_t0) {
                             v3_sub_res(hitNormal, firstHit, targetBody.CD_sph_p[j]);
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, _v3_red);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, _v3_red);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -926,8 +926,8 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                             _tempCDRes_target_desc = "Sph";
                             _tempCDRes_target_cdi = j;
 
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, _v3_white);
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireSphere(firstHit,targetBody.CD_sph_p[j] * 2, _v3_red, 8, false);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, _v3_white);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addSphere(firstHit,targetBody.CD_sph_p[j] * 2, _v3_red, 8, false);
                             //sourceEntity.pushCollisionSource(marker, t0 / sourcePts_l, hitNormal, firstHit, "Point", "Sph", targetEntityIndex, sourceCDindex, j);
                         } // end <t0
                     }// end hitres
@@ -949,7 +949,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                             _tempCDRes_target_desc = "Sph";
                             _tempCDRes_target_cdi = j;
 
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, _v3_white);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, _v3_white);
                             //sourceEntity.pushCollisionSource(marker, t0 / sourcePts_l, hitNormal, firstHit, "Point", "Sph", targetEntityIndex, sourceCDindex, j);
                         }
                     }
@@ -983,7 +983,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
 
                         var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
-                        //    if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                        //    if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -1165,7 +1165,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                     var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {          
-                       // if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                       // if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
                         v3_copy(_tempCDRes_n, target.CD_triangle_n[j]);
@@ -1318,7 +1318,7 @@ function triangle_vector_intersect_res(firsthit, vOrig, vNormal, triP1, triP3P1,
     //v3_sub_res(_t_v_i_v1, triP2, triP1);
 
     v3_addscaled_res(firsthit, vOrig, vNormal, t);
-    //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firsthit, 2, [1, 0, 0]);
+    //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firsthit, 2, [1, 0, 0]);
 
     v3_sub_res(_t_v_i_v2, firsthit, triP1);
 
@@ -1354,7 +1354,7 @@ return (u >= 0) && (v >= 0) && (u + v < 1)
     var v = (dot00 * dot12 - dot01 * dot02) * invDenom
 
     if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
-    //    if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firsthit, 4, [0, 1, 0]);
+    //    if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firsthit, 4, [0, 1, 0]);
         if (t == 0) t = _v3_epsilon;
         return t;
     } else return false;
@@ -1387,7 +1387,7 @@ function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, t
         } else {
             v3_addscaled_res(firstHit, vOrig, triNorm, t * angleCos); //corret position over plane
         }
-        //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, [1, 0, 0]);
+        //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, [1, 0, 0]);
         
         v3_sub_res(_t_v_i_v2, firstHit, triP1);
     
@@ -1400,7 +1400,7 @@ function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, t
         var v = (triP3len * dot12 - tridP3P2dot * dot02) * invDenom
     
         if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
-            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 4, [0, 1, 0]);
+            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 4, [0, 1, 0]);
             if (t == 0) t = _v3_epsilon;
             return t;
         } else return false;

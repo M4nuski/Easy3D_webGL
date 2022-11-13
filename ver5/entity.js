@@ -315,7 +315,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.currentPos = v3_new(); // draw cursor position
     }
 
-    addWireSphere(location, dia, color, sides, addSphCD = false, numSegments = 1) {
+    addSphere(location, dia, color, sides, addSphCD = false, numSegments = 1) {
 
         dia = dia / 2;
         if (addSphCD) this.collision.pushCD_sph(location, dia);
@@ -386,7 +386,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         }
     }
         
-    addWireCross(location, size, color = [1,1,1]) {
+    addCross(location, size, color = [1,1,1]) {
         size = size / 2;
         this.currentColor = color;
 
@@ -618,7 +618,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.addVC(this.currentPos, color);
     }
 
-    addWireCube(loc, rot, size, color, addBoxCD = false, centerCross = false, sideCross = false, bottom = true) {
+    addCube(loc, rot, size, color, addBoxCD = false, centerCross = false, sideCross = false, bottom = true) {
         if (!Array.isArray(size)) size = [size, size, size];
         size[0] = Math.abs(size[0]) / 2;
         size[1] = Math.abs(size[1]) / 2;
@@ -726,7 +726,23 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         if (addCD) this.collision.pushCD_triangle(p1, p2, p3, true);
     }
 
+    addCapsule(pos, rot, length, rad, color = [1, 1, 1], addCD = false) {
+        this.currentColor = color;
 
+        let m = m4_translation_new(loc);
+       
+        m4_rotateZ_mod(m, rot[2]);
+        m4_rotateX_mod(m, rot[0]);
+        m4_rotateY_mod(m, rot[1]);
+
+
+    }
+    addCapsule2p(p1, p2, rad, color = [1, 1, 1], addCD = false) {
+        this.currentColor = color;
+        this.addV(p1);
+        this.addV(p2);
+
+    }
 }
 
 
