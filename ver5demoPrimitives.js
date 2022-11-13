@@ -18,7 +18,7 @@ SCENE.strokeColor = _v3_black;
 // Create the entities
 var groundEntity = new E3D_entity_wireframe_canvas("entity0");
 // Large ground plane
-groundEntity.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray);
+groundEntity.addPlane(_v3_origin, _v3_null, 2048, 2048, _v3_lightgray, 128);
 groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 

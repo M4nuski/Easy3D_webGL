@@ -421,7 +421,7 @@ function collisionResult_asSource_mark(){
         v3_normalize_mod(this.closestCollision[i].n);
         if (E3D_DEBUG_SHOW_HIT_RESULT) { 
             phyTracers.addCross(this.closestCollision[i].p0, 2, _v3_green);
-            phyTracers.addLineByPosNormLen(this.closestCollision[i].p0, this.closestCollision[i].n, 2, false, _v3_white);
+            phyTracers.addLineByPosNormLen(this.closestCollision[i].p0, this.closestCollision[i].n, 2.0, _v3_white);
         }
         if (this.closestCollision[i].source_desc == "Point") {
             this.pActive[this.closestCollision[i].source_cdi] = false;
@@ -508,7 +508,7 @@ function collisionResult_asTarget_mark(){
         v3_normalize_mod(this.isCollisionTarget[i].n);
         if (E3D_DEBUG_SHOW_HIT_RESULT) { 
             phyTracers.addCross(this.isCollisionTarget[i].p0, 2, _v3_red);
-            phyTracers.addLineByPosNormLen(this.isCollisionTarget[i].p0, this.isCollisionTarget[i].n, 2, false, _v3_white);
+            phyTracers.addLineByPosNormLen(this.isCollisionTarget[i].p0, this.isCollisionTarget[i].n, 2.0, _v3_white);
         }
     }
 }

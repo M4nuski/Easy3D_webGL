@@ -22,15 +22,15 @@ CAMERA.moveBy(0, 0, 200);
 var entity = new E3D_entity_wireframe_canvas("entity0");
 
 // Large axis planes
-entity.addPlane(_v3_origin, _v3_90x, 1000, 1000, 19, _v3_lightgreen);
-entity.addPlane(_v3_origin, _v3_90y, 1000, 1000, 19, _v3_lightred);
-entity.addPlane(_v3_origin, _v3_90z, 1000, 1000, 19, _v3_lightblue);
+entity.addPlane(_v3_origin, _v3_90x, 1000, 1000, _v3_lightgreen, 20);
+entity.addPlane(_v3_origin, _v3_90y, 1000, 1000, _v3_lightred, 20);
+entity.addPlane(_v3_origin, _v3_90z, 1000, 1000, _v3_lightblue, 20);
 
 var entity2 = new E3D_entity_wireframe_canvas("entity1");
 // Small axis planes
-entity2.addPlane(_v3_origin, _v3_90x, 1000, 1000, 99, _v3_darkgreen);
-entity2.addPlane(_v3_origin, _v3_90y, 1000, 1000, 99, _v3_darkred);
-entity2.addPlane(_v3_origin, _v3_90z, 1000, 1000, 99, _v3_darkblue);
+entity2.addPlane(_v3_origin, _v3_90x, 1000, 1000, _v3_darkgreen, 100);
+entity2.addPlane(_v3_origin, _v3_90y, 1000, 1000, _v3_darkred, 100);
+entity2.addPlane(_v3_origin, _v3_90z, 1000, 1000, _v3_darkblue, 100);
 
 
 let offset = [10.0, 0.0, 0.0];
@@ -39,61 +39,61 @@ let p1 = [ -2.0, 20.0, 10.0];
 let p = [ 10.0, 25.0, -5.0];
 let v = v3_sub_new(p1, p0);
 let n = v3_normalize_new(v);
-entity.addLine(p0, p1, false, _v3_lightgreen);
-entity.addLineByPosNormLen(p0, n, 2.0, false, _v3_white);
+entity.addLine(p0, p1, _v3_lightgreen);
+entity.addLineByPosNormLen(p0, n, 2.0, _v3_white);
 let resv = v3_proj_on_normal_new(p, n);
 let resp = v3_proj_on_normalplane_new(p, n);
 entity.addCross(p, 1.0, _v3_white);
 entity.addCross(resp, 1.0, _v3_red);
 entity.addCross(resv, 1.0, _v3_blue);
-entity.addLine(p0, p, false, _v3_lightgray);
-entity.addLine(p, resp, false, _v3_lightgray);
-entity.addLine(p, resv, false, _v3_lightgray);
+entity.addLine(p0, p, _v3_lightgray);
+entity.addLine(p, resp, _v3_lightgray);
+entity.addLine(p, resv, _v3_lightgray);
 
 v3_add_mod(p0, offset);
 v3_add_mod(p1, offset);
 v3_add_mod(p, offset);
 v = v3_sub_new(p1, p0);
 n = v3_normalize_new(v);
-entity.addLine(p0, p1, false, _v3_white);
+entity.addLine(p0, p1, _v3_white);
 resv = v3_proj_on_offsetnormal_new(p, p0, n);
 resp = v3_proj_on_plane_new(p, p0, n);
 entity.addCross(p, 1.0, _v3_white);
 entity.addCross(resp, 1.0, _v3_red);
 entity.addCross(resv, 1.0, _v3_blue);
-entity.addLine(p0, p, false, _v3_lightgray);
-entity.addLine(p, resp, false, _v3_lightgray);
-entity.addLine(p, resv, false, _v3_lightgray);
+entity.addLine(p0, p, _v3_lightgray);
+entity.addLine(p, resp, _v3_lightgray);
+entity.addLine(p, resv, _v3_lightgray);
 
 v3_add_mod(p0, offset);
 v3_add_mod(p1, offset);
 v3_add_mod(p, offset);
 v = v3_sub_new(p1, p0);
 n = v3_normalize_new(v);
-entity.addLine(p0, p1, false, _v3_white);
+entity.addLine(p0, p1, _v3_white);
 resv = v3_proj_on_vector_new(p, p0, v);
 resp = v3_proj_on_vectorplane_new(p, p0, v);
 entity.addCross(p, 1.0, _v3_white);
 entity.addCross(resp, 1.0, _v3_red);
 entity.addCross(resv, 1.0, _v3_blue);
-entity.addLine(p0, p, false, _v3_lightgray);
-entity.addLine(p, resp, false, _v3_lightgray);
-entity.addLine(p, resv, false, _v3_lightgray);
+entity.addLine(p0, p, _v3_lightgray);
+entity.addLine(p, resp, _v3_lightgray);
+entity.addLine(p, resv, _v3_lightgray);
 
 v3_add_mod(p0, offset);
 v3_add_mod(p1, offset);
 v3_add_mod(p, offset);
 v = v3_sub_new(p1, p0);
 n = v3_normalize_new(v);
-entity.addLine(p0, p1, false, _v3_white);
+entity.addLine(p0, p1, _v3_white);
 resv = v3_proj_on_segment_new(p, p0, p1);
 resp = v3_proj_on_segmentplane_new(p, p0, p1);
 entity.addCross(p, 1.0, _v3_white);
 entity.addCross(resp, 1.0, _v3_red);
 entity.addCross(resv, 1.0, _v3_blue);
-entity.addLine(p0, p, false, _v3_lightgray);
-entity.addLine(p, resp, false, _v3_lightgray);
-entity.addLine(p, resv, false, _v3_lightgray);
+entity.addLine(p0, p, _v3_lightgray);
+entity.addLine(p, resp, _v3_lightgray);
+entity.addLine(p, resv, _v3_lightgray);
 
 let capsule = {
     l: 10.0,
@@ -123,9 +123,9 @@ CB_tick = function() {
         v = v3_addnoise_new(_v3_origin, 256.0);
         v3_normalize_mod(n);
         p = v3_projection_new(v, n);        
-        entity.addLineByPosNormLen(o, n, 10, false, _v3_white);
-        entity.addLine(o, v, false, _v3_red);
-        entity.addLine(v, p, false, _v3_yellow);
+        entity.addLineByPosNormLen(o, n, 10.0, _v3_white);
+        entity.addLine(o, v, _v3_red);
+        entity.addLine(v, p, _v3_yellow);
     }
     entity2.isVisible = CAMERA.zDist > -100.0;
     $("data").innerText = v3_string(CAMERA.position) + "\n";

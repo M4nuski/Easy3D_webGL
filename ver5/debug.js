@@ -30,17 +30,17 @@ function E3D_DEBUG_SHOW_CD() {
 
         // plane
         for (let j = 0; j < ENTITIES[i].CD_plane; ++j) {
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_n[j], 10, false, _v3_white);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_n[j], 10, _v3_white);
 
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j],  ENTITIES[i].CD_plane_halfWidth[j], false, _v3_lightred);
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j], -ENTITIES[i].CD_plane_halfWidth[j], false, _v3_red);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j],  ENTITIES[i].CD_plane_halfWidth[j], _v3_lightred);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j], -ENTITIES[i].CD_plane_halfWidth[j], _v3_red);
 
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j],  ENTITIES[i].CD_plane_halfHeight[j], false, _v3_lightgreen);
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j], -ENTITIES[i].CD_plane_halfHeight[j], false, _v3_green);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j],  ENTITIES[i].CD_plane_halfHeight[j], _v3_lightgreen);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j], -ENTITIES[i].CD_plane_halfHeight[j], _v3_green);
         }
 
         // edge
-        for (let j = 0; j < ENTITIES[i].CD_edge; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_edge_p[j], ENTITIES[i].CD_edge_n[j], ENTITIES[i].CD_edge_l[j], false, _v3_orange);
+        for (let j = 0; j < ENTITIES[i].CD_edge; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_edge_p[j], ENTITIES[i].CD_edge_n[j], ENTITIES[i].CD_edge_l[j], _v3_orange);
    
         // box
         for (let j = 0; j < ENTITIES[i].CD_box; ++j) {
@@ -66,7 +66,7 @@ function E3D_DEBUG_SHOW_CD() {
             v3_add_res(p3, ENTITIES[i].CD_triangle_p1[j], ENTITIES[i].CD_triangle_p3p1[j]);
             v3_avg3_res(midpoint, ENTITIES[i].CD_triangle_p1[j], p2, p3);
 
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(midpoint, ENTITIES[i].CD_triangle_n[j], 10, false, _v3_white);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(midpoint, ENTITIES[i].CD_triangle_n[j], 10, _v3_white);
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, ENTITIES[i].CD_triangle_p1[j], false, _v3_lightred);
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, p2, false, _v3_lightgreen);
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, p3, false, _v3_lightblue);

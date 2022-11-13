@@ -23,12 +23,10 @@ var animMode = "direct";
 
 // Large ground plane
 var ground = new E3D_entity_wireframe_canvas("entity0");
-ground.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray);
+ground.addPlane(_v3_origin, _v3_null, 2048, 2048, _v3_lightgray, 128);
 ground.isVisible = true;
-var groundIndex = E3D_addEntity(ground, false, true); // add entity and a body, but no animation
-
-BODIES[groundIndex].pushCD_plane(_v3_origin, _v3_y, _v3_x, _v3_z, 2048, 2048); // plane collision body data
-ground.isCollisionTarget = true; // ground dosen't move, only a possible target
+E3D_addEntity(ground, null, new E3D_body(CD_mode.STATIC)); // add entity and a body, but no animation
+BODIES[ground.index].pushCD_plane(_v3_origin, _v3_y, _v3_x, _v3_z, 2048, 2048); // plane collision body data
 
 
 // base entity to move around and show the different methods
