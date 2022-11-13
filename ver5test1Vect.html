@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Easy3D Engine webGL version 0.5 test 1 vector projection</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="media/e3d.ico">
+        <link rel="stylesheet" href="ver5.css">
+        <style>
+        #data {
+            background-color: transparent;
+            z-index: 10;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            white-space: pre;
+            color: white;
+        }
+        </style>
+        <!-- Vector test -->
+        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5test1Vect.js" data-fail="ver5demoFail.js" defer="true"></script>
+    </head>
+
+    <body>
+        <div class="E3D_fullscreenContainer E3D_flexVertical">
+            <div id="E3D_mainDiv" class="E3D_flexContent">
+            </div>
+            <div id="data" class="E3D_monospaceText"></div>
+            <div class="E3D_flexVerticalContentFit E3D_margin">
+                <div class="E3D_monospaceText"><span id="spanSFPS"></span> FPS, <span id="spanSPCT"></span>%, <span id="spanMODE"></span></div>
+            </div>
+        </div>
+    </body>
+</html>

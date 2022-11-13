@@ -318,8 +318,8 @@ function timerTick() {  // Game Loop
     }
 
     inputs.processInputs(timer.delta);
-    inputs.smoothRotation(6);
-    inputs.smoothPosition(6);
+    inputs.smoothRotation(0.8);
+    inputs.smoothPosition(0.8);
     if (scn.camera.id == "cam1f") {
      //   inputs.clampRotationSmooth(-PIdiv2, PIdiv2, true, false, false);
         if (scn.camera.rotation[0] < -PIdiv2)  {
