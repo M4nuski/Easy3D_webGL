@@ -240,18 +240,20 @@ function log(text, silent = true) {
 
 // Entities management
 
-// TODO refactor and standardize:
-// E3D_[verb]Entity[attrib](entityObj)
-// E3D_[verb]Entity[attrib]ByID(entityID)
-// E3D_[verb]Entity[attrib]ByIndex(entityIndex)
+
+function E3D_getEntityIndexById(id) {
+    for (let i = 0; i < ENTITIES.length; ++i) if (ENTITIES[i].id == id) return i;
+    return -1;
+}
+
 
 // Add a new entity to the current scene and setup the GPU buffers
 function E3D_addEntity(entityObj, addAnimation = false, addBody = false) {
-    if (E3D_getEntityIndexFromId(entityObj.id) != -1) { 
+    if (E3D_getEntityIndexById(entityObj.id) != -1) { 
         log("Duplicate entity ID: " + entityObj.id);
         return -1;
     }
-    // Initialize context data buffers        
+    // Initialize context data buffers
     entityObj.vertexBuffer = CONTEXT.createBuffer();
     entityObj.colorBuffer = CONTEXT.createBuffer();
     entityObj.normalBuffer = CONTEXT.createBuffer();
@@ -286,115 +288,225 @@ function E3D_addEntity(entityObj, addAnimation = false, addBody = false) {
     }
     if (addBody) {
         BODIES[entityObj.index].index = entityObj.index;
-        entityObj.hadBody = true;
+        entityObj.hasBody = true;
     }
     entityObj.updateMatrix();
 
     return entityObj.index; 
 }
 
-function E3D_getEntityIndexFromId(id) {
-    for (let i = 0; i < ENTITIES.length; ++i) {
-        if (ENTITIES[i].id == id) return i;
-    }
-    return -1;
+
+function E3D_updateEntityData(entityObj) {
+    entityObj.dataContentChanged = true;
+    entityObj.dataSizeChanged = true;        
+    entityObj.visibilityDistance = v3_length(E3D_calculate_max_pos(entityObj.vertexArray));
+    entityObj.updateMatrix();
+}
+function E3D_updateEntityDataById(id) {
+    let index = E3D_getEntityIndexById(id);
+    if (index == -1) return;
+    E3D_updateEntityData(ENTITIES[index]);
+}
+function E3D_updateEntityDataByIndex(index) {
+    if (index == -1) return;
+    if (index > ENTITIES.length - 1) return;
+    E3D_updateEntityData(ENTITIES[index]);
 }
 
-function E3D_updateEntityData(ent) {
-    let idx = E3D_getEntityIndexFromId(ent.id);
-    if (idx > -1) {
-        ent.dataContentChanged = true;
-        ent.dataSizeChanged = true;        
-        ent.visibilityDistance = v3_length(E3D_calculate_max_pos(ent.vertexArray));
-        ent.updateMatrix();
-    } else {
-        return E3D_addEntity(ent);
+function E3D_removeEntity(entityObj, deleteBuffers = true) {
+    E3D_removeEntityByIndex(entityObj.index, deleteBuffers);
+}
+function E3D_removeEntityById(id, deleteBuffers = true) {
+    E3D_removeEntityByIndex(E3D_getEntityIndexById(id), deleteBuffers);
+}
+function E3D_removeEntityByIndex(index, deleteBuffers = true) {
+    if (index == -1) return;
+    if (index > ENTITIES.length - 1) return;
+
+    if (deleteBuffers) {
+        CONTEXT.deleteBuffer(ENTITIES[index].vertexBuffer);
+        CONTEXT.deleteBuffer(ENTITIES[index].colorBuffer);
+        CONTEXT.deleteBuffer(ENTITIES[index].normalBuffer);
+        CONTEXT.deleteBuffer(ENTITIES[index].strokeIndexBuffer);
     }
-    return idx;
+    ENTITIES.splice(index, 1);
+    ANIMATIONS.splice(index, 1);
+    BODIES.splice(index, 1);        
+    for (var i = index; i < ENTITIES.length; ++i) {
+        ENTITIES[i].index = i;
+        if (ANIMATIONS[i]) ANIMATIONS[i].index = i;
+        if (BODIES[i]) BODIES[i].index = i;
+    }
 }
 
-function E3D_removeEntity(id, deleteBuffers = true) {
-    let idx = this.E3D_getEntityIndexFromId(id);
-    if (idx > -1) {
-        if (deleteBuffers) {
-            CONTEXT.deleteBuffer(ENTITIES[idx].vertexBuffer);
-            CONTEXT.deleteBuffer(ENTITIES[idx].colorBuffer);
-            CONTEXT.deleteBuffer(ENTITIES[idx].normalBuffer);
-            CONTEXT.deleteBuffer(ENTITIES[idx].strokeIndexBuffer);
+function E3D_clearEntity(entityObj, mesh = true, animation = true, body = true) {
+    E3D_clearEntityByIndex(entityObj.index, mesh, animation, body);
+}
+function E3D_clearEntityById(id, mesh = true, animation = true, body = true) {
+    E3D_clearEntityByIndex(E3D_getEntityIndexById(id), mesh, animation, body);
+}
+function E3D_clearEntityByIndex(index, mesh = true, animation = true, body = true) {
+    if (index == -1) return;
+    if (index > ENTITIES.length - 1) return;
+
+    if (mesh) ENTITIES[index].clear();
+    if (animation && (ANIMATIONS[index] != null)) ANIMATIONS[index] = null; // TODO ??
+    if (body && (BODIES[index] != null)) BODIES[index].clear();
+}
+
+
+function E3D_cloneEntity(entityObj, newId) {
+    if (entityObj.index == -1) {
+        log("E3D_cloneEntity: source entity not assigned");
+        return -1;
+    }
+    if (E3D_getEntityIndexById(newId) != -1) {
+        log("E3D_cloneEntity: newId already in use");
+        return -1;
+    }
+
+    let newEntity = new E3D_entity(newId, entityObj.isDynamic);
+
+    newEntity.cloneData(entityObj);   
+
+    if (newEntity.isDynamic) {
+        newEntity.vertexBuffer = CONTEXT.createBuffer();
+        newEntity.colorBuffer = CONTEXT.createBuffer();
+        newEntity.normalBuffer = CONTEXT.createBuffer();
+        newEntity.strokeIndexBuffer = CONTEXT.createBuffer();
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, newEntity.vertexBuffer);
+        CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, newEntity.vertexArray, CONTEXT.DYNAMIC_DRAW);
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, newEntity.colorBuffer);
+        CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, newEntity.colorArray, CONTEXT.DYNAMIC_DRAW);
+        CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, newEntity.normalBuffer);
+        CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, newEntity.normalArray, CONTEXT.DYNAMIC_DRAW);
+        if (newEntity.strokeIndexArray) {
+            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, newEntity.strokeIndexBuffer);
+            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, newEntity.strokeIndexArray, CONTEXT.DYNAMIC_DRAW);
         }
-        ENTITIES.splice(idx, 1);
-        ANIMATIONS.splice(idx, 1);
-        BODIES.splice(idx, 1);        
-        for (var i = idx; i < ENTITIES.length; ++i) {
-            ENTITIES[i].index = i;
-            if (ANIMATIONS[i]) ANIMATIONS[i].index = i;
-            if (BODIES[i]) BODIES[i].index = i;
-        }
+        newEntity.dataSizeChanged = true;
     }
+
+    // update lists
+    ENTITIES.push(newEntity);
+    newEntity.index = ENTITIES.length - 1;
+
+    var anim = null;
+    if (ANIMATIONS[entityObj.index] != null) {
+        anim = new E3D_animation();
+        anim.cloneData(ANIMATIONS[entityObj.index]);
+        newEntity.hasAnimation = true;
+    }
+    ANIMATIONS.push(anim);
+
+    var body = null;
+    if (BODIES[entityObj.index] != null) {
+        body = new E3D_body();
+        body.cloneData(BODIES[entityObj.index]);
+        newEntity.hasBody = true;
+    } 
+    BODIES.push(body);
+
+    newEntity.updateMatrix();
+
+    return newEntity.index;
 }
-// TODO function addBody, addAnimation, removeBody, removeAnimation
-
-function E3D_clearEntity(id, mesh = true, animation = true, body = true) {
-    let idx = this.E3D_getEntityIndexFromId(id);
-    if (idx > -1) {
-        if (mesh) ENTITIES[idx].clear();
-        if (animation && (ANIMATIONS[idx] != null)) ANIMATIONS[idx] = null;
-        if (body && (BODIES[idx] != null)) BODIES[idx].clear();
-    }
+function E3D_cloneEntityByIndex(index, newId) {
+    if (index == -1) return -1;
+    if (index > ENTITIES.length - 1) return -1;
+    return E3D_cloneEntity(ENTITIES[index], newId);
 }
-
-
-
-function E3D_cloneEntity(id, newId) {
-    let idx = E3D_getEntityIndexFromId(id);
-    if ((idx > -1) && (id != newId)) {
-
-        var ent = new E3D_entity(newId, ENTITIES[idx].isDynamic);
-
-        ent.cloneData(ENTITIES[idx]);   
-
-        if (ent.isDynamic) {
-            ent.vertexBuffer = CONTEXT.createBuffer();
-            ent.colorBuffer = CONTEXT.createBuffer();
-            ent.normalBuffer = CONTEXT.createBuffer();
-            ent.strokeIndexBuffer = CONTEXT.createBuffer();
-            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.vertexBuffer);
-            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.vertexArray, CONTEXT.DYNAMIC_DRAW);
-            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.colorBuffer);
-            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.colorArray, CONTEXT.DYNAMIC_DRAW);
-            CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
-            CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, CONTEXT.DYNAMIC_DRAW);
-            if (ent.strokeIndexArray) {
-                CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.strokeIndexBuffer);
-                CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.strokeIndexArray, CONTEXT.DYNAMIC_DRAW);
-            }
-            ent.dataSizeChanged = true;
-        }
-
-        ENTITIES.push(ent);
-
-        var anim = null;
-        if (ANIMATIONS[idx] != null) {
-            anim = new E3D_animation();
-            anim.cloneData(ANIMATIONS[idx]);
-        }
-        ANIMATIONS.push(anim);
-
-        var body = null;
-        if (BODIES[idx] != null) {
-            body = new E3D_body();
-            body.cloneData(BODIES[idx]);
-        } 
-        BODIES.push(body);
-        return ent; // return reference to new entity
-    } else {
-        log("Invalid entity ID (not found or duplicate): " + id);
-    }
+function E3D_cloneEntityById(id, newId) {
+    let index = E3D_getEntityIndexById(id);
+    if (index == -1) return -1;
+    if (index > ENTITIES.length - 1) return -1;
+    return E3D_cloneEntity(ENTITIES[index], newId);
 }
 
 
+// Animations
+// Add
+function E3D_addEntityAnimation(entityObj, animationObj) {
+    E3D_addEntityAnimationByIndex(entityObj.index, animationObj);
+}
+function E3D_addEntityAnimationById(id, animationObj) {
+    E3D_addEntityAnimationByIndex(E3D_getEntityIndexById(id), animationObj);
+}
+function E3D_addEntityAnimationByIndex(index, animationObj) {
+    if (index == -1) return;
+    if (index > ENTITIES.length - 1) return;
+    ANIMATIONS[index] = animationObj;
+    ENTITIES[index].hasAnimation = true;
+}
+
+// Remove
+function E3D_removeEntityAnimation(entityObj) {
+    E3D_removeEntityAnimationByIndex(entityObj.index);
+}
+function E3D_removeEntityAnimationById(id) {
+    E3D_removeEntityAnimationByIndex(E3D_getEntityIndexById(id));
+}
+function E3D_removeEntityAnimationByIndex(index) {
+    if (index == -1) return;
+    if (index > ENTITIES.length - 1) return;
+    ANIMATIONS[index] = null;
+    ENTITIES[index].hasAnimation = false;
+}
+
+// Bodies
+// Add
+function E3D_addEntityBody(entityObj, bodyObj) {
+    E3D_addEntityBodyByIndex(entityObj.index, bodyObj);
+}
+function E3D_addEntityBodyById(id, bodyObj) {
+    E3D_addEntityBodyByIndex(E3D_getEntityIndexById(id), bodyObj);
+}
+function E3D_addEntityBodyByIndex(index, bodyObj) {
+    if (index == -1) return;
+    if (index > ENTITIES.length - 1) return;
+    BODIES[index] = bodyObj;
+    ENTITIES[index].hasBody = true;
+}
+
+// Remove
+function E3D_removeEntityBody(entityObj) {
+    E3D_removeEntityBodyByIndex(entityObj.index);
+}
+function E3D_removeEntityBodyById(id) {
+    E3D_removeEntityBodyByIndex(E3D_getEntityIndexById(id));
+}
+function E3D_removeEntityBodyByIndex(index) {
+    if (index == -1) return;
+    if (index > ENTITIES.length - 1) return;
+    BODIES[index] = null;
+    ENTITIES[index].hasBody = false;
+}
 
 
+// Basic culling, only if in front of camera plane
+
+function E3D_checkEntityVisible(entityObj) {
+    return E3D_checkEntityVisibleByIndex(entityObj.index);
+} 
+function E3D_checkEntityVisibleBiId(id) {
+    let index = E3D_getEntityIndexById(id);
+    if (index == -1) return;
+    return E3D_checkEntityVisibleByIndex(index);
+} 
+var __E3D_checkEntityVisibleByIndex_pos = v3_new();
+function E3D_checkEntityVisibleByIndex(index) {
+    if (ENTITIES[index].isVisibiltyCullable) {
+        v3_sub_res(__E3D_checkEntityVisibleByIndex_pos, ENTITIES[index].position, CAMERA.position);
+        CAMERA.negateCamera_mod(__E3D_checkEntityVisibleByIndex_pos);
+        var dist = -__E3D_checkEntityVisibleByIndex_pos[2]; // only check for Z
+        return ( ((dist - ENTITIES[index].visibilityDistance) < E3D_FAR) && 
+        ((dist + ENTITIES[index].visibilityDistance) > E3D_NEAR) );
+    }
+    return true;
+}
+
+
+// utilities
 
 
 function E3D_calculate_max_pos(vertArray) {
@@ -410,17 +522,4 @@ function E3D_calculate_max_pos(vertArray) {
         }
     }
     return result;
-}
-
-var _E3D_check_entity_visible_pos = v3_new();
-// Basic culling, only if in front of camera plane
-function E3D_check_entity_visible(idx) {
-    if (ENTITIES[idx].isVisibiltyCullable) {
-        v3_sub_res(_E3D_check_entity_visible_pos, ENTITIES[idx].position, CAMERA.position);
-        CAMERA.negateCamera_mod(_E3D_check_entity_visible_pos);
-        var dist = -_E3D_check_entity_visible_pos[2]; // only check for Z
-        return ( ((dist - ENTITIES[idx].visibilityDistance) < E3D_FAR) && 
-        ((dist + ENTITIES[idx].visibilityDistance) > E3D_NEAR) );
-    }
-    return true;
 }
