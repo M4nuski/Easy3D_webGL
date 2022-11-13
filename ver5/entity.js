@@ -315,24 +315,24 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.currentPos = v3_new(); // draw cursor position
     }
 
-    addSphere(location, dia, color, sides, addSphCD = false, numSegments = 1) {
+    addSphere(location, dia, color = [1.0,1.0,1.0], sides = 16, addCD = false, segments = 1) {
 
         dia = dia / 2;
-        if (addSphCD) this.collision.pushCD_sph(location, dia);
+        if (addCD) this.collision.pushCD_sph(location, dia);
         this.currentColor = color;
 
-        var baseOffset = PIdiv2 / numSegments;
+        var baseOffset = PIdiv2 / segments;
 
         var matX = m4_new();
         var matY = m4_new();
         var matZ = m4_new();
         
-        for (var offsetIndex = 1; offsetIndex <= numSegments; ++offsetIndex) {
+        for (var offsetIndex = 1; offsetIndex <= segments; ++offsetIndex) {
           
             var si = Math.sin(0) * dia;
             var ci = Math.cos(0) * dia;
           
-            var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / numSegments);
+            var offsetAngle = baseOffset + (2 * offsetIndex * PIdiv2 / segments);
           
             m4_rotationX_res(matX, offsetAngle);
             m4_rotationY_res(matY, offsetAngle);
@@ -386,7 +386,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         }
     }
         
-    addCross(location, size, color = [1,1,1]) {
+    addCross(location, size, color = [1.0,1.0,1.0]) {
         size = size / 2;
         this.currentColor = color;
 
@@ -401,7 +401,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     // on X Z plane
-    addPlane(pos, rot, width, depth, numSubdiv = 1, color = [1,1,1], addCD = false) {
+    addPlane(pos, rot, width, depth, numSubdiv = 1, color = [1.0,1.0,1.0], addCD = false) {
         this.currentColor = color;
 
         width = width / 2;
@@ -412,10 +412,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         let p2 = [-width, 0.0, -depth];
         let p3 = [-width, 0.0,  depth];
         
-        let m = m4_translation_new(pos);
-        m4_rotateZ_mod(m, rot[2]);
-        m4_rotateX_mod(m, rot[0]);
-        m4_rotateY_mod(m, rot[1]);
+        let m = m4_transform_new(pos, rot);
 
         v3_applym4_mod(p0, m);
         v3_applym4_mod(p1, m);
@@ -487,24 +484,44 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         }
     }
 
-    // upward along Y
-    addCylinder(pos, rot, dia, height, color, sides = 8, sideLineStep = 1, sections = 1, addCD = false) {
+    addCircle(pos, rot, radius, color = [1.0,1.0,1.0], sides = 16) {
         this.currentColor = color;
-        dia = dia / 2;
+        if (sides < 3) sides = 3;
+
+        var si = Math.sin(0) * radius;
+        var ci = Math.cos(0) * radius;
+        var v = [0.0, 0.0, 0.0];
+        let m = m4_transform_new(pos, rot);
+
+        for (var i = 0; i < sides; ++i) {
+            var sip = Math.sin((i+1) * PIx2 / sides) * radius;
+            var cip = Math.cos((i+1) * PIx2 / sides) * radius;
+
+            v3_applym4_res(v, [si, 0, ci], m);
+            this.addV(v);
+            v3_applym4_res(v, [sip, 0, cip], m);
+            this.addV(v);
+
+            si = sip;            
+            ci = cip;
+        }
+    }
+
+    // upward along Y
+    addCylinder(pos, rot, radius, height, color = [1.0,1.0,1.0], sides = 16, sideLines = 8, sections = 1, addCD = false) {
+        this.currentColor = color;
+
         if (sections < 1) sections = 1;
 
-        var si = Math.sin(0) * dia;
-        var ci = Math.cos(0) * dia;
+        var si = Math.sin(0) * radius;
+        var ci = Math.cos(0) * radius;
 
-        let m = m4_translation_new(pos);
-        m4_rotateZ_mod(m, rot[2]);
-        m4_rotateX_mod(m, rot[0]);
-        m4_rotateY_mod(m, rot[1]);
-          
+        let m = m4_transform_new(pos, rot);
+
         for (var i = 0; i < sides; ++i) { 
 
-            var sip = Math.sin((i+1) * PIx2 / sides) * dia;
-            var cip = Math.cos((i+1) * PIx2 / sides) * dia;
+            var sip = Math.sin((i+1) * PIx2 / sides) * radius;
+            var cip = Math.cos((i+1) * PIx2 / sides) * radius;
             
             // base
             var v = [si, 0, ci];
@@ -526,7 +543,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             this.addV(v);
     
 
-            if ( (sideLineStep > 0) && ((i % sideLineStep) == 0) ) {
+            if ( (sideLines > 0) && ((i % Math.ceil(sides / sideLines)) == 0) ) {
                 // side
                 v = [si, 0, ci];    
                 v3_applym4_mod(v, m);
@@ -569,7 +586,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         v3_add_mod(this.currentPos, p);
     }
 
-    addLineTo(p, sweep, col = [1,1,1]) {
+    addLineTo(p, sweep, col = [1.0,1.0,1.0]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(this.currentPos, color);
@@ -578,7 +595,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         v3_copy(this.currentPos, p);
     }
 
-    addLine(p0, p1, sweep, col = [1,1,1]) {
+    addLine(p0, p1, sweep, col = [1.0,1.0,1.0]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(p0, color);
@@ -586,7 +603,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
 
-    addLineByOffset(p, sweep, col = [1,1,1]) {
+    addLineByOffset(p, sweep, col = [1.0,1.0,1.0]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(this.currentPos, color);
@@ -596,7 +613,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         this.addVC(this.currentPos, color);  
     }
 
-    addLineByNormalAndLength(n, l, sweep, col = [1,1,1]) {
+    addLineByNormalAndLength(n, l, sweep, col = [1.0,1.0,1.0]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         this.addVC(this.currentPos, color);
@@ -607,7 +624,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
     }
 
     
-    addLineByPosNormLen(p, n, l, sweep, col = [1,1,1]) {
+    addLineByPosNormLen(p, n, l, sweep, col = [1.0,1.0,1.0]) {
         var color = (sweep) ? this.getNextSweepColor() : col;
 
         v3_copy(this.currentPos, p);
@@ -624,11 +641,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         size[1] = Math.abs(size[1]) / 2;
         size[2] = Math.abs(size[2]) / 2;
 
-        let m = m4_translation_new(loc);
-       
-        m4_rotateZ_mod(m, rot[2]);
-        m4_rotateX_mod(m, rot[0]);
-        m4_rotateY_mod(m, rot[1]);
+        let m = m4_transform_new(loc, rot);
 
         let tfr = [size[0], size[1], size[2]];
         let tfl = [-size[0], size[1], size[2]];
@@ -726,23 +739,72 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         if (addCD) this.collision.pushCD_triangle(p1, p2, p3, true);
     }
 
-    addCapsule(pos, rot, length, rad, color = [1, 1, 1], addCD = false) {
+    addCapsule(pos, rot, length, radius, color = [1.0,1.0,1.0], sides = 16, sideLines = 8, sections = 1, addCD = false) {
         this.currentColor = color;
+        let m = m4_transform_new(pos, rot);
 
-        let m = m4_translation_new(loc);
-       
-        m4_rotateZ_mod(m, rot[2]);
-        m4_rotateX_mod(m, rot[0]);
-        m4_rotateY_mod(m, rot[1]);
+        var v = [0.0, 0.0, 0.0];
+        let p1 = [0.0, 0.0, 0.0];
+        v3_applym4_res(v, p1, m);
+        this.addV(v);
+        let p2 = [0.0, length, 0.0];
+        v3_applym4_res(v, p2, m);
+        this.addV(v);
+        var si = Math.sin(0) * radius;
+        var ci = Math.cos(0) * radius;
 
+        for (var i = 0; i < sides; ++i) {
+            var sip = Math.sin((i+1) * PIx2 / sides) * radius;
+            var cip = Math.cos((i+1) * PIx2 / sides) * radius;
+
+            for (var j = 0; j <= sections; ++j) {
+                let h = j * length / sections;
+                v3_applym4_res(v, [si, h, ci], m);
+                this.addV(v);
+                v3_applym4_res(v, [sip, h, cip], m);
+                this.addV(v);
+            }
+
+            for (var j = 0; j < sideLines; ++j) {
+                let ang = PIx2 * j / sideLines;
+                if (i >= sides / 2) {
+                    v3_rotateY_res(v, [0.0, si, ci], ang);
+                    v3_applym4_mod(v, m);
+                    this.addV(v);
+                    v3_rotateY_res(v, [0.0, sip, cip], ang);
+                    v3_applym4_mod(v, m);
+                    this.addV(v);
+                } else {
+                    v3_rotateY_res(v,[0.0, si + length, ci], ang);
+                    v3_applym4_mod(v, m);
+                    this.addV(v);
+                    v3_rotateY_res(v,[0.0, sip + length, cip], ang);
+                    v3_applym4_mod(v, m);
+                    this.addV(v);
+                }
+            }
+
+            if ( (sideLines > 0) && ((i % Math.ceil(sides / sideLines)) == 0) ) {
+                // side
+                v = [si, 0, ci];    
+                v3_applym4_mod(v, m);
+                this.addV(v);
+
+                v = [si, length, ci];
+                v3_applym4_mod(v, m);
+                this.addV(v);
+            }
+
+
+            si = sip;
+            ci = cip;
+        }
 
     }
-    addCapsule2p(p1, p2, rad, color = [1, 1, 1], addCD = false) {
-        this.currentColor = color;
-        this.addV(p1);
-        this.addV(p2);
 
-    }
+    // TODO refactor CD
+    // TODO addBodyParts()
+
 }
 
 

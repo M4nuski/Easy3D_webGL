@@ -2807,6 +2807,7 @@ function m4_transform_new(position, rotation){
     m[12] = position[0];
     m[13] = position[1];
     m[14] = position[2];
+    return m;
 }
 
 function m4_transform_res(res, position, rotation){
@@ -2818,11 +2819,11 @@ function m4_transform_res(res, position, rotation){
     res[14] = position[2];
 }
 
-function m4_transform_mod(res, position, rotation){
-    m4_rotateZ_mod(res, rotation[2]);
-    m4_rotateX_mod(res, rotation[0]);
-    m4_rotateY_mod(res, rotation[1]);
-    res[12] += position[0];
-    res[13] += position[1];
-    res[14] += position[2];
+function m4_transform_mod(m, position, rotation){
+    m4_rotateZ_mod(m, rotation[2]);
+    m4_rotateX_mod(m, rotation[0]);
+    m4_rotateY_mod(m, rotation[1]);
+    m[12] += position[0];
+    m[13] += position[1];
+    m[14] += position[2];
 }
