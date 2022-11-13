@@ -5,31 +5,6 @@
 "use strict"
 
 
-// Index constant for CD data
-const _CD_box_edge_TopBack  = 0;
-const _CD_box_edge_TopRight = 1;
-const _CD_box_edge_TopFront = 2;
-const _CD_box_edge_TopLeft  = 3;
-
-const _CD_box_edge_BackRight  = 4;
-const _CD_box_edge_FrontRight = 5;
-const _CD_box_edge_FrontLeft  = 6;
-const _CD_box_edge_BackLeft   = 7;
-
-const _CD_box_edge_BottomBack  = 8;
-const _CD_box_edge_BottomRight = 9;
-const _CD_box_edge_BottomFront = 10;
-const _CD_box_edge_BottomLeft  = 11;
-
-const _CD_box_corner_TopBackRight  = 0; 
-const _CD_box_corner_TopFrontRight = 1; 
-const _CD_box_corner_TopFrontLeft  = 2; 
-const _CD_box_corner_TopBackLeft   = 3; 
-
-const _CD_box_corner_BottomBackRight  = 4; 
-const _CD_box_corner_BottomFrontRight = 5; 
-const _CD_box_corner_BottomFrontLeft  = 6; 
-const _CD_box_corner_BottomBackLeft   = 7; 
 
 // Number of CD results objects to create at first as a default
 const E3D_initial_nb_E3D_collisionResult = 3;

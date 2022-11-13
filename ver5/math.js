@@ -339,14 +339,31 @@ function v3_addaddscaled_new(a, b, c, f) {
              a[2] + b[2] + (c[2] * f) ];
 }
 function v3_addaddscaled_mod(a, b, c, f) {
-    a[0] = a[0] + b[0] +(c[0] * f);
-    a[1] = a[1] + b[0] +(c[1] * f);
-    a[2] = a[2] + b[0] +(c[2] * f);
+    a[0] = a[0] + b[0] + (c[0] * f);
+    a[1] = a[1] + b[0] + (c[1] * f);
+    a[2] = a[2] + b[0] + (c[2] * f);
 }
 function v3_addaddscaled_res(res, a, b, c, f) {
-    res[0] = a[0] + b[0] +(c[0] * f);
-    res[1] = a[1] + b[0] +(c[1] * f);
-    res[2] = a[2] + b[0] +(c[2] * f);
+    res[0] = a[0] + b[0] + (c[0] * f);
+    res[1] = a[1] + b[0] + (c[1] * f);
+    res[2] = a[2] + b[0] + (c[2] * f);
+}
+
+// = a + (b * fb) + (c * fc)
+function v3_addscaledaddscaled_new(a, b, fb, c, fc) {
+    return [ a[0] + (b[0] * fb) + (c[0] * fc),
+             a[1] + (b[1] + fb) + (c[1] * fc),
+             a[2] + (b[2] + fb) + (c[2] * fc) ];
+}
+function v3_addscaledaddscaled_mod(a, b, fb, c, fc) {
+    a[0] = a[0] + (b[0] * fb) + (c[0] * fc);
+    a[1] = a[1] + (b[1] + fb) + (c[1] * fc);
+    a[2] = a[2] + (b[2] + fb) + (c[2] * fc);
+}
+function v3_addscaledaddscaled_res(res, a, b, fb, c, fc) {
+    res[0] = a[0] + (b[0] * fb) + (c[0] * fc);
+    res[1] = a[1] + (b[1] + fb) + (c[1] * fc);
+    res[2] = a[2] + (b[2] + fb) + (c[2] * fc);
 }
 
 // Scale vector
@@ -576,6 +593,16 @@ function v3_normalizedelta_mod(p, orig) {
 function v3_normalizedelta_res(res, p, orig) {
     v3_sub_res(res, p, orig);
     v3_normalize_mod(res);
+}
+
+// Segment unpacking
+function v3_unpack(p1, p2) {
+    let n = [ p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2] ];
+    let l = v3_length(n);
+    n[0] /= l;
+    n[1] /= l;
+    n[2] /= l;
+    return { orig:[p1[0], p1[1], p1[2]], normal:n, length:l };
 }
 
 // Vector length

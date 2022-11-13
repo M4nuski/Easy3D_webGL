@@ -9,6 +9,7 @@
 // Base class for static entity, optionnally dynamic
 class E3D_entity {
     constructor(id, dynamic = false, finiteSize = false) {
+        this.index = -1; // index in global data stores for ENTITIES, ANIMATIONS and BODIES
 
         this.id = id; // to find object in list
         this.isVisible = false;
@@ -22,11 +23,12 @@ class E3D_entity {
         this.normalMatrix = m4_new(); // (model matrix without translations)
 
         // Animations
-        this.isAnimated = false;
+        this.hasAnimation = false;
 
         // Rigid body collisions
-        this.isCollisionSource = false;
-        this.isCollisionTarget = false;
+        this.hasBody = false;
+        //this.isCollisionSource = false;
+        //this.isCollisionTarget = false;
 
         // For scene fustrum culling
         this.isVisibiltyCullable = true; // Setting to false will force the entity to always be redrawn
@@ -92,7 +94,7 @@ class E3D_entity {
     } 
 
     collisionDetection() {
-        return this.isVisible && (this.isCollisionSource || this.isCollisionTarget);
+        return this.isVisible && this.hasBody;
     }
 /*
     clear() {
@@ -182,7 +184,7 @@ class E3D_entity {
         this.modelMatrix[13] =  this.position[1];
         this.modelMatrix[14] =  this.position[2];
 
-        if (this.collisionDetection()) this.collision.updateCDdata(this.modelMatrix, this.normalMatrix);
+        if (this.collisionDetection()) BODIES[this.index].updateCDdata(this.modelMatrix, this.normalMatrix);
     }
 
 

@@ -240,45 +240,57 @@ function log(text, silent = true) {
 
 // Entities management
 
+// TODO refactor and standardize:
+// E3D_[verb]Entity[attrib](entityObj)
+// E3D_[verb]Entity[attrib]ByID(entityID)
+// E3D_[verb]Entity[attrib]ByIndex(entityIndex)
 
 // Add a new entity to the current scene and setup the GPU buffers
-function E3D_addEntity(ent, animation = false, body = false) {
-    if (E3D_getEntityIndexFromId(ent.id) != -1) { 
-        log("Duplicate entity ID: " + ent.id);
+function E3D_addEntity(entityObj, addAnimation = false, addBody = false) {
+    if (E3D_getEntityIndexFromId(entityObj.id) != -1) { 
+        log("Duplicate entity ID: " + entityObj.id);
         return -1;
     }
     // Initialize context data buffers        
-    ent.vertexBuffer = CONTEXT.createBuffer();
-    ent.colorBuffer = CONTEXT.createBuffer();
-    ent.normalBuffer = CONTEXT.createBuffer();
-    ent.strokeIndexBuffer = CONTEXT.createBuffer();
+    entityObj.vertexBuffer = CONTEXT.createBuffer();
+    entityObj.colorBuffer = CONTEXT.createBuffer();
+    entityObj.normalBuffer = CONTEXT.createBuffer();
+    entityObj.strokeIndexBuffer = CONTEXT.createBuffer();
 
-    var usage = (ent.isDynamic) ? CONTEXT.DYNAMIC_DRAW : CONTEXT.STATIC_DRAW;
+    var usage = (entityObj.isDynamic) ? CONTEXT.DYNAMIC_DRAW : CONTEXT.STATIC_DRAW;
 
-    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.vertexBuffer);
-    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.vertexArray, usage);        
+    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, entityObj.vertexBuffer);
+    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, entityObj.vertexArray, usage);        
 
-    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.colorBuffer);
-    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.colorArray, usage);            
+    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, entityObj.colorBuffer);
+    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, entityObj.colorArray, usage);            
 
-    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, ent.normalBuffer);
-    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, ent.normalArray, usage);
-    if (ent.strokeIndexArray) {
-        CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexBuffer);
-        CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, ent.strokeIndexArray, usage);
+    CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, entityObj.normalBuffer);
+    CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, entityObj.normalArray, usage);
+    if (entityObj.strokeIndexArray) {
+        CONTEXT.bindBuffer(CONTEXT.ELEMENT_ARRAY_BUFFER, entityObj.strokeIndexBuffer);
+        CONTEXT.bufferData(CONTEXT.ELEMENT_ARRAY_BUFFER, entityObj.strokeIndexArray, usage);
     }
     
-    ent.visibilityDistance = v3_length(E3D_calculate_max_pos(ent.vertexArray));
-
-    ent.updateMatrix();
+    entityObj.visibilityDistance = v3_length(E3D_calculate_max_pos(entityObj.vertexArray));
 
     // update lists
-    ENTITIES.push(ent);
-    ANIMATIONS.push(animation ? new E3D_animation() : null);
-    BODIES.push(body ? new E3D_body() : null);
+    ENTITIES.push(entityObj);
+    ANIMATIONS.push(addAnimation ? new E3D_animation() : null);
+    BODIES.push(addBody ? new E3D_body() : null);
+    // backreferences
+    entityObj.index = ENTITIES.length - 1;
+    if (addAnimation) {
+        ANIMATIONS[entityObj.index].index = entityObj.index;
+        entityObj.hasAnimation = true;
+    }
+    if (addBody) {
+        BODIES[entityObj.index].index = entityObj.index;
+        entityObj.hadBody = true;
+    }
+    entityObj.updateMatrix();
 
-    // return new entity's index in the lists
-    return ENTITIES.length - 1; 
+    return entityObj.index; 
 }
 
 function E3D_getEntityIndexFromId(id) {
@@ -298,6 +310,7 @@ function E3D_updateEntityData(ent) {
     } else {
         return E3D_addEntity(ent);
     }
+    return idx;
 }
 
 function E3D_removeEntity(id, deleteBuffers = true) {
@@ -309,11 +322,17 @@ function E3D_removeEntity(id, deleteBuffers = true) {
             CONTEXT.deleteBuffer(ENTITIES[idx].normalBuffer);
             CONTEXT.deleteBuffer(ENTITIES[idx].strokeIndexBuffer);
         }
-        ENTITIES.splice(idx, 1);     
-        ANIMATIONS.splice(idx, 1);   
-        BODIES.splice(idx, 1);      
+        ENTITIES.splice(idx, 1);
+        ANIMATIONS.splice(idx, 1);
+        BODIES.splice(idx, 1);        
+        for (var i = idx; i < ENTITIES.length; ++i) {
+            ENTITIES[i].index = i;
+            if (ANIMATIONS[i]) ANIMATIONS[i].index = i;
+            if (BODIES[i]) BODIES[i].index = i;
+        }
     }
 }
+// TODO function addBody, addAnimation, removeBody, removeAnimation
 
 function E3D_clearEntity(id, mesh = true, animation = true, body = true) {
     let idx = this.E3D_getEntityIndexFromId(id);
@@ -323,6 +342,7 @@ function E3D_clearEntity(id, mesh = true, animation = true, body = true) {
         if (body && (BODIES[idx] != null)) BODIES[idx].clear();
     }
 }
+
 
 
 function E3D_cloneEntity(id, newId) {
@@ -371,6 +391,11 @@ function E3D_cloneEntity(id, newId) {
         log("Invalid entity ID (not found or duplicate): " + id);
     }
 }
+
+
+
+
+
 
 function E3D_calculate_max_pos(vertArray) {
     let result = v3_new();

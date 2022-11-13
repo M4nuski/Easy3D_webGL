@@ -19,7 +19,9 @@ const E3D_DONE = 4; // call end function
 
 class E3D_animation {
     constructor(group = 0) {
-        this.group = group; // animation can use different animators that only process specific groups
+        this.index = -1; // index in global stores to back-reference other information
+
+        this.group = group; // animation metadata ex to use different animators that only process specific groups
 
         this.ttl = -1; // time to live in seconds, -1 to disable
         this.initial_ttl  = -1;
