@@ -171,8 +171,8 @@ function E3D_onTick_default() {
     if (CB_tick) CB_tick();
     // Inputs
     INPUTS.processInputs();
-    INPUTS.smoothRotation(6);
-    INPUTS.smoothPosition(6);
+    INPUTS.smoothRotation(0.8);
+    INPUTS.smoothPosition(0.8);
 
     // Camera
     CAMERA.moveBy(-INPUTS.px_delta_smth, INPUTS.py_delta_smth, INPUTS.pz_delta_smth, 

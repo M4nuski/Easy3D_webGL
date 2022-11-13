@@ -85,7 +85,7 @@ CB_tick = function() {
             directBeatCurrentScale = directBeat[directBeatNum % directBeat.length];
             directBeatLast = directBeatNum;
         } else {
-            directBeatCurrentScale = TIMER.smooth(directBeatCurrentScale, 1.0, 10);
+            directBeatCurrentScale = TIMER.smooth(directBeatCurrentScale, 1.0, 0.8);
         }
         
         // Vertex scaling

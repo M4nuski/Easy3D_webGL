@@ -34,9 +34,14 @@ class E3D_timing {
     }
 
     smooth(val, target, fact) { 
-        let f = this.delta * fact;
+        let f = -(Math.pow(1.0 - fact, (this.delta / 0.1)) - 1.0);
         if (f > 1.0) f = 1.0;
         return val + ((target - val) * f);
+    }
+    adjustSmoothing(fact) { 
+        let f = -(Math.pow(1.0 - fact, (this.delta / 0.1)) - 1.0);
+        if (f > 1.0) f = 1.0;
+        return f;
     }
 
     run() {
