@@ -22,6 +22,7 @@ var E3D_scriptList = [
     "ver5/scene.js",
 
     "ver5/animation.js",
+    "ver5/body.js",
     "ver5/collision.js",
     
     "ver5/core.js",

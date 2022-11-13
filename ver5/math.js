@@ -1460,7 +1460,7 @@ function v3a_applym4_new(a, m) {
     return res;
 }
 function v3a_applym4_res(res, a, m) {
-    res = [];
+    //res = [];
     for (var i = 0; i < a.length; ++i) {
         var a0 = a[i][0];
         var a1 = a[i][1];
@@ -1468,10 +1468,10 @@ function v3a_applym4_res(res, a, m) {
 
         var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
         w = w || 1.0;
-
-        res.push( [ (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w,
-                    (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w,
-                    (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w ]);
+        // modify in-place
+        res[i][0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w;
+        res[i][1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w;
+        res[i][2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
     }
 }
 function v3a_applym4_mod(a, m) {
