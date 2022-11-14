@@ -9,7 +9,7 @@ console.log("User Main Script Start");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera
 E3D_InitAll();
-CAMERA = new E3D_camera_model("cam2")
+//CAMERA = new E3D_camera_model("cam2")
 E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
 
@@ -47,11 +47,12 @@ obj1.addCube([50.0, 0.0, 25.0], _v3_null, 10.0);
 obj1.addCube([50.0, 25.0, 25.0], _v3_null, 10.0, _v3_white, true, false);
 obj1.addCube([50.0, 50.0, 25.0], _v3_null, 10.0, _v3_white, false, true);
 obj1.addCube([50.0, -25.0, 25.0], _v3_null, [10.0, 20.0, 30.0]);
+obj1.addCube([50.0, 50.0, .0], _v3_null, 10.0, _v3_white, false, true, false);
 
 obj1.addTriangle([50.0, 0.0, 75.0], [50.0, 25.0, 50.0], [75.0, 0.0, 50.0]);
 
-obj1.addCapsule([100.0, 0.0, 25.0], _v3_null, 40.0, 10.0);
-obj1.addCapsule([100.0, 0.0, 50.0], _v3_null, 40.0, 10.0, _v3_white, 32, 12, 4);
+obj1.addCapsule([100.0, 0.0, 25.0], _v3_null, 50.0, 10.0);
+obj1.addCapsule([100.0, 0.0, 50.0], _v3_null, 50.0, 10.0, _v3_white, 32, 12, 4);
 
 obj1.isVisible = true;
 E3D_addEntity(obj1);
@@ -69,4 +70,8 @@ CB_tick = function() {
     entity2.isVisible = CAMERA.zDist > -100.0;
     $("data").innerText = v3_string(CAMERA.position) + "\n";
     $("data").innerText += CAMERA.zDist.toFixed(3);*/
+    $("spanSFPS").innerText = TIMER.fpsSmoothed.toFixed(1);
+    $("spanSPCT").innerText = TIMER.usageSmoothed.toFixed(1);
+    $("spanINTERVAL").innerText = TIMER.interval;
+    $("spanLINES").innerText = obj1.numElements / 2;
 }

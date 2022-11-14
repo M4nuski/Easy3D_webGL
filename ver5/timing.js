@@ -28,7 +28,7 @@ class E3D_timing {
         this.fpsSmoothed = 60;
 
         this.g = E3D_G;
-        this.smoothFactor = 0.5;
+        this.smoothFactor = 0.85;
 
         if (run) window.requestAnimationFrame( (t) => this.tickEvent(t) );
     }
@@ -71,7 +71,7 @@ class E3D_timing {
                 
                 this.usageSmoothed = this.smooth(this.usageSmoothed, this.usage, this.smoothFactor);
 
-                if (this.delta > 0) {
+                if (this.delta > 0.0) {
                     this.fps = 1.0 / this.delta;
                     this.fpsSmoothed = this.smooth(this.fpsSmoothed, this.fps, this.smoothFactor);
                 }

@@ -542,18 +542,6 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             v3_applym4_mod(v, m);
             this.addV(v);
     
-
-            if ( (sideLines > 0) && ((i % Math.ceil(sides / sideLines)) == 0) ) {
-                // side
-                v = [si, 0, ci];    
-                v3_applym4_mod(v, m);
-                this.addV(v);
-
-                v = [si, height, ci];
-                v3_applym4_mod(v, m);
-                this.addV(v);
-            }
-
             for (var j = 1; j < sections; ++j) {
 
                 var v = [si, j * height / sections, ci];
@@ -566,8 +554,24 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             }
 
             si = sip;
+            ci = cip;  
+        }
+
+        si = Math.sin(0) * radius;
+        ci = Math.cos(0) * radius;
+        for (var i = 0; i < sideLines; ++i) {
+            sip = Math.sin((i+1) * PIx2 / sideLines) * radius;
+            cip = Math.cos((i+1) * PIx2 / sideLines) * radius;
+
+            v = [si, 0, ci];    
+            v3_applym4_mod(v, m);
+            this.addV(v);
+
+            v = [si, height, ci];
+            v3_applym4_mod(v, m);
+            this.addV(v);
+            si = sip;
             ci = cip;
-  
         }
 
     }
@@ -768,18 +772,23 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
                 }
             }
 
-            if ( (sideLines > 0) && ((i % Math.ceil(sides / sideLines)) == 0) ) {
-                // side
-                v = [si, 0, ci];    
-                v3_applym4_mod(v, m);
-                this.addV(v);
+            si = sip;
+            ci = cip;
+        }
 
-                v = [si, length, ci];
-                v3_applym4_mod(v, m);
-                this.addV(v);
-            }
+        si = Math.sin(0) * radius;
+        ci = Math.cos(0) * radius;
+        for (var i = 0; i < sideLines; ++i) {
+            sip = Math.sin((i+1) * PIx2 / sideLines) * radius;
+            cip = Math.cos((i+1) * PIx2 / sideLines) * radius;
 
+            v = [si, 0, ci];    
+            v3_applym4_mod(v, m);
+            this.addV(v);
 
+            v = [si, length, ci];
+            v3_applym4_mod(v, m);
+            this.addV(v);
             si = sip;
             ci = cip;
         }
