@@ -56,17 +56,17 @@ function E3D_InitAll(element) {
     E3D_InitScene(element);
     if (SCENE) {
 
-        log("Camera", false);
+        log("E3D_InitAll: Camera", false);
         CAMERA = new E3D_camera_persp("camera0p");
         E3D_onResize();
 
-        log("Inputs", false);
+        log("E3D_InitAll: Inputs", false);
         INPUTS.supportKeyboard();
         INPUTS.supportMouse();
         INPUTS.supportTouch();
         INPUTS.supportPointerLock();
          
-        log("Timer", false);
+        log("E3D_InitAll: Timer", false);
         TIMER.onTick = E3D_onTick_default;
         TIMER.run();
     }    
@@ -76,10 +76,10 @@ function E3D_InitAll(element) {
 function E3D_InitScene(element) {
     E3D_InitContext(element);
     if (CONTEXT) {
-        log("Scene Initialization", false);
+        log("E3D_InitScene: Scene Initialization", false);
         try {
 
-            log("Shader Program", false);
+            log("E3D_InitScene: Shader Program", false);
             SCENE.program = new E3D_program("program_default_lights", programData_default);
 
             SCENE.initialize();
@@ -95,11 +95,11 @@ function E3D_InitScene(element) {
 // Context only
 function E3D_InitContext(element) {
     if (element == undefined) {
-        log("No target element provided", false);
+        log("E3D_InitContext: No target element provided, checking for E3D_mainDiv", false);
 
         element = document.getElementById("E3D_mainDiv");
         if (element == undefined) {
-            log("No target element found", false);
+            log("E3D_InitContext: E3D_mainDiv not found, creating in body", false);
             element = document.createElement("div");
             element.id = "E3D_mainDiv";
             element.style.position = "absolute";
@@ -114,6 +114,7 @@ function E3D_InitContext(element) {
     if (element.tagName == "CANVAS") {
         CANVAS = element;
     } else {
+        log("E3D_InitContext: Element not a canvas, creating child canvas", false);
         CANVAS = document.createElement("canvas");
         CANVAS.id = "E3D_canvas";
         element.appendChild(CANVAS);
@@ -126,12 +127,12 @@ function E3D_InitContext(element) {
 
     window.addEventListener("resize", E3D_onResize);
 
-    log("Context Initialization", false);
+    log("E3D_InitContext: Context Initialization", false);
     CONTEXT = CANVAS.getContext("webgl");
     CONTEXT.getExtension("OES_element_index_uint");
 
     if (!CONTEXT) {
-        log("Unable to initialize WebGL. Your browser or machine may not support it.", false);
+        log("E3D_InitContext: Unable to initialize WebGL. Your browser or machine may not support it.", false);
         TIMER.pause();
         return;
     }
@@ -156,7 +157,7 @@ function E3D_onResize() {
     CONTEXT.viewport(0, 0, E3D_WIDTH, E3D_HEIGHT);
     CAMERA.resize();
     INPUTS.resize(); 
-    if (E3D_DEBUG_VERBOSE) log("Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
+    if (E3D_DEBUG_VERBOSE) log("E3D_onResize: Resized to " + E3D_WIDTH + "x" + E3D_HEIGHT);
     if (CB_resize) CB_resize();
 }
 
@@ -250,7 +251,7 @@ function E3D_getEntityIndexById(id) {
 // Add a new entity to the current scene and setup the GPU buffers
 function E3D_addEntity(entityObj, addAnimation = false, addBody = false) {
     if (E3D_getEntityIndexById(entityObj.id) != -1) { 
-        log("Duplicate entity ID: " + entityObj.id);
+        log("E3D_addEntity: Duplicate entity ID: " + entityObj.id);
         return -1;
     }
     // Initialize context data buffers

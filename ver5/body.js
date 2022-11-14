@@ -21,8 +21,6 @@ const CD_type = {  // p  r  nx ny nz lx ly lz pts
 }
 const CD_type_strings = [ "None", "Point", "Sphere", "Capsule", "Edge", "Infinite Plane", "Plane", "Bottomless Box", "Box", "Triangle", "Grid" ];
 
-//TODO default orientation on X-Z plane, up following Y axis
-
 const CD_mode = {
     STATIC:     0, // dosent move, affect dynamic (physics) and controlled (block)
     DYNAMIC:    1, // can move (physics), affect dynamic, react to static, dynamic, controlled
@@ -265,7 +263,7 @@ class E3D_body {
         }
     }
     
-    pushCD_grid(); // TODO
+    // TODO pushCD_grid(width, depth, numWidth, numDepth, pointList) {}
 
     cloneData(targetCDdata) {
         this.clear();
@@ -300,6 +298,7 @@ class E3D_body {
                 case CD_type.TRI:
                     this.pushCD_triangle(targetCDdata[i].nx0, v3_add_new(targetCDdata[i].nx0, targetCDdata[i].ny0), v3_add_new(targetCDdata[i].nx0, targetCDdata[i].nz0));
                     break;
+                // TODO case CD_type.GRID:
             }
         }
     }
