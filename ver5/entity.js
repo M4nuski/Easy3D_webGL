@@ -801,6 +801,60 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
         }
     }
 
+    addQuadGrid(location, rotation, width, depth, widthSubdivisions = 1, depthSubdivisions = 1, color = [1.0,1.0,1.0], addCD = false) {
+        this.currentColor = color;
+
+        let hwidth = width / 2.0;
+        let hdepth = depth / 2.0;
+
+        if (widthSubdivisions < 1) widthSubdivisions = 1;
+        if (depthSubdivisions < 1) depthSubdivisions = 1;
+
+        let m = m4_transform_new(location, rotation);
+
+        let a = [0.0, 0.0, 0.0];
+        let b = [0.0, 0.0, 0.0];
+
+        let index = this.arrayIndex;
+
+        for (var z = 0; z < depthSubdivisions; ++z) {
+            let zpos0 = (z / depthSubdivisions * depth) - hdepth;
+            let zpos1 = ((z+1) / depthSubdivisions * depth) - hdepth;
+            for (var x = 0; x <= widthSubdivisions; ++x)  {
+                let xpos = (x / widthSubdivisions * width) - hwidth;
+
+                v3_applym4_res(a, [xpos, 0.0, zpos0], m);
+                this.addVC(a, this.nextColor());
+                v3_applym4_res(b, [xpos, 0.0, zpos1], m);
+                this.addV(b); 
+            }
+        }
+
+        for (var x = 0; x < widthSubdivisions; ++x) {
+            let xpos0 = (x / widthSubdivisions * width) - hwidth;
+            let xpos1 = ((x+1) / widthSubdivisions * width) - hwidth;
+            for (var z = 0; z <= depthSubdivisions; ++z)  {
+                let zpos = (z / depthSubdivisions * depth) - hdepth;
+
+                v3_applym4_res(a, [xpos0, 0.0, zpos], m);
+                this.addVC(a, this.nextColor());
+                v3_applym4_res(b, [xpos1, 0.0, zpos], m);
+                this.addV(b); 
+            }
+        }
+
+        if (addCD && this.hasBody) {
+
+//            BODY[this.index].pushCD_grid(location);
+        }
+        return index;
+    }
+
+    getGridVertex(baseIndex, width, height, x, y) {
+        return this.getVertex(baseIndex + x + (y * width) );
+    }
+
+
     // TODO addBodyParts()
 
 }

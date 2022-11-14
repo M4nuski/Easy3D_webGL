@@ -13,12 +13,13 @@ const CD_type = {  // p  r  nx ny nz lx ly lz pts
     CAPSULE:    3, // p  r     n        l
     EDGE:       4, // p        n        l
     INFPLANE:   5, // p        n      
-    PLANE:      6, // p  r? nw n  nh lw    lh
+    PLANE:      6, // p     nw n  nh lw    lh
     BLBOX:      7, // p  r  nx ny nz lx ly lz 4p
     BOX:        8, // p  r  nx ny nz lx ly lz 8p
-    TRI:        9 /// n     p1 p2 p3 do d2 d3   
+    TRI:        9, // n     p1 p2 p3 do d2 d3
+    GRID:      10  //    r           iw wh ih xp
 }
-const CD_type_strings = [ "None", "Point", "Sphere", "Capsule", "Edge", "Infinite Plane", "Plane", "Bottomless Box", "Box", "Triangle" ];
+const CD_type_strings = [ "None", "Point", "Sphere", "Capsule", "Edge", "Infinite Plane", "Plane", "Bottomless Box", "Box", "Triangle", "Grid" ];
 
 //TODO default orientation on X-Z plane, up following Y axis
 
@@ -87,6 +88,8 @@ class E3D_body {
                     v3_applym4_res(this.nx[i], this.nx0[i], modelMatrix);
                     v3_applym4_res(this.ny[i], this.ny0[i], modelMatrix);
                     v3_applym4_res(this.nz[i], this.nz0[i], modelMatrix);
+                } else if (pType == CD_type.GRID) {
+                    v3a_applym4_res(this.plist[i], this.p0list[i], modelMatrix);
                 } else {
                     v3_applym4_res(this.p[i], this.p0[i], modelMatrix);
                     if (pType >= 6) v3_applym4_res(this.nx[i], this.nx0[i], normalMatrix);
@@ -262,7 +265,7 @@ class E3D_body {
         }
     }
     
-
+    pushCD_grid(); // TODO
 
     cloneData(targetCDdata) {
         this.clear();
