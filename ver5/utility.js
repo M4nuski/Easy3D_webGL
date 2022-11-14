@@ -107,3 +107,11 @@ function findIn2ArrayExcept(a1, a2, exception) {
 function findIn3ArrayExcept(a1, a2, a3, exception) {
     return a1.filter( (elem) => a2.includes(elem) && a3.includes(elem) && (elem != exception) );
 }
+
+// Sugary Iterators 
+function forN(n, lambda) {
+    for (let i = 0; i < n; ++i) lambda(i, n);
+}
+function forXY(nx, ny, lambda) {
+    for (let x = 0; x < nx; ++x) for (let y = 0; y < ny; ++y) lambda(x, y, nx, ny);
+}

@@ -19,7 +19,9 @@ const E3D_DONE = 4; // call end function
 
 class E3D_animation {
     constructor(group = 0) {
-        this.group = group; // animation can use different animators that only process specific groups
+        this.index = -1; // index in global stores to back-reference other information
+
+        this.group = group; // animation metadata ex to use different animators that only process specific groups
 
         this.ttl = -1; // time to live in seconds, -1 to disable
         this.initial_ttl  = -1;
@@ -76,7 +78,7 @@ class E3D_animation {
     }
 
     cloneData(target) {
-        throw "NOT IMPLEMENTED: E3D_animation.cloneData(target)";
+        throw new Error("NOT IMPLEMENTED: E3D_animation.cloneData(target)");
     }
 
 }
@@ -350,13 +352,13 @@ function collisionResult_asSource_bounce(){
         this.lastHitMarker = ""+firstCol.marker;        
 
         /*if (E3D_DEBUG_SHOW_HIT_RESULT) { 
-            phyTracers.addWireCross(this.last_position, 1, _v3_red);
-            phyTracers.addWireCross(firstCol.p0, 1, _v3_green);
-            phyTracers.addWireCross(this.target.position, 1, _v3_blue);
+            phyTracers.addCross(this.last_position, 1, _v3_red);
+            phyTracers.addCross(firstCol.p0, 1, _v3_green);
+            phyTracers.addCross(this.target.position, 1, _v3_blue);
         }*/
         
         
-        //if (firstCol.t0 < 0.0) { //throw "collision behind initial position: " + firstCol.marker + "@" + firstCol.t0;
+        //if (firstCol.t0 < 0.0) { //throw new Error("collision behind initial position: " + firstCol.marker + "@" + firstCol.t0);
         
        // }
         firstCol.t0 = Math.sqrt(Math.abs(firstCol.t0));
@@ -418,8 +420,8 @@ function collisionResult_asSource_mark(){
     for (var i = 0; i < this.colNum; ++i) {
         v3_normalize_mod(this.closestCollision[i].n);
         if (E3D_DEBUG_SHOW_HIT_RESULT) { 
-            phyTracers.addWireCross(this.closestCollision[i].p0, 2, _v3_green);
-            phyTracers.addLineByPosNormLen(this.closestCollision[i].p0, this.closestCollision[i].n, 2, false, _v3_white);
+            phyTracers.addCross(this.closestCollision[i].p0, 2, _v3_green);
+            phyTracers.addLineByPosNormLen(this.closestCollision[i].p0, this.closestCollision[i].n, 2.0, _v3_white);
         }
         if (this.closestCollision[i].source_desc == "Point") {
             this.pActive[this.closestCollision[i].source_cdi] = false;
@@ -505,8 +507,8 @@ function collisionResult_asTarget_mark(){
     for (var i = 0; i < this.otherColNum; ++i) {
         v3_normalize_mod(this.isCollisionTarget[i].n);
         if (E3D_DEBUG_SHOW_HIT_RESULT) { 
-            phyTracers.addWireCross(this.isCollisionTarget[i].p0, 2, _v3_red);
-            phyTracers.addLineByPosNormLen(this.isCollisionTarget[i].p0, this.isCollisionTarget[i].n, 2, false, _v3_white);
+            phyTracers.addCross(this.isCollisionTarget[i].p0, 2, _v3_red);
+            phyTracers.addLineByPosNormLen(this.isCollisionTarget[i].p0, this.isCollisionTarget[i].n, 2.0, _v3_white);
         }
     }
 }

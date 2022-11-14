@@ -14,10 +14,10 @@ E3D_InitAll();
 // Create a new entity
 var entity = new E3D_entity_wireframe_canvas("entity0");
 // Large ground plane
-entity.addPlane(_v3_origin, _v3_90x, 2048, 2048, 128, _v3_lightgray);
+entity.addPlane(_v3_origin, _v3_null, 2048, 2048, _v3_lightgray, 128);
 // Cube in the middle, on top of ground
-entity.addWireCube([0, 24, 0], _v3_null, 48, _v3_white);
-//for (var x = -10; x < 11; ++x) for (var y = -10; y < 11; ++y) if ((x != 0) || (y != 0)) entity.addWireCube([x * 64, 16, y * 64], _v3_null, 32, _v3_white);
+entity.addCube([0, 24, 0], _v3_null, 48);
+//for (var x = -10; x < 11; ++x) for (var y = -10; y < 11; ++y) if ((x != 0) || (y != 0)) entity.addCube([x * 64, 16, y * 64], _v3_null, 32, _v3_white);
 
 entity.isVisible = true;
 

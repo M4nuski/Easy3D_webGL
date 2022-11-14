@@ -23,24 +23,24 @@ function E3D_DEBUG_SHOW_CD() {
     for (let i = 0; i < ENTITIES.length; ++i) {
 
         // vis culling
-        if (ENTITIES[i].isVisibiltyCullable) E3D_DEBUG_SHOW_CD_ENTITY.addWireSphere(ENTITIES[i].position, ENTITIES[i].cull_dist * 2, _v3_orange, 24, false);
+        if (ENTITIES[i].isVisibiltyCullable) E3D_DEBUG_SHOW_CD_ENTITY.addSphere(ENTITIES[i].position, ENTITIES[i].cull_dist * 2, _v3_orange, 24, false);
 
         // sph
-        for (let j = 0; j < ENTITIES[i].CD_sph; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addWireSphere(ENTITIES[i].CD_sph_p[j], ENTITIES[i].CD_sph_r[j] * 2, _v3_lightred, 4, false);
+        for (let j = 0; j < ENTITIES[i].CD_sph; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addSphere(ENTITIES[i].CD_sph_p[j], ENTITIES[i].CD_sph_r[j] * 2, _v3_lightred, 4, false);
 
         // plane
         for (let j = 0; j < ENTITIES[i].CD_plane; ++j) {
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_n[j], 10, false, _v3_white);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_n[j], 10, _v3_white);
 
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j],  ENTITIES[i].CD_plane_halfWidth[j], false, _v3_lightred);
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j], -ENTITIES[i].CD_plane_halfWidth[j], false, _v3_red);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j],  ENTITIES[i].CD_plane_halfWidth[j], _v3_lightred);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_w[j], -ENTITIES[i].CD_plane_halfWidth[j], _v3_red);
 
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j],  ENTITIES[i].CD_plane_halfHeight[j], false, _v3_lightgreen);
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j], -ENTITIES[i].CD_plane_halfHeight[j], false, _v3_green);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j],  ENTITIES[i].CD_plane_halfHeight[j], _v3_lightgreen);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_plane_p[j], ENTITIES[i].CD_plane_h[j], -ENTITIES[i].CD_plane_halfHeight[j], _v3_green);
         }
 
         // edge
-        for (let j = 0; j < ENTITIES[i].CD_edge; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_edge_p[j], ENTITIES[i].CD_edge_n[j], ENTITIES[i].CD_edge_l[j], false, _v3_orange);
+        for (let j = 0; j < ENTITIES[i].CD_edge; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_edge_p[j], ENTITIES[i].CD_edge_n[j], ENTITIES[i].CD_edge_l[j], _v3_orange);
    
         // box
         for (let j = 0; j < ENTITIES[i].CD_box; ++j) {
@@ -66,7 +66,7 @@ function E3D_DEBUG_SHOW_CD() {
             v3_add_res(p3, ENTITIES[i].CD_triangle_p1[j], ENTITIES[i].CD_triangle_p3p1[j]);
             v3_avg3_res(midpoint, ENTITIES[i].CD_triangle_p1[j], p2, p3);
 
-            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(midpoint, ENTITIES[i].CD_triangle_n[j], 10, false, _v3_white);
+            E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(midpoint, ENTITIES[i].CD_triangle_n[j], 10, _v3_white);
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, ENTITIES[i].CD_triangle_p1[j], false, _v3_lightred);
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, p2, false, _v3_lightgreen);
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, p3, false, _v3_lightblue);
@@ -117,7 +117,7 @@ function E3D_DEBUG_SHOW_HITTEST() {
     _E3D_DEBUG_SHOW_HITTEST = true;
 }
 // TODO function E3D_DEBUG_HITTEST_SPHERE(...) _LINE _CROSS
-// if (_E3D_DEBUG_SHOW_HITTEST) {E3D_DEBUG_SHOW_HITTEST_ENTITY.addWireSphere(...)}
+// if (_E3D_DEBUG_SHOW_HITTEST) {E3D_DEBUG_SHOW_HITTEST_ENTITY.addSphere(...)}
 
 // Collision detection detected hits markers
 var E3D_DEBUG_SHOW_HIT_ENTITY = null;
@@ -140,7 +140,7 @@ function E3D_DEBUG_SHOW_HIT() {
     _E3D_DEBUG_SHOW_HIT = true;
 }
 // TODO function E3D_DEBUG_HIT_SPHERE(...) _LINE _CROSS
-// if (_E3D_DEBUG_SHOW_HIT) {E3D_DEBUG_SHOW_HIT_ENTITY.addWireSphere(...)}
+// if (_E3D_DEBUG_SHOW_HIT) {E3D_DEBUG_SHOW_HIT_ENTITY.addSphere(...)}
 
 // Animation path markers
 var E3D_DEBUG_SHOW_PATH_ENTITY = null;

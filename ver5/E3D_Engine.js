@@ -22,6 +22,7 @@ var E3D_scriptList = [
     "ver5/scene.js",
 
     "ver5/animation.js",
+    "ver5/body.js",
     "ver5/collision.js",
     
     "ver5/core.js",
@@ -35,14 +36,14 @@ var E3D_currentScript = "";
 
 function E3D_scriptLoaded() {
     E3D_numScriptLoaded++;
-    if (E3D_DEBUG_VERBOSE) console.log(E3D_currentScript + " Loaded");
+    if (E3D_DEBUG_VERBOSE) console.log("E3D_Engine: " + E3D_currentScript + " Loaded");
     if (E3D_numScriptLoaded >= E3D_scriptList.length) {
-        console.log("All Scripts Loaded");
+        console.log("E3D_Engine: All Scripts Loaded");
     } else E3D_loadNextScript();
 }
 
 function E3D_scriptLoadError(event){
-    console.log("Script Load Error for " + E3D_currentScript + ": " + event.type);
+    console.log("E3D_Engine: Script Load Error for " + E3D_currentScript + ": " + event.type);
     if (E3D_fallbackScript != "") {
         var s = document.createElement("script");
         s.type = "text/javascript"; 
@@ -76,15 +77,19 @@ function E3D_loadNextScript() {
 
 var scriptTags = document.querySelectorAll("SCRIPT");
 for (var tag of scriptTags) {
+    var debug = tag.getAttribute("data-debug");
+    if ((debug) && (debug == "verbose")) E3D_DEBUG_VERBOSE = true;
+}
+for (var tag of scriptTags) {
     var main = tag.getAttribute("data-main");
     if (main) { 
         E3D_scriptList.push(main);
-        if (E3D_DEBUG_VERBOSE) console.log("adding main script " + main);
+        if (E3D_DEBUG_VERBOSE) console.log("E3D_Engine: Adding main script " + main);
     }
     var fail = tag.getAttribute("data-fail");
     if (fail) {
         E3D_fallbackScript = fail;
-        if (E3D_DEBUG_VERBOSE) console.log("using fallback script " + fail);
+        if (E3D_DEBUG_VERBOSE) console.log("E3D_Engine: Using fallback script " + fail);
     }
 }
 

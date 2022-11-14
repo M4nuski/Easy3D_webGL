@@ -109,7 +109,6 @@ class E3D_mesh {
         let v1 = [0, 0, 0];
         let v2 = [0, 0, 0];
         let v3 = [0, 0, 0];
-        let newNormal = [0, 0, 0];
 
         for (var i = 0; i < this.positions.length; i += 9) { // for each face
 
@@ -117,9 +116,7 @@ class E3D_mesh {
             v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5]);
             v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8]);     
 
-            v3_normal_res(newNormal, v1, v2, v3);
-
-            entity.pushCD_triangle(newNormal, v1, v2, v3);
+            entity.pushCD_triangle(v1, v2, v3, false);
         }
         log(entity.CD_triangle + " CD triangles");
 

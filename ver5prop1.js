@@ -269,8 +269,8 @@ SCENE.strokeColor = _v3_black;
 // Create the entities
 var groundEntity = new E3D_entity_wireframe_canvas("entity0");
 // Large ground plane
-groundEntity.addPlane(_v3_origin, _v3_90x, 3048, 3048, 119, _v3_black);
-groundEntity.addPlane([0.0, 0.1, 0.0], _v3_90x, 3048, 3048, 9, _v3_red);
+groundEntity.addPlane(_v3_origin, _v3_null, 3048, 3048, _v3_black, 120);
+groundEntity.addPlane([0.0, 0.1, 0.0], _v3_null, 3048, 3048, _v3_red, 10);
 groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 // Profile wireframe
@@ -562,8 +562,8 @@ function genProp(){
     if (showProfile) {
         profileEntity.clear();
         for (var j = 0; j < numSegments; ++j) {
-            profileEntity.moveCursorTo(segments[j].profile[0]);
-            for (var i = 1; i < profile.length; ++i) profileEntity.addLineTo(segments[j].profile[i], false, _v3_orange);
+            profileEntity.moveLineCursorTo(segments[j].profile[0]);
+            for (var i = 1; i < profile.length; ++i) profileEntity.addLineTo(segments[j].profile[i], _v3_orange);
         }
     }
 

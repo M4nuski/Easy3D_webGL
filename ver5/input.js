@@ -488,7 +488,7 @@ class E3D_input {
     }
 
     smoothRotation(smoothFactor, x = true, y = true, z = true) {
-        let f = TIMER.delta * smoothFactor;
+        let f = TIMER.adjustSmoothing(smoothFactor);
 
         if (f < 1.0) {
             if (x) {
@@ -515,7 +515,7 @@ class E3D_input {
     }
 
     smoothPosition(smoothFactor, x = true, y = true, z = true) {
-        let f = TIMER.delta * smoothFactor;
+        let f = TIMER.adjustSmoothing(smoothFactor);
 
         if (f < 1.0) {
             if (x) {

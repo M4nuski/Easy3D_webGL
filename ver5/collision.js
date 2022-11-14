@@ -1,474 +1,13 @@
 // Easy3D_WebGL
-// Collision detection methods
-// Body class
-// Emmanuel Charette 2019-2020
+// Collision detection and resolving methods
+// Emmanuel Charette 2019-2022
 
 "use strict"
 
 
-// Index constant for CD data
-const _CD_box_edge_TopBack  = 0;
-const _CD_box_edge_TopRight = 1;
-const _CD_box_edge_TopFront = 2;
-const _CD_box_edge_TopLeft  = 3;
-
-const _CD_box_edge_BackRight  = 4;
-const _CD_box_edge_FrontRight = 5;
-const _CD_box_edge_FrontLeft  = 6;
-const _CD_box_edge_BackLeft   = 7;
-
-const _CD_box_edge_BottomBack  = 8;
-const _CD_box_edge_BottomRight = 9;
-const _CD_box_edge_BottomFront = 10;
-const _CD_box_edge_BottomLeft  = 11;
-
-const _CD_box_corner_TopBackRight  = 0; 
-const _CD_box_corner_TopFrontRight = 1; 
-const _CD_box_corner_TopFrontLeft  = 2; 
-const _CD_box_corner_TopBackLeft   = 3; 
-
-const _CD_box_corner_BottomBackRight  = 4; 
-const _CD_box_corner_BottomFrontRight = 5; 
-const _CD_box_corner_BottomFrontLeft  = 6; 
-const _CD_box_corner_BottomBackLeft   = 7; 
 
 // Number of CD results objects to create at first as a default
 const E3D_initial_nb_E3D_collisionResult = 3;
-
-
-
-class E3D_body {
-    constructor() {
-        this.delta = v3_new(); // Position delta vector
-        this.deltaLength = -1; // length of this.delta during animation step for culling and interpolation
-        // TODO manage rotation transforms as well
-
-        this.nbsourceCollision = 0;
-        this.sourceCollisions = new Array(E3D_initial_nb_E3D_collisionResult);
-        for (var i = 0; i < E3D_initial_nb_E3D_collisionResult; ++i) this.sourceCollisions[i] = new E3D_collisionResult(); 
-
-        this.nbTargetCollision = 0;
-        this.targetCollisions = new Array(E3D_initial_nb_E3D_collisionResult);
-        for (var i = 0; i < E3D_initial_nb_E3D_collisionResult; ++i) this.targetCollisions[i] = new E3D_collisionResult(); 
-
-        this.candidates = []; // for all other entities, bool to test for CD after culling pass
-        this.distances = []; // cache for distance between entities
-        this.lastHitMarker = ""; // marker of last hit target to ignore on next pass
-
-        // Rigid body data
-
-        /*
-            CD_point
-                Source
-                Interpolate as vector
-
-            CD_edge
-                Source and Target
-                Interpolate as plane
-
-            CD_sphere
-                Source and Target
-                Interpolate as capsule (vector with radius)
-
-            CD_capsule
-                Source and Target
-                Interpolate as pillow (plane with radius)
-                
-            CD_triangle
-                Target
-                Interpolated first in capsule with other triangles to find nearest "t"
-
-            CD_plane
-                Target
-                No Interpolation (static)
-                
-            CD_box (not aligned)
-                Target
-                No Interpolation (static)
-                optional bottom (dont CD bottom plane and 4 bottom edges)
-        */
-        
-            // Point Source
-            this.CD_point = 0;
-            this.CD_point_p0 = []; // original to model space
-            this.CD_point_p  = []; // transformed to world space
-
-            // Edge Target
-            this.CD_edge = 0;
-            this.CD_edge_p0 = []; // original to model space
-            this.CD_edge_p  = []; // transformed to world space
-            this.CD_edge_n0 = []; // original to model space
-            this.CD_edge_n  = []; // transformed to world space (rotation)
-            this.CD_edge_l  = [];
-
-            // Sphere Source/Target
-            this.CD_sph = 0;
-            this.CD_sph_p0 = []; // original to model space
-            this.CD_sph_p  = []; // transformed to world space
-            this.CD_sph_r  = []; // radius
-            this.CD_sph_rs = []; // radius squared
-
-            // Plane Target, on X-Y plane
-            this.CD_plane = 0;
-            this.CD_plane_p0 = []; // center position original to model space
-            this.CD_plane_p  = []; // transformed to world space
-            this.CD_plane_n0 = []; // surface normal original to model space
-            this.CD_plane_n  = []; // surface normal transformed to world space (rotation)
-            this.CD_plane_w0 = []; // half-width normal original to model space
-            this.CD_plane_w  = []; // half-width normal transformed to world space (rotation)
-            this.CD_plane_h0 = []; // half-height normal original to model space
-            this.CD_plane_h  = []; // half-height normal transformed to world space (rotation)
-            this.CD_plane_halfWidth  = [];
-            this.CD_plane_halfHeight = [];
-
-            // Box Target 
-            this.CD_box = 0;
-            this.CD_box_p0 = []; // center position original to model space
-            this.CD_box_p  = []; // transformed to world space
-            this.CD_box_x0 = []; // width normal X original to model space
-            this.CD_box_x  = []; // transformed to world space (rotation)
-            this.CD_box_y0 = []; // height normal Y original to model space
-            this.CD_box_y  = []; // transformed to world space (rotation)
-            this.CD_box_z0 = []; // depth normal Z original to model space
-            this.CD_box_z  = []; // transformed to world space (rotation)
-
-            this.CD_box_bottom = []; // bool to include bottom face and edges
-
-            this.CD_box_edge_p0 = []; // 8 box edges corners pos in model space
-            this.CD_box_edge_p  = []; // pos in world space
- 
-            this.CD_box_halfWidth  = []; //x
-            this.CD_box_halfHeight = []; //y
-            this.CD_box_halfDepth  = []; //z 
-            
-            this.CD_box_preCull_r = [];
-
-            // Triangle Target
-            this.CD_triangle = 0;
-            this.CD_triangle_n0 = [];  // original to model space
-            this.CD_triangle_n  = [];  // transformed to world space (rotation)
-            this.CD_triangle_p10 = []; // original to model space
-            this.CD_triangle_p1  = []; // transformed to world space
-
-            this.CD_triangle_p3p10 = []; // original to model space
-            this.CD_triangle_p3p1 = []; // original to model space (rotation)
-            this.CD_triangle_p2p10  = []; // transformed to world space
-            this.CD_triangle_p2p1  = []; // transformed to world space (rotation)
-
-            this.CD_triangle_p3p1lenSq = [];
-            this.CD_triangle_p2p1lenSq = [];
-            this.CD_triangle_p3p2p1dot = [];
-    }
-
-    
-
-    updateCDdata(modelMatrix, normalMatrix) {
-        for (var i = 0; i < this.CD_point; ++i) {
-            v3_applym4_res(this.CD_point_p[i], this.CD_point_p0[i], modelMatrix);
-        }
-        for (var i = 0; i < this.CD_edge; ++i) {
-            v3_applym4_res(this.CD_edge_p[i], this.CD_edge_p0[i], modelMatrix);
-            v3_applym4_res(this.CD_edge_n[i], this.CD_edge_n0[i], normalMatrix);
-        }
-        for (var i = 0; i < this.CD_sph; ++i) {
-            v3_applym4_res(this.CD_sph_p[i], this.CD_sph_p0[i], modelMatrix);
-        }
-        for (var i = 0; i < this.CD_plane; ++i) {
-            v3_applym4_res(this.CD_plane_p[i], this.CD_plane_p0[i], modelMatrix);
-            v3_applym4_res(this.CD_plane_n[i], this.CD_plane_n0[i], normalMatrix);
-            v3_applym4_res(this.CD_plane_w[i], this.CD_plane_w0[i], normalMatrix);
-            v3_applym4_res(this.CD_plane_h[i], this.CD_plane_h0[i], normalMatrix);
-        }
-        for (var i = 0; i < this.CD_box; ++i) {
-            v3_applym4_res(this.CD_box_p[i], this.CD_box_p0[i], modelMatrix);
-            v3_applym4_res(this.CD_box_x[i], this.CD_box_x0[i], normalMatrix);
-            v3_applym4_res(this.CD_box_y[i], this.CD_box_y0[i], normalMatrix);
-            v3_applym4_res(this.CD_box_z[i], this.CD_box_z0[i], normalMatrix);
-            for (var j = 0; j < 8; ++j) v3_applym4_res(this.CD_box_edge_p[i][j], this.CD_box_edge_p0[i][j], modelMatrix);
-        }        
-        for (var i = 0; i < this.CD_triangle; ++i) {
-            v3_applym4_res(this.CD_triangle_n[i],  this.CD_triangle_n0[i],  normalMatrix);
-            v3_applym4_res(this.CD_triangle_p1[i], this.CD_triangle_p10[i], modelMatrix);         
-            v3_applym4_res(this.CD_triangle_p3p1[i], this.CD_triangle_p3p10[i],  normalMatrix); 
-            v3_applym4_res(this.CD_triangle_p2p1[i], this.CD_triangle_p2p10[i],  normalMatrix); 
-        }
-    }
-
-
-
-
-    pushCD_point(p) {
-        this.CD_point_p0[this.CD_point] = v3_clone(p);
-        this.CD_point_p[this.CD_point] = v3_clone(p);
-
-        this.CD_point += 1;
-    }
-    pushCD_edge(p, n, l) {
-        this.CD_edge_p0[this.CD_edge] = v3_clone(p);
-        this.CD_edge_p[this.CD_edge] = v3_clone(p);
-        
-        this.CD_edge_n0[this.CD_edge] = v3_clone(n);
-        this.CD_edge_n[this.CD_edge] = v3_clone(n);
-
-        this.CD_edge_l[this.CD_edge] = l;
-        
-        this.CD_edge += 1;
-    }
-    pushCD_edge2p(p1, p2) {
-        var n = v3_sub_new(p2, p1);
-        var l = v3_length(n)
-        v3_invscale_mod(n, l);
-        this.CD_edge_p0[this.CD_edge] = v3_clone(p1);
-        this.CD_edge_p[this.CD_edge] = v3_clone(p1);
-        
-        this.CD_edge_n0[this.CD_edge] = v3_clone(n);
-        this.CD_edge_n[this.CD_edge] = v3_clone(n);
-
-        this.CD_edge_l[this.CD_edge] = l;
-        
-        this.CD_edge += 1;
-    }
-    pushCD_sph(p, r) {
-        this.CD_sph_p0[this.CD_sph] = v3_clone(p); 
-        this.CD_sph_p[this.CD_sph] = v3_clone(p); 
-        
-        this.CD_sph_r[this.CD_sph] = r;
-        this.CD_sph_rs[this.CD_sph] = r*r;
-        
-        this.CD_sph += 1;
-    }
-
-    pushCD_plane(p, n, wn, hn, w, h) {
-        this.CD_plane_p0[this.CD_plane] = v3_clone(p); // position offset of plane
-        this.CD_plane_p[this.CD_plane] = v3_clone(p);  
-        this.CD_plane_n0[this.CD_plane] = v3_clone(n); // normal of plane face
-        this.CD_plane_n[this.CD_plane] = v3_clone(n);  
-        this.CD_plane_w0[this.CD_plane] = v3_clone(wn); // width
-        this.CD_plane_w[this.CD_plane] = v3_clone(wn);
-        this.CD_plane_h0[this.CD_plane] = v3_clone(hn); // height
-        this.CD_plane_h[this.CD_plane] = v3_clone(hn);
-        this.CD_plane_halfWidth[this.CD_plane] = w;
-        this.CD_plane_halfHeight[this.CD_plane] = h;
-
-        this.CD_plane += 1;
-    }
-
-    pushCD_box(p, nx, ny, nz, hwidth, hheight, hdepth, bottom) {
-        this.CD_box_p0[this.CD_box] = v3_clone(p); 
-        this.CD_box_p[this.CD_box] = v3_clone(p); 
-
-        this.CD_box_x0[this.CD_box] = v3_clone(nx); 
-        this.CD_box_x[this.CD_box] = v3_clone(nx); 
-        this.CD_box_y0[this.CD_box] = v3_clone(ny); 
-        this.CD_box_y[this.CD_box] = v3_clone(ny); 
-        this.CD_box_z0[this.CD_box] = v3_clone(nz); 
-        this.CD_box_z[this.CD_box] = v3_clone(nz); 
-
-        this.CD_box_halfWidth[this.CD_box]  = hwidth;
-        this.CD_box_halfHeight[this.CD_box] = hheight;
-        this.CD_box_halfDepth[this.CD_box]  = hdepth; 
-
-        this.CD_box_bottom[this.CD_box] = bottom; 
-
-        // create the corner vertex
-        // scale normal by half dim
-        var px = v3_scale_new(nx,  hwidth);
-        var mx = v3_scale_new(nx, -hwidth);
-
-        var py = v3_scale_new(ny,  hheight);
-        var my = v3_scale_new(ny, -hheight);
-
-        var pz = v3_scale_new(nz,  hdepth);
-        var mz = v3_scale_new(nz, -hdepth);
-
-        this.CD_box_edge_p0[this.CD_box] = [];
-
-        // top
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopBackRight]  = v3_addaddadd_new(p, py, px, mz);
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopFrontRight] = v3_addaddadd_new(p, py, px, pz);
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopFrontLeft]  = v3_addaddadd_new(p, py, mx, pz);
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_TopBackLeft]   = v3_addaddadd_new(p, py, mx, mz);
-
-        // bottom 
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomBackRight]  = v3_addaddadd_new(p, my, px, mz);
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomFrontRight] = v3_addaddadd_new(p, my, px, pz);
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomFrontLeft]  = v3_addaddadd_new(p, my, mx, pz);
-        this.CD_box_edge_p0[this.CD_box][_CD_box_corner_BottomBackLeft]   = v3_addaddadd_new(p, my, mx, mz);
-
-        this.CD_box_edge_p[this.CD_box] = v3a_clone(this.CD_box_edge_p0[this.CD_box]);
-
-        this.CD_box_preCull_r[this.CD_box] = Math.sqrt(hwidth*hwidth + hheight*hheight + hdepth*hdepth);
-
-        this.CD_box += 1;
-    }
-    
-    pushCD_triangle(n, p1, p2 ,p3) {
-        this.CD_triangle_n0[this.CD_triangle]  = v3_clone(n);
-        this.CD_triangle_n[this.CD_triangle]   = v3_clone(n);
-        this.CD_triangle_p10[this.CD_triangle] = v3_clone(p1);
-        this.CD_triangle_p1[this.CD_triangle]  = v3_clone(p1);
-
-        var p3p1 = v3_sub_new(p3, p1);
-        var p2p1 = v3_sub_new(p2, p1);
-
-        this.CD_triangle_p3p10[this.CD_triangle] = v3_clone(p3p1);
-        this.CD_triangle_p3p1[this.CD_triangle]  = v3_clone(p3p1);
-        this.CD_triangle_p2p10[this.CD_triangle] = v3_clone(p2p1);
-        this.CD_triangle_p2p1[this.CD_triangle]  = v3_clone(p2p1);
-
-        this.CD_triangle_p3p1lenSq[this.CD_triangle] = v3_lengthsquared(p3p1);
-        this.CD_triangle_p2p1lenSq[this.CD_triangle] = v3_lengthsquared(p2p1);
-        this.CD_triangle_p3p2p1dot[this.CD_triangle] = v3_dot(p3p1, p2p1);
-
-        this.CD_triangle += 1;
-    }
-    
-
-
-    cloneData(targetCDdata) {
-
-  
-            if (targetCDdata.CD_point > 0) {
-                this.CD_point = targetCDdata.CD_point;
-                this.CD_point_p0 = v3a_clone(targetCDdata.CD_point_p0);
-                this.CD_point_p  = v3a_clone(targetCDdata.CD_point_p);
-            }
-            if (targetCDdata.CD_edge > 0) {
-                this.CD_edge = targetCDdata.CD_edge;
-                this.CD_edge_p0 = v3a_clone(targetCDdata.CD_edge_p0);
-                this.CD_edge_p  = v3a_clone(targetCDdata.CD_edge_p);
-                this.CD_edge_n0 = v3a_clone(targetCDdata.CD_edge_n0);
-                this.CD_edge_n  = v3a_clone(targetCDdata.CD_edge_n);
-                this.CD_edge_l  = targetCDdata.CD_edge_l.slice();
-            }
-            if (targetCDdata.CD_sph > 0) {
-                this.CD_sph = targetCDdata.CD_sph;
-                this.CD_sph_p0 = v3a_clone(targetCDdata.CD_sph_p0);
-                this.CD_sph_p = v3a_clone(targetCDdata.CD_sph_p);
-                this.CD_sph_r = targetCDdata.CD_sph_r.slice();
-                this.CD_sph_rs = targetCDdata.CD_sph_rs.slice();
-            }
-            if (targetCDdata.CD_plane > 0) {
-                this.CD_plane = targetCDdata.CD_plane;
-                this.CD_plane_p0 = v3a_clone(targetCDdata.CD_plane_p0);
-                this.CD_plane_p  = v3a_clone(targetCDdata.CD_plane_p);
-                this.CD_plane_n0 = v3a_clone(targetCDdata.CD_plane_n0);
-                this.CD_plane_n  = v3a_clone(targetCDdata.CD_plane_n);
-                this.CD_plane_w0 = v3a_clone(targetCDdata.CD_plane_w0);
-                this.CD_plane_w  = v3a_clone(targetCDdata.CD_plane_w);
-                this.CD_plane_h0 = v3a_clone(targetCDdata.CD_plane_h0);
-                this.CD_plane_h  = v3a_clone(targetCDdata.CD_plane_h);
-                this.CD_plane_halfWidth  = targetCDdata.CD_plane_halfWidth.slice();
-                this.CD_plane_halfHeight = targetCDdata.CD_plane_halfHeight.slice();
-            }
-            if (targetCDdata.CD_box > 0) {
-                this.CD_box = targetCDdata.CD_box;
-    
-                this.CD_box_p0  = v3a_clone(targetCDdata.CD_box_p0);
-                this.CD_box_p = v3a_clone(targetCDdata.CD_box_p);
-                this.CD_box_x0  = v3a_clone(targetCDdata.CD_box_x0);
-                this.CD_box_x = v3a_clone(targetCDdata.CD_box_x);
-                this.CD_box_y0  = v3a_clone(targetCDdata.CD_box_y0);
-                this.CD_box_y = v3a_clone(targetCDdata.CD_box_y);
-                this.CD_box_z0  = v3a_clone(targetCDdata.CD_box_z0);
-                this.CD_box_z = v3a_clone(targetCDdata.CD_box_z);
-    
-                this.CD_box_bottom  = targetCDdata.CD_box_bottom.slice();
-    
-                this.CD_box_edge_p0 = v3a_clone(targetCDdata.CD_box_edge_p0);
-                this.CD_box_edge_p = v3a_clone(targetCDdata.CD_box_edge_p);
-    
-                this.CD_box_halfWidth  = targetCDdata.CD_box_halfWidth.slice();
-                this.CD_box_halfHeight = targetCDdata.CD_box_halfHeight.slice();            
-                this.CD_box_halfDepth  = targetCDdata.CD_box_halfDepth.slice();
-    
-                this.CD_box_preCull_r  = targetCDdata.CD_box_preCull_r.slice();
-            }
-    
-            if (targetCDdata.CD_triangle > 0) {
-    
-                this.CD_triangle = targetCDdata.CD_triangle;
-                this.CD_triangle_p10 = v3a_clone(targetCDdata.CD_triangle_p10); 
-                this.CD_triangle_p1  = v3a_clone(targetCDdata.CD_triangle_p1);
-                this.CD_triangle_n0  = v3a_clone(targetCDdata.CD_triangle_n0); 
-                this.CD_triangle_n   = v3a_clone(targetCDdata.CD_triangle_n); 
-    
-                this.CD_triangle_p3p10 = v3a_clone(targetCDdata.CD_triangle_p3p10); 
-                this.CD_triangle_p2p10 = v3a_clone(targetCDdata.CD_triangle_p2p10); 
-                this.CD_triangle_p3p1  = v3a_clone(targetCDdata.CD_triangle_p3p1); 
-                this.CD_triangle_p2p1  = v3a_clone(targetCDdata.CD_triangle_p2p1); 
-        
-                this.CD_triangle_p3p1lenSq = targetCDdata.CD_triangle_p3p1lenSq.slice();
-                this.CD_triangle_p2p1lenSq = targetCDdata.CD_triangle_p2p1lenSq.slice();
-                this.CD_triangle_p3p2p1dot = targetCDdata.CD_triangle_p3p2p1dot.slice();
-            }
-    }
-
-    clear() {
-        this.CD_point = 0;
-        this.CD_edge = 0;
-        this.CD_sph = 0;
-        this.CD_plane = 0;
-        this.CD_box = 0;
-        this.CD_triangle = 0;
-    }
-
-
-    swapCDdataFrame() {
-        // TODO keep track of last positions/rotations with ref swapping between FRAMES 
-    }
-
-    resetCollisions() {             
-        for (var i = 0; i < this.nbsourceCollision; ++i)this.sourceCollisions[i].reset();
-        for (var i = 0; i < this.nbTargetCollision; ++i)this.targetCollisions[i].reset();
-
-        this.nbsourceCollision = 0;
-        this.nbTargetCollision = 0;
-    }
-
-    pushCollisionSource(m, t, n, p, sDesc, scdi, targetIndex, tDesc, tcdi) {
-        if (this.nbsourceCollision >= this.sourceCollisions.length) this.sourceCollisions.push(new E3D_collisionResult());
-        
-        this.sourceCollisions[this.nbsourceCollision].marker = ""+m;
-        this.sourceCollisions[this.nbsourceCollision].t0 = t;
-        v3_copy(this.sourceCollisions[this.nbsourceCollision].n, n);
-        v3_copy(this.sourceCollisions[this.nbsourceCollision].p0, p);
-        
-        this.sourceCollisions[this.nbsourceCollision].source_desc = sDesc;
-        this.sourceCollisions[this.nbsourceCollision].source_cdi = scdi;
-
-        this.sourceCollisions[this.nbsourceCollision].entity_index = targetIndex;
-
-        this.sourceCollisions[this.nbsourceCollision].target_desc = tDesc;
-        this.sourceCollisions[this.nbsourceCollision].target_cdi = tcdi; 
-        
-        this.nbsourceCollision++;
-    }
-
-
-
-    pushCollisionTarget(m, t, n, p, sDesc, scdi, sourceIndex, tDesc, tcdi) {
-        if (this.nbTargetCollision >=this.targetCollisions.length)this.targetCollisions.push(new E3D_collisionResult());
-
-        this.targetCollisions[this.nbTargetCollision].marker = ""+m;
-        this.targetCollisions[this.nbTargetCollision].t0 = t;
-        v3_copy(this.targetCollisions[this.nbTargetCollision].n, n);
-        v3_copy(this.targetCollisions[this.nbTargetCollision].p0, p);
-
-        this.targetCollisions[this.nbTargetCollision].source_desc = sDesc;
-        this.targetCollisions[this.nbTargetCollision].source_cdi = scdi;
-
-        this.targetCollisions[this.nbTargetCollision].entity_index = sourceIndex;
-
-        this.targetCollisions[this.nbTargetCollision].target_desc = tDesc;
-        this.targetCollisions[this.nbTargetCollision].target_cdi = tcdi; 
-
-        this.nbTargetCollision++;
-    }
-}
-
-
-
 
 class E3D_collisionResult {
     constructor() {
@@ -490,11 +29,11 @@ class E3D_collisionResult {
         this.marker = "";
         this.t0 = Infinity;
     }
+
+    check() {
+        // TODO as per HIT
+    }
 }
-
-
-
-
 
 
 function CheckForBodyCollisions_SphSource(sourceEntityIndex){
@@ -524,8 +63,8 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
     v3_invscale_res(sourceSph_n, sourceBody.delta, sourceSph_l);  
 
     //if (E3D_DEBUG_SHOW_HIT_TEST && (dev_Hits != undefined)) {
-    //    dev_Hits.addWireSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
-     //   dev_Hits.addWireSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
+    //    dev_Hits.addSphere(sourceSph_p0, 2.0 * sourceSph_r, _v3_blue, 8, false, 3);
+     //   dev_Hits.addSphere(sourceSph_p, 2.0 * sourceSph_r, _v3_green, 8, false, 3);    
     //}
 
     // temporary CD result data
@@ -608,7 +147,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                         //point_segment_point_res(posOffset, targetBody.CD_edge_p[targetCDindex], targetBody.CD_edge_n[targetCDindex], targetBody.CD_edge_l[targetCDindex], firstHit);
                         v3_sub_res(hitNormal, firstHit, posOffset);   
                         
-                        if (E3D_DEBUG_SHOW_HIT_TEST) dev_Hits.addWireSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
+                        if (E3D_DEBUG_SHOW_HIT_TEST) dev_Hits.addSphere(firstHit, 2.0 * sourceSph_r, [1.0,0.25,0.25], 8, false, 3);
 
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
@@ -651,7 +190,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
 
                         var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
                         if ( t0 <= _tempCDRes_t0 ) {
-                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, (d0 > 0.0) ? [1, 0, 0] : [ 1, 0.25, 0.25], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -805,12 +344,12 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_y[targetCDindex]);
                                 closestHit = hitRes;                                       
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_TopRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_TopLeft] = true;
@@ -841,13 +380,13 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_y[targetCDindex]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_BottomRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BottomLeft] = true;
@@ -884,12 +423,12 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_z[targetCDindex]);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_FrontLeft] = true;
@@ -922,13 +461,13 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_z[targetCDindex]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_BackRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
@@ -967,12 +506,12 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_x[targetCDindex]);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontRight] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackRight] = true;
@@ -1006,13 +545,13 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                             if (edgeRes == "I") { // inside hit
                                 planeHit = true;
                                 // add to the list of hits.
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2 * sourceSph_r, [1,1,0]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2 * sourceSph_r, [1,1,0]);
                                 v3_copy(hitNormal, target.CD_box_x[targetCDindex]);
                                 v3_negate_mod(hitNormal);
                                 closestHit = hitRes; 
                             } else if (edgeRes != "F") { // margin hit
                                 edgesToTest = true;
-                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, sourceSph_r, [0,1,1]);
+                                if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, sourceSph_r, [0,1,1]);
                                 // edge A
                                 if (edgeRes[0] == "P") edgesToCheck[_CD_box_edge_FrontLeft] = true;         
                                 if (edgeRes[0] == "N") edgesToCheck[_CD_box_edge_BackLeft] = true;
@@ -1236,7 +775,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                         var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
 
-                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -1273,7 +812,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_sph; ++sourceCDindex) 
                     var t0 = v3_distancesquared(firstHit, sourceSph_p0) * Math.sign(hitRes);
 
                     if ( t0 <= _tempCDRes_t0 ) {          
-                        if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                        if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
                         v3_copy(_tempCDRes_n, target.CD_triangle_n[targetCDindex]);
@@ -1379,7 +918,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                         var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes); 
                         if ( t0 < _tempCDRes_t0) {
                             v3_sub_res(hitNormal, firstHit, targetBody.CD_sph_p[j]);
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, _v3_red);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, _v3_red);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -1387,8 +926,8 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                             _tempCDRes_target_desc = "Sph";
                             _tempCDRes_target_cdi = j;
 
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, _v3_white);
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireSphere(firstHit,targetBody.CD_sph_p[j] * 2, _v3_red, 8, false);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, _v3_white);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addSphere(firstHit,targetBody.CD_sph_p[j] * 2, _v3_red, 8, false);
                             //sourceEntity.pushCollisionSource(marker, t0 / sourcePts_l, hitNormal, firstHit, "Point", "Sph", targetEntityIndex, sourceCDindex, j);
                         } // end <t0
                     }// end hitres
@@ -1410,7 +949,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                             _tempCDRes_target_desc = "Sph";
                             _tempCDRes_target_cdi = j;
 
-                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, _v3_white);
+                            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, _v3_white);
                             //sourceEntity.pushCollisionSource(marker, t0 / sourcePts_l, hitNormal, firstHit, "Point", "Sph", targetEntityIndex, sourceCDindex, j);
                         }
                     }
@@ -1444,7 +983,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
 
                         var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);
                         if ( t0 < _tempCDRes_t0 ) {
-                        //    if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
+                        //    if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,0,0], 8, false, 3);
                             _tempCDRes_marker = marker;
                             _tempCDRes_t0 = t0;
                             v3_copy(_tempCDRes_n, hitNormal);
@@ -1626,7 +1165,7 @@ for (var sourceCDindex = 0; sourceCDindex < sourceBody.CD_point; ++sourceCDindex
                     var t0 = v3_distancesquared(firstHit, sourcePts_p0) * Math.sign(hitRes);
 
                     if ( t0 < _tempCDRes_t0 ) {          
-                       // if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addWireSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
+                       // if (E3D_DEBUG_SHOW_HIT_TEST) if (t0 > _v3_epsilon) phyTracers.addSphere(firstHit, 2 * sourceSph_r, [1,1,0.8], 8, false, 3);
                         _tempCDRes_marker = marker;
                         _tempCDRes_t0 = t0;
                         v3_copy(_tempCDRes_n, target.CD_triangle_n[j]);
@@ -1680,7 +1219,7 @@ function VectSphHit(v, so, sr2) { // translated to v origin
 
     E3D_DEBUG_DATA_CD.set("v-s tca", tca);
 
-if (isNaN(tca)) throw "VectSphHit tca NaN";
+if (isNaN(tca)) throw new Error("VectSphHit tca NaN");
     if  (tca < 0) return false;
     // sph behind origin
 
@@ -1694,7 +1233,7 @@ if (isNaN(tca)) throw "VectSphHit tca NaN";
     t1 = tca + thc;
     E3D_DEBUG_DATA_CD.set("v-s t0" , t0);
     E3D_DEBUG_DATA_CD.set("v-s t1" , t1);
-if (isNaN(thc)) throw "VectSphHit thc NaN";
+if (isNaN(thc)) throw new Error("VectSphHit thc NaN");
     return (t0 < t1) ? t0 : t1;
 }
 
@@ -1703,7 +1242,7 @@ function vector_sph_t(n, sphO_minus_vectO, sphRadSquared) { // translated to v o
     var t1 = 0;
     var tca = v3_dot(sphO_minus_vectO, n);
 
-if (isNaN(tca)) throw "vector_sph_t tca NaN";
+if (isNaN(tca)) throw new Error("vector_sph_t tca NaN");
 
   //  if  (tca < 0) return false;
 
@@ -1711,7 +1250,7 @@ if (isNaN(tca)) throw "vector_sph_t tca NaN";
     if (d2 > sphRadSquared) return false;
     var thc = Math.sqrt(sphRadSquared - d2);
 
-if (isNaN(thc)) throw "vector_sph_t thc NaN";
+if (isNaN(thc)) throw new Error("vector_sph_t thc NaN");
 
     t0 = tca - thc;
     t1 = tca + thc;
@@ -1779,7 +1318,7 @@ function triangle_vector_intersect_res(firsthit, vOrig, vNormal, triP1, triP3P1,
     //v3_sub_res(_t_v_i_v1, triP2, triP1);
 
     v3_addscaled_res(firsthit, vOrig, vNormal, t);
-    //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firsthit, 2, [1, 0, 0]);
+    //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firsthit, 2, [1, 0, 0]);
 
     v3_sub_res(_t_v_i_v2, firsthit, triP1);
 
@@ -1815,7 +1354,7 @@ return (u >= 0) && (v >= 0) && (u + v < 1)
     var v = (dot00 * dot12 - dot01 * dot02) * invDenom
 
     if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
-    //    if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firsthit, 4, [0, 1, 0]);
+    //    if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firsthit, 4, [0, 1, 0]);
         if (t == 0) t = _v3_epsilon;
         return t;
     } else return false;
@@ -1848,7 +1387,7 @@ function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, t
         } else {
             v3_addscaled_res(firstHit, vOrig, triNorm, t * angleCos); //corret position over plane
         }
-        //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 2, [1, 0, 0]);
+        //if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 2, [1, 0, 0]);
         
         v3_sub_res(_t_v_i_v2, firstHit, triP1);
     
@@ -1861,7 +1400,7 @@ function triangle_capsule_intersect_res(firstHit, vOrig, vNormal, vRad, triP1, t
         var v = (triP3len * dot12 - tridP3P2dot * dot02) * invDenom
     
         if ((u >= 0.0) && (v >= 0.0) && (u + v < 1.0)) {
-            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addWireCross(firstHit, 4, [0, 1, 0]);
+            if (E3D_DEBUG_SHOW_HIT_TEST) phyTracers.addCross(firstHit, 4, [0, 1, 0]);
             if (t == 0) t = _v3_epsilon;
             return t;
         } else return false;

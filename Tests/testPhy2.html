@@ -309,16 +309,8 @@
                     
                     this.aLast = v3_new();
                     this.aDelta = v3_new();
-
                     //this.CD_culling_radius = 10.0; // deltaLength + largest CD data ?
-                    
-                    // eager : first hit found, indivudial resolved, 1 pass
-                    // first : lowest t, individual resolved, 1 pass
-                    // full  : lowest t both resolved, multi pass until no t <= 1.0 or max number of passes
-                    // analytical : mathematical resolving of t 
-                    // successive approximation : spherical envelope testing then s-approx until threashold
-
-                    
+                
                     // TODO body object
                     this.CD_type = CD_types.NONE;
                     this.CD_mode = CD_modes.STATIC;
@@ -334,26 +326,6 @@
                 }
             }
 
-            var lastParams = {};
-            var testParams = {
-
- "pos": [
-  -0.5625,
-  0.27041666666666675,
-  0
- ],
- "pLast": [
-  -0.5625,
-  0.27041666666666675,
-  0
- ],
- "pSpeed": [
-  6.5648203160807417,
-  3.395066967695944,
-  0
- ],
- "rad": 0.10689565869283417
-}
             var strList = new Map();
             var hits = [];
             var hitList = [];
@@ -504,11 +476,7 @@
                         //if (abs(td) < 0.0001) td = timeDelta;
                         objList[currentI].pSpeed[0] = (currentX - lastX) / td;
                         objList[currentI].pSpeed[1] = (currentY - lastY) / td;
-                        lastParams.pos = v3_clone(objList[currentI].pos);
-                        lastParams.pLast = v3_clone(objList[currentI].pLast);
-                        lastParams.pSpeed = v3_clone(objList[currentI].pSpeed);
-                        lastParams.rad = objList[currentI].rad;
-                      //  lastParams.rad = objList[currentI].CD_r;
+
                         currentI = -1;
                     }
                 }                
@@ -820,41 +788,6 @@
                 var nf = Math.pow(1.0 - f, (step / 0.1)) - 1.0;
                 return (nf < 1.0) ? -nf : 1.0;
             }
-            function v3_shorten_mod(v, len) {
-                let alen = v3_length(v);
-                if (alen < _v3_epsilon) return;
-                let tlen = alen - len;
-                if (tlen <= 0.0) {
-                    v[0] = 0.0;
-                    v[1] = 0.0;
-                    v[2] = 0.0;
-                } else {
-                    v[0] = v[0] * tlen / alen;
-                    v[1] = v[1] * tlen / alen;
-                    v[2] = v[2] * tlen / alen;
-                }
-            }
-            function v3_setlength_mod(v, len) {
-                let alen = v3_length(v);
-                if (alen < _v3_epsilon) return;
-                v[0] = v[0] * len / alen;
-                v[1] = v[1] * len / alen;
-                v[2] = v[2] * len / alen;
-            }
-            function v3_lengthen_mod(v, len) {
-                let alen = v3_length(v);
-                if (alen < _v3_epsilon) return;
-                let tlen = alen + len;
-                if (tlen <= 0.0) {
-                    v[0] = 0.0;
-                    v[1] = 0.0;
-                    v[2] = 0.0;
-                } else {
-                    v[0] = v[0] * tlen / alen;
-                    v[1] = v[1] * tlen / alen;
-                    v[2] = v[2] * tlen / alen;
-                }
-            }
 
             function newHit(source, target) {
                 let nh = new hit(source, target);
@@ -896,7 +829,7 @@
                 v3_lerp_res(nh.p0, source.pLast, source.pos, nh.t);
                 v3_normalize_res(nh.n, v3_sub_new(nh.p0, sph_p0));
                 v3_addscaled_mod(nh.p0, nh.n, 0.001);
-                v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                v3_proj_on_plane_res(nh.p1, source.pos, nh.p0, nh.n);
                 let projvect = v3_sub_new(nh.p1, nh.p0);
                 v3_setlength_mod(projvect, line_length * (1.0 - nh.t));
                 v3_add_res(nh.p1, nh.p0, projvect);
@@ -966,18 +899,17 @@
             }
 
             function CD_dyn_sta_circle_capsule(source, target) {
-                strListset("cca check", 0);
                 let src_p0 = v3_add_new(source.pLast, source.CD_p);
                 let src_p1 = v3_add_new(source.pos, source.CD_p);
                 let tgt_p0 = v3_add_new(target.pos, target.CD_p);
 
                 // shift perspective along capsule n
-                let src_p0p = v3_offset_proj_new(src_p0, tgt_p0, target.CD_n);
-                let src_p1p = v3_offset_proj_new(src_p1, tgt_p0, target.CD_n);
+                let src_p0p = v3_proj_on_plane_new(src_p0, tgt_p0, target.CD_n);
+                let src_p1p = v3_proj_on_plane_new(src_p1, tgt_p0, target.CD_n);
 
                 let src_deltapn = v3_sub_new(src_p1p, src_p0p);
                 let src_deltaLengthp = v3_length(src_deltapn);
-                if (src_deltaLengthp < _v3_epsilon) return; // TODO check as sphere-line
+                if (src_deltaLengthp < _v3_epsilon) return;
                 v3_invscale_mod(src_deltapn, src_deltaLengthp);
 
                 let prj_dot0 = v3_offset_dot(tgt_p0, src_p0p, src_deltapn);
@@ -990,7 +922,6 @@
                 let radSumSq = radSum * radSum;
                 if (closest_distSq > radSumSq) return; 
 
-                // get t0 and t1
                 let offset = Math.sqrt(radSumSq - closest_distSq);
                 if ((prj_dot0 + offset) < 0.0) return;
 
@@ -1017,7 +948,7 @@
 
                     v3_normalize_res(nh.n, v3_sub_new(cyl_hit_p, closest_p));
                     v3_addscaled_mod(nh.p0, nh.n, 0.001);
-                    v3_offset_proj_res(nh.p1, source.pos, nh.p0, nh.n);
+                    v3_proj_on_plane_res(nh.p1, source.pos, nh.p0, nh.n);
                     let projvect = v3_sub_new(nh.p1, nh.p0);
                     v3_setlength_mod(projvect, source.deltaLength * (1.0 - nh.t));
                     v3_add_res(nh.p1, nh.p0, projvect);
@@ -1185,25 +1116,6 @@
                             ctx.stroke();
                             ctx.beginPath();
                                 arc(p1[0], p1[1], current_obj.CD_r, a0 - PIdiv2, a0 - PIdiv2 + Math.PI);
-                            ctx.stroke();
-
-                            ctx.strokeStyle = "#88F";
-                            v3_scale_mod(o, (current_obj.CD_r + 0.5) / current_obj.CD_r);
-                            ctx.beginPath();
-                                moveTo(p[0], p[1]);
-                                lineTo(p1[0], p1[1]);
-
-                                moveTo(p[0] + o[0], p[1] + o[1]);
-                                lineTo(p1[0] + o[0], p1[1] + o[1]);
-
-                                moveTo(p[0] - o[0], p[1] - o[1]);
-                                lineTo(p1[0] - o[0], p1[1] - o[1]);
-                            ctx.stroke();
-                            ctx.beginPath();
-                                arc(p[0], p[1], current_obj.CD_r + 0.5, a0 + PIdiv2, a0 + PIdiv2 + Math.PI);
-                            ctx.stroke();
-                            ctx.beginPath();
-                                arc(p1[0], p1[1], current_obj.CD_r + 0.5, a0 - PIdiv2, a0 - PIdiv2 + Math.PI);
                             ctx.stroke();
                             break;
                     }

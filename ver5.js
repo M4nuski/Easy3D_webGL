@@ -219,9 +219,9 @@ function initEngine() {
     scn.state = E3D_ACTIVE;
 
     testSph = new E3D_entity_wireframe_canvas("wireSphereTest");
-    testSph.addWireSphere([30,0,0], 20, [1,0,0], 24, true);
-    testSph.addWireSphere([0,30,0], 20, [0,1,0], 24, true);
-    testSph.addWireSphere([0,0,30], 20, [0,0,1], 24, true);
+    testSph.addSphere([30,0,0], 20, [1,0,0], 24, true);
+    testSph.addSphere([0,30,0], 20, [0,1,0], 24, true);
+    testSph.addSphere([0,0,30], 20, [0,0,1], 24, true);
     testSph.visible = true;
     scn.addEntity(testSph);
 
@@ -245,10 +245,10 @@ function initEngine() {
 
     cubes = new E3D_entity_wireframe_canvas("cubesTest");
     cubes.position = [0, 50, -50];
-    cubes.addWireCube([0, -50, 0], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
-    cubes.addWireCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
-    cubes.addWireCube([0, 0, 0], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
-    cubes.addWireCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
+    cubes.addCube([0, -50, 0], [0,0,0], [15, 15, 15], [1,0,0], true, false, false );
+    cubes.addCube([0, -25, 0], [0,0,0], [10, 10, 10], [0,1,0], true, true, false );
+    cubes.addCube([0, 0, 0], [0,0,0], [5, 5, 5], [0,0,1], true, false, true );
+    cubes.addCube([0, 25, 0], [0,0,0], [10, 10, 10], [1,0,1], true, true, true );
     cubes.addTriangle([0, 20, 80], [-30, 22, 150], [30, 18, 150], [1, 1, 1], true);
     cubes.visible = true;
     scn.addEntity(cubes);
@@ -293,7 +293,7 @@ function prepRender() {
         show_DEV_CD = true;
         dev_CD.clear();
         for (let i = 0; i < scn.entities.length; ++i) {
-            if (scn.entities[i].vis_culling) dev_CD.addWireSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
+            if (scn.entities[i].vis_culling) dev_CD.addSphere(scn.entities[i].position,scn.entities[i].cull_dist * 2, [1,0.5,0], 24, false);
         }
         dev_CD.visible = true;
     } else {
@@ -318,8 +318,8 @@ function timerTick() {  // Game Loop
     }
 
     inputs.processInputs(timer.delta);
-    inputs.smoothRotation(6);
-    inputs.smoothPosition(6);
+    inputs.smoothRotation(0.8);
+    inputs.smoothPosition(0.8);
     if (scn.camera.id == "cam1f") {
      //   inputs.clampRotationSmooth(-PIdiv2, PIdiv2, true, false, false);
         if (scn.camera.rotation[0] < -PIdiv2)  {
@@ -498,7 +498,7 @@ function collisionResult_lastPass_splode() {
                 for (var j=0; j < nvect; ++j) {
 
                     v3_add_res(location, this.closestCollision[hitIndex].p0, vect[j]);
-                    splos.addWireCross(location, s, col[colorIndex]);
+                    splos.addCross(location, s, col[colorIndex]);
         
                     colorIndex++;
                     if (colorIndex >= col.length) colorIndex = 0;
