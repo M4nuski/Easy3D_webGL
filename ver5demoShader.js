@@ -101,8 +101,8 @@ E3D_addEntity(torusEntity);
 $forEach(".E3D_fakeButton", button => onClick(button, (event) => SCENE.program = programs[event.target.getAttribute("data-shader")]));
 
 // handle interval changes
-TIMER.setInterval($("inputINT").value);
-onEvent($("inputINT"), "change", (event) => { TIMER.setInterval(event.target.value); event.target.blur(); } );
+TIMER.setFpsCap($("inputINT").value);
+onEvent($("inputINT"), "change", (event) => { TIMER.setFpsCap(event.target.value); event.target.blur(); } );
 
 
 

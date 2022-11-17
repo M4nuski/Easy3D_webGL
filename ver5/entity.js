@@ -48,6 +48,7 @@ class E3D_entity {
 
         // To draw lines or overlay on model
         this.numStrokeElements = 0;
+        this.drawIndexed = false;
         this.drawStrokes = false;
 
         // GL buffer data stores
@@ -62,12 +63,21 @@ class E3D_entity {
         // _dataOffset_u = 18
         // _dataOffset_v = 19
 
+
         // OpenGL GPU buffer references
         this.vertexBuffer;
         this.normalBuffer;
         this.colorBuffer; // TODO replace by texture with this.uvBuffer;
-
+        this.indexBuffer;
         this.strokeIndexBuffer;
+
+        
+        /*
+            entity.strokeIndexArray = new Uint32Array(strokeList);
+            entity.numIndices = strokeList.length;
+            entity.drawIndexed = true;
+        */
+
 
         // float32Array of raw data
         if (dynamic) {                            
@@ -82,9 +92,10 @@ class E3D_entity {
 
         // int32Array
         this.strokeIndexArray;
+    
 
         // TODO this.textureID = "";
-        // TODO material other than texture
+        // TODO materials
         // TODO isTransparent // z-sort before render, dont write to depth buffer
         // this.zPos = 0; relative to fustrum, for z-sort
 

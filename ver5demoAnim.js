@@ -10,9 +10,7 @@ E3D_InitAll();
 
 // Move the camera back and up a little, slight nod
 CAMERA.moveTo(0, 24, 100, 0.25);
-
-// Set FPS to 1:1 vs screen refresh
-TIMER.setInterval(1);
+TIMER.setFpsCap(60);
 
 
 // State
@@ -78,7 +76,7 @@ CB_tick = function() {
         directEntity.updateMatrix(); 
 
         // Beat
-        var directBeatNum = Math.floor(TIMER.elapsed / directBeatSlice);
+        var directBeatNum = Math.floor(TIMER.time / directBeatSlice);
         if (directBeatNum != directBeatLast) {
             directBeatCurrentScale = directBeat[directBeatNum % directBeat.length];
             directBeatLast = directBeatNum;

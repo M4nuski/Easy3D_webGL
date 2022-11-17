@@ -44,7 +44,7 @@ class E3D_input {
 
         // Config        
         this._posSpeed = 50; // units per sec for position outputs
-        this._rotSpeed = 90 * DegToRad; // rad per sec for rotation outputs
+        this._rotSpeed = 2.0 * DegToRad; // rad per "pixels"
 
         this.mousePosDirection = 1; 
         this.mouseRotDirection = 1;
@@ -338,9 +338,9 @@ class E3D_input {
         this.py_delta *= TIMER.delta;
         this.pz_delta *= TIMER.delta;
 
-        this.rx_delta *= TIMER.delta;
-        this.ry_delta *= TIMER.delta;
-        this.rz_delta *= TIMER.delta;
+        //this.rx_delta *= TIMER.delta;
+        //this.ry_delta *= TIMER.delta;
+        //this.rz_delta *= TIMER.delta;
         
         this.px += this.px_delta;
         this.py += this.py_delta; 
@@ -488,7 +488,7 @@ class E3D_input {
     }
 
     smoothRotation(smoothFactor, x = true, y = true, z = true) {
-        let f = TIMER.adjustSmoothing(smoothFactor);
+        let f = TIMER.compensateSmoothingFactor(smoothFactor);
 
         if (f < 1.0) {
             if (x) {
@@ -515,7 +515,7 @@ class E3D_input {
     }
 
     smoothPosition(smoothFactor, x = true, y = true, z = true) {
-        let f = TIMER.adjustSmoothing(smoothFactor);
+        let f = TIMER.compensateSmoothingFactor(smoothFactor);
 
         if (f < 1.0) {
             if (x) {

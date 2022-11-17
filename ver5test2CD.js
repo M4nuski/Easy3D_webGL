@@ -75,6 +75,6 @@ CB_tick = function() {
     $("data").innerText += CAMERA.zDist.toFixed(3);*/
     $("spanSFPS").innerText = TIMER.fpsSmoothed.toFixed(1);
     $("spanSPCT").innerText = TIMER.usageSmoothed.toFixed(1);
-    $("spanINTERVAL").innerText = TIMER.interval;
+
     $("spanLINES").innerText = SCENE.drawnElements;
 }
