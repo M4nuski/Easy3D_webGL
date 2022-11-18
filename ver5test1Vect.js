@@ -9,9 +9,9 @@ console.log("User Main Script Start");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera
 E3D_InitAll();
-CAMERA = new E3D_camera("cam_o");
+//CAMERA = new E3D_camera("cam_o");
 //CAMERA = new E3D_camera_persp("cam_p");
-//CAMERA = new E3D_camera_model("cam_m");
+CAMERA = new E3D_camera_model("cam_m");
 //CAMERA = new E3D_camera_space("cam_s");
 
 E3D_onResize();
@@ -129,13 +129,7 @@ E3D_addEntity(entity);
 
 CB_tick = function() {
     if (INPUTS.checkCommand("action1", true)) {
-        n = v3_addnoise_new(_v3_origin, 1.0);
-        v = v3_addnoise_new(_v3_origin, 256.0);
-        v3_normalize_mod(n);
-        p = v3_projection_new(v, n);        
-        entity.addLineByPosNormLen(o, n, 10.0, _v3_white);
-        entity.addLine(o, v, _v3_red);
-        entity.addLine(v, p, _v3_yellow);
+
     }
     if ((CAMERA.id == "cam_o") && (INPUTS.pz_delta != 0.0)) {
         E3D_ZOOM = 1.0 + (Math.abs(INPUTS.pz) * 0.01);
