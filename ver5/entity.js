@@ -262,7 +262,7 @@ class E3D_entity {
 
 // 3 axis shown with optionnal vector. Wireframe rendering.
 class E3D_entity_axis extends E3D_entity {
-    constructor (id, showAxis, vectorScale, normalize) {
+    constructor (id, size, showAxis, vectorScale, normalize) {
         super(id, true);
 
         this.vectorScale = vectorScale;
@@ -271,9 +271,9 @@ class E3D_entity_axis extends E3D_entity {
 
         this.isVisibiltyCullable = false;
 
-        this.vertexArray = new Float32Array([0, 0, 0, 1, 0, 0,
-                                             0, 0, 0, 0, 1, 0,
-                                             0, 0, 0, 0, 0, 1,
+        this.vertexArray = new Float32Array([0, 0, 0, size, 0, 0,
+                                             0, 0, 0, 0, size, 0,
+                                             0, 0, 0, 0, 0, size,
                                              0, 0, 0, 1, 1, 1]);
 
         this.colorArray = new Float32Array([1, 0, 0, 1, 0, 0,

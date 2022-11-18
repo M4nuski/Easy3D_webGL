@@ -43,7 +43,7 @@ class E3D_input {
         this.inputDoneTable.set(E3D_INP_ALWAYS, false);
 
         // Config        
-        this._posSpeed = 50; // units per sec for position outputs
+        this._posSpeed = 150; // units per sec for position outputs
         this._rotSpeed = 2.0 * DegToRad; // rad per "pixels"
 
         this.mousePosDirection = 1; 

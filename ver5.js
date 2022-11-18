@@ -202,13 +202,13 @@ function initEngine() {
 
 
     
-    l0v = new E3D_entity_axis("light0vect", true, 10.0, true);
+    l0v = new E3D_entity_axis("light0vect", 10.0, true, 10.0, true);
     l0v.position = v3_val_new(-5, 20, -5);
     l0v.visible = true;
     l0v.vis_culling = false;
     scn.addEntity(l0v);
     
-    l1v = new E3D_entity_axis("light1vect", true, 10.0, true);
+    l1v = new E3D_entity_axis("light1vect", 10.0, true, 10.0, true);
     l1v.position = v3_val_new(5, 20, 5);
     l1v.visible = true;
     l1v.vis_culling = false;

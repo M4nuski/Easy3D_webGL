@@ -7,14 +7,15 @@
 
 // Config
 //  Camera settings
-var E3D_FOV = 45 * DegToRad;
+var E3D_ZOOM = 1.0; // for orthogonal projections
+var E3D_FOV = 45 * DegToRad; // for perspective projections
 var E3D_NEAR = 0.1;
 var E3D_FAR = 500.0;
 //  Default viewport size
 var E3D_WIDTH = 640;
 var E3D_HEIGHT = 480;
  //  Gravitational constant
-var E3D_G = 386.22;
+var E3D_G = 386.09;
 
 // Global members 
 var TIMER = new E3D_timing(E3D_onTick_callback); 

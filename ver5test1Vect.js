@@ -9,7 +9,11 @@ console.log("User Main Script Start");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera
 E3D_InitAll();
-CAMERA = new E3D_camera_model("cam2")
+CAMERA = new E3D_camera("cam_o");
+//CAMERA = new E3D_camera_persp("cam_p");
+//CAMERA = new E3D_camera_model("cam_m");
+//CAMERA = new E3D_camera_space("cam_s");
+
 E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
 
@@ -109,8 +113,14 @@ let vect = {
     n: v3_normalize_new( [ 0.2, 2.0, -2.0] )
 }
 
-
-
+let axis1 = new E3D_entity_axis("adjustToCam", 25.0, true, 10.0, false);
+axis1.moveTo([0.01, 50.01, 0.01]);
+axis1.isVisible = true;
+E3D_addEntity(axis1);
+let axis2 = new E3D_entity_axis("negateCam", 25.0, true, 10.0, false);
+axis2.moveTo([0.01, 75.01, 0.01]);
+axis2.isVisible = true;
+E3D_addEntity(axis2);
 
 entity.isVisible = true;
 E3D_addEntity(entity2);
@@ -127,7 +137,18 @@ CB_tick = function() {
         entity.addLine(o, v, _v3_red);
         entity.addLine(v, p, _v3_yellow);
     }
+    if ((CAMERA.id == "cam_o") && (INPUTS.pz_delta != 0.0)) {
+        E3D_ZOOM = 1.0 + (Math.abs(INPUTS.pz) * 0.01);
+        CAMERA.resize();
+    }
+}
+
+TIMER.onSlowTick = function () {
+
+    axis1.updateVector(CAMERA.adjustToCamera_new([0.0, 0.0, -1.0]));
+    axis2.updateVector(CAMERA.negateCamera_new([0.0, 0.0, -1.0]));
+    
     entity2.isVisible = CAMERA.zDist > -100.0;
     $("data").innerText = v3_string(CAMERA.position) + "\n";
-    $("data").innerText += CAMERA.zDist.toFixed(3);
+    if (CAMERA.id == "cam_m") $("data").innerText += CAMERA.zDist.toFixed(3);
 }

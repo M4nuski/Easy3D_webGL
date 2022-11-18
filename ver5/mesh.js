@@ -105,7 +105,10 @@ class E3D_mesh {
     }
 
     addCDFromData(entity, addOrphanEdges = true) {
-
+        if (!hasCollisionDetection()) {
+            log("Entity dosen't have collision data object");
+            return;
+        }
         let v1 = [0, 0, 0];
         let v2 = [0, 0, 0];
         let v3 = [0, 0, 0];
@@ -116,7 +119,7 @@ class E3D_mesh {
             v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5]);
             v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8]);     
 
-            entity.pushCD_triangle(v1, v2, v3, false);
+            BODIES[entity.index].pushCD_triangle(v1, v2, v3, false);
         }
         log(entity.CD_triangle + " CD triangles");
 
@@ -127,13 +130,13 @@ class E3D_mesh {
 
         for (var i = 0; i < this.edges.length; ++i) { // for each edge
             if (addOrphanEdges && !this.edges[i].done) {
-                entity.pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
+                BODIES[entity.index].pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
             } else if (this.edges[i].done) {
                 v3_avg3_res(centroid1, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index31]);
                 v3_avg3_res(centroid2, this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2], this.uniques[this.edges[i].index32]);
                 v3_sub_mod(centroid1, centroid2);
 
-                if (v3_dot(centroid1, this.edges[i].normal2) < -0.001) entity.pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
+                if (v3_dot(centroid1, this.edges[i].normal2) < -0.001) BODIES[entity.index].pushCD_edge2p(this.uniques[this.edges[i].index1], this.uniques[this.edges[i].index2]);
             }
         }
 

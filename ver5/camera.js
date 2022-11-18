@@ -27,11 +27,11 @@ class E3D_camera {
 
     // recalculate projection (base) matrix
     resize() {
-      //  let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2 : E3D_HEIGHT / 2;
-      //  E3D_NEAR = -dd2;
-      //  E3D_FAR = dd2;
+        let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2.0 : E3D_HEIGHT / 2.0;
+        //E3D_NEAR = -dd2;
+        //E3D_FAR = dd2;
  
-        m4_ortho_res(this.projectionMatrix, E3D_WIDTH, E3D_HEIGHT, E3D_NEAR, E3D_FAR);  
+        m4_ortho_res(this.projectionMatrix, E3D_WIDTH / E3D_ZOOM, E3D_HEIGHT / E3D_ZOOM, -dd2, dd2);  
 
     }
 
@@ -45,7 +45,7 @@ class E3D_camera {
         m4_rotateY_mod(this.matrix, this.rotation[1]);
     }
 
-    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {        
+    moveBy(tx, ty, tz, rx = 0.0, ry = 0.0, rz = 0.0) {        
         this.position[0] += tx;
         this.position[1] += ty;
         this.position[2] += tz;
@@ -126,7 +126,7 @@ class E3D_camera_persp extends E3D_camera {
         m4_translate_mod(this.matrix, this._neg_position);
     }
 
-    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) {
+    moveBy(tx, ty, tz, rx = 0.0, ry = 0.0, rz = 0.0) {
         // adjust translation to current rotation
         const t = v3_val_new(tx, ty, tz);
         v3_rotateX_mod(t, -this.rotation[0]);
@@ -149,14 +149,14 @@ class E3D_camera_model extends E3D_camera_persp {
         super(id);
         this.nvx = v3_new();
         this.nvy = v3_new();
-        this.zDist = 0; // position is now pivot point for rotation
+        this.zDist = 0.0; // position is now pivot point for rotation
         this.inverseRotationMatrix = m4_new();
 
     }
     updateMatrix() {
         // update matrix per internal data
         if (this.zDist != undefined) {
-            m4_translate_res(this.matrix, this.projectionMatrix,  [0, 0, this.zDist]);
+            m4_translate_res(this.matrix, this.projectionMatrix,  [0.0, 0.0, this.zDist]);
 
             m4_rotateX_mod(this.matrix, this.rotation[0]);
             m4_rotateY_mod(this.matrix, this.rotation[1]);
@@ -169,12 +169,12 @@ class E3D_camera_model extends E3D_camera_persp {
         }
     }
 
-    moveBy(tx, ty, tz, rx = 0, ry = 0, rz = 0) { // tx and ty pan and move the pivot point, z is always away from that point
-        let t = v3_val_new(tx, ty, 0);
+    moveBy(tx, ty, tz, rx = 0.0, ry = 0.0, rz = 0.0) { // tx and ty pan and move the pivot point, z is always away from that point
+        let t = v3_val_new(tx, ty, 0.0);
         v3_applym4_mod(t, this.inverseRotationMatrix);
         this.zDist -= tz;
-        if (this.zDist > 0) {
-            this.zDist = 0;
+        if (this.zDist > 0.0) {
+            this.zDist = 0.0;
         }
 
         v3_add_mod(this.position, t);
@@ -256,7 +256,7 @@ class E3D_camera_space extends E3D_camera_persp {
         }
     }
 
-    moveBy(tx, ty, tz, rx = 0, rz = 0, ry = 0) {
+    moveBy(tx, ty, tz, rx = 0.0, rz = 0.0, ry = 0.0) {
         //transform translation to local
         const t = v3_val_new(tx, ty, tz);
         v3_applym4_mod(t, this.inverseRotationMatrix);
@@ -270,9 +270,9 @@ class E3D_camera_space extends E3D_camera_persp {
         this.updateMatrix();
 
         //reset rotations, incremental
-        this.rotation[0] = 0;
-        this.rotation[1] = 0;
-        this.rotation[2] = 0;
+        this.rotation[0] = 0.0;
+        this.rotation[1] = 0.0;
+        this.rotation[2] = 0.0;
     }
 
     adjustToCamera_new(vect) {
