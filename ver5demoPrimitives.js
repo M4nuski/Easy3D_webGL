@@ -8,6 +8,8 @@
 
 var paramText = document.getElementById("params");
 
+E3D_DEBUG_LOG_TIMESTAMPS = true;
+
 log("E3D_userInit");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera

@@ -9,6 +9,8 @@
 var programs = [];
 var meshLoader = new E3D_mesh();
 
+E3D_DEBUG_LOG_TIMESTAMPS = true;
+
 log("E3D_userInit");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera
@@ -106,13 +108,15 @@ onEvent($("inputINT"), "change", (event) => { TIMER.setFpsCap(event.target.value
 
 
 
-// use the engine OnTick event callback to change the rotation of the torus
+// use the engine OnTick event callback to change the rotation of the torus every frames
 CB_tick = function() {
     // rotate around Y
     torusEntity.rotation[1] += TIMER.delta * 0.4;
     torusEntity.updateMatrix();
-    
-    // some stats
+}
+
+// use the timer OnSlowTick event callback to update stats shown in document less often than each frames
+TIMER.onSlowTick = function () {
     $("spanFPS").innerText = padStart(TIMER.fps.toFixed(2), " ", 8);
     $("spanSFPS").innerText = padStart(TIMER.fpsSmoothed.toFixed(1), " ", 8);
     $("spanPct").innerText = padStart(TIMER.usage.toFixed(1), " ", 8);

@@ -259,6 +259,8 @@ var profileAeroData = [
 const Cyl_CD = 1.17; // Sph 0.47;
 const Cyl_CL = 0.00;
 
+E3D_DEBUG_LOG_TIMESTAMPS = true;
+
 log("E3D_userInit");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera

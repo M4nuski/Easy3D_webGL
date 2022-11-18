@@ -226,15 +226,15 @@ function E3D_onTick_callback() {
 var E3D_logElement = null;
 var E3D_logStart = Date.now();
 function log(text, silent = true) {
-    let ts = Date.now() - E3D_logStart;
+    let ts = (E3D_DEBUG_LOG_TIMESTAMPS) ? "[" + (Date.now() - E3D_logStart) + "] " : "";
     if (!silent) {
         if (E3D_logElement == null) E3D_logElement = document.getElementById("E3D_logDiv");        
         if (E3D_logElement != null) {
-            E3D_logElement.innerHTML += "[" + ts + "] " + text + "<br />";
+            E3D_logElement.innerHTML += ts + text + "<br />";
             E3D_logElement.scrollTop = E3D_logElement.scrollHeight - E3D_logElement.offsetHeight;
         } 
     }
-    console.log("[" + ts + "] " + text);
+    console.log(ts + text);
 }
 
 

@@ -6,6 +6,8 @@
 "use strict"
 
 
+E3D_DEBUG_LOG_TIMESTAMPS = true;
+
 console.log("User Main Script Start");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera

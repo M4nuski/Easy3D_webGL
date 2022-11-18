@@ -33,6 +33,7 @@ var E3D_scriptList = [
 var E3D_fallbackScript = "";
 var E3D_numScriptLoaded = 0;
 var E3D_currentScript = "";
+var E3D_engineRoot = "";
 
 function E3D_scriptLoaded() {
     E3D_numScriptLoaded++;
@@ -69,8 +70,8 @@ function E3D_loadNextScript() {
         s.type = "text/javascript"; 
         s.onload = E3D_scriptLoaded;
         s.onerror = E3D_scriptLoadError;
-        s.src = E3D_scriptList[E3D_numScriptLoaded];
-        E3D_currentScript = E3D_scriptList[E3D_numScriptLoaded];
+        s.src = E3D_engineRoot + E3D_scriptList[E3D_numScriptLoaded];
+        E3D_currentScript = E3D_engineRoot + E3D_scriptList[E3D_numScriptLoaded];
         document.head.appendChild(s);
     }
 }
@@ -90,6 +91,11 @@ for (var tag of scriptTags) {
     if (fail) {
         E3D_fallbackScript = fail;
         if (E3D_DEBUG_VERBOSE) console.log("E3D_Engine: Using fallback script " + fail);
+    }
+    var root = tag.getAttribute("data-root");
+    if (root) {
+        E3D_engineRoot = root;
+        if (E3D_DEBUG_VERBOSE) console.log("E3D_Engine: Using engine root of " + root);
     }
 }
 

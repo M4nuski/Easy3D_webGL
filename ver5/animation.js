@@ -121,7 +121,7 @@ function collisionDetectionAnimator(animGroup = 0, maxCDIterations = 10) {
         BODIES[i].candidates = new Array(ENTITIES.length);
         for (let j = 0; j < ENTITIES.length; ++j) { // all other entities are targets
             BODIES[i].candidates[j] = false; // default 
-            if ((i != j) && ENTITIES[j].isVisible && ENTITIES[j].collisionDetection()) {  // different visible entity with CD
+            if ((i != j) && ENTITIES[j].isVisible && ENTITIES[j].hasCollisionDetection()) {  // different visible entity with CD
                 
                 var deltaPosition = 0;
 

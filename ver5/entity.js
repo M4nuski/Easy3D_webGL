@@ -43,12 +43,13 @@ class E3D_entity {
         this.dataContentChanged = false; // GPU buffers will be updated  
         this.dataSizeChanged = true; // GPU buffers will be reset and updated
 
-        this.numElements = 0; // Actual number of vertices to draw.
-        this.drawMode = CONTEXT.TRIANGLES;
+        this.drawMode = CONTEXT.TRIANGLES; // Default element render mode is Triangles
 
-        // To draw lines or overlay on model
+        this.numElements = 0; // Actual number of vertices to draw
+        this.drawIndexed = false; // Indexed element draw
+
+        // To draw lines or overlay on model, indexed only
         this.numStrokeElements = 0;
-        this.drawIndexed = false;
         this.drawStrokes = false;
 
         // GL buffer data stores
@@ -71,26 +72,19 @@ class E3D_entity {
         this.indexBuffer;
         this.strokeIndexBuffer;
 
-        
-        /*
-            entity.strokeIndexArray = new Uint32Array(strokeList);
-            entity.numIndices = strokeList.length;
-            entity.drawIndexed = true;
-        */
-
-
-        // float32Array of raw data
+        // Raw data (Float32Array)
         if (dynamic) {                            
             this.vertexArray = new Float32Array(this.arraySize * 3);
             this.normalArray = new Float32Array(this.arraySize * 3);
             this.colorArray  = new Float32Array(this.arraySize * 3);
         } else {
-            this.vertexArray; 
+            this.vertexArray;
             this.normalArray;
             this.colorArray;
         }
 
-        // int32Array
+        // Element indices data (Int32Array)
+        this.indexArray;
         this.strokeIndexArray;
     
 
@@ -102,7 +96,7 @@ class E3D_entity {
         this.updateMatrix();
     } 
 
-    collisionDetection() {
+    hasCollisionDetection() {
         return this.isVisible && this.hasBody;
     }
 
@@ -152,7 +146,7 @@ class E3D_entity {
         this.modelMatrix[13] =  this.position[1];
         this.modelMatrix[14] =  this.position[2];
 
-        if (this.collisionDetection()) BODIES[this.index].updateCDdata(this.modelMatrix, this.normalMatrix);
+        if (this.hasCollisionDetection()) BODIES[this.index].updateCDdata(this.modelMatrix, this.normalMatrix);
     }
 
 

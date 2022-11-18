@@ -34,7 +34,7 @@ class E3D_mesh {
         this.boundingboxMax = [0, 0, 0];
         this.boundingboxLength = 0.0;
 
-        // moved in constructor to avoir error in Edge
+        // moved in constructor to avoid error in Edge
         this.sphereBaseType = {
             ICO: 0,
             OCTA: 1,
@@ -426,7 +426,8 @@ class E3D_mesh {
         var v3 = v3_new();
         var newNormal = v3_new();
         // create face normals
-        for (var i = 0; i < this.positions.length; i += 9) { // for each face
+        let numPos = this.positions.length;
+        for (var i = 0; i < numPos; i += 9) { // for each face
             v3_val_res(v1, this.positions[i + 0], this.positions[i + 1], this.positions[i + 2] );
             v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5] );
             v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8] );
@@ -499,14 +500,16 @@ class E3D_mesh {
         var n = v3_normalize_new([this.boundingboxMax[0] - this.boundingboxMin[0], this.boundingboxMax[1] - this.boundingboxMin[1], this.boundingboxMax[2] - this.boundingboxMin[2]]);
         if (v3_lengthsquared(n) < _v3_epsilon) n = [0.57735, 0.57735, 0.57735];
 
-        for (var i = 0; i < data.length; ++i) data[i][3] = v3_dot(data[i], n);
+        let dataLength = data.length;
+
+        for (var i = 0; i < dataLength; ++i) data[i][3] = v3_dot(data[i], n);
         data = data.sort( (v1, v2) => (v1[3] - v2[3]) );
 
         // walk the array and flag vertex that are not unique anymore
-        for (var i = 0; i < data.length; ++i) if (data[i][5]) {
+        for (var i = 0; i < dataLength; ++i) if (data[i][5]) {
             data[i][6] = i;
             var j = i + 1;
-            while ((j < data.length) && (Math.abs(data[i][3] - data[j][3]) < epsilon)) {
+            while ((j < dataLength) && (Math.abs(data[i][3] - data[j][3]) < epsilon)) {
                 if (v3_equals(data[i], data[j], epsilon)) {
                     data[j][5] = false;
                     data[j][6] = i;
@@ -516,7 +519,7 @@ class E3D_mesh {
         }
 
         // extract unique vertex and assign indices
-        for (var i = 0; i < data.length; ++i) {
+        for (var i = 0; i < dataLength; ++i) {
             if (data[i][5]) {
                 this.uniques.push(v3_clone(data[i]));
                 data[i][7] = this.uniques.length - 1;
@@ -866,7 +869,8 @@ class E3D_mesh {
         this.boundingboxMin = [ Infinity,  Infinity,  Infinity];
         this.boundingboxLength = -1.0;
         var v = v3_new();
-        for (var i = 0; i < this.positions.length; i += 3) {
+        let numPos = this.positions.length;
+        for (var i = 0; i < numPos; i += 3) {
             v[0] = this.positions[i + 0];
             v[1] = this.positions[i + 1];
             v[2] = this.positions[i + 2];

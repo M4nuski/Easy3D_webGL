@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Easy3D Engine webGL version 0.5 test 2 CD in 3D</title>
+        <title>Easy3D Engine webGL version 0.5 performance tests</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="media/e3d.ico">
-        <link rel="stylesheet" href="ver5.css">
+        <link rel="icon" href="../media/e3d.ico">
+        <link rel="stylesheet" href="../ver5.css">
         <style>
         #data {
-            padding: 0.1em;
+            padding: 0.2em;
             background-color: transparent;
             z-index: 10;
             position: absolute;
@@ -19,7 +19,7 @@
         }
         </style>
         <!-- Vector test -->
-        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5test2CD.js" data-debug="verbose" data-fail="ver5demoFail.js" defer="true"></script>
+        <script type="text/javascript" src="../ver5/E3D_Engine.js" data-root="../" data-main="Tests/testVer5perf.js" data-debug="verbose" defer="true"></script>
     </head>
 
     <body>
@@ -28,7 +28,7 @@
             </div>
             <div id="data" class="E3D_monospaceText"></div>
             <div class="E3D_flexVerticalContentFit E3D_margin">
-                <div class="E3D_monospaceText"><span id="spanSFPS"></span> FPS, <span id="spanSPCT"></span>%, interval:<span id="spanINTERVAL"></span>, <span id="spanLINES"></span> lines</div>
+                <div class="E3D_monospaceText"><span id="spanSFPS"></span> FPS, usage: <span id="spanSPCT"></span>%, <span id="spanLINES"></span> elements</div>
             </div>
         </div>
     </body>

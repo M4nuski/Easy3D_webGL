@@ -5,12 +5,15 @@
 
 "use strict"
 
+
+E3D_DEBUG_LOG_TIMESTAMPS = true;
+
 // Init all default engine components
 E3D_InitAll();
 
 // Move the camera back and up a little, slight nod
 CAMERA.moveTo(0, 24, 100, 0.25);
-TIMER.setFpsCap(60);
+TIMER.setFpsCap(85);
 
 
 // State
@@ -56,7 +59,7 @@ $forEach(".E3D_fakeButton", button => onClick(button, (event) => animMode = even
 //document.querySelectorAll(".fakeButton").forEach(button => onClick(button, (event) => animMode = event.target.getAttribute("data-mode")));
 
 
-// use the engine OnTick event callback for stats and direct animations
+// use the engine OnTick event callback for stats and direct animations every frames
 CB_tick = function() {
 
 
