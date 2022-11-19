@@ -152,7 +152,7 @@ function E3D_onResize() {
     // get new size
     E3D_WIDTH = CANVAS.offsetWidth; 
     E3D_HEIGHT = CANVAS.offsetHeight;
-    E3D_AR = E3D_WIDTH / E3D_HEIGHT;0
+    E3D_AR = E3D_WIDTH / E3D_HEIGHT;
     // adjust canvas resolution to fit new size, remove or override to lower the render viewport resolution
     CANVAS.width = E3D_WIDTH;
     CANVAS.height = E3D_HEIGHT;

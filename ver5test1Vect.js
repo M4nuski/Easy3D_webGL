@@ -133,8 +133,8 @@ CB_tick = function() {
 
     }
     if ((CAMERA.id == "cam_o") && (INPUTS.pz_delta != 0.0)) {
-        E3D_ZOOM = 1.0 + (Math.abs(INPUTS.pz) * 0.01);
-        CAMERA.resize();
+   //     E3D_ZOOM = 1.0 + (Math.abs(INPUTS.pz) * 0.01);
+   //     CAMERA.resize();
     }
 }
 

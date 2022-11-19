@@ -27,11 +27,11 @@ class E3D_camera {
 
     // recalculate projection (base) matrix
     resize() {
-        let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2.0 : E3D_HEIGHT / 2.0;
+        //let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2.0 : E3D_HEIGHT / 2.0;
         //E3D_NEAR = -dd2;
         //E3D_FAR = dd2;
  
-        m4_ortho_res(this.projectionMatrix, E3D_WIDTH / E3D_ZOOM, E3D_HEIGHT / E3D_ZOOM, -dd2, dd2);  
+        m4_ortho_res(this.projectionMatrix, E3D_WIDTH / E3D_ZOOM, E3D_HEIGHT / E3D_ZOOM, -E3D_FAR, E3D_FAR);  
 
     }
 
@@ -73,6 +73,7 @@ class E3D_camera {
         return this.matrix;
     }
 
+    // TODO add Z rotation compensation
     rotateToCameraView_new(vect) {
         var res = v3_rotateX_new(vect, -this.rotation[0]); 
         v3_rotateY_mod(res, -this.rotation[1]); 
@@ -112,7 +113,7 @@ class E3D_camera {
         r[3] = (this.matrix[3] * vect[0] + this.matrix[7] * vect[1] + this.matrix[11] * vect[2] + this.matrix[15]);
 
         var res = { visible: false, x: 0.0, y: 0.0, z: 0.0 };
-        if (r[2] <= 0.0) return res;
+        if ((r[2] < -1.0) || (r[2] > 1.0)) return res;
 
         r[0] /= r[3];
         if (r[0] <= -1.0) res.x = 0.0; else 
@@ -135,20 +136,14 @@ class E3D_camera {
         // clamp to front of viewport
         if (distFromViewport < 0.0) distFromViewport = 0.0;
 
-        let f = E3D_AR * Math.tan(E3D_FOV / 2.0);
-        // slopes for projection
-        // TODO replace by zoom in orthogonal projection
-        let fx = (distFromViewport + E3D_NEAR) / E3D_NEAR;
-        let fy = (E3D_AR >= 1.0) ? fx / E3D_AR : fx * E3D_AR;
-        
         // x and y are on viewport, between -1.0 and 1.0
-        x = ((x / E3D_WIDTH) - 0.5) * 2.0 * f;
-        y = ((y / E3D_HEIGHT) - 0.5) * -2.0 * f;
+        x = ((x / E3D_WIDTH) - 0.5);
+        y = -((y / E3D_HEIGHT) - 0.5);
 
-        let p = [x * fx, y * fy, -distFromViewport];
+        let p = [x * E3D_WIDTH / E3D_ZOOM, y * E3D_HEIGHT / E3D_ZOOM, -distFromViewport + E3D_FAR];
 
-        this.rotateToCameraView_mod(p);
         v3_add_mod(p, this.position);
+        this.rotateToCameraView_mod(p);
 
         return p;
     }
@@ -191,6 +186,33 @@ class E3D_camera_persp extends E3D_camera {
         this.rotation[2] += rz;
 
         this.updateMatrix();
+    }
+
+    getScreenCoordinates(vect) {
+        var r = [0.0, 0.0, 0.0, 1.0];
+        r[0] = (this.matrix[0] * vect[0] + this.matrix[4] * vect[1] + this.matrix[8]  * vect[2] + this.matrix[12]); 
+        r[1] = (this.matrix[1] * vect[0] + this.matrix[5] * vect[1] + this.matrix[9]  * vect[2] + this.matrix[13]);
+        r[2] = (this.matrix[2] * vect[0] + this.matrix[6] * vect[1] + this.matrix[10] * vect[2] + this.matrix[14]);
+        r[3] = (this.matrix[3] * vect[0] + this.matrix[7] * vect[1] + this.matrix[11] * vect[2] + this.matrix[15]);
+
+        var res = { visible: false, x: 0.0, y: 0.0, z: 0.0 };
+        if (r[2] <= 0.0) return res;
+
+        r[0] /= r[3];
+        if (r[0] <= -1.0) res.x = 0.0; else 
+        if (r[0] >=  1.0) res.x = E3D_WIDTH; else {
+            res.x = (r[0] * 0.5) + 0.5;
+            res.x *= E3D_WIDTH;
+        }
+        r[1] /= r[3];
+        if (r[1] <= -1.0) res.y = E3D_HEIGHT; else 
+        if (r[1] >=  1.0) res.y = 0.0; else {
+            res.y = (-r[1] * 0.5) + 0.5;
+            res.y *= E3D_HEIGHT;
+        }
+        res.z = r[2] * (E3D_FAR - E3D_NEAR) / (E3D_FAR + E3D_NEAR) + (2.0 * E3D_NEAR);
+        res.visible = (res.z <= E3D_FAR);
+        return res;
     }
 
     getworldCoordinates(x, y, distFromViewport = 0.0) {
@@ -330,7 +352,7 @@ class E3D_camera_space extends E3D_camera_persp {
         }
     }
 
-    moveBy(tx, ty, tz, rx = 0.0, rz = 0.0, ry = 0.0) { // TODO verify rz vs ry
+    moveBy(tx, ty, tz, rx = 0.0, rz = 0.0, ry = 0.0) { // rz and ry are swapped as roll is assigned to "left/right"
         //transform translation to local
         const t = v3_val_new(tx, ty, tz);
         v3_applym4_mod(t, this.inverseRotationMatrix);
