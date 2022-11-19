@@ -34,6 +34,7 @@
             color: white;
             pointer-events: none;
         }
+
         </style>
         <!-- Vector test -->
         <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5test1Vect.js" data-fail="ver5demoFail.js" defer="true"></script>
@@ -45,12 +46,26 @@
             </div><div id="p1" class="floater">P1</div><div id="p2" class="floater">P2</div><div id="p3" class="floater">P3</div><div id="p4" class="floater">P4</div> 
             <div id="data" class="E3D_monospaceText"></div>
             <div id="commands"> 
-                <div id="cmd_resetX" class="E3D_fakeButton">cam pos x50</div>
-                <div id="cmd_resetZ" class="E3D_fakeButton">cam pos z50</div>
-                <div id="cmd_resetY" class="E3D_fakeButton">cam pos y50</div>
+                <div class="E3D_label">Camera Type:</div>
+                <div id="cmd_type_o" class="E3D_fakeButton">Orthogonal</div>
+                <div id="cmd_type_p" class="E3D_fakeButton">Perspective</div>
+                <div id="cmd_type_m" class="E3D_fakeButton">Model/Orbit</div>
+                <div id="cmd_type_s" class="E3D_fakeButton">Space</div>
+                <div class="E3D_label">Camera Position:</div>
+                <div id="cmd_reset" class="E3D_fakeButton">x00 y00 z00</div>
+                <div id="cmd_resetX" class="E3D_fakeButton">x50 y00 z00</div>
+                <div id="cmd_resetZ" class="E3D_fakeButton">x00 y00 z50</div>
+                <div id="cmd_resetY" class="E3D_fakeButton">x00 y50 z50</div>
                 <span id="cmd_mx10" class="E3D_fakeButton">-10X</span><span id="cmd_mx" class="E3D_fakeButton">-X</span><span id="cmd_px" class="E3D_fakeButton">+X</span><span id="cmd_px10" class="E3D_fakeButton">+10X</span><br/>
                 <span id="cmd_my10" class="E3D_fakeButton">-10Y</span><span id="cmd_my" class="E3D_fakeButton">-Y</span><span id="cmd_py" class="E3D_fakeButton">+Y</span><span id="cmd_py10" class="E3D_fakeButton">+10Y</span><br/>
                 <span id="cmd_mz10" class="E3D_fakeButton">-10Z</span><span id="cmd_mz" class="E3D_fakeButton">-Z</span><span id="cmd_pz" class="E3D_fakeButton">+Z</span><span id="cmd_pz10" class="E3D_fakeButton">+10Z</span><br/>
+                <div class="E3D_label">Camera Rotation:</div>
+                <span class="E3D_label">Pitch: </span><span id="cmd_rmx45" class="E3D_fakeButton">-45X</span><span id="cmd_rpx45" class="E3D_fakeButton">+45X</span><br/>
+                <span class="E3D_label">Yaw  : </span><span id="cmd_rmy45" class="E3D_fakeButton">-45Y</span><span id="cmd_rpy45" class="E3D_fakeButton">+45Y</span><br/>
+                <span class="E3D_label">Roll : </span><span id="cmd_rmz45" class="E3D_fakeButton">-45Z</span><span id="cmd_rpz45" class="E3D_fakeButton">+45Z</span><br/>
+                <div class="E3D_label">Parameters:</div>
+                <span class="E3D_label">Dist: </span><input type="range" id="cmd_dist" min="1" max="1000" value="100" /><br/>
+                <span class="E3D_label">FOV : </span><input type="range" id="cmd_FOV" min="10" max="179" value="45" />
             </div>
 
             <div class="E3D_flexVerticalContentFit E3D_margin">

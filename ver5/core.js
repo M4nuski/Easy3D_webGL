@@ -14,6 +14,7 @@ var E3D_FAR = 500.0;
 //  Default viewport size
 var E3D_WIDTH = 640;
 var E3D_HEIGHT = 480;
+var E3D_AR = E3D_WIDTH / E3D_HEIGHT;
  //  Gravitational constant
 var E3D_G = 386.09;
 
@@ -151,6 +152,7 @@ function E3D_onResize() {
     // get new size
     E3D_WIDTH = CANVAS.offsetWidth; 
     E3D_HEIGHT = CANVAS.offsetHeight;
+    E3D_AR = E3D_WIDTH / E3D_HEIGHT;0
     // adjust canvas resolution to fit new size, remove or override to lower the render viewport resolution
     CANVAS.width = E3D_WIDTH;
     CANVAS.height = E3D_HEIGHT;

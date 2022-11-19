@@ -139,7 +139,8 @@ class E3D_input {
         //this.keyMap.set("toggleFullscreen", "F11");
         //this.keyMap.set("exitLock", "Escape");
 
-
+        this.pageX = 0;
+        this.pageY = 0;
         // Raw pointer data
         this.pinx = 0;
         this.piny = 0; 
@@ -633,6 +634,9 @@ class E3D_input {
             this.pinx = event.pageX;
             this.piny = event.pageY;
             if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseMove");
+
+            this.pageX = event.pageX;
+            this.pageY = event.pageY;
         }
     }
     

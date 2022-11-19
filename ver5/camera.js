@@ -131,6 +131,28 @@ class E3D_camera {
         return res;
     }
 
+    getworldCoordinates(x, y, distFromViewport = 0.0) {
+        // clamp to front of viewport
+        if (distFromViewport < 0.0) distFromViewport = 0.0;
+
+        let f = E3D_AR * Math.tan(E3D_FOV / 2.0);
+        // slopes for projection
+        // TODO replace by zoom in orthogonal projection
+        let fx = (distFromViewport + E3D_NEAR) / E3D_NEAR;
+        let fy = (E3D_AR >= 1.0) ? fx / E3D_AR : fx * E3D_AR;
+        
+        // x and y are on viewport, between -1.0 and 1.0
+        x = ((x / E3D_WIDTH) - 0.5) * 2.0 * f;
+        y = ((y / E3D_HEIGHT) - 0.5) * -2.0 * f;
+
+        let p = [x * fx, y * fy, -distFromViewport];
+
+        this.rotateToCameraView_mod(p);
+        v3_add_mod(p, this.position);
+
+        return p;
+    }
+
 
 
 }
@@ -145,8 +167,7 @@ class E3D_camera_persp extends E3D_camera {
     }
 
     resize() {
-        var ar = E3D_WIDTH / E3D_HEIGHT;
-        m4_persp_res(this.projectionMatrix, E3D_FOV, ar, E3D_NEAR, E3D_FAR);
+        m4_persp_res(this.projectionMatrix, E3D_FOV, E3D_AR, E3D_NEAR, E3D_FAR);
     }
 
     updateMatrix() {
@@ -172,6 +193,28 @@ class E3D_camera_persp extends E3D_camera {
         this.updateMatrix();
     }
 
+    getworldCoordinates(x, y, distFromViewport = 0.0) {
+        // clamp to front of viewport
+        if (distFromViewport < 0.0) distFromViewport = 0.0;
+
+        // AR and FOV correction factor
+        let f = E3D_AR * Math.tan(E3D_FOV / 2.0);
+
+        // projection factors
+        let fx = (distFromViewport + E3D_NEAR) / E3D_NEAR;
+        let fy = (E3D_AR >= 1.0) ? fx / E3D_AR : fx * E3D_AR;
+        
+        // x and y are on viewport, between -1.0 and 1.0
+        x = ((x / E3D_WIDTH) - 0.5) * 2.0;
+        y = ((y / E3D_HEIGHT) - 0.5) * -2.0;
+
+        let p = [x * fx * f, y * fy * f, -distFromViewport];
+
+        this.rotateToCameraView_mod(p);
+        v3_add_mod(p, this.position);
+
+        return p;
+    }
 }
 
 // Model view camera, perspective matrix rotating aroung a pivot point
@@ -287,7 +330,7 @@ class E3D_camera_space extends E3D_camera_persp {
         }
     }
 
-    moveBy(tx, ty, tz, rx = 0.0, rz = 0.0, ry = 0.0) {
+    moveBy(tx, ty, tz, rx = 0.0, rz = 0.0, ry = 0.0) { // TODO verify rz vs ry
         //transform translation to local
         const t = v3_val_new(tx, ty, tz);
         v3_applym4_mod(t, this.inverseRotationMatrix);

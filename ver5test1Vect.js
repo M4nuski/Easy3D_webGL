@@ -9,10 +9,11 @@ console.log("User Main Script Start");
 
 // Load all default engine parts: scene, lights, timer, inputs, camera
 E3D_InitAll();
-//CAMERA = new E3D_camera("cam_o");
-CAMERA = new E3D_camera_persp("cam_p");
-//CAMERA = new E3D_camera_model("cam_m");
-//CAMERA = new E3D_camera_space("cam_s");
+let cam_o = new E3D_camera("cam_o");
+let cam_p = new E3D_camera_persp("cam_p");
+let cam_m = new E3D_camera_model("cam_m");
+let cam_s = new E3D_camera_space("cam_s");
+CAMERA = cam_p;
 
 E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
@@ -99,20 +100,6 @@ entity.addLine(p0, p, _v3_lightgray);
 entity.addLine(p, resp, _v3_lightgray);
 entity.addLine(p, resv, _v3_lightgray);
 
-let capsule = {
-    l: 10.0,
-    r: 0.5,
-    p: [ 0.0, 0.0, -2.0],
-    n: v3_normalize_new( [ 0.2, 1.0, 0.2] )
-}
-
-let vect = {
-    l: 20.0,
-    r: 0.5,
-    p: [ 10.0, 5.0, -2.0],
-    n: v3_normalize_new( [ 0.2, 2.0, -2.0] )
-}
-
 let axis1 = new E3D_entity_axis("adjustToCam", 25.0, true, 10.0, false);
 axis1.moveTo([0.01, 50.01, 0.01]);
 axis1.isVisibiltyCullable = false;
@@ -130,6 +117,16 @@ entity.isVisibiltyCullable = false;
 entity.isVisible = true;
 E3D_addEntity(entity);
 
+var point1 = new E3D_entity_wireframe_canvas("point1");
+point1.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 16, 8);
+point1.isVisibiltyCullable = false;
+point1.isVisible = true;
+E3D_addEntity(point1);
+var point2 = new E3D_entity_wireframe_canvas("point2");
+point2.addSphere([0.0, 0.0, 0.0], 5.0, _v3_green, 16, 8);
+point2.isVisibiltyCullable = false;
+point2.isVisible = true;
+E3D_addEntity(point2);
 
 CB_tick = function() {
     if (INPUTS.checkCommand("action1", true)) {
@@ -145,6 +142,7 @@ let p1element = $("p1");
 let p2element = $("p2");
 let p3element = $("p3");
 let p4element = $("p4");
+var distFromCam = 100.0;
 
 TIMER.onSlowTick = function () {
 
@@ -169,28 +167,6 @@ TIMER.onSlowTick = function () {
     p4element.style.visibility = sc.visible ? "visible" : "hidden";
     p4element.style.left = sc.x + "px"; p4element.style.top = sc.y + "px";
 
-
-
-  /*  CAMERA.inCameraSpace_mod(p1);
-    CAMERA.inCameraSpace_mod(p2);
-    CAMERA.inCameraSpace_mod(p3);
-
-
-    //p1[0] = p1[0] * (1.0 + (p1[2] / (E3D_FAR - E3D_NEAR)));
-    // for AR > 1.0    
-   // var fvx = (E3D_WIDTH / E3D_HEIGHT) / (1.0 / Math.tan(E3D_FOV/2.0));
-   // var fvy = 1.0 / (1.0 / Math.tan(E3D_FOV/2.0));
-    var fx = Math.tan(E3D_FOV/2.0);
-    var fy = fx * E3D_HEIGHT / E3D_WIDTH;
-    p1[0] = p1[0] + ((p1[2] * fx));
-    p1[1] = p1[1] + ((p1[2] * fy));
-
-    p2[0] = p2[0] + ((p2[2] * fx));
-    p2[1] = p2[1] + ((p2[2] * fy));*/
-///   v3_mult_mod(p1, [zz, xy, 1.0]);
-  //  v3_mult_mod(p2, [zz, xy, 1.0]);
-  //  v3_mult_mod(p3, [zz, xy, 1.0]);
-
     
     entity2.isVisible = CAMERA.zDist > -100.0;
     $("data").innerText = E3D_WIDTH + "x" + E3D_HEIGHT + " n:" + E3D_NEAR + " f:" + E3D_FAR + "\n";
@@ -204,13 +180,28 @@ TIMER.onSlowTick = function () {
     $("data").innerText += "tan(FOV/2.0): " + Math.tan(E3D_FOV/2.0).toFixed(3) + "\n";
     $("data").innerText += "1.0/tan(FOV/2.0): " + (1.0 / Math.tan(E3D_FOV/2.0)).toFixed(3) + "\n";
     $("data").innerText += "AR: " + (E3D_WIDTH / E3D_HEIGHT).toFixed(3) + "\n";
+    $("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam)) + "\n";
+    $("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam+100.0)) + "\n";
 
+    point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
+    point1.updateMatrix();
+    point2.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam+100.0));
+    point2.updateMatrix();
 }
 
+// camera type
+onClick("cmd_type_o", () => { CAMERA = cam_o; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
+onClick("cmd_type_p", () => { CAMERA = cam_p; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
+onClick("cmd_type_m", () => { CAMERA = cam_m; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
+onClick("cmd_type_s", () => { CAMERA = cam_s; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
+
+// reset
+onClick("cmd_reset", () => CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ));
 onClick("cmd_resetX", () => CAMERA.moveTo(50.0, 0.0, 0.0, 0.0, 0.0, 0.0 ));
 onClick("cmd_resetZ", () => CAMERA.moveTo(0.0, 0.0, 50.0, 0.0, 0.0, 0.0 ));
 onClick("cmd_resetY", () => CAMERA.moveTo(0.0, 50.0, 0.0, 0.0, 0.0, 0.0 ));
 
+// position
 onClick("cmd_mx", () => CAMERA.moveBy(-1.0, 0.0, 0.0));
 onClick("cmd_px", () => CAMERA.moveBy( 1.0, 0.0, 0.0));
 
@@ -228,3 +219,17 @@ onClick("cmd_py10", () => CAMERA.moveBy(0.0, 10.0, 0.0));
 
 onClick("cmd_mz10", () => CAMERA.moveBy(0.0, 0.0,-10.0));
 onClick("cmd_pz10", () => CAMERA.moveBy(0.0, 0.0, 10.0));
+
+// rotation
+onClick("cmd_rmx45", () => CAMERA.moveBy(0.0, 0.0, 0.0,  -45.0 * DegToRad, 0.0, 0.0));
+onClick("cmd_rpx45", () => CAMERA.moveBy(0.0, 0.0, 0.0,   45.0 * DegToRad, 0.0, 0.0));
+
+onClick("cmd_rmy45", () => CAMERA.moveBy(0.0, 0.0, 0.0,  0.0, -45.0 * DegToRad, 0.0));
+onClick("cmd_rpy45", () => CAMERA.moveBy(0.0, 0.0, 0.0,  0.0,  45.0 * DegToRad, 0.0));
+
+onClick("cmd_rmz45", () => CAMERA.moveBy(0.0, 0.0, 0.0,  0.0, 0.0, -45.0 * DegToRad));
+onClick("cmd_rpz45", () => CAMERA.moveBy(0.0, 0.0, 0.0,  0.0, 0.0,  45.0 * DegToRad));
+
+// parameters
+onEvent("cmd_dist", "input", (event) => distFromCam = Number(event.target.value));
+onEvent("cmd_FOV", "input", (event) => { E3D_FOV = Number(event.target.value) * DegToRad; CAMERA.resize(); });
