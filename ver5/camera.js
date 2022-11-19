@@ -75,34 +75,40 @@ class E3D_camera {
 
     // TODO add Z rotation compensation
     rotateToCameraView_new(vect) {
-        var res = v3_rotateX_new(vect, -this.rotation[0]);
+        var res = v3_rotateZ_new(vect, -this.rotation[2]);
+        v3_rotateX_mod(res, -this.rotation[0]);
         v3_rotateY_mod(res, -this.rotation[1]);
         return res;
     }
     rotateToCameraView_res(res, vect) {
-        v3_rotateX_res(res, vect, -this.rotation[0]);
+        v3_rotateZ_res(res, vect, -this.rotation[2]);
+        v3_rotateX_mod(res, -this.rotation[0]);
         v3_rotateY_mod(res, -this.rotation[1]);
     }
     rotateToCameraView_mod(vect) {
+        v3_rotateZ_mod(vect, -this.rotation[2]);
         v3_rotateX_mod(vect, -this.rotation[0]);
         v3_rotateY_mod(vect, -this.rotation[1]);
     }
 
     inCameraSpace_new(vect) {
-        var res = v3_sub_res(res, vect, this.position);
+        var res = v3_sub_new(vect, this.position);
         v3_rotateY_mod(res, this.rotation[1]);
         v3_rotateX_mod(res, this.rotation[0]);
+        v3_rotateX_mod(res, this.rotation[2]);
         return res;
     }
     inCameraSpace_res(res, vect) {
         v3_sub_res(res, vect, this.position);
         v3_rotateY_mod(res, this.rotation[1]);
         v3_rotateX_mod(res, this.rotation[0]);
+        v3_rotateX_mod(res, this.rotation[2]);
     }
     inCameraSpace_mod(vect) {
         v3_sub_mod(vect, this.position);
         v3_rotateY_mod(vect, this.rotation[1]);
         v3_rotateX_mod(vect, this.rotation[0]);
+        v3_rotateX_mod(vect, this.rotation[2]);
     }
 
     getScreenCoordinates(vect) {

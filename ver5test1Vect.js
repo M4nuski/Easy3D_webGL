@@ -18,10 +18,23 @@ CAMERA = cam_p;
 E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
 
-// Move the camera back and up a little
-CAMERA.moveBy(0, 0, 0, 0.0,-0.0, 0.0);
-CAMERA.moveBy(50.0, 0, 0.00);
+var E3D_culling = E3D_cullingMode.NONE;
 
+var dataMap = new Map();
+function formatDataMap() {
+    var text = "";
+    dataMap.forEach((a, b) => { text += (b + ": " + a) + "\n"; } );
+    return text;
+}
+function setData(item, data) {
+    dataMap.set(item, data);
+}
+function setDataFloat(item, data, dec = 3) {
+    dataMap.set(item, data.toFixed(dec));
+}
+function setDataV3(item, data) {
+    dataMap.set(item, v3_string(data));
+}
 
 // Create a new entity
 var entity = new E3D_entity_wireframe_canvas("entity0");
@@ -100,31 +113,25 @@ entity.addLine(p0, p, _v3_lightgray);
 entity.addLine(p, resp, _v3_lightgray);
 entity.addLine(p, resv, _v3_lightgray);
 
-let axis1 = new E3D_entity_axis("adjustToCam", 25.0, true, 10.0, false);
+let axis1 = new E3D_entity_axis("rotateToCameraView", 25.0, true, 25.0, false);
 axis1.moveTo([0.01, 50.01, 0.01]);
-axis1.isVisibiltyCullable = false;
 axis1.isVisible = true;
 E3D_addEntity(axis1);
-let axis2 = new E3D_entity_axis("negateCam", 25.0, true, 10.0, false);
+let axis2 = new E3D_entity_axis("inCameraSpace", 25.0, true, 25.0, false);
 axis2.moveTo([0.01, 75.01, 0.01]);
-axis2.isVisibiltyCullable = false;
 axis2.isVisible = true;
 E3D_addEntity(axis2);
 
-entity2.isVisibiltyCullable = false;
 E3D_addEntity(entity2);
-entity.isVisibiltyCullable = false;
 entity.isVisible = true;
 E3D_addEntity(entity);
 
 var point1 = new E3D_entity_wireframe_canvas("point1");
 point1.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 16, 8);
-point1.isVisibiltyCullable = false;
 point1.isVisible = true;
 E3D_addEntity(point1);
 var point2 = new E3D_entity_wireframe_canvas("point2");
 point2.addSphere([0.0, 0.0, 0.0], 5.0, _v3_green, 16, 8);
-point2.isVisibiltyCullable = false;
 point2.isVisible = true;
 E3D_addEntity(point2);
 
@@ -147,12 +154,12 @@ var distFromCam = 100.0;
 TIMER.onSlowTick = function () {
 
     axis1.updateVector(CAMERA.rotateToCameraView_new([0.0, 0.0, -1.0]));
-    //axis2.updateVector(CAMERA.inCameraSpace_new([0.0, 0.0, -1.0]));
+    axis2.updateVector(CAMERA.inCameraSpace_new([0.0, 0.0, -1.0]));
 
-    let p1 = [ 0.0,  0.0, 0.0, 1.0];
-    let p2 = [100.0, 0.0, 0.0, 1.0];
-    let p3 = [0.0, 100.0, 0.0, 1.0];
-    let p4 = [0.0, 0.0, 100.0, 1.0];
+    let p1 = [ 0.0,  0.0, 0.0];
+    let p2 = [100.0, 0.0, 0.0];
+    let p3 = [0.0, 100.0, 0.0];
+    let p4 = [0.0, 0.0, 100.0];
 
     let sc = CAMERA.getScreenCoordinates(p1);
     p1element.style.visibility = sc.visible ? "visible" : "hidden";
@@ -167,26 +174,28 @@ TIMER.onSlowTick = function () {
     p4element.style.visibility = sc.visible ? "visible" : "hidden";
     p4element.style.left = sc.x + "px"; p4element.style.top = sc.y + "px";
 
-
     entity2.isVisible = CAMERA.zDist > -100.0;
-    $("data").innerText = E3D_WIDTH + "x" + E3D_HEIGHT + " n:" + E3D_NEAR + " f:" + E3D_FAR + "\n";
-    $("data").innerText += v3_string(CAMERA.position) + "\n";
-    if (CAMERA.id == "cam_m") $("data").innerText += CAMERA.zDist.toFixed(3)+ "\n";;
-    $("data").innerText += v3_string(p1) + p1[3].toFixed(3) + "\n";
-    $("data").innerText += v3_string(p2) + p2[3].toFixed(3) + "\n";
-    $("data").innerText += v3_string(p3) + p3[3].toFixed(3) + "\n";
-    $("data").innerText += v3_string(p4) + p4[3].toFixed(3) + "\n";
-    $("data").innerText += "FOV: " + (RadToDeg * E3D_FOV).toFixed(3) + "\n";
-    $("data").innerText += "tan(FOV/2.0): " + Math.tan(E3D_FOV/2.0).toFixed(3) + "\n";
-    $("data").innerText += "1.0/tan(FOV/2.0): " + (1.0 / Math.tan(E3D_FOV/2.0)).toFixed(3) + "\n";
-    $("data").innerText += "AR: " + (E3D_WIDTH / E3D_HEIGHT).toFixed(3) + "\n";
-    $("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam)) + "\n";
-    $("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0)) + "\n";
+
+
+    setData("Screen", E3D_WIDTH + "x" + E3D_HEIGHT + " near: " + E3D_NEAR + " far: " + E3D_FAR);
+    setData("Viewport", "zoom: " + E3D_ZOOM.toFixed(3) + " FOV: " + (RadToDeg * E3D_FOV).toFixed(3) + " AR: " + (E3D_WIDTH / E3D_HEIGHT).toFixed(3));
+    setDataV3("Cam.pos", CAMERA.position);
+    if (CAMERA.id == "cam_m") setDataFloat("zDist", CAMERA.zDist);
+
+    setDataV3("p1", p1);
+    setDataV3("p2", p2);
+    setDataV3("p3", p3);
+    setDataV3("p4", p4);
+
+    //$("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam)) + "\n";
+    //$("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0)) + "\n";
 
     point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
     point1.updateMatrix();
     point2.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0));
     point2.updateMatrix();
+
+    $("data").innerText = formatDataMap();
 }
 
 // camera type
@@ -233,3 +242,4 @@ onClick("cmd_rpz45", () => CAMERA.moveBy(0.0, 0.0, 0.0,  0.0, 0.0,  45.0 * DegTo
 // parameters
 onEvent("cmd_dist", "input", (event) => distFromCam = Number(event.target.value));
 onEvent("cmd_FOV", "input", (event) => { E3D_FOV = Number(event.target.value) * DegToRad; CAMERA.resize(); });
+onEvent("cmd_zoom", "input", (event) => { E3D_ZOOM = Number(event.target.value) / 8.0; CAMERA.resize(); });

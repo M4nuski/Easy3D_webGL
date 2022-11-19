@@ -4,7 +4,7 @@
 
 // Visual markers
 
-// CD hit box 
+// CD hit box
 var E3D_DEBUG_SHOW_CD_ENTITY = null;
 function E3D_DEBUG_HIDE_CD() {
     if (E3D_DEBUG_SHOW_CD_ENTITY != null) E3D_DEBUG_SHOW_CD_ENTITY.isVisible = false;
@@ -15,7 +15,7 @@ function E3D_DEBUG_SHOW_CD() {
         E3D_DEBUG_SHOW_CD_ENTITY = new E3D_entity_wireframe_canvas("E3D_DEBUG_SHOW_CD_ENTITY");
         addEntity(E3D_DEBUG_SHOW_CD_ENTITY);
         E3D_DEBUG_SHOW_CD_ENTITY.isVisibiltyCullable = false;
-    } 
+    }
 
     E3D_DEBUG_SHOW_CD_ENTITY.isVisible = true;
     E3D_DEBUG_SHOW_CD_ENTITY.clear();
@@ -41,7 +41,7 @@ function E3D_DEBUG_SHOW_CD() {
 
         // edge
         for (let j = 0; j < ENTITIES[i].CD_edge; ++j) E3D_DEBUG_SHOW_CD_ENTITY.addLineByPosNormLen(ENTITIES[i].CD_edge_p[j], ENTITIES[i].CD_edge_n[j], ENTITIES[i].CD_edge_l[j], _v3_orange);
-   
+
         // box
         for (let j = 0; j < ENTITIES[i].CD_box; ++j) {
             E3D_DEBUG_SHOW_CD_ENTITY.addLine( ENTITIES[i].CD_box_edge_p[j][_CD_box_corner_TopBackRight],
@@ -56,7 +56,7 @@ function E3D_DEBUG_SHOW_CD() {
             E3D_DEBUG_SHOW_CD_ENTITY.addLine( ENTITIES[i].CD_box_edge_p[j][_CD_box_corner_BottomBackLeft],
                             ENTITIES[i].CD_box_edge_p[j][_CD_box_corner_TopFrontRight], false, _v3_orange);
         }
-   
+
         // triangle
         var midpoint = [0,0,0];
         var p2 = [0,0,0];
@@ -71,7 +71,7 @@ function E3D_DEBUG_SHOW_CD() {
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, p2, false, _v3_lightgreen);
             E3D_DEBUG_SHOW_CD_ENTITY.addLine(midpoint, p3, false, _v3_lightblue);
         }
-    }    
+    }
 }
 
 // Logging
