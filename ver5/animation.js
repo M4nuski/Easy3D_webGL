@@ -222,8 +222,8 @@ function addTransformAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, gr
 
 function addTransformAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
 
-    var newPosSpeed = CAMERA.adjustToCamera_new(pos_speed);
-    var newRotSpeed = CAMERA.adjustToCamera_new(rot_speed);
+    var newPosSpeed = CAMERA.rotateToCameraView_new(pos_speed);
+    var newRotSpeed = CAMERA.rotateToCameraView_new(rot_speed);
 
     v3_add_mod(entity.position, CAMERA.position);
     v3_add_mod(entity.rotation, CAMERA.rotation);
@@ -247,8 +247,8 @@ function addPhysicsAnim(entity, pos_speed, rot_speed = _v3_null, group = 0, grav
 
 function addPhysicsAnim_fromCamera(entity, pos_speed, rot_speed = _v3_null, group = 0, gravity = 0.0, ttl = -1, endState = E3D_DONE) {
 
-    var newPosSpeed = CAMERA.adjustToCamera_new(pos_speed);
-    var newRotSpeed = CAMERA.adjustToCamera_new(rot_speed);
+    var newPosSpeed = CAMERA.rotateToCameraView_new(pos_speed);
+    var newRotSpeed = CAMERA.rotateToCameraView_new(rot_speed);
 
     v3_add_mod(entity.position, CAMERA.position);
     v3_add_mod(entity.rotation, CAMERA.rotation);
@@ -310,8 +310,8 @@ function addParticuleAnim(entity, pos_speed, rot_speed, nbPart, spawnFunction, u
 
 
 function addParticuleAnim_fromCamera(entity, pos_speed, rot_speed, nbPart, spawnFunction, updateFunction, gravity = 0, ttl = -1, endState = E3D_DONE, CD = false) {
-    var newPosSpeed = CAMERA.adjustToCamera_new(pos_speed);
-    var newRotSpeed = CAMERA.adjustToCamera_new(rot_speed);
+    var newPosSpeed = CAMERA.rotateToCameraView_new(pos_speed);
+    var newRotSpeed = CAMERA.rotateToCameraView_new(rot_speed);
 
     v3_add_mod(entity.position, CAMERA.position);
     v3_add_mod(entity.rotation, CAMERA.rotation);
@@ -321,12 +321,12 @@ function addParticuleAnim_fromCamera(entity, pos_speed, rot_speed, nbPart, spawn
     return addParticuleAnim(entity, newPosSpeed, newRotSpeed, nbPart, spawnFunction, updateFunction, gravity, ttl, endState, CD);
 
 /*
-    var offset = camera.adjustToCamera(anim.target.position);
+    var offset = camera.rotateToCameraView(anim.target.position);
     v3_copy(anim.target.position, camera.position);
     v3_add_mod(anim.target.position, offset);
 
-    anim.pspd = camera.adjustToCamera(pos_speed);
-    anim.rspd = camera.adjustToCamera(rot_speed);
+    anim.pspd = camera.rotateToCameraView(pos_speed);
+    anim.rspd = camera.rotateToCameraView(rot_speed);
 */
 }    
 

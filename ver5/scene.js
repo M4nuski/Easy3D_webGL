@@ -199,8 +199,8 @@ class E3D_scene_default extends E3D_scene {
     }
 
     preRender() {
-        if (this.light0_lockToCamera) CAMERA.adjustToCamera_res(this.light0_adjusted, this.light0_direction);
-        if (this.light1_lockToCamera) CAMERA.adjustToCamera_res(this.light1_adjusted, this.light1_direction);
+        if (this.light0_lockToCamera) CAMERA.rotateToCameraView_res(this.light0_adjusted, this.light0_direction);
+        if (this.light1_lockToCamera) CAMERA.rotateToCameraView_res(this.light1_adjusted, this.light1_direction);
 
         if (this.fogLimit > 0.0) this.fogFactor = 1.0 / ((E3D_FAR - E3D_NEAR) - this.fogLimit);    
     }

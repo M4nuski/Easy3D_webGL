@@ -10,16 +10,16 @@ console.log("User Main Script Start");
 // Load all default engine parts: scene, lights, timer, inputs, camera
 E3D_InitAll();
 //CAMERA = new E3D_camera("cam_o");
-//CAMERA = new E3D_camera_persp("cam_p");
-CAMERA = new E3D_camera_model("cam_m");
+CAMERA = new E3D_camera_persp("cam_p");
+//CAMERA = new E3D_camera_model("cam_m");
 //CAMERA = new E3D_camera_space("cam_s");
 
 E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
 
 // Move the camera back and up a little
-CAMERA.moveBy(0, 0, 0, 0.2,-0.2, 0.0);
-CAMERA.moveBy(0, 0, 200);
+CAMERA.moveBy(0, 0, 0, 0.0,-0.0, 0.0);
+CAMERA.moveBy(50.0, 0, 0.00);
 
 
 // Create a new entity
@@ -115,15 +115,19 @@ let vect = {
 
 let axis1 = new E3D_entity_axis("adjustToCam", 25.0, true, 10.0, false);
 axis1.moveTo([0.01, 50.01, 0.01]);
+axis1.isVisibiltyCullable = false;
 axis1.isVisible = true;
 E3D_addEntity(axis1);
 let axis2 = new E3D_entity_axis("negateCam", 25.0, true, 10.0, false);
 axis2.moveTo([0.01, 75.01, 0.01]);
+axis2.isVisibiltyCullable = false;
 axis2.isVisible = true;
 E3D_addEntity(axis2);
 
-entity.isVisible = true;
+entity2.isVisibiltyCullable = false;
 E3D_addEntity(entity2);
+entity.isVisibiltyCullable = false;
+entity.isVisible = true;
 E3D_addEntity(entity);
 
 
@@ -137,12 +141,90 @@ CB_tick = function() {
     }
 }
 
+let p1element = $("p1");
+let p2element = $("p2");
+let p3element = $("p3");
+let p4element = $("p4");
+
 TIMER.onSlowTick = function () {
 
-    axis1.updateVector(CAMERA.adjustToCamera_new([0.0, 0.0, -1.0]));
-    axis2.updateVector(CAMERA.negateCamera_new([0.0, 0.0, -1.0]));
+    axis1.updateVector(CAMERA.rotateToCameraView_new([0.0, 0.0, -1.0]));
+    //axis2.updateVector(CAMERA.inCameraSpace_new([0.0, 0.0, -1.0]));
+
+    let p1 = [ 0.0,  0.0, 0.0, 1.0];
+    let p2 = [100.0, 0.0, 0.0, 1.0];
+    let p3 = [0.0, 100.0, 0.0, 1.0];
+    let p4 = [0.0, 0.0, 100.0, 1.0];
+
+    let sc = CAMERA.getScreenCoordinates(p1);
+    p1element.style.visibility = sc.visible ? "visible" : "hidden";
+    p1element.style.left = sc.x + "px"; p1element.style.top = sc.y + "px";
+    sc = CAMERA.getScreenCoordinates(p2);
+    p2element.style.visibility = sc.visible ? "visible" : "hidden";
+    p2element.style.left = sc.x + "px"; p2element.style.top = sc.y + "px";
+    sc = CAMERA.getScreenCoordinates(p3);
+    p3element.style.visibility = sc.visible ? "visible" : "hidden";
+    p3element.style.left = sc.x + "px"; p3element.style.top = sc.y + "px";
+    sc = CAMERA.getScreenCoordinates(p4);
+    p4element.style.visibility = sc.visible ? "visible" : "hidden";
+    p4element.style.left = sc.x + "px"; p4element.style.top = sc.y + "px";
+
+
+
+  /*  CAMERA.inCameraSpace_mod(p1);
+    CAMERA.inCameraSpace_mod(p2);
+    CAMERA.inCameraSpace_mod(p3);
+
+
+    //p1[0] = p1[0] * (1.0 + (p1[2] / (E3D_FAR - E3D_NEAR)));
+    // for AR > 1.0    
+   // var fvx = (E3D_WIDTH / E3D_HEIGHT) / (1.0 / Math.tan(E3D_FOV/2.0));
+   // var fvy = 1.0 / (1.0 / Math.tan(E3D_FOV/2.0));
+    var fx = Math.tan(E3D_FOV/2.0);
+    var fy = fx * E3D_HEIGHT / E3D_WIDTH;
+    p1[0] = p1[0] + ((p1[2] * fx));
+    p1[1] = p1[1] + ((p1[2] * fy));
+
+    p2[0] = p2[0] + ((p2[2] * fx));
+    p2[1] = p2[1] + ((p2[2] * fy));*/
+///   v3_mult_mod(p1, [zz, xy, 1.0]);
+  //  v3_mult_mod(p2, [zz, xy, 1.0]);
+  //  v3_mult_mod(p3, [zz, xy, 1.0]);
+
     
     entity2.isVisible = CAMERA.zDist > -100.0;
-    $("data").innerText = v3_string(CAMERA.position) + "\n";
-    if (CAMERA.id == "cam_m") $("data").innerText += CAMERA.zDist.toFixed(3);
+    $("data").innerText = E3D_WIDTH + "x" + E3D_HEIGHT + " n:" + E3D_NEAR + " f:" + E3D_FAR + "\n";
+    $("data").innerText += v3_string(CAMERA.position) + "\n";
+    if (CAMERA.id == "cam_m") $("data").innerText += CAMERA.zDist.toFixed(3)+ "\n";;
+    $("data").innerText += v3_string(p1) + p1[3].toFixed(3) + "\n";
+    $("data").innerText += v3_string(p2) + p2[3].toFixed(3) + "\n";
+    $("data").innerText += v3_string(p3) + p3[3].toFixed(3) + "\n";
+    $("data").innerText += v3_string(p4) + p4[3].toFixed(3) + "\n";
+    $("data").innerText += "FOV: " + (RadToDeg * E3D_FOV).toFixed(3) + "\n";
+    $("data").innerText += "tan(FOV/2.0): " + Math.tan(E3D_FOV/2.0).toFixed(3) + "\n";
+    $("data").innerText += "1.0/tan(FOV/2.0): " + (1.0 / Math.tan(E3D_FOV/2.0)).toFixed(3) + "\n";
+    $("data").innerText += "AR: " + (E3D_WIDTH / E3D_HEIGHT).toFixed(3) + "\n";
+
 }
+
+onClick("cmd_resetX", () => CAMERA.moveTo(50.0, 0.0, 0.0, 0.0, 0.0, 0.0 ));
+onClick("cmd_resetZ", () => CAMERA.moveTo(0.0, 0.0, 50.0, 0.0, 0.0, 0.0 ));
+onClick("cmd_resetY", () => CAMERA.moveTo(0.0, 50.0, 0.0, 0.0, 0.0, 0.0 ));
+
+onClick("cmd_mx", () => CAMERA.moveBy(-1.0, 0.0, 0.0));
+onClick("cmd_px", () => CAMERA.moveBy( 1.0, 0.0, 0.0));
+
+onClick("cmd_my", () => CAMERA.moveBy(0.0,-1.0, 0.0));
+onClick("cmd_py", () => CAMERA.moveBy(0.0, 1.0, 0.0));
+
+onClick("cmd_mz", () => CAMERA.moveBy(0.0, 0.0,-1.0));
+onClick("cmd_pz", () => CAMERA.moveBy(0.0, 0.0, 1.0));
+
+onClick("cmd_mx10", () => CAMERA.moveBy(-10.0, 0.0, 0.0));
+onClick("cmd_px10", () => CAMERA.moveBy( 10.0, 0.0, 0.0));
+
+onClick("cmd_my10", () => CAMERA.moveBy(0.0,-10.0, 0.0));
+onClick("cmd_py10", () => CAMERA.moveBy(0.0, 10.0, 0.0));
+
+onClick("cmd_mz10", () => CAMERA.moveBy(0.0, 0.0,-10.0));
+onClick("cmd_pz10", () => CAMERA.moveBy(0.0, 0.0, 10.0));

@@ -8,8 +8,8 @@
 // Config
 //  Camera settings
 var E3D_ZOOM = 1.0; // for orthogonal projections
-var E3D_FOV = 45 * DegToRad; // for perspective projections
-var E3D_NEAR = 0.1;
+var E3D_FOV = 45.0 * DegToRad; // for perspective projections
+var E3D_NEAR = 1.0;
 var E3D_FAR = 500.0;
 //  Default viewport size
 var E3D_WIDTH = 640;
@@ -499,7 +499,7 @@ var __E3D_checkEntityVisibleByIndex_pos = v3_new();
 function E3D_checkEntityVisibleByIndex(index) {
     if (ENTITIES[index].isVisibiltyCullable) {
         v3_sub_res(__E3D_checkEntityVisibleByIndex_pos, ENTITIES[index].position, CAMERA.position);
-        CAMERA.negateCamera_mod(__E3D_checkEntityVisibleByIndex_pos);
+        CAMERA.inCameraSpace_mod(__E3D_checkEntityVisibleByIndex_pos);
         var dist = -__E3D_checkEntityVisibleByIndex_pos[2]; // only check for Z
         return ( ((dist - ENTITIES[index].visibilityDistance) < E3D_FAR) && 
         ((dist + ENTITIES[index].visibilityDistance) > E3D_NEAR) );

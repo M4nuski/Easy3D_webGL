@@ -73,33 +73,64 @@ class E3D_camera {
         return this.matrix;
     }
 
-    adjustToCamera_new(vect) {
+    rotateToCameraView_new(vect) {
         var res = v3_rotateX_new(vect, -this.rotation[0]); 
         v3_rotateY_mod(res, -this.rotation[1]); 
         return res;
     }  
-    adjustToCamera_res(res, vect) {
+    rotateToCameraView_res(res, vect) {
         v3_rotateX_res(res, vect, -this.rotation[0]); 
         v3_rotateY_mod(res, -this.rotation[1]); 
     }   
-    adjustToCamera_mod(vect) {
+    rotateToCameraView_mod(vect) {
         v3_rotateX_mod(vect, -this.rotation[0]); 
         v3_rotateY_mod(vect, -this.rotation[1]); 
     }  
 
-    negateCamera_new(vect) {
-        var res = v3_rotateY_new(vect, this.rotation[1]); 
-        v3_rotateX_mod(res, this.rotation[0]); 
+    inCameraSpace_new(vect) {
+        var res = v3_sub_res(res, vect, this.position);
+        v3_rotateY_mod(res, this.rotation[1]); 
+        v3_rotateX_mod(res, this.rotation[0]);
         return res;
     }  
-    negateCamera_res(res, vect) {
-        v3_rotateY_res(res, vect, this.rotation[1]); 
+    inCameraSpace_res(res, vect) {
+        v3_sub_res(res, vect, this.position);
+        v3_rotateY_mod(res, this.rotation[1]); 
         v3_rotateX_mod(res, this.rotation[0]);
     } 
-    negateCamera_mod(vect) {
+    inCameraSpace_mod(vect) {
+        v3_sub_mod(vect, this.position);
         v3_rotateY_mod(vect, this.rotation[1]); 
         v3_rotateX_mod(vect, this.rotation[0]);
-    }  
+    }
+
+    getScreenCoordinates(vect) {
+        var r = [0.0, 0.0, 0.0, 1.0];
+        r[0] = (this.matrix[0] * vect[0] + this.matrix[4] * vect[1] + this.matrix[8]  * vect[2] + this.matrix[12]); 
+        r[1] = (this.matrix[1] * vect[0] + this.matrix[5] * vect[1] + this.matrix[9]  * vect[2] + this.matrix[13]);
+        r[2] = (this.matrix[2] * vect[0] + this.matrix[6] * vect[1] + this.matrix[10] * vect[2] + this.matrix[14]);
+        r[3] = (this.matrix[3] * vect[0] + this.matrix[7] * vect[1] + this.matrix[11] * vect[2] + this.matrix[15]);
+
+        var res = { visible: false, x: 0.0, y: 0.0, z: 0.0 };
+        if (r[2] <= 0.0) return res;
+
+        r[0] /= r[3];
+        if (r[0] <= -1.0) res.x = 0.0; else 
+        if (r[0] >=  1.0) res.x = E3D_WIDTH; else {
+            res.x = (r[0] * 0.5) + 0.5;
+            res.x *= E3D_WIDTH;
+        }
+        r[1] /= r[3];
+        if (r[1] <= -1.0) res.y = E3D_HEIGHT; else 
+        if (r[1] >=  1.0) res.y = 0.0; else {
+            res.y = (-r[1] * 0.5) + 0.5;
+            res.y *= E3D_HEIGHT;
+        }
+        res.z = r[2] * (E3D_FAR - E3D_NEAR) / (E3D_FAR + E3D_NEAR) + (2.0 * E3D_NEAR);
+        res.visible = (res.z <= E3D_FAR);
+        return res;
+    }
+
 
 
 }
@@ -187,28 +218,28 @@ class E3D_camera_model extends E3D_camera_persp {
 
     }
 
-    adjustToCamera_new(vect) {
+    rotateToCameraView_new(vect) {
         return v3_applym4_new(vect, this.inverseRotationMatrix);
     }  
-    adjustToCamera_res(res, vect) {
+    rotateToCameraView_res(res, vect) {
         v3_applym4_res(res, vect, this.inverseRotationMatrix);
     }  
-    adjustToCamera_mod(vect) {
+    rotateToCameraView_mod(vect) {
         v3_applym4_mod(vect, this.inverseRotationMatrix);
     }  
 
-    negateCamera_new(vect) {
+    inCameraSpace_new(vect) {
         let res = v3_rotateX_new(vect, this.rotation[0]); 
         v3_rotateY_mod(res, this.rotation[1]); 
         res[2] += this.zDist;
         return res;
     }  
-    negateCamera_res(res, vect) {
+    inCameraSpace_res(res, vect) {
         v3_rotateX_res(res, vect, this.rotation[0]); 
         v3_rotateY_mod(res, this.rotation[1]); 
         res[2] += this.zDist;
     } 
-    negateCamera_mod(vect) {
+    inCameraSpace_mod(vect) {
         v3_rotateX_mod(vect, this.rotation[0]); 
         v3_rotateY_mod(vect, this.rotation[1]); 
         vect[2] += this.zDist;
@@ -275,24 +306,24 @@ class E3D_camera_space extends E3D_camera_persp {
         this.rotation[2] = 0.0;
     }
 
-    adjustToCamera_new(vect) {
+    rotateToCameraView_new(vect) {
         return v3_applym4_new(vect, this.inverseRotationMatrix);
     }  
-    adjustToCamera_res(res, vect) {
+    rotateToCameraView_res(res, vect) {
         v3_applym4_res(res, vect, this.inverseRotationMatrix);
     }  
-    adjustToCamera_mod(vect) {
+    rotateToCameraView_mod(vect) {
         v3_applym4_mod(vect, this.inverseRotationMatrix);
     }  
 
 
-    negateCamera_new(vect) {
+    inCameraSpace_new(vect) {
         return v3_applym4_new(vect, this.rotationMatrix);
     }  
-    negateCamera_res(res, vect) {
+    inCameraSpace_res(res, vect) {
         v3_applym4_res(res, vect, this.rotationMatrix);
     }  
-    negateCamera_mod(vect) {
+    inCameraSpace_mod(vect) {
         v3_applym4_mod(vect, this.rotationMatrix);
     } 
 
