@@ -167,7 +167,7 @@ TIMER.onSlowTick = function () {
     p4element.style.visibility = sc.visible ? "visible" : "hidden";
     p4element.style.left = sc.x + "px"; p4element.style.top = sc.y + "px";
 
-    
+
     entity2.isVisible = CAMERA.zDist > -100.0;
     $("data").innerText = E3D_WIDTH + "x" + E3D_HEIGHT + " n:" + E3D_NEAR + " f:" + E3D_FAR + "\n";
     $("data").innerText += v3_string(CAMERA.position) + "\n";
@@ -181,11 +181,11 @@ TIMER.onSlowTick = function () {
     $("data").innerText += "1.0/tan(FOV/2.0): " + (1.0 / Math.tan(E3D_FOV/2.0)).toFixed(3) + "\n";
     $("data").innerText += "AR: " + (E3D_WIDTH / E3D_HEIGHT).toFixed(3) + "\n";
     $("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam)) + "\n";
-    $("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam+100.0)) + "\n";
+    $("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0)) + "\n";
 
     point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
     point1.updateMatrix();
-    point2.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam+100.0));
+    point2.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0));
     point2.updateMatrix();
 }
 
@@ -196,7 +196,7 @@ onClick("cmd_type_m", () => { CAMERA = cam_m; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0,
 onClick("cmd_type_s", () => { CAMERA = cam_s; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
 
 // reset
-onClick("cmd_reset", () => CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ));
+onClick("cmd_reset",  () => CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ));
 onClick("cmd_resetX", () => CAMERA.moveTo(50.0, 0.0, 0.0, 0.0, 0.0, 0.0 ));
 onClick("cmd_resetZ", () => CAMERA.moveTo(0.0, 0.0, 50.0, 0.0, 0.0, 0.0 ));
 onClick("cmd_resetY", () => CAMERA.moveTo(0.0, 50.0, 0.0, 0.0, 0.0, 0.0 ));

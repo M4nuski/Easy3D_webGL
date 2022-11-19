@@ -11,7 +11,7 @@
 // Base class for scene view matrix generation (orthogonal projection)
 class E3D_camera {
 
-    constructor(id) {        
+    constructor(id) {
         this.id = id;
 
         this.rotation = v3_new();
@@ -30,8 +30,8 @@ class E3D_camera {
         //let dd2 = (E3D_WIDTH > E3D_HEIGHT) ? E3D_WIDTH / 2.0 : E3D_HEIGHT / 2.0;
         //E3D_NEAR = -dd2;
         //E3D_FAR = dd2;
- 
-        m4_ortho_res(this.projectionMatrix, E3D_WIDTH / E3D_ZOOM, E3D_HEIGHT / E3D_ZOOM, -E3D_FAR, E3D_FAR);  
+
+        m4_ortho_res(this.projectionMatrix, E3D_WIDTH / E3D_ZOOM, E3D_HEIGHT / E3D_ZOOM, -E3D_FAR, E3D_FAR);
 
     }
 
@@ -45,11 +45,11 @@ class E3D_camera {
         m4_rotateY_mod(this.matrix, this.rotation[1]);
     }
 
-    moveBy(tx, ty, tz, rx = 0.0, ry = 0.0, rz = 0.0) {        
+    moveBy(tx, ty, tz, rx = 0.0, ry = 0.0, rz = 0.0) {
         this.position[0] += tx;
         this.position[1] += ty;
         this.position[2] += tz;
-        
+
         this.rotation[0] += rx;
         this.rotation[1] += ry;
         this.rotation[2] += rz;
@@ -61,7 +61,7 @@ class E3D_camera {
         this.position[0] = px;
         this.position[1] = py;
         this.position[2] = pz;
-        
+
         this.rotation[0] = rx;
         this.rotation[1] = ry;
         this.rotation[2] = rz;
@@ -75,39 +75,39 @@ class E3D_camera {
 
     // TODO add Z rotation compensation
     rotateToCameraView_new(vect) {
-        var res = v3_rotateX_new(vect, -this.rotation[0]); 
-        v3_rotateY_mod(res, -this.rotation[1]); 
+        var res = v3_rotateX_new(vect, -this.rotation[0]);
+        v3_rotateY_mod(res, -this.rotation[1]);
         return res;
-    }  
+    }
     rotateToCameraView_res(res, vect) {
-        v3_rotateX_res(res, vect, -this.rotation[0]); 
-        v3_rotateY_mod(res, -this.rotation[1]); 
-    }   
+        v3_rotateX_res(res, vect, -this.rotation[0]);
+        v3_rotateY_mod(res, -this.rotation[1]);
+    }
     rotateToCameraView_mod(vect) {
-        v3_rotateX_mod(vect, -this.rotation[0]); 
-        v3_rotateY_mod(vect, -this.rotation[1]); 
-    }  
+        v3_rotateX_mod(vect, -this.rotation[0]);
+        v3_rotateY_mod(vect, -this.rotation[1]);
+    }
 
     inCameraSpace_new(vect) {
         var res = v3_sub_res(res, vect, this.position);
-        v3_rotateY_mod(res, this.rotation[1]); 
+        v3_rotateY_mod(res, this.rotation[1]);
         v3_rotateX_mod(res, this.rotation[0]);
         return res;
-    }  
+    }
     inCameraSpace_res(res, vect) {
         v3_sub_res(res, vect, this.position);
-        v3_rotateY_mod(res, this.rotation[1]); 
+        v3_rotateY_mod(res, this.rotation[1]);
         v3_rotateX_mod(res, this.rotation[0]);
-    } 
+    }
     inCameraSpace_mod(vect) {
         v3_sub_mod(vect, this.position);
-        v3_rotateY_mod(vect, this.rotation[1]); 
+        v3_rotateY_mod(vect, this.rotation[1]);
         v3_rotateX_mod(vect, this.rotation[0]);
     }
 
     getScreenCoordinates(vect) {
         var r = [0.0, 0.0, 0.0, 1.0];
-        r[0] = (this.matrix[0] * vect[0] + this.matrix[4] * vect[1] + this.matrix[8]  * vect[2] + this.matrix[12]); 
+        r[0] = (this.matrix[0] * vect[0] + this.matrix[4] * vect[1] + this.matrix[8]  * vect[2] + this.matrix[12]);
         r[1] = (this.matrix[1] * vect[0] + this.matrix[5] * vect[1] + this.matrix[9]  * vect[2] + this.matrix[13]);
         r[2] = (this.matrix[2] * vect[0] + this.matrix[6] * vect[1] + this.matrix[10] * vect[2] + this.matrix[14]);
         r[3] = (this.matrix[3] * vect[0] + this.matrix[7] * vect[1] + this.matrix[11] * vect[2] + this.matrix[15]);
@@ -116,13 +116,13 @@ class E3D_camera {
         if ((r[2] < -1.0) || (r[2] > 1.0)) return res;
 
         r[0] /= r[3];
-        if (r[0] <= -1.0) res.x = 0.0; else 
+        if (r[0] <= -1.0) res.x = 0.0; else
         if (r[0] >=  1.0) res.x = E3D_WIDTH; else {
             res.x = (r[0] * 0.5) + 0.5;
             res.x *= E3D_WIDTH;
         }
         r[1] /= r[3];
-        if (r[1] <= -1.0) res.y = E3D_HEIGHT; else 
+        if (r[1] <= -1.0) res.y = E3D_HEIGHT; else
         if (r[1] >=  1.0) res.y = 0.0; else {
             res.y = (-r[1] * 0.5) + 0.5;
             res.y *= E3D_HEIGHT;
@@ -153,7 +153,7 @@ class E3D_camera {
 }
 
 //  Basic free moving perspective camera view
-class E3D_camera_persp extends E3D_camera { 
+class E3D_camera_persp extends E3D_camera {
     constructor(id) {
         super(id);
 
@@ -180,7 +180,7 @@ class E3D_camera_persp extends E3D_camera {
         v3_rotateY_mod(t, -this.rotation[1]);
 
         v3_add_mod(this.position, t);
-        
+
         this.rotation[0] += rx;
         this.rotation[1] += ry;
         this.rotation[2] += rz;
@@ -190,7 +190,7 @@ class E3D_camera_persp extends E3D_camera {
 
     getScreenCoordinates(vect) {
         var r = [0.0, 0.0, 0.0, 1.0];
-        r[0] = (this.matrix[0] * vect[0] + this.matrix[4] * vect[1] + this.matrix[8]  * vect[2] + this.matrix[12]); 
+        r[0] = (this.matrix[0] * vect[0] + this.matrix[4] * vect[1] + this.matrix[8]  * vect[2] + this.matrix[12]);
         r[1] = (this.matrix[1] * vect[0] + this.matrix[5] * vect[1] + this.matrix[9]  * vect[2] + this.matrix[13]);
         r[2] = (this.matrix[2] * vect[0] + this.matrix[6] * vect[1] + this.matrix[10] * vect[2] + this.matrix[14]);
         r[3] = (this.matrix[3] * vect[0] + this.matrix[7] * vect[1] + this.matrix[11] * vect[2] + this.matrix[15]);
@@ -199,13 +199,13 @@ class E3D_camera_persp extends E3D_camera {
         if (r[2] <= 0.0) return res;
 
         r[0] /= r[3];
-        if (r[0] <= -1.0) res.x = 0.0; else 
+        if (r[0] <= -1.0) res.x = 0.0; else
         if (r[0] >=  1.0) res.x = E3D_WIDTH; else {
             res.x = (r[0] * 0.5) + 0.5;
             res.x *= E3D_WIDTH;
         }
         r[1] /= r[3];
-        if (r[1] <= -1.0) res.y = E3D_HEIGHT; else 
+        if (r[1] <= -1.0) res.y = E3D_HEIGHT; else
         if (r[1] >=  1.0) res.y = 0.0; else {
             res.y = (-r[1] * 0.5) + 0.5;
             res.y *= E3D_HEIGHT;
@@ -225,7 +225,7 @@ class E3D_camera_persp extends E3D_camera {
         // projection factors
         let fx = (distFromViewport + E3D_NEAR) / E3D_NEAR;
         let fy = (E3D_AR >= 1.0) ? fx / E3D_AR : fx * E3D_AR;
-        
+
         // x and y are on viewport, between -1.0 and 1.0
         x = ((x / E3D_WIDTH) - 0.5) * 2.0;
         y = ((y / E3D_HEIGHT) - 0.5) * -2.0;
@@ -240,7 +240,7 @@ class E3D_camera_persp extends E3D_camera {
 }
 
 // Model view camera, perspective matrix rotating aroung a pivot point
-class E3D_camera_model extends E3D_camera_persp { 
+class E3D_camera_model extends E3D_camera_persp {
     constructor(id) {
         super(id);
         this.nvx = v3_new();
@@ -259,7 +259,7 @@ class E3D_camera_model extends E3D_camera_persp {
 
             v3_negate_res(this._neg_position, this.position);
             m4_translate_mod(this.matrix, this._neg_position);
-            
+
             m4_rotationY_res(this.inverseRotationMatrix , -this.rotation[1]);
             m4_rotateX_mod(this.inverseRotationMatrix, -this.rotation[0]);
         }
@@ -274,7 +274,7 @@ class E3D_camera_model extends E3D_camera_persp {
         }
 
         v3_add_mod(this.position, t);
-        
+
         this.rotation[0] += rx;
         this.rotation[1] += ry;
         this.rotation[2] += rz;
@@ -285,36 +285,58 @@ class E3D_camera_model extends E3D_camera_persp {
 
     rotateToCameraView_new(vect) {
         return v3_applym4_new(vect, this.inverseRotationMatrix);
-    }  
+    }
     rotateToCameraView_res(res, vect) {
         v3_applym4_res(res, vect, this.inverseRotationMatrix);
-    }  
+    }
     rotateToCameraView_mod(vect) {
         v3_applym4_mod(vect, this.inverseRotationMatrix);
-    }  
+    }
 
     inCameraSpace_new(vect) {
-        let res = v3_rotateX_new(vect, this.rotation[0]); 
-        v3_rotateY_mod(res, this.rotation[1]); 
+        let res = v3_rotateX_new(vect, this.rotation[0]);
+        v3_rotateY_mod(res, this.rotation[1]);
         res[2] += this.zDist;
         return res;
-    }  
+    }
     inCameraSpace_res(res, vect) {
-        v3_rotateX_res(res, vect, this.rotation[0]); 
-        v3_rotateY_mod(res, this.rotation[1]); 
+        v3_rotateX_res(res, vect, this.rotation[0]);
+        v3_rotateY_mod(res, this.rotation[1]);
         res[2] += this.zDist;
-    } 
+    }
     inCameraSpace_mod(vect) {
-        v3_rotateX_mod(vect, this.rotation[0]); 
-        v3_rotateY_mod(vect, this.rotation[1]); 
+        v3_rotateX_mod(vect, this.rotation[0]);
+        v3_rotateY_mod(vect, this.rotation[1]);
         vect[2] += this.zDist;
-    } 
+    }
 
+    getworldCoordinates(x, y, distFromViewport = 0.0) {
+        // clamp to front of viewport
+        if (distFromViewport < 0.0) distFromViewport = 0.0;
 
+        // AR and FOV correction factor
+        let f = E3D_AR * Math.tan(E3D_FOV / 2.0);
+
+        // projection factors
+        let fx = (distFromViewport + E3D_NEAR) / E3D_NEAR;
+        let fy = (E3D_AR >= 1.0) ? fx / E3D_AR : fx * E3D_AR;
+
+        // x and y are on viewport, between -1.0 and 1.0
+        x = ((x / E3D_WIDTH) - 0.5) * 2.0;
+        y = ((y / E3D_HEIGHT) - 0.5) * -2.0;
+
+        let p = [x * fx * f, y * fy * f, -distFromViewport - this.zDist];
+
+        this.rotateToCameraView_mod(p);
+        v3_add_mod(p, this.position);
+
+        return p;
+    }
 }
 
+
 // Perspective matrix with incremental movements in 3D space
-class E3D_camera_space extends E3D_camera_persp { 
+class E3D_camera_space extends E3D_camera_persp {
     constructor(id) {
         super(id);
 
@@ -343,7 +365,7 @@ class E3D_camera_space extends E3D_camera_persp {
             m4_rotate_mod(this.rotationMatrix, this.rotation[1], this.nvy);
             m4_rotate_mod(this.rotationMatrix, this.rotation[2], this.nvz);
 
-            m4_multiply_res(this.matrix, this.projectionMatrix, this.rotationMatrix);     
+            m4_multiply_res(this.matrix, this.projectionMatrix, this.rotationMatrix);
 
             v3_negate_res(this._neg_position, this.position);
             m4_translate_mod(this.matrix, this._neg_position);
@@ -373,24 +395,24 @@ class E3D_camera_space extends E3D_camera_persp {
 
     rotateToCameraView_new(vect) {
         return v3_applym4_new(vect, this.inverseRotationMatrix);
-    }  
+    }
     rotateToCameraView_res(res, vect) {
         v3_applym4_res(res, vect, this.inverseRotationMatrix);
-    }  
+    }
     rotateToCameraView_mod(vect) {
         v3_applym4_mod(vect, this.inverseRotationMatrix);
-    }  
+    }
 
 
     inCameraSpace_new(vect) {
         return v3_applym4_new(vect, this.rotationMatrix);
-    }  
+    }
     inCameraSpace_res(res, vect) {
         v3_applym4_res(res, vect, this.rotationMatrix);
-    }  
+    }
     inCameraSpace_mod(vect) {
         v3_applym4_mod(vect, this.rotationMatrix);
-    } 
+    }
 
 }
 
@@ -410,20 +432,20 @@ var fullscreenlastelement;
 
 function fullscreenActive() {
     document.fullscreenElement = document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-    return !(!document.fullscreenElement);  
+    return !(!document.fullscreenElement);
 }
 
 function _fullscreenChange() {
     if (E3D_DEBUG_LOG_INPUT_MODE) log("FullScreen Changed.");
-    if (fullscreenChangeCallback) fullscreenChangeCallback(fullscreenActive(), fullscreenlastelement);  
+    if (fullscreenChangeCallback) fullscreenChangeCallback(fullscreenActive(), fullscreenlastelement);
 }
 
 function fullscreenToggle(elem) {
-    fullscreenlastelement = elem;    
+    fullscreenlastelement = elem;
     elem.requestFullscreen = elem.webkitRequestFullScreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
 
     if (fullscreenActive()) {
-        document.exitFullscreen();        
+        document.exitFullscreen();
     } else {
         elem.requestFullscreen();
     }
