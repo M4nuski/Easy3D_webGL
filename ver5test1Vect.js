@@ -17,8 +17,9 @@ CAMERA = cam_p;
 
 E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
+SCENE.fogLimit = E3D_FAR - 1;
 
-var E3D_culling = E3D_cullingMode.NONE;
+var E3D_culling = E3D_cullingMode.ZDIST;
 
 var dataMap = new Map();
 function formatDataMap() {
@@ -113,11 +114,11 @@ entity.addLine(p0, p, _v3_lightgray);
 entity.addLine(p, resp, _v3_lightgray);
 entity.addLine(p, resv, _v3_lightgray);
 
-let axis1 = new E3D_entity_axis("rotateToCameraView", 25.0, true, 25.0, false);
+let axis1 = new E3D_entity_axis("rotateToCameraView", 25.0, true, 25.0, true);
 axis1.moveTo([0.01, 50.01, 0.01]);
 axis1.isVisible = true;
 E3D_addEntity(axis1);
-let axis2 = new E3D_entity_axis("inCameraSpace", 25.0, true, 25.0, false);
+let axis2 = new E3D_entity_axis("inCameraSpace", 25.0, true, 1.0, false);
 axis2.moveTo([0.01, 75.01, 0.01]);
 axis2.isVisible = true;
 E3D_addEntity(axis2);
@@ -134,6 +135,31 @@ var point2 = new E3D_entity_wireframe_canvas("point2");
 point2.addSphere([0.0, 0.0, 0.0], 5.0, _v3_green, 16, 8);
 point2.isVisible = true;
 E3D_addEntity(point2);
+
+forN(2048, (i) => {
+    var point = new E3D_entity_wireframe_canvas("point#" + i);
+    point.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 12, 4);
+    point.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 12, 4);
+    point.moveTo(v3_addnoise_new(_v3_null, 1024.0));
+    point.isVisible = true;
+    E3D_addEntity(point);
+    point.visibilityDistance = 5.0;   // override for testing
+});
+
+var culltestpoint1 = new E3D_entity_wireframe_canvas("ctpoint1");
+culltestpoint1.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 16, 4);
+culltestpoint1.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 16, 4);
+culltestpoint1.isVisible = true;
+E3D_addEntity(culltestpoint1);
+culltestpoint1.visibilityDistance = 5.0; // override for testing
+
+var culltestpoint2 = new E3D_entity_wireframe_canvas("ctpoint2");
+culltestpoint2.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 16, 4);
+culltestpoint2.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 16, 4);
+culltestpoint2.moveTo([-50.0, -50.0, -50.0]);
+culltestpoint2.isVisible = true;
+E3D_addEntity(culltestpoint2);
+culltestpoint2.visibilityDistance = 5.0; // override for testing
 
 CB_tick = function() {
     if (INPUTS.checkCommand("action1", true)) {
@@ -154,7 +180,7 @@ var distFromCam = 100.0;
 TIMER.onSlowTick = function () {
 
     axis1.updateVector(CAMERA.rotateToCameraView_new([0.0, 0.0, -1.0]));
-    axis2.updateVector(CAMERA.inCameraSpace_new([0.0, 0.0, -1.0]));
+    axis2.updateVector(CAMERA.inCameraSpace_new([0.0, 0.0, 0.0]));
 
     let p1 = [ 0.0,  0.0, 0.0];
     let p2 = [100.0, 0.0, 0.0];
@@ -187,6 +213,8 @@ TIMER.onSlowTick = function () {
     setDataV3("p3", p3);
     setDataV3("p4", p4);
 
+    setDataV3("inCamSpace", CAMERA.inCameraSpace_new([-50.0, -50.0, -50.0]));
+
     //$("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam)) + "\n";
     //$("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0)) + "\n";
 
@@ -196,10 +224,14 @@ TIMER.onSlowTick = function () {
     point2.updateMatrix();
 
     $("data").innerText = formatDataMap();
+    $("spanSFPS").innerText = TIMER.fpsSmoothed.toFixed(1);
+    $("spanSPCT").innerText = TIMER.usageSmoothed.toFixed(1);
+    $("spanLINES").innerText = E3D_DEBUG_RENDER_NB_ELEMENTS;
+    $("spanENT").innerText = E3D_DEBUG_RENDER_NB_ENTITIES;
 }
 
 // camera type
-onClick("cmd_type_o", () => { CAMERA = cam_o; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
+onClick("cmd_type_o", () => { CAMERA = cam_o; CAMERA.moveTo( 0.0, 0.0, -250.0, 0.0, 0.0, 0.0 ); } );
 onClick("cmd_type_p", () => { CAMERA = cam_p; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
 onClick("cmd_type_m", () => { CAMERA = cam_m; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
 onClick("cmd_type_s", () => { CAMERA = cam_s; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );

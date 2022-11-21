@@ -65,7 +65,7 @@ CB_tick = function() {
         n = v3_addnoise_new(_v3_origin, 1.0);
         v = v3_addnoise_new(_v3_origin, 256.0);
         v3_normalize_mod(n);
-        p = v3_projection_new(v, n);        
+        p = v3_projection_new(v, n);
         entity.addLineByPosNormLen(o, n, 10, _v3_white);
         entity.addLine(o, v, _v3_red);
         entity.addLine(v, p, _v3_yellow);
@@ -76,5 +76,5 @@ CB_tick = function() {
     $("spanSFPS").innerText = TIMER.fpsSmoothed.toFixed(1);
     $("spanSPCT").innerText = TIMER.usageSmoothed.toFixed(1);
 
-    $("spanLINES").innerText = SCENE.drawnElements;
+    $("spanLINES").innerText = E3D_DEBUG_RENDER_NB_ELEMENTS;
 }

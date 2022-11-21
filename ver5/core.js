@@ -179,6 +179,9 @@ function E3D_onResize() {
 
 // Default timer tick event handler
 function E3D_onTick_default() {
+    E3D_DEBUG_RENDER_NB_ELEMENTS = 0;
+    E3D_DEBUG_RENDER_NB_ENTITIES = 0;
+
     if (CB_tick) CB_tick();
     // Inputs
     INPUTS.processInputs();
@@ -203,6 +206,9 @@ function E3D_onTick_default() {
 
 // timer tick handler for scene only, callbacks for the rest
 function E3D_onTick_scene() {
+    E3D_DEBUG_RENDER_NB_ELEMENTS = 0;
+    E3D_DEBUG_RENDER_NB_ENTITIES = 0;
+
     if (CB_processInputs) CB_processInputs();
     if (CB_processCamera) CB_processCamera();
     if (CB_processAnimations) CB_processAnimations();
@@ -219,6 +225,9 @@ function E3D_onTick_scene() {
 
 // timer tick handler for callbacks only
 function E3D_onTick_callback() {
+    E3D_DEBUG_RENDER_NB_ELEMENTS = 0;
+    E3D_DEBUG_RENDER_NB_ENTITIES = 0;
+
     if (CB_processInputs) CB_processInputs();
     if (CB_processCamera) CB_processCamera();
     if (CB_processAnimations) CB_processAnimations();
@@ -499,7 +508,7 @@ function E3D_removeEntityBodyByIndex(index) {
 function E3D_checkEntityVisible(entityObj) {
     return E3D_checkEntityVisibleByIndex(entityObj.index);
 }
-function E3D_checkEntityVisibleBiId(id) {
+function E3D_checkEntityVisibleById(id) {
     let index = E3D_getEntityIndexById(id);
     if (index == -1) return;
     return E3D_checkEntityVisibleByIndex(index);
@@ -516,9 +525,9 @@ function E3D_checkEntityVisibleByIndex(index) {
         return ( ((dist - ENTITIES[index].visibilityDistance) < E3D_FAR) && ((dist + ENTITIES[index].visibilityDistance) > E3D_NEAR) );
     }
 
-    // TODOif (E3D_culling == E3D_cullingMode.FUSTRUM) {
-    //
-    //}
+    if (E3D_culling == E3D_cullingMode.FUSTRUM) {
+        return CAMERA.inFustrum(ENTITIES[index].position, ENTITIES[index].visibilityDistance);
+    }
 
     return true;
 }
