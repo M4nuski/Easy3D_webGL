@@ -375,7 +375,7 @@ function E3D_clearEntityByIndex(index, mesh = true, animation = true, body = tru
 }
 
 
-function E3D_cloneEntity(entityObj, newId) {
+function E3D_cloneEntity(entityObj, newId, makeStatic = false) {
     if (entityObj.index == -1) {
         log("E3D_cloneEntity: source entity not assigned");
         return -1;
@@ -385,7 +385,7 @@ function E3D_cloneEntity(entityObj, newId) {
         return -1;
     }
 
-    let newEntity = new E3D_entity(newId, entityObj.isDynamic);
+    let newEntity = new E3D_entity(newId, entityObj.isDynamic && !makeStatic);
 
     newEntity.cloneData(entityObj);
 
@@ -405,6 +405,11 @@ function E3D_cloneEntity(entityObj, newId) {
             CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, newEntity.strokeIndexArray, CONTEXT.DYNAMIC_DRAW);
         }
         newEntity.dataSizeChanged = true;
+    } else {
+        newEntity.vertexBuffer = entityObj.vertexBuffer;
+        newEntity.colorBuffer = entityObj.colorBuffer;
+        newEntity.normalBuffer = entityObj.normalBuffer;
+        newEntity.strokeIndexBuffer = entityObj.strokeIndexBuffer;
     }
 
     // update lists

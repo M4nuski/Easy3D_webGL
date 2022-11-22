@@ -66,7 +66,7 @@ const _v3_n90z = [ 0.0, 0.0,-PIdiv2];
 
 const _v3_epsilon = 0.00001;
 
-const _m4_identity = m4_new(); 
+const _m4_identity = m4_new();
 
 // Colors
 const _v3_white      = [ 1.0,  1.0,  1.0];
@@ -114,7 +114,7 @@ class Random {
         return this._seed = this._seed * 16807 % 2147483647;
     }
     // Returns a pseudo-random floating point number in range [0.0, 1.0-epsilon].
-    nextFloat() {        
+    nextFloat() {
         return (this.next() - 1) / 2147483646; // We know that result of next() will be 1 to 2147483646 (inclusive).
     }
     // Returns a pseudo-random integer in range [0, maxInt-1].
@@ -122,8 +122,8 @@ class Random {
         return Math.floor(maxInt * (this.next() - 1) / 2147483646);
     }
 }
-  
-  
+
+
  // Clamping
 function clamp(val, min, max) {
     if (val < min) return min;
@@ -145,9 +145,9 @@ function clampPlusMinus(val, limit) {
 function v3_new() { return [ 0.0, 0.0, 0.0 ]; }
 
 // Vector from values
-function v3_val_new(x, y, z) { return [ x, y, z ]; } 
+function v3_val_new(x, y, z) { return [ x, y, z ]; }
 
-function v3_val_res(res, x, y, z) { res[0] = x; res[1] = y; res[2] = z; } 
+function v3_val_res(res, x, y, z) { res[0] = x; res[1] = y; res[2] = z; }
 
 // Return new vector equal to argument
 function v3_clone(a) {
@@ -173,7 +173,7 @@ function v3_equals(a, b, epsilon = _v3_epsilon) {
 
 // Clamp each components to min and max
 function v3_clamp_new(a, min, max) {
-    var res = [a[0], a[1], a[2]]; 
+    var res = [a[0], a[1], a[2]];
     if (res[0] < min) res[0] = min;
     if (res[0] > max) res[0] = max;
     if (res[1] < min) res[1] = min;
@@ -404,7 +404,7 @@ function v3_invscale_res(res, a, f) {
 }
 
 
-// Negate vector 
+// Negate vector
 // = -a
 function v3_negate_new(a) {
     return [ -a[0],
@@ -483,27 +483,27 @@ function v3_lerp_res(res, a, b, f) {
 function v3_dot(a, b) {
     return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]);
 }
-// Dot product: (point - origin) (.*) normal 
+// Dot product: (point - origin) (.*) normal
 function v3_offset_dot(point, origin, normal) {
     return ((point[0] - origin[0]) * normal[0]) + ((point[1] - origin[1]) * normal[1]) + ((point[2] - origin[2]) * normal[2]);
 }
 
 // Cross product
-function v3_cross_new(a, b) { 
-    var r =  [0.0, 0.0, 0.0];    
+function v3_cross_new(a, b) {
+    var r =  [0.0, 0.0, 0.0];
     r[0] = a[1] * b[2] - a[2] * b[1];
     r[1] = a[2] * b[0] - a[0] * b[2];
     r[2] = a[0] * b[1] - a[1] * b[0];
     return r;
 }
-function v3_cross_mod(a, b) { 
+function v3_cross_mod(a, b) {
     var a0 = a[0], a1 = a[1], a2 = a[2];
     a[0] = a1 * b[2] - a2 * b[1];
     a[1] = a2 * b[0] - a0 * b[2];
     a[2] = a0 * b[1] - a1 * b[0];
 }
 
-function v3_cross_res(res, a, b) { 
+function v3_cross_res(res, a, b) {
     res[0] = a[1] * b[2] - a[2] * b[1];
     res[1] = a[2] * b[0] - a[0] * b[2];
     res[2] = a[0] * b[1] - a[1] * b[0];
@@ -516,7 +516,7 @@ function v3_angle(a, b) {
     v3_normalize_res(__v3_angle_nb, b);
 
     var cosine = v3_dot(__v3_angle_na, __v3_angle_nb);
-  
+
     if (cosine > 1.0) {
       return 0.0;
     } else if (cosine < -1.0) {
@@ -531,7 +531,7 @@ function v3_normalize_new(a) {
     var l = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
     if (l > 0.0) {
         l = Math.sqrt(l);
-        return [ 
+        return [
         a[0] / l,
         a[1] / l,
         a[2] / l ];
@@ -564,7 +564,7 @@ function v3_normalize_res(res, a) {
 var __v3_normal_p21 = v3_new();
 var __v3_normal_p31 = v3_new();
 
-function v3_normal_new(p1, p2, p3) {        
+function v3_normal_new(p1, p2, p3) {
     var n = [0.0, 0.0, 0.0];
 
     v3_sub_res(__v3_normal_p21, p2, p1);
@@ -685,19 +685,19 @@ function v3_distanceYZsquared(a, b) {
 // Reflect incident vector per normal
 function v3_reflect_mod(inc, norm) {
     var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
-    inc[0] = inc[0] - (norm[0] * dr2); 
+    inc[0] = inc[0] - (norm[0] * dr2);
     inc[1] = inc[1] - (norm[1] * dr2);
     inc[2] = inc[2] - (norm[2] * dr2);
 }
 function v3_reflect_new(inc, norm) {
     var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
-    return [ inc[0] - (norm[0] * dr2), 
-             inc[1] - (norm[1] * dr2), 
+    return [ inc[0] - (norm[0] * dr2),
+             inc[1] - (norm[1] * dr2),
              inc[2] - (norm[2] * dr2) ];
 }
 function v3_reflect_res(result, inc, norm) {
     var dr2 = 2.0 * (inc[0] * norm[0] + inc[1] * norm[1] + inc[2] * norm[2]);
-    result[0] = inc[0] - (norm[0] * dr2); 
+    result[0] = inc[0] - (norm[0] * dr2);
     result[1] = inc[1] - (norm[1] * dr2);
     result[2] = inc[2] - (norm[2] * dr2);
 }
@@ -807,10 +807,10 @@ function v3_avg2normalized_new(a, b) {
     var l = x * x + y * y + z * z;
     if (l > 0.0) {
         l = Math.sqrt(l);
-        return [ 
+        return [
             x / l,
             y / l,
-            z / l 
+            z / l
         ];
     } else return [0.0, 0.0, 0.0];
 }
@@ -869,10 +869,10 @@ function v3_avg3normalized_new(a, b, c) {
     var l = x * x + y * y + z * z;
     if (l > 0.0) {
         l = Math.sqrt(l);
-        return [ 
+        return [
             x / l,
             y / l,
-            z / l 
+            z / l
         ];
     } else return [0.0, 0.0, 0.0];
 }
@@ -1049,7 +1049,7 @@ function v3_proj_on_plane_mod(point, p0, pn) {
     __v3_proj_offset[2] = point[2] - p0[2];
 
     let l = v3_dot(__v3_proj_offset, pn);
-    
+
     point[0] = point[0] - pn[0] * l;
     point[1] = point[1] - pn[1] * l;
     point[2] = point[2] - pn[2] * l;
@@ -1060,7 +1060,7 @@ function v3_proj_on_plane_res(res, point, p0, pn) {
     __v3_proj_offset[2] = point[2] - p0[2];
 
     let l = v3_dot(__v3_proj_offset, pn);
-    
+
     res[0] = point[0] - pn[0] * l;
     res[1] = point[1] - pn[1] * l;
     res[2] = point[2] - pn[2] * l;
@@ -1402,10 +1402,10 @@ function v3a_new(n) {
 // = a * f
 function v3a_scale_new(a, f) {
     var res = [];
-    for (var i = 0; i < a.length; ++i) res.push( [ a[i][0] * f, 
-                                                   a[i][1] * f, 
+    for (var i = 0; i < a.length; ++i) res.push( [ a[i][0] * f,
+                                                   a[i][1] * f,
                                                    a[i][2] * f ] );
-    return res; 
+    return res;
 }
 function v3a_scale_mod(a, f) {
     for (var i = 0; i < a.length; ++i) a[i] = [ a[i][0] * f,
@@ -1414,8 +1414,8 @@ function v3a_scale_mod(a, f) {
 }
 function v3a_scale_res(res, a, f) {
     res = [];
-    for (var i = 0; i < a.length; ++i) res.push( [ a[i][0] * f, 
-                                                   a[i][1] * f, 
+    for (var i = 0; i < a.length; ++i) res.push( [ a[i][0] * f,
+                                                   a[i][1] * f,
                                                    a[i][2] * f ] );
 }
 
@@ -1549,35 +1549,37 @@ function v3_isNaN(v) {
 
 // Create new identity matrix
 function m4_new(){
-    var m = new Array(16);
+    var m = new Float32Array(16);
     m[0] =  1.0;        m[1] =  0.0;        m[2] =  0.0;       m[3] =  0.0;
     m[4] =  0.0;        m[5] =  1.0;        m[6] =  0.0;       m[7] =  0.0;
     m[8] =  0.0;        m[9] =  0.0;        m[10] = 1.0;       m[11] = 0.0;
     m[12] = 0.0;        m[13] = 0.0;        m[14] = 0.0;       m[15] = 1.0;
-    return m;      
+    return m;
 }
 // Return a new m4 equal to argument
 function m4_clone(a){
-    var m = new Array(16);
+    return new Float32Array(a);
+  /*  var m = new Float32Array(16);
     m[0] =  a[0];        m[1] =  a[1];        m[2] =  a[2];       m[3] =  a[3];
     m[4] =  a[4];        m[5] =  a[5];        m[6] =  a[6];       m[7] =  a[7];
     m[8] =  a[8];        m[9] =  a[9];        m[10] = a[10];      m[11] = a[11];
     m[12] = a[12];       m[13] = a[13];       m[14] = a[14];      m[15] = a[15];
-    return m;      
+    return m;*/
 }
 // Copy content of 2 matrices
 function m4_copy(res, a){
-    res[0] =  a[0];        res[1] =  a[1];        res[2] =  a[2];       res[3] =  a[3];
+    res.set(a);
+   /* res[0] =  a[0];        res[1] =  a[1];        res[2] =  a[2];       res[3] =  a[3];
     res[4] =  a[4];        res[5] =  a[5];        res[6] =  a[6];       res[7] =  a[7];
     res[8] =  a[8];        res[9] =  a[9];        res[10] = a[10];      res[11] = a[11];
-    res[12] = a[12];       res[13] = a[13];       res[14] = a[14];      res[15] = a[15];
+    res[12] = a[12];       res[13] = a[13];       res[14] = a[14];      res[15] = a[15];*/
 }
 // Reset matrix content to identity
 function m4_reset(a){
     a[0] =  1.0;        a[1] =  0.0;        a[2] =  0.0;       a[3] =  0.0;
     a[4] =  0.0;        a[5] =  1.0;        a[6] =  0.0;       a[7] =  0.0;
     a[8] =  0.0;        a[9] =  0.0;        a[10] = 1.0;       a[11] = 0.0;
-    a[12] = 0.0;        a[13] = 0.0;        a[14] = 0.0;       a[15] = 1.0;    
+    a[12] = 0.0;        a[13] = 0.0;        a[14] = 0.0;       a[15] = 1.0;
 }
 
 
@@ -1600,7 +1602,7 @@ function m4_transpose_mod(a) {
     a[13] = a7;
     a[14] = a11;
 }
-function m4_transpose_res(res, a) {    
+function m4_transpose_res(res, a) {
    res[0] = a[0];
    res[1] = a[4];
    res[2] = a[8];
@@ -1618,8 +1620,8 @@ function m4_transpose_res(res, a) {
    res[14] = a[11];
    res[15] = a[15];
 }
-function m4_transpose_new(a) {    
-    var m = new Array(16);
+function m4_transpose_new(a) {
+    var m = new Float32Array(16);
     m[0] = a[0];
     m[1] = a[4];
     m[2] = a[8];
@@ -1641,7 +1643,7 @@ function m4_transpose_new(a) {
 
 
 // Invert matrix
-function m4_invert_new(a) {    
+function m4_invert_new(a) {
     var a00 = a[0],
     a01 = a[1],
     a02 = a[2],
@@ -1658,7 +1660,7 @@ function m4_invert_new(a) {
     a31 = a[13],
     a32 = a[14],
     a33 = a[15];
-    
+
     var b00 = a00 * a11 - a01 * a10;
     var b01 = a00 * a12 - a02 * a10;
     var b02 = a00 * a13 - a03 * a10;
@@ -1671,16 +1673,16 @@ function m4_invert_new(a) {
     var b09 = a21 * a32 - a22 * a31;
     var b10 = a21 * a33 - a23 * a31;
     var b11 = a22 * a33 - a23 * a32;
-      
+
     // Calculate the determinant
     var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-    
+
     if (!det) return m4_clone(a);
 
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     det = 1.0 / det;
-    
+
     res[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
     res[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
     res[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
@@ -1697,7 +1699,7 @@ function m4_invert_new(a) {
     res[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
     res[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
     res[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
-     
+
     return res;
 }
 function m4_invert_mod(a) {
@@ -1718,7 +1720,7 @@ function m4_invert_mod(a) {
         a31 = a[13],
         a32 = a[14],
         a33 = a[15];
-      
+
     var b00 = a00 * a11 - a01 * a10;
     var b01 = a00 * a12 - a02 * a10;
     var b02 = a00 * a13 - a03 * a10;
@@ -1731,14 +1733,14 @@ function m4_invert_mod(a) {
     var b09 = a21 * a32 - a22 * a31;
     var b10 = a21 * a33 - a23 * a31;
     var b11 = a22 * a33 - a23 * a32;
-      
+
     // Calculate the determinant
     var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-      
-    if (det) { 
-        
+
+    if (det) {
+
         det = 1.0 / det;
-        
+
         a[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
         a[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
         a[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
@@ -1775,7 +1777,7 @@ function m4_invert_res(res, a) {
         a31 = a[13],
         a32 = a[14],
         a33 = a[15];
-      
+
     var b00 = a00 * a11 - a01 * a10;
     var b01 = a00 * a12 - a02 * a10;
     var b02 = a00 * a13 - a03 * a10;
@@ -1788,14 +1790,14 @@ function m4_invert_res(res, a) {
     var b09 = a21 * a32 - a22 * a31;
     var b10 = a21 * a33 - a23 * a31;
     var b11 = a22 * a33 - a23 * a32;
-      
+
     // Calculate the determinant
     var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-      
-    if (det) { 
-        
+
+    if (det) {
+
         det = 1.0 / det;
-        
+
         res[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
         res[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
         res[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
@@ -1818,13 +1820,13 @@ function m4_invert_res(res, a) {
 
 // Multiply 2 matrices
 function m4_multiply_new(a, b){
-    var res = new Array(16);
+    var res = new Float32Array(16);
     var a00 = a[0],  a01 = a[1],  a02 = a[2],  a03 = a[3];
     var a10 = a[4],  a11 = a[5],  a12 = a[6],  a13 = a[7];
     var a20 = a[8],  a21 = a[9],  a22 = a[10], a23 = a[11];
     var a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
 
-    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];        
+    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
     res[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
     res[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
     res[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
@@ -1855,7 +1857,7 @@ function m4_multiply_mod(a, b){
     var a20 = a[8],  a21 = a[9],  a22 = a[10], a23 = a[11];
     var a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
 
-    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];        
+    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
     a[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
     a[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
     a[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
@@ -1885,7 +1887,7 @@ function m4_multiply_res(res, a, b){
     var a20 = a[8],  a21 = a[9],  a22 = a[10], a23 = a[11];
     var a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
 
-    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];        
+    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
     res[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
     res[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
     res[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
@@ -1913,7 +1915,7 @@ function m4_multiply_res(res, a, b){
 
 // Create new translation matrix
 function m4_translation_new(v){
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     res[0] =  1.0;        res[1] =  0.0;        res[2] =  0.0;       res[3] =  0.0;
     res[4] =  0.0;        res[5] =  1.0;        res[6] =  0.0;       res[7] =  0.0;
@@ -1939,7 +1941,7 @@ function m4_translation_res(res, v){
 
 // Add translation to matrix
 function m4_translate_new(a, v){
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     res[0] = a[0]; res[1] = a[1]; res[2]  = a[2];  res[3]  = a[3];
     res[4] = a[4]; res[5] = a[5]; res[6]  = a[6];  res[7]  = a[7];
@@ -1972,7 +1974,7 @@ function m4_translate_res(res, a, v){
 
 // Create mew rotation matrix around vector
 function m4_rotation_new(ang, v) {
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var x = v[0],
         y = v[1],
@@ -1984,7 +1986,7 @@ function m4_rotation_new(ang, v) {
     x /= len;
     y /= len;
     z /= len;
-      
+
     var s = Math.sin(ang);
     var c = Math.cos(ang);
     var t = 1.0 - c;
@@ -2003,7 +2005,7 @@ function m4_rotation_new(ang, v) {
     res[9]  = y * z * t - x * s;
     res[10] = z * z * t + c;
     res[11] = 0.0;
-    
+
     res[12] = 0.0;
     res[13] = 0.0;
     res[14] = 0.0;
@@ -2022,7 +2024,7 @@ function m4_rotation_res(res, ang, v) {
     x /= len;
     y /= len;
     z /= len;
-      
+
     var s = Math.sin(ang);
     var c = Math.cos(ang);
     var t = 1.0 - c;
@@ -2041,7 +2043,7 @@ function m4_rotation_res(res, ang, v) {
     res[9]  = y * z * t - x * s;
     res[10] = z * z * t + c;
     res[11] = 0.0;
-    
+
     res[12] = 0.0;
     res[13] = 0.0;
     res[14] = 0.0;
@@ -2050,7 +2052,7 @@ function m4_rotation_res(res, ang, v) {
 
 // Add rotation around vector to matrix
 function m4_rotate_new(a, ang, v){
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var x = v[0],
         y = v[1],
@@ -2066,15 +2068,15 @@ function m4_rotate_new(a, ang, v){
     x /= len;
     y /= len;
     z /= len;
-      
+
     var s = Math.sin(ang);
     var c = Math.cos(ang);
     var t = 1.0 - c;
-      
+
     var a00 = a[0], a01 = a[1], a02 = a[2],  a03 = a[3];
     var a10 = a[4], a11 = a[5], a12 = a[6],  a13 = a[7];
     var a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
-      
+
     // Construct the rotation matrix
     var b00 = x * x * t + c;
     var b01 = y * x * t + z * s;
@@ -2087,7 +2089,7 @@ function m4_rotate_new(a, ang, v){
     var b20 = x * z * t + y * s;
     var b21 = y * z * t - x * s;
     var b22 = z * z * t + c;
-      
+
     // Perform rotation-specific matrix multiplication
     res[0] = a00 * b00 + a10 * b01 + a20 * b02;
     res[1] = a01 * b00 + a11 * b01 + a21 * b02;
@@ -2101,7 +2103,7 @@ function m4_rotate_new(a, ang, v){
     res[9] = a01 * b20 + a11 * b21 + a21 * b22;
     res[10] = a02 * b20 + a12 * b21 + a22 * b22;
     res[11] = a03 * b20 + a13 * b21 + a23 * b22;
-    
+
     res[12] = a[12];
     res[13] = a[13];
     res[14] = a[14];
@@ -2121,15 +2123,15 @@ function m4_rotate_mod(a, ang, v){
     x /= len;
     y /= len;
     z /= len;
-      
+
     var s = Math.sin(ang);
     var c = Math.cos(ang);
     var t = 1.0 - c;
-      
+
     var a00 = a[0], a01 = a[1], a02 = a[2],  a03 = a[3];
     var a10 = a[4], a11 = a[5], a12 = a[6],  a13 = a[7];
     var a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
-      
+
     // Construct the rotation matrix
     var b00 = x * x * t + c;
     var b01 = y * x * t + z * s;
@@ -2142,7 +2144,7 @@ function m4_rotate_mod(a, ang, v){
     var b20 = x * z * t + y * s;
     var b21 = y * z * t - x * s;
     var b22 = z * z * t + c;
-      
+
     // Perform rotation-specific matrix multiplication
     a[0] = a00 * b00 + a10 * b01 + a20 * b02;
     a[1] = a01 * b00 + a11 * b01 + a21 * b02;
@@ -2155,7 +2157,7 @@ function m4_rotate_mod(a, ang, v){
     a[8] = a00 * b20 + a10 * b21 + a20 * b22;
     a[9] = a01 * b20 + a11 * b21 + a21 * b22;
     a[10] = a02 * b20 + a12 * b21 + a22 * b22;
-    a[11] = a03 * b20 + a13 * b21 + a23 * b22; 
+    a[11] = a03 * b20 + a13 * b21 + a23 * b22;
 }
 
 function m4_rotate_res(res, a, ang, v){
@@ -2172,15 +2174,15 @@ function m4_rotate_res(res, a, ang, v){
     x /= len;
     y /= len;
     z /= len;
-      
+
     var s = Math.sin(ang);
     var c = Math.cos(ang);
     var t = 1.0 - c;
-      
+
     var a00 = a[0], a01 = a[1], a02 = a[2],  a03 = a[3];
     var a10 = a[4], a11 = a[5], a12 = a[6],  a13 = a[7];
     var a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
-      
+
     // Construct the rotation matrix
     var b00 = x * x * t + c;
     var b01 = y * x * t + z * s;
@@ -2193,7 +2195,7 @@ function m4_rotate_res(res, a, ang, v){
     var b20 = x * z * t + y * s;
     var b21 = y * z * t - x * s;
     var b22 = z * z * t + c;
-      
+
     // Perform rotation-specific matrix multiplication
     res[0] = a00 * b00 + a10 * b01 + a20 * b02;
     res[1] = a01 * b00 + a11 * b01 + a21 * b02;
@@ -2207,7 +2209,7 @@ function m4_rotate_res(res, a, ang, v){
     res[9] = a01 * b20 + a11 * b21 + a21 * b22;
     res[10] = a02 * b20 + a12 * b21 + a22 * b22;
     res[11] = a03 * b20 + a13 * b21 + a23 * b22;
-    
+
     res[12] = a[12];
     res[13] = a[13];
     res[14] = a[14];
@@ -2216,7 +2218,7 @@ function m4_rotate_res(res, a, ang, v){
 
 // Create rotation matrix around X
 function m4_rotationX_new(ang) {
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var s = Math.sin(ang);
     var c = Math.cos(ang);
@@ -2228,7 +2230,7 @@ function m4_rotationX_new(ang) {
 
     res[4] = 0.0;
     res[5] = c;
-    res[6] = s;    
+    res[6] = s;
     res[7] = 0.0;
 
     res[8]  =  0.0;
@@ -2240,7 +2242,7 @@ function m4_rotationX_new(ang) {
     res[13] = 0.0;
     res[14] = 0.0;
     res[15] = 1.0;
-    
+
     return res;
 }
 function m4_rotationX_res(res, ang) {
@@ -2254,7 +2256,7 @@ function m4_rotationX_res(res, ang) {
 
     res[4] = 0.0;
     res[5] = c;
-    res[6] = s;    
+    res[6] = s;
     res[7] = 0.0;
 
     res[8]  =  0.0;
@@ -2270,7 +2272,7 @@ function m4_rotationX_res(res, ang) {
 
 // Add rotation around X to matrix
 function m4_rotateX_new(a, ang){
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var s = Math.sin(ang);
     var c = Math.cos(ang);
@@ -2282,7 +2284,7 @@ function m4_rotateX_new(a, ang){
 
     res[4] = a[4] * c + a[8]  * s;
     res[5] = a[5] * c + a[9]  * s;
-    res[6] = a[6] * c + a[10] * s;    
+    res[6] = a[6] * c + a[10] * s;
     res[7] = a[7] * c + a[11] * s;
 
     res[8]  = a[8]  * c - a[4] * s;
@@ -2294,7 +2296,7 @@ function m4_rotateX_new(a, ang){
     res[13] = a[13];
     res[14] = a[14];
     res[15] = a[15];
-    
+
     return res;
 }
 
@@ -2313,7 +2315,7 @@ function m4_rotateX_mod(a, ang){
 
     a[4] = a04 * c + a08 * s;
     a[5] = a05 * c + a09 * s;
-    a[6] = a06 * c + a10 * s;    
+    a[6] = a06 * c + a10 * s;
     a[7] = a07 * c + a11 * s;
 
     a[8]  = a08 * c - a04 * s;
@@ -2333,7 +2335,7 @@ function m4_rotateX_res(res, a, ang){
 
     res[4] = a[4] * c + a[8]  * s;
     res[5] = a[5] * c + a[9]  * s;
-    res[6] = a[6] * c + a[10] * s;    
+    res[6] = a[6] * c + a[10] * s;
     res[7] = a[7] * c + a[11] * s;
 
     res[8]  = a[8]  * c - a[4] * s;
@@ -2349,7 +2351,7 @@ function m4_rotateX_res(res, a, ang){
 
 // Create a new rotation matrix around Y
 function m4_rotationY_new(ang) {
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var s = Math.sin(ang);
     var c = Math.cos(ang);
@@ -2368,7 +2370,7 @@ function m4_rotationY_new(ang) {
     res[9]  = 0.0;
     res[10] = c;
     res[11] = 0.0;
-    
+
     res[12] = 0.0;
     res[13] = 0.0;
     res[14] = 0.0;
@@ -2394,7 +2396,7 @@ function m4_rotationY_res(res, ang) {
     res[9]  = 0.0;
     res[10] = c;
     res[11] = 0.0;
-    
+
     res[12] = 0.0;
     res[13] = 0.0;
     res[14] = 0.0;
@@ -2403,7 +2405,7 @@ function m4_rotationY_res(res, ang) {
 
 // Add rotation around Y to matrix
 function m4_rotateY_new(a, ang){
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var s = Math.sin(ang);
     var c = Math.cos(ang);
@@ -2422,7 +2424,7 @@ function m4_rotateY_new(a, ang){
     res[9]  = a[1] * s + a[9]  * c;
     res[10] = a[2] * s + a[10] * c;
     res[11] = a[3] * s + a[11] * c;
-    
+
     res[12] = a[12];
     res[13] = a[13];
     res[14] = a[14];
@@ -2472,7 +2474,7 @@ function m4_rotateY_res(res, a, ang){
     res[9]  = a[1] * s + a[9]  * c;
     res[10] = a[2] * s + a[10] * c;
     res[11] = a[3] * s + a[11] * c;
-    
+
     res[12] = a[12];
     res[13] = a[13];
     res[14] = a[14];
@@ -2481,7 +2483,7 @@ function m4_rotateY_res(res, a, ang){
 
 // Create a new rotation matrix around Z
 function m4_rotationZ_new(ang) {
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var s = Math.sin(ang);
     var c = Math.cos(ang);
@@ -2500,7 +2502,7 @@ function m4_rotationZ_new(ang) {
     res[9]  = 0.0;
     res[10] = 1.0;
     res[11] = 0.0;
-    
+
     res[12] = 0.0;
     res[13] = 0.0;
     res[14] = 0.0;
@@ -2526,7 +2528,7 @@ function m4_rotationZ_res(res, ang) {
     res[9]  = 0.0;
     res[10] = 1.0;
     res[11] = 0.0;
-    
+
     res[12] = 0.0;
     res[13] = 0.0;
     res[14] = 0.0;
@@ -2535,7 +2537,7 @@ function m4_rotationZ_res(res, ang) {
 
 // Add rotation around Z to matrix
 function m4_rotateZ_new(a, ang){
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     var s = Math.sin(ang);
     var c = Math.cos(ang);
@@ -2543,8 +2545,8 @@ function m4_rotateZ_new(a, ang){
     res[0] = a[0] * c + a[4] * s;
     res[1] = a[1] * c + a[5] * s;
     res[2] = a[2] * c + a[6] * s;
-    res[3] = a[3] * c + a[7] * s;    
-  
+    res[3] = a[3] * c + a[7] * s;
+
     res[4] = a[4] * c - a[0] * s;
     res[5] = a[5] * c - a[1] * s;
     res[6] = a[6] * c - a[2] * s;
@@ -2579,7 +2581,7 @@ function m4_rotateZ_mod(a, ang){
     a[0] = a00 * c + a04 * s;
     a[1] = a01 * c + a05 * s;
     a[2] = a02 * c + a06 * s;
-    a[3] = a03 * c + a07 * s;    
+    a[3] = a03 * c + a07 * s;
 
     a[4] = a04 * c - a00 * s;
     a[5] = a05 * c - a01 * s;
@@ -2600,7 +2602,7 @@ function m4_rotateZ_res(res, a, ang){
     res[5] = a[5] * c - a[1] * s;
     res[6] = a[6] * c - a[2] * s;
     res[7] = a[7] * c - a[3] * s;
-  
+
     res[8] = a[8];
     res[9] = a[9];
     res[10] = a[10];
@@ -2615,7 +2617,7 @@ function m4_rotateZ_res(res, a, ang){
 
 // Create new scale matrix
 function m4_proportion_new(v) {
-    var res = new Array(16);   
+    var res = new Float32Array(16);
 
     res[0]  = v[0];
     res[1]  = 0.0;
@@ -2662,7 +2664,7 @@ function m4_proportion_res(res, v) {
 
 // Add scale to matrix
 function m4_scale_new(a, v) {
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     res[0]  = a[0]  * v[0];
     res[1]  = a[1]  * v[0];
@@ -2721,9 +2723,9 @@ function m4_scale_new(a, v) {
   }
 
 
-// Create new symmetric orthogonal projection matrix 
+// Create new symmetric orthogonal projection matrix
 function m4_ortho_new(width, height, znear, zfar){
-    var res = new Array(16);
+    var res = new Float32Array(16);
 
     res[0] = 2.0 / width;
     res[1] = 0.0;
@@ -2766,7 +2768,7 @@ function m4_ortho_res(res, width, height, znear, zfar){
 
 // Create new symmetrical perpective projetcion matrix
 function m4_persp_new(yfov, ar, znear, zfar){
-    var res = new Array(16);
+    var res = new Float32Array(16);
     if (ar < 1.0) yfov = yfov / ar;
     var f = 1.0 / Math.tan(yfov / 2.0);
     var nf = 1.0 / (znear - zfar);
@@ -2808,10 +2810,10 @@ function m4_persp_res(res, yfov, ar, znear, zfar){
     res[12] = 0.0;
     res[13] = 0.0;
     res[14] = 2.0 * zfar * znear * nf;
-    res[15] = 0.0; 
+    res[15] = 0.0;
 }
 
-// Pitch Yaw Roll Position matrix 
+// Pitch Yaw Roll Position matrix
 function m4_transform_new(position, rotation){
     var m = m4_rotationZ_new(rotation[2]);
     m4_rotateX_mod(m, rotation[0]);

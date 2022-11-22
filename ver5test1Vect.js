@@ -136,15 +136,22 @@ point2.addSphere([0.0, 0.0, 0.0], 5.0, _v3_green, 16, 8);
 point2.isVisible = true;
 E3D_addEntity(point2);
 
-forN(2048, (i) => {
-    var point = new E3D_entity_wireframe_canvas("point#" + i);
+    var point = new E3D_entity_wireframe_canvas("point#0");
     point.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 12, 4);
     point.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 12, 4);
     point.moveTo(v3_addnoise_new(_v3_null, 1024.0));
     point.isVisible = true;
     E3D_addEntity(point);
     point.visibilityDistance = 5.0;   // override for testing
-});
+
+    forN(2048, (i) => {
+        var point2 = E3D_cloneEntity(point, "point#" + (i+1), true);
+        ENTITIES[point2].moveTo(v3_addnoise_new(_v3_null, 1024.0));
+        ENTITIES[point2].updateMatrix();
+        ENTITIES[point2].isVisible = true;
+        //E3D_addEntity(point2);
+        ENTITIES[point2].visibilityDistance = 5.0;   // override for testing
+    });
 
 var culltestpoint1 = new E3D_entity_wireframe_canvas("ctpoint1");
 culltestpoint1.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 16, 4);

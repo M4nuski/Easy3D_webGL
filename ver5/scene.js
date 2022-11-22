@@ -45,7 +45,8 @@ class E3D_scene { // Basic, single pass
     }
 
     setSceneUniforms() {
-        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uProjectionMatrix, false, CAMERA.getProjectionViewMatrix());
+        if (typeof(CAMERA.matrix))
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uProjectionMatrix, false, CAMERA.matrix);
         if (this.program.shaderUniforms.uStrokePass != -1) CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
     }
     setEntityUniforms(i) {
@@ -205,7 +206,7 @@ class E3D_scene_default extends E3D_scene {
     }
 
     setSceneUniforms() {
-        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uProjectionMatrix, false, CAMERA.getProjectionViewMatrix());
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms.uProjectionMatrix, false, CAMERA.matrix);
         if (this.program.shaderUniforms.uStrokePass != -1) CONTEXT.uniform1i(this.program.shaderUniforms.uStrokePass, 0);
 
         CONTEXT.uniform3fv(this.program.shaderUniforms.uLightA_Color, this.lightA_color);
@@ -331,7 +332,7 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
     }
 
     setPass1SceneUniforms() {
-        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, CAMERA.getProjectionViewMatrix());
+        CONTEXT.uniformMatrix4fv(this.program.shaderUniforms["uProjectionMatrix"], false, CAMERA.matrix);
         CONTEXT.uniform4fv(this.program.shaderUniforms["uFarColor"], this.farColor );
         CONTEXT.uniform4fv(this.program.shaderUniforms["uStrokeColor"], this.strokeColor );
         CONTEXT.uniform1f(this.program.shaderUniforms["uStrokeDepth"], this.strokeDepth );
@@ -339,7 +340,7 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
     }
 
     setPass2SceneUniforms() {
-        CONTEXT.uniformMatrix4fv(this.program2.shaderUniforms["uProjectionMatrix"], false, CAMERA.getProjectionViewMatrix());
+        CONTEXT.uniformMatrix4fv(this.program2.shaderUniforms["uProjectionMatrix"], false, CAMERA.matrix);
         CONTEXT.uniform3fv(this.program2.shaderUniforms["uLight"], this.light0_adjusted);
         CONTEXT.uniform1i(this.program2.shaderUniforms["strokePass"], 0);
         CONTEXT.uniform4fv(this.program2.shaderUniforms["uStrokeColor"], this.strokeColor);
