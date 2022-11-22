@@ -90,25 +90,22 @@ class E3D_camera {
         v3_rotateY_mod(vect, -this.rotation[1]);
     }
 
-    inCameraSpace_new(vect) {
-        var res = v3_sub_new(vect, this.position);
-        v3_rotateY_mod(res, this.rotation[1]);
-        v3_rotateX_mod(res, this.rotation[0]);
-        v3_rotateZ_mod(res, this.rotation[2]);
-        v3_add_mod(res, this.position);
-        return res;
+    isEntityVisible(index) {
+        if (E3D_culling == E3D_cullingMode.NONE) return true;
+        if (!ENTITIES[index].isVisibiltyCullable) return true;
+        if (E3D_culling == E3D_cullingMode.ZDIST) return this.inRange(ENTITIES[index].position, ENTITIES[index].visibilityDistance);
+        if (E3D_culling == E3D_cullingMode.FUSTRUM) return this.inFustrum(ENTITIES[index].position, ENTITIES[index].visibilityDistance);
+        return true;
     }
-    inCameraSpace_res(res, vect) {
-        v3_sub_res(res, vect, this.position);
-        v3_rotateY_mod(res, this.rotation[1]);
-        v3_rotateX_mod(res, this.rotation[0]);
-        v3_rotateZ_mod(res, this.rotation[2]);
+
+    inRange(point, radius) {
+        //CAMERA.inCameraSpace_res(__CAMERA.isEntityVisible(i);_pos, ENTITIES[index].position);
+        //var dist = -__CAMERA.isEntityVisible(i);_pos[2]; // only check for Z
+        //return ( ((dist - ENTITIES[index].visibilityDistance) < E3D_FAR) && ((dist + ENTITIES[index].visibilityDistance) > E3D_NEAR) );
+        return true;
     }
-    inCameraSpace_mod(vect) {
-        v3_sub_mod(vect, this.position);
-        v3_rotateY_mod(vect, this.rotation[1]);
-        v3_rotateX_mod(vect, this.rotation[0]);
-        v3_rotateZ_mod(vect, this.rotation[2]);
+    inFustrum(point, radius) {
+        return true;
     }
 
     getScreenCoordinates(vect) {
@@ -299,21 +296,11 @@ class E3D_camera_model extends E3D_camera_persp {
         v3_applym4_mod(vect, this.inverseRotationMatrix);
     }
 
-    inCameraSpace_new(vect) {
-        let res = v3_rotateX_new(vect, this.rotation[0]);
-        v3_rotateY_mod(res, this.rotation[1]);
-        res[2] += this.zDist;
-        return res;
+    inRange(point, radius) {
+        return true;
     }
-    inCameraSpace_res(res, vect) {
-        v3_rotateX_res(res, vect, this.rotation[0]);
-        v3_rotateY_mod(res, this.rotation[1]);
-        res[2] += this.zDist;
-    }
-    inCameraSpace_mod(vect) {
-        v3_rotateX_mod(vect, this.rotation[0]);
-        v3_rotateY_mod(vect, this.rotation[1]);
-        vect[2] += this.zDist;
+    inFustrum(point, radius) {
+        return true;
     }
 
     getworldCoordinates(x, y, distFromViewport = 0.0) {
@@ -409,17 +396,12 @@ class E3D_camera_space extends E3D_camera_persp {
         v3_applym4_mod(vect, this.inverseRotationMatrix);
     }
 
-
-    inCameraSpace_new(vect) {
-        return v3_applym4_new(vect, this.rotationMatrix);
+    inRange(point, radius) {
+        return true;
     }
-    inCameraSpace_res(res, vect) {
-        v3_applym4_res(res, vect, this.rotationMatrix);
+    inFustrum(point, radius) {
+        return true;
     }
-    inCameraSpace_mod(vect) {
-        v3_applym4_mod(vect, this.rotationMatrix);
-    }
-
 }
 
 

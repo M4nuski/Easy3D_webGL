@@ -165,10 +165,6 @@ CB_tick = function() {
     if (INPUTS.checkCommand("action1", true)) {
 
     }
-    if ((CAMERA.id == "cam_o") && (INPUTS.pz_delta != 0.0)) {
-   //     E3D_ZOOM = 1.0 + (Math.abs(INPUTS.pz) * 0.01);
-   //     CAMERA.resize();
-    }
 }
 
 let p1element = $("p1");
@@ -180,7 +176,6 @@ var distFromCam = 100.0;
 TIMER.onSlowTick = function () {
 
     axis1.updateVector(CAMERA.rotateToCameraView_new([0.0, 0.0, -1.0]));
-    axis2.updateVector(CAMERA.inCameraSpace_new([0.0, 0.0, 0.0]));
 
     let p1 = [ 0.0,  0.0, 0.0];
     let p2 = [100.0, 0.0, 0.0];
@@ -212,11 +207,6 @@ TIMER.onSlowTick = function () {
     setDataV3("p2", p2);
     setDataV3("p3", p3);
     setDataV3("p4", p4);
-
-    setDataV3("inCamSpace", CAMERA.inCameraSpace_new([-50.0, -50.0, -50.0]));
-
-    //$("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam)) + "\n";
-    //$("data").innerText += v3_string(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0)) + "\n";
 
     point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
     point1.updateMatrix();

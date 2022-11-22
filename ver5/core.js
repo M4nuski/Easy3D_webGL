@@ -503,36 +503,6 @@ function E3D_removeEntityBodyByIndex(index) {
 }
 
 
-// Basic culling, only if in front of camera plane
-
-function E3D_checkEntityVisible(entityObj) {
-    return E3D_checkEntityVisibleByIndex(entityObj.index);
-}
-function E3D_checkEntityVisibleById(id) {
-    let index = E3D_getEntityIndexById(id);
-    if (index == -1) return;
-    return E3D_checkEntityVisibleByIndex(index);
-}
-var __E3D_checkEntityVisibleByIndex_pos = v3_new();
-function E3D_checkEntityVisibleByIndex(index) {
-
-    if (E3D_culling == E3D_cullingMode.NONE) return true;
-    if (!ENTITIES[index].isVisibiltyCullable) return true;
-
-    if (E3D_culling == E3D_cullingMode.ZDIST) {
-        CAMERA.inCameraSpace_res(__E3D_checkEntityVisibleByIndex_pos, ENTITIES[index].position);
-        var dist = -__E3D_checkEntityVisibleByIndex_pos[2]; // only check for Z
-        return ( ((dist - ENTITIES[index].visibilityDistance) < E3D_FAR) && ((dist + ENTITIES[index].visibilityDistance) > E3D_NEAR) );
-    }
-
-    if (E3D_culling == E3D_cullingMode.FUSTRUM) {
-        return CAMERA.inFustrum(ENTITIES[index].position, ENTITIES[index].visibilityDistance);
-    }
-
-    return true;
-}
-
-
 // utilities
 
 

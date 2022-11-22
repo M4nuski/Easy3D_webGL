@@ -94,7 +94,7 @@ class E3D_scene { // Basic, single pass
         this.setSceneUniforms();
 
         for (let i = 0; i < ENTITIES.length; ++i) {
-            if ((ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (E3D_checkEntityVisibleByIndex(i)) ) {
+            if ((ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (CAMERA.isEntityVisible(i)) ) {
                 E3D_DEBUG_RENDER_NB_ENTITIES++;
                 this.setEntityBuffers(i);
                 this.setEntityUniforms(i);
@@ -259,7 +259,7 @@ class E3D_scene_2pass extends E3D_scene {
         E3D_DEBUG_RENDER_NB_ELEMENTS = 0;
 
         this.visibilityList = [];
-        for (let i = 0; i < ENTITIES.length; ++i) this.visibilityList[i] = (ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (E3D_checkEntityVisibleByIndex(i)) ;
+        for (let i = 0; i < ENTITIES.length; ++i) this.visibilityList[i] = (ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (CAMERA.isEntityVisible(i)) ;
 
         CONTEXT.clear(CONTEXT.COLOR_BUFFER_BIT | CONTEXT.DEPTH_BUFFER_BIT);
 
@@ -349,7 +349,7 @@ class E3D_scene_cell_shader extends E3D_scene_2pass {
         E3D_DEBUG_RENDER_NB_ELEMENTS = 0;
 
         this.visibilityList = [];
-        for (let i = 0; i < ENTITIES.length; ++i) this.visibilityList[i] = (ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (E3D_checkEntityVisibleByIndex(i)) ;
+        for (let i = 0; i < ENTITIES.length; ++i) this.visibilityList[i] = (ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (CAMERA.isEntityVisible(i)) ;
 
         CONTEXT.clear(CONTEXT.COLOR_BUFFER_BIT | CONTEXT.DEPTH_BUFFER_BIT);
 
