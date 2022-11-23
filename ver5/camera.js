@@ -95,12 +95,22 @@ class E3D_camera {
     }
 
     inRange(point, radius) {
-        //CAMERA.inCameraSpace_res(__CAMERA.isEntityVisible(i);_pos, ENTITIES[index].position);
-        //var dist = -__CAMERA.isEntityVisible(i);_pos[2]; // only check for Z
-        //return ( ((dist - ENTITIES[index].visibilityDistance) < E3D_FAR) && ((dist + ENTITIES[index].visibilityDistance) > E3D_NEAR) );
-        return true;
+        var offset = v3_rotateY_new(point, this.rotation[1]);
+        v3_rotateX_mod(offset, this.rotation[0]);
+        v3_rotateZ_mod(offset, this.rotation[2]);
+        v3_sub_mod(offset, this.position);
+        return ( ((offset[2] - radius) < E3D_FAR) && ((offset[2] + radius) > E3D_NEAR) );
     }
     inFustrum(point, radius) {
+        var offset = v3_rotateY_new(point, this.rotation[1]);
+        v3_rotateX_mod(offset, this.rotation[0]);
+        v3_rotateZ_mod(offset, this.rotation[2]);
+        v3_sub_mod(offset, this.position);
+        if ( ((offset[2] - radius) > E3D_FAR) || ((offset[2] + radius) < E3D_NEAR) ) return false;
+        let w = E3D_WIDTH / E3D_ZOOM / 2.0;
+        if ( ((offset[0] + radius) < -w) || ((offset[0] - radius) > w) ) return false;
+        let h = E3D_HEIGHT / E3D_ZOOM / 2.0;
+        if ( ((offset[1] + radius) < -h) || ((offset[1] - radius) > h) ) return false;
         return true;
     }
 

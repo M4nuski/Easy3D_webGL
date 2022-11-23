@@ -219,6 +219,8 @@ TIMER.onSlowTick = function () {
     setDataV3("p3", p3);
     setDataV3("p4", p4);
 
+    setData("inFustrum", CAMERA.inFustrum([0.0, 0.0, 0.0], 5.0));
+
     point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
     point1.updateMatrix();
     point2.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0));
