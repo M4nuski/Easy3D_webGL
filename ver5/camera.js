@@ -69,10 +69,6 @@ class E3D_camera {
         this.updateMatrix();
     }
 
-    getProjectionViewMatrix() {
-        return this.matrix;
-    }
-
     rotateToCameraView_new(vect) {
         var res = v3_rotateZ_new(vect, -this.rotation[2]);
         v3_rotateX_mod(res, -this.rotation[0]);
@@ -240,6 +236,17 @@ class E3D_camera_persp extends E3D_camera {
 
         return p;
     }
+
+    inRange(point, radius) {
+        var offset = v3_sub_new(point, this.position);
+        v3_rotateY_mod(offset, this.rotation[1]);
+        v3_rotateX_mod(offset, this.rotation[0]);
+        v3_rotateZ_mod(offset, this.rotation[2]);
+        return ( ((-offset[2] - radius) < E3D_FAR) && ((-offset[2] + radius) > E3D_NEAR) );
+    }
+    inFustrum(point, radius) {
+        return true;
+    }
 }
 
 // Model view camera, perspective matrix rotating aroung a pivot point
@@ -297,8 +304,14 @@ class E3D_camera_model extends E3D_camera_persp {
     }
 
     inRange(point, radius) {
-        return true;
+        var offset = v3_sub_new(point, this.position);
+        offset[2] += this.zDist;
+        v3_rotateY_mod(offset, this.rotation[1]);
+        v3_rotateX_mod(offset, this.rotation[0]);
+        v3_rotateZ_mod(offset, this.rotation[2]);
+        return ( ((-offset[2] - radius) < E3D_FAR) && ((-offset[2] + radius) > E3D_NEAR) );
     }
+
     inFustrum(point, radius) {
         return true;
     }
@@ -397,7 +410,9 @@ class E3D_camera_space extends E3D_camera_persp {
     }
 
     inRange(point, radius) {
-        return true;
+        var offset = v3_sub_new(point, this.position);
+        v3_applym4_mod(offset, this.rotationMatrix);
+        return ( ((-offset[2] - radius) < E3D_FAR) && ((-offset[2] + radius) > E3D_NEAR) );
     }
     inFustrum(point, radius) {
         return true;
@@ -406,7 +421,7 @@ class E3D_camera_space extends E3D_camera_persp {
 
 
 
-
+// Full screen handlers
 
 
 document.exitFullscreen = document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;

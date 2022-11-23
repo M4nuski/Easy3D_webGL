@@ -42,19 +42,19 @@ class E3D_input {
         this.inputDoneTable = new Map(); // keys that got released but trigger again without keydown (keyboard auto-repeat)
         this.inputDoneTable.set(E3D_INP_ALWAYS, false);
 
-        // Config        
+        // Config
         this._posSpeed = 150; // units per sec for position outputs
         this._rotSpeed = 2.0 * DegToRad; // rad per "pixels"
 
-        this.mousePosDirection = 1; 
+        this.mousePosDirection = 1;
         this.mouseRotDirection = 1;
-        
+
         this._mouseSpeed = 50; // units per mouse position delta
         this._mouseWheelSpeed = 5.0; // units per wheel rotation delta
 
         this.elemScaleX = 1.0; // screen pixels to element's relative size
-        this.elemScaleY = 1.0; 
-        
+        this.elemScaleY = 1.0;
+
         this._doubleTapDelay = 200; //ms
         this._pinchHysteresis = 10; // How many pixels of difference between finger movements is to be still considered 0
 
@@ -107,10 +107,10 @@ class E3D_input {
         */
 
         // Keyboard Controls, maps commands to keyboardEvent.code
-        this.keyMap = new Map(); 
+        this.keyMap = new Map();
         // this.keyMap.set(command, key.code);
         // Could also be this.keyMap.set("px_dec", E3D_INP_RMB); to change a position input with a mouse button
-        
+
         // internal default commands
         this.keyMap.set("px_dec", "KeyD");
         this.keyMap.set("px_inc", "KeyA");
@@ -123,7 +123,7 @@ class E3D_input {
 
         this.keyMap.set("rx_dec", "KeyT");
         this.keyMap.set("rx_inc", "KeyG");
-        
+
         this.keyMap.set("ry_dec", "KeyG");
         this.keyMap.set("ry_inc", "KeyJ");
 
@@ -143,7 +143,7 @@ class E3D_input {
         this.pageY = 0;
         // Raw pointer data
         this.pinx = 0;
-        this.piny = 0; 
+        this.piny = 0;
         this.mx = 0;
         this.my = 0;
         this.mw = 0;
@@ -159,13 +159,13 @@ class E3D_input {
         this.reset();
     }
 
-// Methods 
+// Methods
     reset() {
         // Positions
         // Delta
         this.px_delta = 0;
         this.py_delta = 0;
-        this.pz_delta = 0;        
+        this.pz_delta = 0;
         // Smoothed Delta
         this.px_delta_smth = 0;
         this.py_delta_smth = 0;
@@ -199,7 +199,7 @@ class E3D_input {
 
     }
 
-    supportMouse() {    
+    supportMouse() {
         CANVAS.addEventListener("contextmenu", (e) => { e.preventDefault(); } );
 
         CANVAS.addEventListener("mousedown", (e) => { this.mouseDown(e) } );
@@ -211,9 +211,9 @@ class E3D_input {
 
         CANVAS.addEventListener("dblclick", (e) => { this.mouseDblClick(e) } );
 
-        this.resize(); 
+        this.resize();
     }
-    
+
     supportKeyboard() {
         document.addEventListener("keydown", (e) => { this.keyDown(e) } );
         document.addEventListener("keyup", (e) => { this.keyUp(e) } );
@@ -225,25 +225,25 @@ class E3D_input {
         CANVAS.addEventListener("touchcancel", (e) => { this.touchEnd(e) } );
         CANVAS.addEventListener("touchmove", (e) => { this.touchMove(e) } );
 
-        this.resize(); 
+        this.resize();
     }
 
     supportPointerLock() {
-        if (pLockSupported) CB_pointerlockMove = (x, y) => { this.mouseLockedMove(x, y) }; 
+        if (pLockSupported) CB_pointerlockMove = (x, y) => { this.mouseLockedMove(x, y) };
     }
 
     resize() {
-        this.elemScaleX = 1.0 / CANVAS.offsetWidth; 
-        this.elemScaleY = 1.0 / CANVAS.offsetHeight; 
+        this.elemScaleX = 1.0 / CANVAS.offsetWidth;
+        this.elemScaleY = 1.0 / CANVAS.offsetHeight;
     }
 
     // Process keys and pointer inputs to get final output values
     processInputs() {
 
-        this.px_delta = this.px_offset; 
-        this.py_delta = this.py_offset; 
+        this.px_delta = this.px_offset;
+        this.py_delta = this.py_offset;
         this.pz_delta = this.pz_offset;
-        this.rx_delta = this.rx_offset; 
+        this.rx_delta = this.rx_offset;
         this.ry_delta = this.ry_offset;
         this.rz_delta = this.rz_offset;
 
@@ -268,7 +268,7 @@ class E3D_input {
         }
         if (this.inputTable.get(this.keyMap.get("pz_inc"))) {
             this.pz_delta += this._posSpeed;
-        }    
+        }
 
         // Rotation
         if (this.inputTable.get(this.keyMap.get("rx_dec"))) {
@@ -276,14 +276,14 @@ class E3D_input {
         }
         if (this.inputTable.get(this.keyMap.get("rx_inc"))) {
             this.rx_delta += this._rotSpeed;
-        }    
+        }
 
         if (this.inputTable.get(this.keyMap.get("ry_dec"))) {
             this.ry_delta -= this._rotSpeed;
         }
         if (this.inputTable.get(this.keyMap.get("ry_inc"))) {
             this.ry_delta += this._rotSpeed;
-        }    
+        }
 
         if (this.inputTable.get(this.keyMap.get("rz_dec"))) {
             this.rz_delta -= this._rotSpeed;
@@ -293,7 +293,7 @@ class E3D_input {
         }
 
         // Pointer
-        // Position        
+        // Position
         var mps = this._posSpeed * this.mousePosDirection;
         var mrs = this._rotSpeed * this.mouseRotDirection;
 
@@ -342,9 +342,9 @@ class E3D_input {
         //this.rx_delta *= TIMER.delta;
         //this.ry_delta *= TIMER.delta;
         //this.rz_delta *= TIMER.delta;
-        
+
         this.px += this.px_delta;
-        this.py += this.py_delta; 
+        this.py += this.py_delta;
         this.pz += this.pz_delta;
 
         this.rx += this.rx_delta;
@@ -352,31 +352,31 @@ class E3D_input {
         this.rz += this.rz_delta;
 
         // Warp rotations
-        if (this.rx < -PIx2) { 
+        if (this.rx < -PIx2) {
             this.rx += PIx2;
             this.rx_smth += PIx2;
         }
-        if (this.rx > PIx2) { 
-            this.rx -= PIx2; 
-            this.rx_smth -= PIx2; 
+        if (this.rx > PIx2) {
+            this.rx -= PIx2;
+            this.rx_smth -= PIx2;
         }
 
-        if (this.ry < -PIx2) { 
+        if (this.ry < -PIx2) {
             this.ry += PIx2;
             this.ry_smth += PIx2;
         }
-        if (this.ry > PIx2) { 
-            this.ry -= PIx2; 
-            this.ry_smth -= PIx2; 
+        if (this.ry > PIx2) {
+            this.ry -= PIx2;
+            this.ry_smth -= PIx2;
         }
 
-        if (this.rz < -PIx2) { 
+        if (this.rz < -PIx2) {
             this.rz += PIx2;
             this.rz_smth += PIx2;
         }
-        if (this.rz > PIx2) { 
-            this.rz -= PIx2; 
-            this.rz_smth -= PIx2; 
+        if (this.rz > PIx2) {
+            this.rz -= PIx2;
+            this.rz_smth -= PIx2;
         }
 
         this.mx = 0;
@@ -495,11 +495,11 @@ class E3D_input {
             if (x) {
                 this.rx_smth += (this.rx - this.rx_smth) * f;
                 this.rx_delta_smth += (this.rx_delta - this.rx_delta_smth) * f;
-            }            
+            }
             if (y) {
-                this.ry_smth += (this.ry - this.ry_smth) * f;  
-                this.ry_delta_smth += (this.ry_delta - this.ry_delta_smth) * f; 
-            } 
+                this.ry_smth += (this.ry - this.ry_smth) * f;
+                this.ry_delta_smth += (this.ry_delta - this.ry_delta_smth) * f;
+            }
             if (z) {
                 this.rz_smth += (this.rz - this.rz_smth) * f;
                 this.rz_delta_smth += (this.rz_delta - this.rz_delta_smth) * f;
@@ -522,15 +522,15 @@ class E3D_input {
             if (x) {
                 this.px_smth += (this.px - this.px_smth) * f;
                 this.px_delta_smth += (this.px_delta - this.px_delta_smth) * f;
-            }            
+            }
             if (y) {
                 this.py_smth += (this.py - this.py_smth) * f;
                 this.py_delta_smth += (this.py_delta - this.py_delta_smth) * f;
-            }    
+            }
             if (z) {
                 this.pz_smth += (this.pz - this.pz_smth) * f;
                 this.pz_delta_smth += (this.pz_delta - this.pz_delta_smth) * f;
-            }    
+            }
         } else {
             this.px_smth = this.px;
             this.py_smth = this.py;
@@ -544,21 +544,21 @@ class E3D_input {
 
     // Add or update command key binding
     addCommand(cmd, key) {
-        this.keyMap.set(cmd, key);        
+        this.keyMap.set(cmd, key);
     }
     // Remove command and it's binding
     removeCommand(cmd) {
-        return this.keyMap.delete(cmd);        
+        return this.keyMap.delete(cmd);
     }
     // Check if a command has been triggered, and reset it if needed
     // Make sure that no 2 commands or button inputs conflicts otherwise they might reset each others
     checkCommand(cmd, reset = false) {
-        let res = this.inputTable.get(this.keyMap.get(cmd));        
+        let res = this.inputTable.get(this.keyMap.get(cmd));
         if (reset && res) this.inputTable.set(this.keyMap.get(cmd), false);
         return res;
     }
 
-    
+
     // Resize
 
 
@@ -578,18 +578,18 @@ class E3D_input {
 
         var inpDone = this.inputDoneTable.get(event.code);
         if ((inpDone == undefined) || (inpDone == true)) {
-            this.inputTable.set(event.code, true);   
+            this.inputTable.set(event.code, true);
             this.inputDoneTable.set(event.code, false);
-        }    
+        }
         if (event.type == undefined) event.type = "keyDown";
         if (CB_input) CB_input( event );
 
         //prevent scroll down on spacebar
-        if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault(); 
+        if ((event.target) && (event.target == document.body) && (event.code == " ")) event.preventDefault();
         if (E3D_DEBUG_LOG_INPUT_STATES) log("keyDown");
     }
-    
-    keyUp(event) {    
+
+    keyUp(event) {
         if (event.type == undefined) event.type = "keyUp";
         if (CB_input) CB_input( event );
 
@@ -612,7 +612,7 @@ class E3D_input {
         if (E3D_DEBUG_LOG_INPUT_STATES) log("mouseDown");
         return false;
     }
-    
+
     mouseUp(event) {
         this.keyUp( { code : event.button, type:"mouseUp" } );
 
@@ -620,12 +620,12 @@ class E3D_input {
         if (E3D_DEBUG_LOG_INPUT_STATES) log("mouseUp");
         return false;
     }
-    
+
     mouseLeave() {
         for (let i = 0; i < 3; ++i) this.keyUp( { code : i } );
         if (E3D_DEBUG_LOG_INPUT_STATES) log("mouseLeave");
     }
-    
+
     mouseMove(event) {
         if (!pLockActive()) {
             this.mx += (event.pageX - this.pinx) * this._mouseSpeed * this.elemScaleX;
@@ -639,21 +639,21 @@ class E3D_input {
             this.pageY = event.pageY;
         }
     }
-    
+
     mouseLockedMove(x, y) {
         this.mx += x * this._mouseSpeed * this.elemScaleX;
         this.my += y * this._mouseSpeed * this.elemScaleY;
         if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseLockedMove");
     }
-    
-    mouseWheel(event) {   
+
+    mouseWheel(event) {
         // Override cross browser/OS wheel delta discrepencies
         this.mw += (event.deltaY > 0) ? this._mouseWheelSpeed : -this._mouseWheelSpeed;
 
         if (event.preventDefault) { event.preventDefault(); };
         if (E3D_DEBUG_LOG_INPUT_MOVES) log("mouseWheel");
     }
-    
+
     mouseDblClick(event) {
         this.keyUp( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
         this.keyDown( { code : E3D_INP_DOUBLE_PREFIX_CODE + event.button } );
@@ -663,7 +663,7 @@ class E3D_input {
     }
 
 
-    // Touch Inputs 
+    // Touch Inputs
 
 
     touchStart(event) {
@@ -710,8 +710,8 @@ class E3D_input {
             this.doubleTapping = false;
 
             if (this.doubleTapTimer) {
-                clearTimeout(this.doubleTapTimer); 
-                this.doubleTapTimer = false; 
+                clearTimeout(this.doubleTapTimer);
+                this.doubleTapTimer = false;
             }
         } else {
             this.doubleTapping = true;
@@ -724,9 +724,9 @@ class E3D_input {
             this.keyDown( { code : touchCode } );
             this.liftTapping = false;
 
-            if (this.liftTimer) { 
-                clearTimeout(this.liftTimer); 
-                this.liftTimer = false; 
+            if (this.liftTimer) {
+                clearTimeout(this.liftTimer);
+                this.liftTimer = false;
             }
         }
         if (E3D_DEBUG_LOG_INPUT_STATES) log("touchStart");
@@ -736,7 +736,7 @@ class E3D_input {
     touchEnd(event) {
 
      //   if (event.preventDefault) { event.preventDefault(); }; // commented-out to fix css :hover not de-activating on mobile
-        
+
         if (this.ongoingTouches.size == 1) {
             var firstTouch = this.ongoingTouches.get(event.changedTouches[0].identifier);
             if (firstTouch) {
@@ -744,7 +744,7 @@ class E3D_input {
                 this.mouseUp(firstTouch);
             }
         }
-        
+
         if (this.ongoingTouches.size == 2) {
             var touchesIter = this.ongoingTouches.values();
             var firstTouch = touchesIter.next().value;
@@ -755,13 +755,13 @@ class E3D_input {
 
         if (!this.liftTapping) {
             this.liftTapping = true;
-            if (this.liftTimer) { 
-                clearTimeout(this.liftTimer); 
-                this.liftTimer = false; 
+            if (this.liftTimer) {
+                clearTimeout(this.liftTimer);
+                this.liftTimer = false;
             }
             this.liftTimer = setTimeout( () => { this.liftTapping = false; }, this._doubleTapDelay );
         }
-        
+
         for (var i = 0; i < event.changedTouches.length; i++) this.ongoingTouches.delete(event.changedTouches[i].identifier);
 
         if (E3D_DEBUG_LOG_INPUT_STATES) log("touchEnd");
@@ -772,8 +772,8 @@ class E3D_input {
     touchMove(event) {
 
         if (event.preventDefault) { event.preventDefault(); };
-       
-        for (var i = 0; i < event.changedTouches.length; ++i) 
+
+        for (var i = 0; i < event.changedTouches.length; ++i)
             this.ongoingTouches.set(event.changedTouches[i].identifier, this.copyTouch(event.changedTouches[i]) ); // update objects
 
         if (this.ongoingTouches.size == 1) {
@@ -876,7 +876,7 @@ class E3D_input_virtual_trackpad {
         element.addEventListener("resize", (e) => this.onResize(e));
 
         this.onResize();
-    } 
+    }
 
     onResize() {
         this.xScale = CANVAS.offsetWidth / this.element.offsetWidth;
@@ -905,12 +905,12 @@ class E3D_input_virtual_trackpad {
         event.preventDefault();
         INPUTS.touchCancel( { changedTouches : [this.offsetTouch(event.changedTouches[0])] } );
     }
-    
+
 
     offsetTouch(touch) {
-        return { identifier: touch.identifier, 
-            pageX: (touch.pageX - this.xOffset) * this.xScale, 
-            pageY: (touch.pageY - this.yOffset) * this.yScale            
+        return { identifier: touch.identifier,
+            pageX: (touch.pageX - this.xOffset) * this.xScale,
+            pageY: (touch.pageY - this.yOffset) * this.yScale
             };
     }
 
@@ -925,10 +925,10 @@ class E3D_input_virtual_thumbstick {
 
         this.element = element;
 
-        this.doubleTapCommand = doubleTapCommand;        
+        this.doubleTapCommand = doubleTapCommand;
         this.doubleTapping = false;
-        this.doubleTapTimer = false; 
-        this.liftTapCommand = liftTapCommand;     
+        this.doubleTapTimer = false;
+        this.liftTapCommand = liftTapCommand;
         this.liftTapping = false;
         this.liftTimer = false;
 
@@ -958,12 +958,12 @@ class E3D_input_virtual_thumbstick {
         element.addEventListener("resize", (e) => this.onResize(e));
 
         this.onResize();
-    } 
+    }
 
     onResize() {
         this.xMax = this.element.offsetWidth / 2;
         this.yMax = this.element.offsetHeight / 2;
-        
+
         let o = getTotalPageOffset(this.element);
         this.xMid = o.x + this.xMax;
         this.yMid = o.y + this.yMax;
@@ -981,7 +981,7 @@ class E3D_input_virtual_thumbstick {
             if (dx < -1.0) dx = -1.0;
             if (dx >  1.0) dx =  1.0;
             if (dy < -1.0) dy = -1.0;
-            if (dy >  1.0) dy =  1.0;     
+            if (dy >  1.0) dy =  1.0;
 
             // X
             if (Math.abs(dx) > this.deadZone) {
@@ -1014,8 +1014,8 @@ class E3D_input_virtual_thumbstick {
             }
             this.doubleTapping = false;
             if (this.doubleTapTimer) {
-                clearTimeout(this.doubleTapTimer); 
-                this.doubleTapTimer = false; 
+                clearTimeout(this.doubleTapTimer);
+                this.doubleTapTimer = false;
             }
         } else {
             this.doubleTapping = true;
@@ -1028,9 +1028,9 @@ class E3D_input_virtual_thumbstick {
                 INPUTS.keyDown( { code : INPUTS.keyMap.get(this.liftTapCommand) } );
             }
             this.liftTapping = false;
-            if (this.liftTimer) { 
-                clearTimeout(this.liftTimer); 
-                this.liftTimer = false; 
+            if (this.liftTimer) {
+                clearTimeout(this.liftTimer);
+                this.liftTimer = false;
             }
         }
 
@@ -1042,9 +1042,9 @@ class E3D_input_virtual_thumbstick {
 
         if (!this.liftTapping) {
             this.liftTapping = true;
-            if (this.liftTimer) { 
-                clearTimeout(this.liftTimer); 
-                this.liftTimer = false; 
+            if (this.liftTimer) {
+                clearTimeout(this.liftTimer);
+                this.liftTimer = false;
             }
             this.liftTimer = setTimeout( () => { this.liftTapping = false; }, INPUTS._doubleTapDelay );
         }
@@ -1056,7 +1056,7 @@ class E3D_input_virtual_thumbstick {
             this.x = event.changedTouches[0].pageX;
             this.y = event.changedTouches[0].pageY;
         }
-    }    
+    }
 
 }
 
@@ -1086,12 +1086,12 @@ var pLockElement; // element that captured the pointer
 const _pLockDeltaLimit = 300; // max delta per event to avoid warp-around when browser place the cursor back into the center after exiting the client area
 
 function pLockRequest(element) {
-    pLockElement = element;    
+    pLockElement = element;
     if (pLockSupported) {
-        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock; 
+        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
         pLockRequested = true;
         if (E3D_DEBUG_LOG_INPUT_MODE) log("Requesting pLock.");
-        element.requestPointerLock(); 
+        element.requestPointerLock();
         if (CB_pointerlockEvent) CB_pointerlockEvent("request");
     } else if (E3D_DEBUG_LOG_INPUT_MODE) log("pLockRequest: pLock not supported.");
 }
@@ -1160,7 +1160,7 @@ function pLockInternalCallback(event) {
     var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
     if (CB_pointerlockMove) {
-        if ((movementX < _pLockDeltaLimit) && (movementX > -_pLockDeltaLimit) && 
+        if ((movementX < _pLockDeltaLimit) && (movementX > -_pLockDeltaLimit) &&
             (movementY < _pLockDeltaLimit) && (movementY > -_pLockDeltaLimit)) {
             if (E3D_DEBUG_LOG_INPUT_MOVES) log("x: " + movementX + ", y: " + movementY);
             CB_pointerlockMove(movementX, movementY);

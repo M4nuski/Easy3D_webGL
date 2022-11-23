@@ -21,6 +21,9 @@ SCENE.fogLimit = E3D_FAR - 1;
 
 var E3D_culling = E3D_cullingMode.ZDIST;
 
+INPUTS._mouseWheelSpeed = 1.0;
+
+
 var dataMap = new Map();
 function formatDataMap() {
     var text = "";
@@ -172,6 +175,7 @@ CB_tick = function() {
     if (INPUTS.checkCommand("action1", true)) {
 
     }
+    INPUTS._posSpeed = INPUTS.inputTable.get("ShiftLeft") ? 300.0 : 150.0;
 }
 
 let p1element = $("p1");
