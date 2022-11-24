@@ -1465,6 +1465,32 @@ function v3_applym4_mod(a, m) {
     a[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w;
 }
 
+function v4_applym4_new(a, m) {
+    var res = [0.0, 0.0, 0.0, 0.0];
+
+    var a0 = a[0];
+    var a1 = a[1];
+    var a2 = a[2];
+    var a3 = a[3];
+
+    res[0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12] * a3);
+    res[1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13] * a3);
+    res[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14] * a3);
+    res[3] = (m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15] * a3);
+
+    return res;
+}
+function v4_applym4_res(a, m) {
+    var a0 = a[0];
+    var a1 = a[1];
+    var a2 = a[2];
+    var a3 = a[3];
+
+    res[0] = (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12] * a3);
+    res[1] = (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13] * a3);
+    res[2] = (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14] * a3);
+    res[3] = (m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15] * a3);
+}
 function v4_applym4_mod(a, m) {
     var a0 = a[0];
     var a1 = a[1];

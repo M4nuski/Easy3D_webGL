@@ -19,7 +19,7 @@ E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
 SCENE.fogLimit = E3D_FAR - 1;
 
-var E3D_culling = E3D_cullingMode.ZDIST;
+var E3D_culling = E3D_cullingMode.FUSTRUM;
 
 INPUTS._mouseWheelSpeed = 1.0;
 
@@ -219,7 +219,29 @@ TIMER.onSlowTick = function () {
     setDataV3("p3", p3);
     setDataV3("p4", p4);
 
-    setData("inFustrum", CAMERA.inFustrum([0.0, 0.0, 0.0], 5.0));
+    var offset = v3_sub_new([0.0, 0.0, 0.0], CAMERA.position);
+    v3_rotateY_mod(offset, CAMERA.rotation[1]);
+    v3_rotateX_mod(offset, CAMERA.rotation[0]);
+    v3_rotateZ_mod(offset, CAMERA.rotation[2]);
+
+    setDataV3("inFustrum p", offset);
+    //let f = Math.tan(E3D_FOV / 2.0) * E3D_AR;
+    //let fx = (E3D_AR >= 1.0) ? f : f / E3D_AR;
+    //let fy = (E3D_AR < 1.0) ? f : f / E3D_AR;
+
+    let f = Math.tan(E3D_FOV / 2.0);
+
+    let fx = offset[2] * (E3D_FAR - E3D_NEAR) / (E3D_FAR + E3D_NEAR) + (2.0 * E3D_NEAR);
+    let fy = fx;
+    if (E3D_AR >= 1.0) {
+        fx = fx * E3D_AR;
+    } else {
+        fy = fx / E3D_AR;
+    }
+
+    setDataFloat("fov/2.0", f);
+    setDataFloat("w at z", fx * f);
+    setDataFloat("h at z", fy * f);
 
     point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
     point1.updateMatrix();
@@ -236,7 +258,7 @@ TIMER.onSlowTick = function () {
 // camera type
 onClick("cmd_type_o", () => { CAMERA = cam_o; CAMERA.moveTo( 0.0, 0.0, -250.0, 0.0, 0.0, 0.0 ); } );
 onClick("cmd_type_p", () => { CAMERA = cam_p; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
-onClick("cmd_type_m", () => { CAMERA = cam_m; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
+onClick("cmd_type_m", () => { CAMERA = cam_m; CAMERA.moveTo( 0.0, 0.0, -100.0, 0.0, 0.0, 0.0 ); } );
 onClick("cmd_type_s", () => { CAMERA = cam_s; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
 
 // reset
