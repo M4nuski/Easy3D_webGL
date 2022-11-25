@@ -92,6 +92,10 @@ class E3D_scene { // Basic, single pass
         CONTEXT.clear(CONTEXT.COLOR_BUFFER_BIT | CONTEXT.DEPTH_BUFFER_BIT);
         CONTEXT.useProgram(this.program.shaderProgram);
 
+        CONTEXT.enableVertexAttribArray(this.program.shaderAttributes.aVertexPosition);
+        CONTEXT.enableVertexAttribArray(this.program.shaderAttributes.aVertexNormal);
+        CONTEXT.enableVertexAttribArray(this.program.shaderAttributes.aVertexColor);
+
         this.setSceneUniforms();
 
         for (let i = 0; i < ENTITIES.length; ++i) {
@@ -125,7 +129,7 @@ class E3D_scene { // Basic, single pass
         if (location == -1) return;
         CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
         CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
-        CONTEXT.enableVertexAttribArray(location);
+        //CONTEXT.enableVertexAttribArray(location);
     }
 
     bindAndUpdate3FloatBuffer(location, buffer, data) {
@@ -133,7 +137,7 @@ class E3D_scene { // Basic, single pass
         CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
         CONTEXT.bufferSubData(CONTEXT.ARRAY_BUFFER, 0, data);
         CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
-        CONTEXT.enableVertexAttribArray(location);
+        //CONTEXT.enableVertexAttribArray(location);
     }
 
     bindAndReset3FloatBuffer(location, buffer, data) {
@@ -141,7 +145,7 @@ class E3D_scene { // Basic, single pass
         CONTEXT.bindBuffer(CONTEXT.ARRAY_BUFFER, buffer);
         CONTEXT.bufferData(CONTEXT.ARRAY_BUFFER, data, CONTEXT.DYNAMIC_DRAW);
         CONTEXT.vertexAttribPointer(location, 3, CONTEXT.FLOAT, false, 0, 0);
-        CONTEXT.enableVertexAttribArray(location);
+        //CONTEXT.enableVertexAttribArray(location);
     }
 
 

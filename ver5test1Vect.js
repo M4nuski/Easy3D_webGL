@@ -147,12 +147,11 @@ E3D_addEntity(point2);
     E3D_addEntity(point);
     point.visibilityDistance = 5.0;   // override for testing
 
-    forN(2048, (i) => {
+    forN(16*1024, (i) => {
         var point2 = E3D_cloneEntity(point, "point#" + (i+1), true);
         ENTITIES[point2].moveTo(v3_addnoise_new(_v3_null, 1024.0));
         ENTITIES[point2].updateMatrix();
         ENTITIES[point2].isVisible = true;
-        //E3D_addEntity(point2);
         ENTITIES[point2].visibilityDistance = 5.0;   // override for testing
     });
 
@@ -208,7 +207,6 @@ TIMER.onSlowTick = function () {
 
     entity2.isVisible = CAMERA.zDist > -100.0;
 
-
     setData("Screen", E3D_WIDTH + "x" + E3D_HEIGHT + " near: " + E3D_NEAR + " far: " + E3D_FAR);
     setData("Viewport", "zoom: " + E3D_ZOOM.toFixed(3) + " FOV: " + (RadToDeg * E3D_FOV).toFixed(3) + " AR: " + (E3D_WIDTH / E3D_HEIGHT).toFixed(3));
     setDataV3("Cam.pos", CAMERA.position);
@@ -219,30 +217,6 @@ TIMER.onSlowTick = function () {
     setDataV3("p3", p3);
     setDataV3("p4", p4);
 
-    var offset = v3_sub_new([0.0, 0.0, 0.0], CAMERA.position);
-    v3_rotateY_mod(offset, CAMERA.rotation[1]);
-    v3_rotateX_mod(offset, CAMERA.rotation[0]);
-    v3_rotateZ_mod(offset, CAMERA.rotation[2]);
-
-    setDataV3("inFustrum p", offset);
-    //let f = Math.tan(E3D_FOV / 2.0) * E3D_AR;
-    //let fx = (E3D_AR >= 1.0) ? f : f / E3D_AR;
-    //let fy = (E3D_AR < 1.0) ? f : f / E3D_AR;
-
-    let f = Math.tan(E3D_FOV / 2.0);
-
-    let fx = offset[2] * (E3D_FAR - E3D_NEAR) / (E3D_FAR + E3D_NEAR) + (2.0 * E3D_NEAR);
-    let fy = fx;
-    if (E3D_AR >= 1.0) {
-        fx = fx * E3D_AR;
-    } else {
-        fy = fx / E3D_AR;
-    }
-
-    setDataFloat("fov/2.0", f);
-    setDataFloat("w at z", fx * f);
-    setDataFloat("h at z", fy * f);
-
     point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
     point1.updateMatrix();
     point2.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0));
@@ -252,14 +226,14 @@ TIMER.onSlowTick = function () {
     $("spanSFPS").innerText = TIMER.fpsSmoothed.toFixed(1);
     $("spanSPCT").innerText = TIMER.usageSmoothed.toFixed(1);
     $("spanLINES").innerText = E3D_DEBUG_RENDER_NB_ELEMENTS;
-    $("spanENT").innerText = E3D_DEBUG_RENDER_NB_ENTITIES;
+    $("spanENT").innerText = E3D_DEBUG_RENDER_NB_ENTITIES + "/" + ENTITIES.length;
 }
 
 // camera type
-onClick("cmd_type_o", () => { CAMERA = cam_o; CAMERA.moveTo( 0.0, 0.0, -250.0, 0.0, 0.0, 0.0 ); } );
-onClick("cmd_type_p", () => { CAMERA = cam_p; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
-onClick("cmd_type_m", () => { CAMERA = cam_m; CAMERA.moveTo( 0.0, 0.0, -100.0, 0.0, 0.0, 0.0 ); } );
-onClick("cmd_type_s", () => { CAMERA = cam_s; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); } );
+onClick("cmd_type_o", () => { CAMERA = cam_o; CAMERA.moveTo( 0.0, 0.0, -250.0, 0.0, 0.0, 0.0 ); CAMERA.resize(); } );
+onClick("cmd_type_p", () => { CAMERA = cam_p; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 );  CAMERA.resize(); } );
+onClick("cmd_type_m", () => { CAMERA = cam_m; CAMERA.moveTo( 0.0, 0.0, -100.0, 0.0, 0.0, 0.0 ); CAMERA.resize(); } );
+onClick("cmd_type_s", () => { CAMERA = cam_s; CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ); CAMERA.resize(); } );
 
 // reset
 onClick("cmd_reset",  () => CAMERA.moveTo( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ));
@@ -300,3 +274,8 @@ onClick("cmd_rpz45", () => CAMERA.moveBy(0.0, 0.0, 0.0,  0.0, 0.0,  45.0 * DegTo
 onEvent("cmd_dist", "input", (event) => distFromCam = Number(event.target.value));
 onEvent("cmd_FOV", "input", (event) => { E3D_FOV = Number(event.target.value) * DegToRad; CAMERA.resize(); });
 onEvent("cmd_zoom", "input", (event) => { E3D_ZOOM = Number(event.target.value) / 8.0; CAMERA.resize(); });
+
+// culling mode
+onClick("cmd_cull_n", () => E3D_culling = E3D_cullingMode.NONE );
+onClick("cmd_cull_z", () => E3D_culling = E3D_cullingMode.ZDIST );
+onClick("cmd_cull_f", () => E3D_culling = E3D_cullingMode.FUSTRUM );
