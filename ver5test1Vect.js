@@ -20,9 +20,9 @@ SCENE.setClearColor(_v3_darkgray);
 SCENE.fogLimit = E3D_FAR - 1;
 
 var E3D_culling = E3D_cullingMode.FUSTRUM;
-
+E3D_DEBUG_RENDER_TIME = true;
 INPUTS._mouseWheelSpeed = 1.0;
-
+TIMER.setFpsCap(144);
 
 var dataMap = new Map();
 function formatDataMap() {
@@ -139,22 +139,6 @@ point2.addSphere([0.0, 0.0, 0.0], 5.0, _v3_green, 16, 8);
 point2.isVisible = true;
 E3D_addEntity(point2);
 
-    var point = new E3D_entity_wireframe_canvas("point#0");
-    point.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 12, 4);
-    point.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 12, 4);
-    point.moveTo(v3_addnoise_new(_v3_null, 1024.0));
-    point.isVisible = true;
-    E3D_addEntity(point);
-    point.visibilityDistance = 5.0;   // override for testing
-
-    forN(16*1024, (i) => {
-        var point2 = E3D_cloneEntity(point, "point#" + (i+1), true);
-        ENTITIES[point2].moveTo(v3_addnoise_new(_v3_null, 1024.0));
-        ENTITIES[point2].updateMatrix();
-        ENTITIES[point2].isVisible = true;
-        ENTITIES[point2].visibilityDistance = 5.0;   // override for testing
-    });
-
 var culltestpoint1 = new E3D_entity_wireframe_canvas("ctpoint1");
 culltestpoint1.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 16, 4);
 culltestpoint1.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 16, 4);
@@ -170,7 +154,27 @@ culltestpoint2.isVisible = true;
 E3D_addEntity(culltestpoint2);
 culltestpoint2.visibilityDistance = 5.0; // override for testing
 
+
+var point = new E3D_entity_wireframe_canvas("point#0");
+point.addSphere([0.0, 0.0, 0.0], 10.0, _v3_green, 12, 4);
+point.addSphere([0.0, 0.0, 0.0], 5.0, _v3_red, 12, 4);
+point.moveTo(v3_addnoise_new(_v3_null, 1024.0));
+point.isVisible = true;
+E3D_addEntity(point);
+point.visibilityDistance = 5.0;   // override for testing
+var numCullPoints = 0;
+
 CB_tick = function() {
+    if (numCullPoints < 256) {
+        forN(64, (i) => {
+            var point2 = E3D_cloneEntity(point, "point#" + ((i+1) + (numCullPoints * 64)), true);
+            ENTITIES[point2].moveTo(v3_addnoise_new(_v3_null, 1024.0));
+            ENTITIES[point2].updateMatrix();
+            ENTITIES[point2].isVisible = true;
+            ENTITIES[point2].visibilityDistance = 5.0;   // override for testing
+        });
+        numCullPoints++;
+    }
     if (INPUTS.checkCommand("action1", true)) {
 
     }
@@ -227,6 +231,9 @@ TIMER.onSlowTick = function () {
     $("spanSPCT").innerText = TIMER.usageSmoothed.toFixed(1);
     $("spanLINES").innerText = E3D_DEBUG_RENDER_NB_ELEMENTS;
     $("spanENT").innerText = E3D_DEBUG_RENDER_NB_ENTITIES + "/" + ENTITIES.length;
+    $("spanDELTA").innerText = TIMER.delta.toFixed(3);
+    $("spanINDELTA").innerText = TIMER.innerDelta.toFixed(3);
+    $("spanGPU").innerText = E3D_DEBUG_RENDER_USAGE.toFixed(1);
 }
 
 // camera type

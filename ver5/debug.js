@@ -86,6 +86,10 @@ var E3D_DEBUG_LOG_INPUT_MODE = false; // log fullscreen, mouse lock
 // Rendering
 var E3D_DEBUG_RENDER_NB_ELEMENTS = 0;
 var E3D_DEBUG_RENDER_NB_ENTITIES = 0;
+var E3D_DEBUG_RENDER_TIME = false;
+var E3D_DEBUG_RENDER_START = 0.0;
+var E3D_DEBUG_RENDER_ACCUM = 0.0;
+var E3D_DEBUG_RENDER_USAGE = 100.0; // %
 
 // Collision Detection
 var E3D_DEBUG_CD_NB_TEST = 0; // number of hit tests

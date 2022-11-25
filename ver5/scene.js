@@ -101,6 +101,7 @@ class E3D_scene { // Basic, single pass
         for (let i = 0; i < ENTITIES.length; ++i) {
             if ((ENTITIES[i].isVisible) && (ENTITIES[i].numElements > 0) && (CAMERA.isEntityVisible(i)) ) {
                 E3D_DEBUG_RENDER_NB_ENTITIES++;
+                if (E3D_DEBUG_RENDER_TIME) TIMER.beginRender();
                 this.setEntityBuffers(i);
                 this.setEntityUniforms(i);
 
@@ -116,6 +117,7 @@ class E3D_scene { // Basic, single pass
                 // Draw triangles
                 CONTEXT.drawArrays(ENTITIES[i].drawMode, 0, ENTITIES[i].numElements);
                 E3D_DEBUG_RENDER_NB_ELEMENTS += ENTITIES[i].numElements;
+                if (E3D_DEBUG_RENDER_TIME) TIMER.endRender();
             }
         }
     }
