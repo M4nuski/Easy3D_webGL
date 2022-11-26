@@ -27,6 +27,7 @@ grid.addPlane(_v3_origin, _v3_90z, 1000, 1000, _v3_lightblue, 20);
 grid.isVisible = true;
 E3D_addEntity(grid);
 
+// Primitives demo
 var obj1 = new E3D_entity_wireframe_canvas("entity_solid");
 obj1.addSphere([0.0, 0.0, 0.0], 15.0);
 obj1.addSphere([0.0, 25.0, 0.0], 15.0, _v3_white, 32, 3);
@@ -54,8 +55,8 @@ obj1.addTriangle([50.0, 0.0, 75.0], [50.0, 25.0, 50.0], [75.0, 0.0, 50.0]);
 obj1.addCapsule([100.0, 0.0, 25.0], _v3_null, 50.0, 10.0);
 obj1.addCapsule([100.0, 0.0, 50.0], _v3_null, 50.0, 10.0, _v3_white, 32, 12, 4);
 
-let gridInddex = obj1.addQuadGrid([-200.0, 0.5, 0.0], _v3_null, 200, 100, 20, 10);
-forXY(20, 10, (x, y) => { let v = obj1.getGridVertex(gridInddex, 20, 10, x, y); v[1] = Math.random()*2.0;} );
+//let gridInddex = obj1.addQuadGrid([-200.0, 0.5, 0.0], _v3_null, 200, 100, 20, 10);
+//forXY(20, 10, (x, y) => { let v = obj1.getGridVertex(gridInddex, 20, 10, x, y); v[1] = Math.random()*2.0;} );
 
 obj1.isVisible = true;
 E3D_addEntity(obj1);

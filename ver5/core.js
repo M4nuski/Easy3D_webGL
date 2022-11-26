@@ -387,7 +387,7 @@ function E3D_cloneEntity(entityObj, newId, makeStatic = false) {
 
     let newEntity = new E3D_entity(newId, entityObj.isDynamic && !makeStatic);
 
-    newEntity.cloneData(entityObj);
+    newEntity.cloneDataFrom(entityObj);
 
     if (newEntity.isDynamic) {
         newEntity.vertexBuffer = CONTEXT.createBuffer();
@@ -419,7 +419,7 @@ function E3D_cloneEntity(entityObj, newId, makeStatic = false) {
     var anim = null;
     if (ANIMATIONS[entityObj.index] != null) {
         anim = new E3D_animation();
-        anim.cloneData(ANIMATIONS[entityObj.index]);
+        anim.cloneDataFrom(ANIMATIONS[entityObj.index]);
         newEntity.hasAnimation = true;
     }
     ANIMATIONS.push(anim);
@@ -427,7 +427,7 @@ function E3D_cloneEntity(entityObj, newId, makeStatic = false) {
     var body = null;
     if (BODIES[entityObj.index] != null) {
         body = new E3D_body();
-        body.cloneData(BODIES[entityObj.index]);
+        body.cloneDataFrom(BODIES[entityObj.index]);
         newEntity.hasBody = true;
     }
     BODIES.push(body);

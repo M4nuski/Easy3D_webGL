@@ -7,12 +7,12 @@
 
 
 const CD_type = {  // p  r  nx ny nz lx ly lz pts
-    NONE:       0, // 
+    NONE:       0, //
     POINT:      1, // p
-    SPHERE:     2, // p  r         
+    SPHERE:     2, // p  r
     CAPSULE:    3, // p  r     n        l
     EDGE:       4, // p        n        l
-    INFPLANE:   5, // p        n      
+    INFPLANE:   5, // p        n
     PLANE:      6, // p     nw n  nh lw    lh
     BLBOX:      7, // p  r  nx ny nz lx ly lz 4p
     BOX:        8, // p  r  nx ny nz lx ly lz 8p
@@ -26,7 +26,7 @@ const CD_mode = {
     DYNAMIC:    1, // can move (physics), affect dynamic, react to static, dynamic, controlled
     CONTROLLED: 2  // can be moved, affect dynamic, react to static and controlled (block, rubberband)
 }
-const CD_mode_strings = [ "Static", "Dynamic", "Controlled" ]; 
+const CD_mode_strings = [ "Static", "Dynamic", "Controlled" ];
 
 // Index constant for CD data
 const CD_boxEdge = {
@@ -42,7 +42,7 @@ const CD_boxCorner = {
 class E3D_body {
     constructor(mode) {
         this.index = -1; // index in global stores to back-reference other information
-        
+
         this.mode = mode;
 
         this.pDelta = v3_new(); // entity position delta vector
@@ -53,7 +53,7 @@ class E3D_body {
 
 
         this.parts = []; // list of CD_type.point .edge .sph .plane .box etc
-        
+
         this.p0 = []; // center position
         this.p = [];
 
@@ -74,7 +74,7 @@ class E3D_body {
 
         // optional point lists
         this.p0list = []; // list of edge points for boxes
-        this.plist = []; 
+        this.plist = [];
     }
 
     updateCDdata(modelMatrix, normalMatrix) {
@@ -151,7 +151,7 @@ class E3D_body {
     pushCD_plane(p, n, right_n, front_n, width, depth, addEdges = false) {
         let idx = this.parts.push(CD_type.PLANE)-1;
         this.p0[idx]  = v3_clone(p); // position offset of plane
-        this.p[idx]   = v3_clone(p);        
+        this.p[idx]   = v3_clone(p);
         this.ny0[idx] = v3_clone(n); // normal of plane face
         this.ny[idx]  = v3_clone(n);
 
@@ -203,7 +203,7 @@ class E3D_body {
 
         this.lx[idx] = hwidth;
         this.ly[idx] = hheight;
-        this.lz[idx] = hdepth; 
+        this.lz[idx] = hdepth;
 
         // create the corner vertex
         // scale normal by half dim
@@ -235,7 +235,7 @@ class E3D_body {
 
         this.r[idx] = Math.sqrt(hwidth*hwidth + hheight*hheight + hdepth*hdepth);
     }
-    
+
     pushCD_triangle(p1, p2 ,p3, addEdges = false) {
         let idx = this.parts.push(CD_type.TRI)-1;
 
@@ -248,7 +248,7 @@ class E3D_body {
         this.nx0[idx] = v3_clone(p1);
         this.nx[idx]  = v3_clone(p1);
         this.ny0[idx] = v3_clone(p2p1);
-        this.ny[idx]  = v3_clone(p2p1);        
+        this.ny[idx]  = v3_clone(p2p1);
         this.nz0[idx] = v3_clone(p3p1);
         this.nz[idx]  = v3_clone(p3p1);
 
@@ -262,41 +262,41 @@ class E3D_body {
             this.pushCD_edge2p(p3, p1);
         }
     }
-    
+
     // TODO pushCD_grid(width, depth, numWidth, numDepth, pointList) {}
 
-    cloneData(targetCDdata) {
+    cloneDataFrom(sourceEntity) {
         this.clear();
-        for (var i = 0; i < targetCDdata.parts.length; ++i) {
-            switch (targetCDdata[i].parts) {
+        for (var i = 0; i < sourceEntity.parts.length; ++i) {
+            switch (sourceEntity[i].parts) {
                 case CD_type.POINT:
-                    this.pushCD_point(targetCDdata[i].p0);
+                    this.pushCD_point(sourceEntity[i].p0);
                     break;
                 case CD_type.SPHERE:
-                    this.pushCD_sphere(targetCDdata[i].p0, targetCDdata[i].r);
+                    this.pushCD_sphere(sourceEntity[i].p0, sourceEntity[i].r);
                     break;
                 case CD_type.CAPSULE:
-                    this.pushCD_capsule(targetCDdata[i].p0, targetCDdata[i].ny0, targetCDdata[i].r, targetCDdata[i].ly);
+                    this.pushCD_capsule(sourceEntity[i].p0, sourceEntity[i].ny0, sourceEntity[i].r, sourceEntity[i].ly);
                     break;
                 case CD_type.EDGE:
-                    this.pushCD_edge(targetCDdata[i].p0, targetCDdata[i].ny0, targetCDdata[i].ly);
+                    this.pushCD_edge(sourceEntity[i].p0, sourceEntity[i].ny0, sourceEntity[i].ly);
                     break;
                 case CD_type.INFPLANE:
-                    this.pushCD_infPlane(targetCDdata[i].p0, targetCDdata[i].ny0);
+                    this.pushCD_infPlane(sourceEntity[i].p0, sourceEntity[i].ny0);
                     break;
                 case CD_type.PLANE:
-                    this.pushCD_plane(targetCDdata[i].p0, targetCDdata[i].ny0, targetCDdata[i].nx0, targetCDdata[i].nz0, targetCDdata[i].lx / 2.0, targetCDdata[i].lz / 2.0);
+                    this.pushCD_plane(sourceEntity[i].p0, sourceEntity[i].ny0, sourceEntity[i].nx0, sourceEntity[i].nz0, sourceEntity[i].lx / 2.0, sourceEntity[i].lz / 2.0);
                     break;
                 case CD_type.BLBOX:
-                    this.pushCD_box(targetCDdata[i].p0, targetCDdata[i].nx0, targetCDdata[i].ny0, targetCDdata[i].nz0,
-                        targetCDdata[i].lx * 2.0, targetCDdata[i].ly * 2.0, targetCDdata[i].lz * 2.0, false);
+                    this.pushCD_box(sourceEntity[i].p0, sourceEntity[i].nx0, sourceEntity[i].ny0, sourceEntity[i].nz0,
+                        sourceEntity[i].lx * 2.0, sourceEntity[i].ly * 2.0, sourceEntity[i].lz * 2.0, false);
                     break;
                 case CD_type.BOX:
-                    this.pushCD_box(targetCDdata[i].p0, targetCDdata[i].nx0, targetCDdata[i].ny0, targetCDdata[i].nz0,
-                        targetCDdata[i].lx * 2.0, targetCDdata[i].ly * 2.0, targetCDdata[i].lz * 2.0, true);
+                    this.pushCD_box(sourceEntity[i].p0, sourceEntity[i].nx0, sourceEntity[i].ny0, sourceEntity[i].nz0,
+                        sourceEntity[i].lx * 2.0, sourceEntity[i].ly * 2.0, sourceEntity[i].lz * 2.0, true);
                     break;
                 case CD_type.TRI:
-                    this.pushCD_triangle(targetCDdata[i].nx0, v3_add_new(targetCDdata[i].nx0, targetCDdata[i].ny0), v3_add_new(targetCDdata[i].nx0, targetCDdata[i].nz0));
+                    this.pushCD_triangle(sourceEntity[i].nx0, v3_add_new(sourceEntity[i].nx0, sourceEntity[i].ny0), v3_add_new(sourceEntity[i].nx0, sourceEntity[i].nz0));
                     break;
                 // TODO case CD_type.GRID:
             }
@@ -318,15 +318,15 @@ class E3D_body {
         this.ly = [];
         this.lz = [];
         this.p0list = [];
-        this.plist = []; 
+        this.plist = [];
     }
 
 
     swapCDdataFrame() {
-        // TODO keep track of last positions/rotations with ref swapping between FRAMES 
+        // TODO keep track of last positions/rotations with ref swapping between FRAMES
     }
 
-    resetCollisions() {             
+    resetCollisions() {
       /*  for (var i = 0; i < this.nbsourceCollision; ++i)this.sourceCollisions[i].reset();
         for (var i = 0; i < this.nbTargetCollision; ++i)this.targetCollisions[i].reset();
 
@@ -336,20 +336,20 @@ class E3D_body {
 
     pushCollisionSource(m, t, n, p, sDesc, scdi, targetIndex, tDesc, tcdi) {
        /* if (this.nbsourceCollision >= this.sourceCollisions.length) this.sourceCollisions.push(new E3D_collisionResult());
-        
+
         this.sourceCollisions[this.nbsourceCollision].marker = ""+m;
         this.sourceCollisions[this.nbsourceCollision].t0 = t;
         v3_copy(this.sourceCollisions[this.nbsourceCollision].n, n);
         v3_copy(this.sourceCollisions[this.nbsourceCollision].p0, p);
-        
+
         this.sourceCollisions[this.nbsourceCollision].source_desc = sDesc;
         this.sourceCollisions[this.nbsourceCollision].source_cdi = scdi;
 
         this.sourceCollisions[this.nbsourceCollision].entity_index = targetIndex;
 
         this.sourceCollisions[this.nbsourceCollision].target_desc = tDesc;
-        this.sourceCollisions[this.nbsourceCollision].target_cdi = tcdi; 
-        
+        this.sourceCollisions[this.nbsourceCollision].target_cdi = tcdi;
+
         this.nbsourceCollision++;*/
     }
 
@@ -369,7 +369,7 @@ class E3D_body {
         this.targetCollisions[this.nbTargetCollision].entity_index = sourceIndex;
 
         this.targetCollisions[this.nbTargetCollision].target_desc = tDesc;
-        this.targetCollisions[this.nbTargetCollision].target_cdi = tcdi; 
+        this.targetCollisions[this.nbTargetCollision].target_cdi = tcdi;
 
         this.nbTargetCollision++;*/
     }

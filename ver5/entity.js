@@ -46,7 +46,7 @@ class E3D_entity {
         this.drawMode = CONTEXT.TRIANGLES; // Default element render mode is Triangles
 
         this.numElements = 0; // Actual number of vertices to draw
-        this.drawIndexed = false; // Indexed element draw
+        this.drawIndexed = false; // TODO Indexed element draw
 
         // To draw lines or overlay on model, indexed only
         this.numStrokeElements = 0;
@@ -96,7 +96,7 @@ class E3D_entity {
         this.updateMatrix();
     }
 
-    cloneData(sourceEntity) {
+    cloneDataFrom(sourceEntity) {
         this.arraySize = sourceEntity.arraySize;
         this.arrayIncrement = sourceEntity.arrayIncrement;
         this.arrayIndex = sourceEntity.arrayIndex;
