@@ -167,6 +167,11 @@ onEvent("FFT_lin_squelch", "input", (event) => {
     FFT_lin_squelchValue = Number(event.target.value);
     FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
 } );
+var FFT_lin_bassValue = 8;
+onEvent("FFT_lin_bass", "input", (event) => {
+    FFT_lin_bassValue = Number(event.target.value);
+    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
+} );
 var AC_lin_freq1 = getElem("AC_lin_freq1");
 var AC_lin_freq1Value = 0.0;
 var AC_lin_note1 = getElem("AC_lin_note1");
@@ -358,9 +363,12 @@ function init_visualize() {
         var localPeakFreq = 0;
         var fPerSample = (sampleRate / 2.0) / bufferLengthAlt;
 
-        var prevCentFreq=getCentFreq2(graphNoteMin * 100);
+        /*var prevCentFreq=getCentFreq2(graphNoteMin * 100);
         var currentCentFreq=getCentFreq2(graphNoteMin * 100 + 1);
-        var nextCentFreq=0;
+        var nextCentFreq=0;*/
+
+        var bassBoostM = -FFT_lin_bassValue / (numCent / 1.5); // cutoff at 2/3 scale
+        var bassBoostB = FFT_lin_bassValue - (bassBoostM * graphNoteMin * 100 * 1.5);
 
         // draw FFT_lin
         for (var cent = graphNoteMin * 100 + 1; cent <= graphNoteMax * 100 - 1; ++cent) {
@@ -372,6 +380,8 @@ function init_visualize() {
             var ratio = sample - baseIndex;
             barHeight = ((1.0-ratio) * dataArrayAlt[baseIndex]) + (ratio*dataArrayAlt[baseIndex + 1]);
 
+            barHeight = barHeight + (bassBoostM * cent) + bassBoostB;
+
             canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
             var x = (cent - (graphNoteMin * 100)) / ((graphNoteMax - graphNoteMin) * 100);
             x = x * WIDTH;
@@ -382,6 +392,7 @@ function init_visualize() {
                 let curr = dataArrayAlt[baseIndex];
                 let next = dataArrayAlt[baseIndex + 1];
                 var newIndex = pararbInterpolate(baseIndex, prev, curr, next);
+                if (newIndex < 0) newIndex = 0;
                 localPeakValue = barHeight;
                 localPeakFreq = newIndex * fPerSample;
             }
@@ -608,6 +619,7 @@ function noteStringFromIndex(index) {
 }
 function noteIndexFromPitch(frequency) {
     var noteNum = 12 * (Math.log( frequency / baseFreq )/Math.log(2) );
+    if (noteNum < 69) noteNum = 69;
     return (Math.round( noteNum ) + 69);
 }
 
@@ -667,8 +679,8 @@ Sample Rate: <span id="rate">0</span>, FFT Size: <span id="size">0</span><br />
 <canvas class="visualizer" width="1024" height="512"></canvas><br />
 <table>
     <tr>
-        <th colspan="4">Autocorrellation (Linear, quadratic interpolation, first interval)</th>
-        <th colspan="4">FFT (Linear, quadratic interpolation, highest peak)</th>
+        <th colspan="4">Autocorrellation (Linear, first interval)</th>
+        <th colspan="4">FFT (Linear, parabolic interpolation, highest peak)</th>
     </tr>
     <tr>
         <td>Smoothing:</td><td><input type="range" id="AC_lin_smooth" min="1" max="100" value="90" /></td>
@@ -683,13 +695,13 @@ Sample Rate: <span id="rate">0</span>, FFT Size: <span id="size">0</span><br />
         <td>Peak:</td><td><span id="FFT_lin_peak">0</span></td>
     </tr>
     <tr>
-        <td>&nbsp;</td><td><span id="AC_lin_text"></span></td>
+        <td>&nbsp;</td><td>&nbsp;</td>
         <td>Note(ZC):</td><td><span id="AC_lin_note1">A</span></td>
-        <td>&nbsp;</td><td><span id="FFT_lin_text"></span></td>
+        <td>Bass Amp:</td><td><input type="range" id="FFT_lin_bass" min="0" max="128" value="8" /></td>
         <td>Note:</td><td><span id="FFT_lin_note">A</span></td>
     </tr>
     <tr>
-        <td>&nbsp;</td><td>&nbsp;</td>
+        <td>&nbsp;</td><td><span id="AC_lin_text"></span></td>
         <td>Note(P2P):</td><td><span id="AC_lin_note2">A</span></td>
         <td>&nbsp;</td><td><span id="FFT_lin_text"></span></td>
         <td>&nbsp;</td><td>&nbsp;</td>
