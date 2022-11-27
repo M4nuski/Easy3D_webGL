@@ -17,17 +17,9 @@
         .visualizer {
             width : 96%;
             margin-left: 2%;
-            height: 256px;
+            height: 512px;
         }
-        #f0 { position: absolute; left: 2%; }
-        #f1 { position: absolute; left: 15%; }
-        #f2 { position: absolute; left: 28%; }
-        #f3 { position: absolute; left: 41%; }
 
-        #f4 { position: absolute; left: 54%; }
-        #f5 { position: absolute; left: 67%; }
-        #f6 { position: absolute; left: 80%; }
-        #f7 { position: absolute; left: 93%; }
         #warning {
             display: none;
             color: red;
@@ -113,6 +105,21 @@ function warn(text) {
 
 onClick("startButton", init);
 var max = getElem("max");
+var maxF = getElem("maxF");
+var maxN = getElem("maxN");
+onEvent("toneEnable", "change", setToneVol);
+onEvent("toneVol", "input", setToneVol);
+onEvent("toneFreq", "input", (event) => {
+    if (oscillatorTone) oscillatorTone.frequency.value = Number(getElem("toneFreq").value);
+} );
+function setToneVol() {
+    if (gainNodeTone) {
+        gainNodeTone.gain.value = (getElem("toneEnable").checked) ? Number(getElem("toneVol").value) : 0.0;
+        oscillatorTone.frequency.value = Number(getElem("toneFreq").value);
+    }
+}
+onEvent("baseFreq", "change", (event) => baseFreq = Number(event.target.value));
+
 // TODO metronome
 //onClick("muteButton", mute);
 
@@ -124,42 +131,43 @@ var sampleRate;
 var analyserSize;
 var gainNodeMet, gainNodeTone;
 var oscillatorTone;
+var baseFreq = 440.0;
 
 function init() {
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  sampleRate = audioContext.sampleRate;
-  getElem("rate").innerText = sampleRate;
-  analyser = audioContext.createAnalyser();
-  analyser.minDecibels = -100;
-  analyser.maxDecibels = -10;
-  analyser.smoothingTimeConstant = 0.5;
-  analyser.fftSize = 4096;
-  analyserSize = analyser.fftSize;
-  getElem("size").innerText = analyserSize;
+    if (audioContext) return;
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    sampleRate = audioContext.sampleRate;
+    getElem("rate").innerText = sampleRate;
+    analyser = audioContext.createAnalyser();
+    analyser.minDecibels = -100;
+    analyser.maxDecibels = -10;
+    analyser.smoothingTimeConstant = 0.1;
+    analyser.fftSize = 4096;
+    analyserSize = analyser.fftSize;
+    getElem("size").innerText = analyserSize;
 
-getElem("f0").innerText = "0.0Hz";
-getElem("f1").innerText = (1.0 * (sampleRate / 2.0) / 7.0).toFixed(1) + "Hz";
-getElem("f2").innerText = (2.0 * (sampleRate / 2.0) / 7.0).toFixed(1) + "Hz";
-getElem("f3").innerText = (3.0 * (sampleRate / 2.0) / 7.0).toFixed(1) + "Hz";
+    if (!navigator?.mediaDevices?.getUserMedia) {
+        // No audio allowed
+        warn('Sorry, getUserMedia is required for the app.')
+        return;
+    } else {
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then(
+            function(stream) {
+            // Initialize the SourceNode
+            source = audioContext.createMediaStreamSource(stream);
+            // Connect the source node to the analyzer
+            source.connect(analyser);
 
-getElem("f4").innerText = (4.0 * (sampleRate / 2.0) / 7.0).toFixed(1) + "Hz";
-getElem("f5").innerText = (5.0 * (sampleRate / 2.0) / 7.0).toFixed(1) + "Hz";
-getElem("f6").innerText = (6.0 * (sampleRate / 2.0) / 7.0).toFixed(1) + "Hz";
-getElem("f7").innerText = (sampleRate / 2.0).toFixed(1) + "Hz";
+            gainNodeTone = audioContext.createGain();
+            gainNodeTone.connect(audioContext.destination);
+            gainNodeTone.gain.value = 0;
 
-  if (!navigator?.mediaDevices?.getUserMedia) {
-    // No audio allowed
-    warn('Sorry, getUserMedia is required for the app.')
-    return;
-  } else {
-    navigator.mediaDevices.getUserMedia({audio: true})
-      .then(
-        function(stream) {
-          // Initialize the SourceNode
-          source = audioContext.createMediaStreamSource(stream);
-          // Connect the source node to the analyzer
-          source.connect(analyser);
-          visualize();
+            oscillatorTone = audioContext.createOscillator();
+            oscillatorTone.connect(gainNodeTone);
+            oscillatorTone.start();
+
+            visualize();
         }
       )
       .catch(function(err) {
@@ -169,6 +177,7 @@ getElem("f7").innerText = (sampleRate / 2.0).toFixed(1) + "Hz";
 
   // Visualizing, copied from voice change o matic
   var canvas = document.querySelector('.visualizer');
+  canvas.width = canvas.offsetWidth;
   var canvasContext = canvas.getContext("2d");
   var WIDTH;
   var HEIGHT;
@@ -177,7 +186,6 @@ getElem("f7").innerText = (sampleRate / 2.0).toFixed(1) + "Hz";
     WIDTH = canvas.width;
     HEIGHT = canvas.height;
 
-    var drawVisual;
     var drawNoteVisual;
 
     var previousValueToDisplay = 0;
@@ -188,8 +196,8 @@ getElem("f7").innerText = (sampleRate / 2.0).toFixed(1) + "Hz";
     // Thanks to PitchDetect: https://github.com/cwilso/PitchDetect/blob/master/js/pitchdetect.js
     var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     function noteFromPitch( frequency ) {
-      var noteNum = 12 * (Math.log( frequency / 440 )/Math.log(2) );
-      return Math.round( noteNum ) + 69;
+      var noteNum = 12 * (Math.log( frequency / baseFreq )/Math.log(2) );
+      return noteStrings[(Math.round( noteNum ) + 69) % noteStrings.length];
     }
 
 
@@ -200,27 +208,113 @@ getElem("f7").innerText = (sampleRate / 2.0).toFixed(1) + "Hz";
       canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
 
       var drawAlt = function() {
-        drawVisual = requestAnimationFrame(drawAlt);
+        requestAnimationFrame(drawAlt);
 
         analyser.getByteFrequencyData(dataArrayAlt);
 
+
         canvasContext.fillStyle = 'rgb(0, 0, 0)';
         canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
+        canvasContext.font = "bold 16px Arial";
+        canvasContext.fillStyle = "white";
+        canvasContext.strokeStyle = "white";
 
-        var barWidth = (WIDTH / bufferLengthAlt) * 5;
+        var graphNoteMin = -9; // C0 - 1
+        //var graphNoteMin = -8; // C0 16.35160
+        // note  1 A0 is 27.50000
+        // note 88 C8 is 4196.009
+        // fft of 4096
+        // samples of 48000
+        // fft 4095 is 24000
+        // fft 0 is 0
+        // fft 1 is 5.859
+        // C0 is at fft 2.79
+        //var graphNoteMax = 99; // B8 7902.133
+        var graphNoteMax = 100; // B8 7902.133
+        // 99 + 0 -1 -2 -3 -4 -5 -6 -7 -8
+        // 108 notes
+
+        // 110 notes
+        // split in 100 log cent
+        // 11000 slices
+        // -900 to 10000
+        var graphFreqhMin = getLogFreq(graphNoteMin); // 16.351
+        var graphFreqhMax = getLogFreq(graphNoteMax); // 7902.133
+        for (var i = graphNoteMin; i <= graphNoteMax; ++i) {
+
+            var x = (i - graphNoteMin) / (graphNoteMax - graphNoteMin);
+            x = x * WIDTH;
+            if ((i % 12) == 1) { // Ai
+                canvasContext.beginPath();
+                canvasContext.moveTo(x, 0);
+                canvasContext.lineTo(x, 512);
+                canvasContext.stroke();
+                canvasContext.fillText("A" + Math.floor(i / 12), x, 256-16);
+                canvasContext.fillText(getLogFreq(i).toFixed(1), x, 256+32);
+            } else {
+                canvasContext.beginPath();
+                canvasContext.moveTo(x, 256-16);
+                canvasContext.lineTo(x, 256+16);
+                canvasContext.stroke();
+            }
+            //var f = getLogFreq((i * 12) + 1);
+            //var x = (i - graphNoteMin) / (graphNoteMax - graphNoteMin);
+            //x = x * WIDTH * 10;
+        //    var x = f * WIDTH / (sampleRate / 2.0);
+
+          //  var maxFreq = getLogFreq((8 * 12) + 1);
+          //  var lx = Math.log(x / maxFreq);
+            //sampleRate / 2.0 Hz = width
+
+        }
+
+
+        var numCent = ((graphNoteMax - graphNoteMin + 1 ) * 100);
+        var barWidth = WIDTH / numCent;
         var barHeight;
         var x = 0;
         var maxVal = 0;
-        for(var i = 0; i < bufferLengthAlt; i++) {
-          barHeight = dataArrayAlt[i];
+        var maxFr = 0;
+        var fPerSample = (sampleRate / 2.0) / bufferLengthAlt;
 
-          canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
-          canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+        for (var cent = graphNoteMin * 100; cent <= graphNoteMax * 100; ++cent) {
+            var freq = getCentFreq2(cent);
+            var sample = freq / fPerSample;
+            barHeight = dataArrayAlt[Math.floor(sample)];
+            canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
+            var x = (cent - (graphNoteMin * 100)) / ((graphNoteMax - graphNoteMin) * 100);
+            x = x * WIDTH;
+            canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
 
-          x += barWidth + 1;
-          if (barHeight > maxVal) maxVal = barHeight;
+            if (barHeight > maxVal) {
+                maxVal = barHeight;
+                maxFr = freq;
+            }
         }
+
+        /*
+        for(var i = 0; i < bufferLengthAlt; i++) {
+            barHeight = dataArrayAlt[i];
+            x = barWidth * i;
+            canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
+            canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+
+
+            if (barHeight > maxVal) {
+                maxVal = barHeight;
+                maxFr = i * (sampleRate / 2.0) / bufferLengthAlt;
+            }
+        }*/
+        canvasContext.fillStyle = "white";
+        canvasContext.fillText("FFT:", 4, 256+32);
+        canvasContext.fillText("Autocorrelation:", 4, 16);
+
         max.innerText = Math.round((maxVal * 0.05) + (0.95 * Number( max.innerText)));
+        if (maxVal > 64.0) {
+            maxF.innerText = ((maxFr * 0.01) + (0.99 * Number(maxF.innerText))).toFixed(1);
+            maxN.innerText = noteFromPitch(Number(maxF.innerText));
+        }
+
       };
 
       drawAlt();
@@ -229,6 +323,27 @@ getElem("f7").innerText = (sampleRate / 2.0).toFixed(1) + "Hz";
     drawFrequency();
     //drawNote();
   }
+}
+
+
+const log_baseFactor = Math.pow(2.0, 1.0/12.0);
+const log_unison = 49;
+// note 1 is A0 at 27.5Hz
+// note 49 is A4 at 440.0Hz
+// note 88 is C8 at 4186.0hz
+function getLogFreq(offset) {
+    return baseFreq * Math.pow(log_baseFactor, (offset - log_unison));
+}
+function getLogFreq2(offset) {
+    return 440.0 * Math.pow(Math.pow(2.0, 1.0/12.0), (offset - 49));
+}
+const cent_baseFactor = Math.pow(2.0, 1.0/1200.0);
+const cent_unison = 4900;
+function getCentFreq(offset) {
+    return baseFreq * Math.pow(cent_baseFactor, (offset - cent_unison));
+}
+function getCentFreq2(offset) {
+    return 440.0 * Math.pow(Math.pow(2.0, 1.0/1200.0), (offset - 4900));
 }
 
 function getFreq()  {
@@ -272,22 +387,46 @@ function getFreq()  {
     <div id="warning"></div>
 <div id="startButton" class="E3D_fakeButton">Enable</div><br />
 
-<input id="volSlider" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Playback Volume<br />
-<input id="volSlider" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Metronome Volume<br />
+<input id="toneVol" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Tone Volume<br />
+<input id="toneFreq" type="number" min="20" max="24000" value="440" />Hz <input type="checkbox" id="toneEnable" /> Play Tone <br />
+<input id="metVol" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Metronome Volume<br />
 BPM<br />
 4/4<br />
 <hr />
-<span id="freq">440</span>
+Base A: <input type="number" min="0" max="24000" value="440" id="baseFreq" />
 <div id="muteButton" class="E3D_fakeButton">Mute</div>
 <hr />
 Sample Rate: <span id="rate">0</span><br />
 FFT Size: <span id="size">0</span><br />
-<canvas class="visualizer" width="1024" height="256"></canvas><br />
+<canvas class="visualizer" width="1024" height="512"></canvas><br />
 <span id="f0"></span><span id="f1"></span><span id="f2"></span><span id="f3"></span><span id="f4"></span><span id="f5"></span><span id="f6"></span><span id="f7"></span>
 <br />
-Note: <span id="note"></span><br />
-Peak: <span id="max">0</span>
-<div id="footer">Emmanuel Charette Nov-2022, base on article at https://alexanderell.is/posts/tuner/</div>
+FFT: <span id="note"></span><br />
+Peak: <span id="max">0</span><br />
+Peak Freq: <span id="maxF">0</span>Hz<br />
+Peak Note: <span id="maxN">A</span><br />
+<hr />
+Standard frequencies<br />
+Piano:
+note 1 is A0 at 27.5Hz<br />
+note 41 is C4 at 261.6256Hz (Middle C)<br />
+note 49 is A4 at 440.0Hz<br />
+note 88 is C8 at 4186.009Hz<br />
+Guitar:<br />
+E2 82.40689Hz<br />
+A2 110.0000Hz<br />
+D3 146.8324Hz<br />
+G3 195.9977Hz<br />
+B3 246.9417Hz<br />
+E4 329.6276Hz<br />
+Violin:<br />
+G3 195.9977Hz<br />
+D4 293.6648Hz<br />
+A4 440.0000Hz<br />
+E5 659.2551Hz<br />
+Phone dial tone:<br />
+350Hz + 440Hz<br />
+<div id="footer">Emmanuel Charette Nov-2022, based on article at <a href="https://alexanderell.is/posts/tuner/">https://alexanderell.is/posts/tuner/"</a></div>
 </body>
 
 </html>
