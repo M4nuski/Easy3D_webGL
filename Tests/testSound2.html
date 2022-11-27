@@ -107,6 +107,9 @@ onClick("startButton", init);
 var max = getElem("max");
 var maxF = getElem("maxF");
 var maxN = getElem("maxN");
+var autoF1 = getElem("autoF1");
+var autoF2 = getElem("autoF2");
+var autoN = getElem("autoN");
 onEvent("toneEnable", "change", setToneVol);
 onEvent("toneVol", "input", setToneVol);
 onEvent("toneFreq", "input", (event) => {
@@ -280,7 +283,9 @@ function init() {
         for (var cent = graphNoteMin * 100; cent <= graphNoteMax * 100; ++cent) {
             var freq = getCentFreq2(cent);
             var sample = freq / fPerSample;
-            barHeight = dataArrayAlt[Math.floor(sample)];
+            var baseIndex = Math.floor(sample);
+            var ratio = sample - baseIndex;
+            barHeight = ((1.0-ratio) * dataArrayAlt[baseIndex]) + (ratio*dataArrayAlt[baseIndex + 1]);
             canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
             var x = (cent - (graphNoteMin * 100)) / ((graphNoteMax - graphNoteMin) * 100);
             x = x * WIDTH;
@@ -292,28 +297,54 @@ function init() {
             }
         }
 
-        /*
-        for(var i = 0; i < bufferLengthAlt; i++) {
-            barHeight = dataArrayAlt[i];
-            x = barWidth * i;
-            canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
-            canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+        let maxOffsetSize = sampleRate / graphFreqhMin;
+        let sums = getFreq(maxOffsetSize);
+        if (sums) {
+            barWidth = WIDTH / sums.length;
+            var crossings = [];
 
-
-            if (barHeight > maxVal) {
-                maxVal = barHeight;
-                maxFr = i * (sampleRate / 2.0) / bufferLengthAlt;
+            canvasContext.fillStyle = "cyan";
+            for (var x = 0; x < sums.length-1; ++x) {
+                barHeight = sums[x] * 128.0;
+                canvasContext.fillRect(WIDTH * x / sums.length, HEIGHT - barHeight - 256.0 - 128.0, barWidth, barHeight);
+                if ( ((sums[x] < 0.0) && (sums[x+1] > 0.0)) || ((sums[x] > 0.0) && (sums[x+1] < 0.0))) {
+                    // zero crossing
+                    canvasContext.fillStyle = "yellow";
+                    canvasContext.beginPath();
+                    canvasContext.moveTo(WIDTH * x / sums.length, 128.0-8.0);
+                    canvasContext.lineTo(WIDTH * x / sums.length, 128.0+8.0);
+                    canvasContext.stroke();
+                    canvasContext.fillStyle = "cyan";
+                    crossings.push(x);
+                }
             }
-        }*/
+
+        var dc12 = crossings[1]-crossings[0];
+        var dc23 = crossings[2]-crossings[1];
+        var dc34 = crossings[3]-crossings[2];
+        var dc45 = crossings[4]-crossings[3];
+        if ( (Math.abs(dc45 - dc34) / dc45) < 0.25) {
+            autoF1.innerText = (sampleRate / (dc12 + dc23)).toFixed(1);
+            autoF2.innerText = "";
+        } else {
+            autoF1.innerText = (sampleRate / (dc12 + dc23 + dc34 + dc45)).toFixed(1);
+            autoF2.innerText = (sampleRate / (dc12 + dc23)).toFixed(1);
+        }
+    }
+
+
+
         canvasContext.fillStyle = "white";
         canvasContext.fillText("FFT:", 4, 256+32);
         canvasContext.fillText("Autocorrelation:", 4, 16);
 
         max.innerText = Math.round((maxVal * 0.05) + (0.95 * Number( max.innerText)));
         if (maxVal > 64.0) {
-            maxF.innerText = ((maxFr * 0.01) + (0.99 * Number(maxF.innerText))).toFixed(1);
+            maxF.innerText = ((maxFr * 0.02) + (0.98 * Number(maxF.innerText))).toFixed(1);
             maxN.innerText = noteFromPitch(Number(maxF.innerText));
         }
+
+
 
       };
 
@@ -346,7 +377,7 @@ function getCentFreq2(offset) {
     return 440.0 * Math.pow(Math.pow(2.0, 1.0/1200.0), (offset - 4900));
 }
 
-function getFreq()  {
+function getFreq(offsetSize)  {
     // Start with a bufferLength of the analyser's FFT size
     var bufferLength = analyser.fftSize;
     // Actually create the buffer
@@ -355,17 +386,17 @@ function getFreq()  {
     analyser.getFloatTimeDomainData(buffer);
 
     // Create a new array of the sums of offsets to do the autocorrelation
-    var offsetSums = new Array(bufferLength).fill(0);
+    var offsetSums = new Array(bufferLength).fill(0.0);
     // For each potential offset, calculate the sum of each buffer value times its offset value
     for (let offset = 0; offset < bufferLength; offset++) {
-        for (let j = 0; j < SIZE - i; j++) {
+        for (let j = 0; j < offsetSize - offset; j++) {
             offsetSums[offset] = offsetSums[offset] + buffer[j] * buffer[j+offset]
         }
     }
 
     // Calculate the offset with the highest value
-    var maxValue = -1;
-    var bestOffset = -1;
+    var maxValue = -1.0;
+    var bestOffset = -1.0;
     for (var i = 0; i < offsetSums.length; i++) {
         if (offsetSums[i] > maxValue) {
             maxValue = offsetSums[i];
@@ -373,8 +404,11 @@ function getFreq()  {
         }
     }
 
-    // Once we have the best offset for the repetition, we can calculate the frequency from the sampleRate
-    var frequency = sampleRate / bestOffset
+    if (maxValue < 0.002) return false;
+    // normalize
+    for (let offset = 0; offset < bufferLength; offset++) offsetSums[offset] /= maxValue;
+
+    return offsetSums;
 }
 
 
@@ -389,9 +423,9 @@ function getFreq()  {
 
 <input id="toneVol" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Tone Volume<br />
 <input id="toneFreq" type="number" min="20" max="24000" value="440" />Hz <input type="checkbox" id="toneEnable" /> Play Tone <br />
-<input id="metVol" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Metronome Volume<br />
-BPM<br />
-4/4<br />
+<!--input id="metVol" type="range" min="0.0" max="0.5" value="0.25" step="0.05" />Metronome Volume<br />
+BPM
+4/4<br /-->
 <hr />
 Base A: <input type="number" min="0" max="24000" value="440" id="baseFreq" />
 <div id="muteButton" class="E3D_fakeButton">Mute</div>
@@ -400,11 +434,14 @@ Sample Rate: <span id="rate">0</span><br />
 FFT Size: <span id="size">0</span><br />
 <canvas class="visualizer" width="1024" height="512"></canvas><br />
 <span id="f0"></span><span id="f1"></span><span id="f2"></span><span id="f3"></span><span id="f4"></span><span id="f5"></span><span id="f6"></span><span id="f7"></span>
-<br />
-FFT: <span id="note"></span><br />
+FFT:<br />
 Peak: <span id="max">0</span><br />
 Peak Freq: <span id="maxF">0</span>Hz<br />
 Peak Note: <span id="maxN">A</span><br />
+Autocorrellation:<br />
+Freq1: <span id="autoF1">0</span>Hz<br />
+Freq2: <span id="autoF2">0</span>Hz<br />
+Note: <span id="autoN">A</span><br />
 <hr />
 Standard frequencies<br />
 Piano:
