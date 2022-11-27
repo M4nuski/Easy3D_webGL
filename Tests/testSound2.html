@@ -305,16 +305,15 @@ function init() {
 
             canvasContext.fillStyle = "cyan";
             for (var x = 0; x < sums.length-1; ++x) {
-                barHeight = sums[x] * 128.0;
+                barHeight = sums[x] * 100.0;
                 canvasContext.fillRect(WIDTH * x / sums.length, HEIGHT - barHeight - 256.0 - 128.0, barWidth, barHeight);
                 if ( ((sums[x] < 0.0) && (sums[x+1] > 0.0)) || ((sums[x] > 0.0) && (sums[x+1] < 0.0))) {
                     // zero crossing
-                    canvasContext.fillStyle = "yellow";
+                    canvasContext.strokeStyle = "yellow";
                     canvasContext.beginPath();
                     canvasContext.moveTo(WIDTH * x / sums.length, 128.0-8.0);
                     canvasContext.lineTo(WIDTH * x / sums.length, 128.0+8.0);
                     canvasContext.stroke();
-                    canvasContext.fillStyle = "cyan";
                     crossings.push(x);
                 }
             }
@@ -324,7 +323,11 @@ function init() {
         var dc34 = crossings[3]-crossings[2];
         var dc45 = crossings[4]-crossings[3];
         if ( (Math.abs(dc45 - dc34) / dc45) < 0.25) {
-            autoF1.innerText = (sampleRate / (dc12 + dc23)).toFixed(1);
+            var stack = 0;
+            var ns = 0;
+            for (var i = 1; i < crossings.length/2; ++i) {stack += (crossings[i+1] - crossings[i]); ns++; }
+            stack = stack / ns;
+            autoF1.innerText = (sampleRate / (stack*2.0)).toFixed(1);
             autoF2.innerText = "";
         } else {
             autoF1.innerText = (sampleRate / (dc12 + dc23 + dc34 + dc45)).toFixed(1);
