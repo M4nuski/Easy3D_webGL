@@ -43,7 +43,7 @@ class E3D_timing {
 
     smooth(val, target, fact, compensate = true) {
         if (compensate) fact = -(Math.pow(1.0 - fact, (this.delta / 0.1)) - 1.0);
-        if (fact > 1.0) fact = 1.0;
+        if (fact > 1.0) target;
         return val + ((target - val) * fact);
     }
     compensateSmoothingFactor(fact) {

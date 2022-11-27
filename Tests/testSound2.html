@@ -79,7 +79,7 @@
 
     </style>
     <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() {
 
 function getElem(id) {
     var elem = document.getElementById(id);
@@ -97,19 +97,31 @@ function onEvent(elemOrID, event, callback) {
     if (elemOrID) elemOrID.addEventListener(event, callback);
 }
 
+function smooth(val, target, factor) {
+    if (factor > 1.0) return target;
+    return val + ((target - val) * factor);
+}
 function warn(text) {
     var warning = getElem("warning");
     warning.style.display = "block";
     warning.innerText = text;
 }
 
+// data output elements
+var FFT_lin_peak = getElem("FFT_lin_peak");
+var FFT_lin_peakValue = 0.0;
+var FFT_lin_freq = getElem("FFT_lin_freq");
+var FFT_lin_freqValue = 0.0;
+var FFT_lin_note = getElem("FFT_lin_note");
+
+var AC_lin_freq1 = getElem("AC_lin_freq1");
+var AC_lin_freq1Value = 0.0;
+var AC_lin_freq2 = getElem("AC_lin_freq2");
+var AC_lin_freq2Value = 0.0;
+var AC_lin_note = getElem("AC_lin_note");
+
+// events
 onClick("startButton", init);
-var max = getElem("max");
-var maxF = getElem("maxF");
-var maxN = getElem("maxN");
-var autoF1 = getElem("autoF1");
-var autoF2 = getElem("autoF2");
-var autoN = getElem("autoN");
 onEvent("toneEnable", "change", setToneVol);
 onEvent("toneVol", "input", setToneVol);
 onEvent("toneFreq", "input", (event) => {
@@ -123,98 +135,85 @@ function setToneVol() {
 }
 onEvent("baseFreq", "change", (event) => baseFreq = Number(event.target.value));
 
-// TODO metronome
-//onClick("muteButton", mute);
 
 
+
+// global
 var source;
 var audioContext;
 var analyser;
 var sampleRate;
 var analyserSize;
+
 var gainNodeMet, gainNodeTone;
 var oscillatorTone;
 var baseFreq = 440.0;
 
+// Visualizing, copied from voice change o matic
+var canvas = document.querySelector('.visualizer');
+canvas.width = canvas.offsetWidth;
+var canvasContext = canvas.getContext("2d");
+var WIDTH;
+var HEIGHT;
+
 function init() {
     if (audioContext) return;
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    sampleRate = audioContext.sampleRate;
-    getElem("rate").innerText = sampleRate;
-    analyser = audioContext.createAnalyser();
-    analyser.minDecibels = -100;
-    analyser.maxDecibels = -10;
-    analyser.smoothingTimeConstant = 0.1;
-    analyser.fftSize = 4096;
-    analyserSize = analyser.fftSize;
-    getElem("size").innerText = analyserSize;
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        sampleRate = audioContext.sampleRate;
+        getElem("rate").innerText = sampleRate;
+        analyser = audioContext.createAnalyser();
+        analyser.minDecibels = -100;
+        analyser.maxDecibels = -10;
+        analyser.smoothingTimeConstant = 0.1;
+        analyser.fftSize = 4096;
+        analyserSize = analyser.fftSize;
+        getElem("size").innerText = analyserSize;
+    } catch (err) {
+        warn(err);
+        return;
+    }
 
     if (!navigator?.mediaDevices?.getUserMedia) {
         // No audio allowed
         warn('Sorry, getUserMedia is required for the app.')
         return;
     } else {
-        navigator.mediaDevices.getUserMedia({audio: true})
-        .then(
+        navigator.mediaDevices.getUserMedia({audio: true}).then(
             function(stream) {
-            // Initialize the SourceNode
-            source = audioContext.createMediaStreamSource(stream);
-            // Connect the source node to the analyzer
-            source.connect(analyser);
+                // Initialize the SourceNode
+                source = audioContext.createMediaStreamSource(stream);
+                // Connect the source node to the analyzer
+                source.connect(analyser);
 
-            gainNodeTone = audioContext.createGain();
-            gainNodeTone.connect(audioContext.destination);
-            gainNodeTone.gain.value = 0;
+                gainNodeTone = audioContext.createGain();
+                gainNodeTone.connect(audioContext.destination);
+                gainNodeTone.gain.value = 0;
 
-            oscillatorTone = audioContext.createOscillator();
-            oscillatorTone.connect(gainNodeTone);
-            oscillatorTone.start();
+                oscillatorTone = audioContext.createOscillator();
+                oscillatorTone.connect(gainNodeTone);
+                oscillatorTone.start();
 
-            visualize();
+                init_visualize();
+            }
+        ).catch(function(err) {
+            warn(err);
         }
-      )
-      .catch(function(err) {
-        warn(err);
-      });
-  }
+    );}
+}// init
 
-  // Visualizing, copied from voice change o matic
-  var canvas = document.querySelector('.visualizer');
-  canvas.width = canvas.offsetWidth;
-  var canvasContext = canvas.getContext("2d");
-  var WIDTH;
-  var HEIGHT;
-
-  function visualize() {
+function init_visualize() {
     WIDTH = canvas.width;
     HEIGHT = canvas.height;
 
-    var drawNoteVisual;
+    var bufferLengthAlt = analyser.frequencyBinCount;
+    var dataArrayAlt = new Uint8Array(bufferLengthAlt);
+    canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
 
-    var previousValueToDisplay = 0;
-    var smoothingCount = 0;
-    var smoothingThreshold = 5;
-    var smoothingCountThreshold = 5;
-
-    // Thanks to PitchDetect: https://github.com/cwilso/PitchDetect/blob/master/js/pitchdetect.js
-    var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    function noteFromPitch( frequency ) {
-      var noteNum = 12 * (Math.log( frequency / baseFreq )/Math.log(2) );
-      return noteStrings[(Math.round( noteNum ) + 69) % noteStrings.length];
-    }
-
-
-    var drawFrequency = function() {
-      var bufferLengthAlt = analyser.frequencyBinCount;
-      var dataArrayAlt = new Uint8Array(bufferLengthAlt);
-
-      canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
-
-      var drawAlt = function() {
-        requestAnimationFrame(drawAlt);
+    var drawGraph = function() {
+        requestAnimationFrame(drawGraph);
 
         analyser.getByteFrequencyData(dataArrayAlt);
-
 
         canvasContext.fillStyle = 'rgb(0, 0, 0)';
         canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
@@ -243,8 +242,9 @@ function init() {
         // -900 to 10000
         var graphFreqhMin = getLogFreq(graphNoteMin); // 16.351
         var graphFreqhMax = getLogFreq(graphNoteMax); // 7902.133
-        for (var i = graphNoteMin; i <= graphNoteMax; ++i) {
 
+        // draw scale
+        for (var i = graphNoteMin; i <= graphNoteMax; ++i) {
             var x = (i - graphNoteMin) / (graphNoteMax - graphNoteMin);
             x = x * WIDTH;
             if ((i % 12) == 1) { // Ai
@@ -252,7 +252,7 @@ function init() {
                 canvasContext.moveTo(x, 0);
                 canvasContext.lineTo(x, 512);
                 canvasContext.stroke();
-                canvasContext.fillText("A" + Math.floor(i / 12), x, 256-16);
+                canvasContext.fillText("A" + Math.floor(i / 12), x-10, 256-16);
                 canvasContext.fillText(getLogFreq(i).toFixed(1), x, 256+32);
             } else {
                 canvasContext.beginPath();
@@ -260,46 +260,54 @@ function init() {
                 canvasContext.lineTo(x, 256+16);
                 canvasContext.stroke();
             }
-            //var f = getLogFreq((i * 12) + 1);
-            //var x = (i - graphNoteMin) / (graphNoteMax - graphNoteMin);
-            //x = x * WIDTH * 10;
-        //    var x = f * WIDTH / (sampleRate / 2.0);
-
-          //  var maxFreq = getLogFreq((8 * 12) + 1);
-          //  var lx = Math.log(x / maxFreq);
-            //sampleRate / 2.0 Hz = width
-
         }
-
 
         var numCent = ((graphNoteMax - graphNoteMin + 1 ) * 100);
         var barWidth = WIDTH / numCent;
         var barHeight;
         var x = 0;
-        var maxVal = 0;
-        var maxFr = 0;
+        var localPeakValue = 0;
+        var localPeakFreq = 0;
         var fPerSample = (sampleRate / 2.0) / bufferLengthAlt;
 
+        // draw FFT_lin
         for (var cent = graphNoteMin * 100; cent <= graphNoteMax * 100; ++cent) {
             var freq = getCentFreq2(cent);
             var sample = freq / fPerSample;
+
+            // TODO quadratic interpolation
             var baseIndex = Math.floor(sample);
             var ratio = sample - baseIndex;
             barHeight = ((1.0-ratio) * dataArrayAlt[baseIndex]) + (ratio*dataArrayAlt[baseIndex + 1]);
+
             canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
             var x = (cent - (graphNoteMin * 100)) / ((graphNoteMax - graphNoteMin) * 100);
             x = x * WIDTH;
             canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
 
-            if (barHeight > maxVal) {
-                maxVal = barHeight;
-                maxFr = freq;
+            if (barHeight > localPeakValue) {
+                localPeakValue = barHeight;
+                localPeakFreq = freq;
             }
         }
 
+        // calculate frequency from FFT_lin
+        // val + ((target - val) * fact);
+        // val + (target*fact - val*fact);
+
+        FFT_lin_peakValue = smooth(FFT_lin_peakValue, localPeakValue, 0.2);
+        FFT_lin_peak.innerText =  Math.round(FFT_lin_peakValue);
+        if (FFT_lin_peakValue > 64.0) {
+            FFT_lin_freqValue = smooth(FFT_lin_freqValue, localPeakFreq, 0.1);
+            FFT_lin_freq.innerText = FFT_lin_freqValue.toFixed(1);
+            FFT_lin_note.innerText = noteStringFromPitch(FFT_lin_freqValue);
+        }
+
+        // draw AC_lin
         let maxOffsetSize = sampleRate / graphFreqhMin;
-        let sums = getFreq(maxOffsetSize);
-        if (sums) {
+        let sums = get_AC_lin(maxOffsetSize);
+        if (sums != false) {
+
             barWidth = WIDTH / sums.length;
             var crossings = [];
 
@@ -318,46 +326,41 @@ function init() {
                 }
             }
 
-        var dc12 = crossings[1]-crossings[0];
-        var dc23 = crossings[2]-crossings[1];
-        var dc34 = crossings[3]-crossings[2];
-        var dc45 = crossings[4]-crossings[3];
-        if ( (Math.abs(dc45 - dc34) / dc45) < 0.25) {
-            var stack = 0;
-            var ns = 0;
-            for (var i = 1; i < crossings.length/2; ++i) {stack += (crossings[i+1] - crossings[i]); ns++; }
-            stack = stack / ns;
-            autoF1.innerText = (sampleRate / (stack*2.0)).toFixed(1);
-            autoF2.innerText = "";
-        } else {
-            autoF1.innerText = (sampleRate / (dc12 + dc23 + dc34 + dc45)).toFixed(1);
-            autoF2.innerText = (sampleRate / (dc12 + dc23)).toFixed(1);
+            // calculate freq from AC_lin
+            var dc12 = crossings[1]-crossings[0];
+            var dc23 = crossings[2]-crossings[1];
+            var dc34 = crossings[3]-crossings[2];
+            var dc45 = crossings[4]-crossings[3];
+            if ( (Math.abs(dc45 - dc34) / dc45) < 0.25) {
+                var stack = 0;
+                var numSpans = 0;
+                for (var i = 1; i < crossings.length/2; ++i) {stack += (crossings[i+1] - crossings[i]); numSpans++; }
+                var localFreq1 = sampleRate / (stack*2.0/numSpans);
+
+                AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, 0.2);
+                AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
+                AC_lin_freq2.innerText = "";
+                AC_lin_note.innerText = noteStringFromPitch(AC_lin_freq1Value);
+            } else {
+                var localFreq1 = sampleRate / (dc12 + dc23 + dc34 + dc45);
+                var localFreq2 = sampleRate / (dc12 + dc23);
+                AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, 0.2);
+                AC_lin_freq2Value = smooth(AC_lin_freq2Value, localFreq2, 0.2);
+                AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
+                AC_lin_freq2.innerText = AC_lin_freq2Value.toFixed(1);
+            }
         }
-    }
 
 
-
+        // draw graph labels
         canvasContext.fillStyle = "white";
         canvasContext.fillText("FFT:", 4, 256+32);
         canvasContext.fillText("Autocorrelation:", 4, 16);
-
-        max.innerText = Math.round((maxVal * 0.05) + (0.95 * Number( max.innerText)));
-        if (maxVal > 64.0) {
-            maxF.innerText = ((maxFr * 0.02) + (0.98 * Number(maxF.innerText))).toFixed(1);
-            maxN.innerText = noteFromPitch(Number(maxF.innerText));
-        }
-
-
-
       };
 
-      drawAlt();
-    }
-
-    drawFrequency();
-    //drawNote();
-  }
+    drawGraph();
 }
+
 
 
 const log_baseFactor = Math.pow(2.0, 1.0/12.0);
@@ -379,8 +382,20 @@ function getCentFreq(offset) {
 function getCentFreq2(offset) {
     return 440.0 * Math.pow(Math.pow(2.0, 1.0/1200.0), (offset - 4900));
 }
+// Thanks to PitchDetect: https://github.com/cwilso/PitchDetect/blob/master/js/pitchdetect.js
+var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+function noteStringFromPitch( frequency ) {
+    var index = noteIndexFromPitch(frequency);
+    var octave = Math.floor(index / 12)-1;
+    var str = noteStrings[index % noteStrings.length];
+    return (str.length == 1) ? (str + octave) : (str[0] + octave + str[1]);
+}
+function noteIndexFromPitch( frequency ) {
+    var noteNum = 12 * (Math.log( frequency / baseFreq )/Math.log(2) );
+    return (Math.round( noteNum ) + 69);
+}
 
-function getFreq(offsetSize)  {
+function get_AC_lin(offsetSize)  {
     // Start with a bufferLength of the analyser's FFT size
     var bufferLength = analyser.fftSize;
     // Actually create the buffer
@@ -393,7 +408,7 @@ function getFreq(offsetSize)  {
     // For each potential offset, calculate the sum of each buffer value times its offset value
     for (let offset = 0; offset < bufferLength; offset++) {
         for (let j = 0; j < offsetSize - offset; j++) {
-            offsetSums[offset] = offsetSums[offset] + buffer[j] * buffer[j+offset]
+            offsetSums[offset] += buffer[j] * buffer[j+offset]
         }
     }
 
@@ -437,14 +452,14 @@ Sample Rate: <span id="rate">0</span><br />
 FFT Size: <span id="size">0</span><br />
 <canvas class="visualizer" width="1024" height="512"></canvas><br />
 <span id="f0"></span><span id="f1"></span><span id="f2"></span><span id="f3"></span><span id="f4"></span><span id="f5"></span><span id="f6"></span><span id="f7"></span>
-FFT:<br />
-Peak: <span id="max">0</span><br />
-Peak Freq: <span id="maxF">0</span>Hz<br />
-Peak Note: <span id="maxN">A</span><br />
-Autocorrellation:<br />
-Freq1: <span id="autoF1">0</span>Hz<br />
-Freq2: <span id="autoF2">0</span>Hz<br />
-Note: <span id="autoN">A</span><br />
+FFT (Linear):<br />
+Peak: <span id="FFT_lin_peak">0</span><br />
+Freq: <span id="FFT_lin_freq">0</span>Hz<br />
+Note: <span id="FFT_lin_note">A</span><br />
+Autocorrellation (Linear):<br />
+Freq1: <span id="AC_lin_freq1">0</span>Hz<br />
+Freq2: <span id="AC_lin_freq2">0</span>Hz<br />
+Note: <span id="AC_lin_note">A</span><br />
 <hr />
 Standard frequencies<br />
 Piano:
