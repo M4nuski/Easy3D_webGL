@@ -15,8 +15,8 @@
             font-size: initial;
         }
         .visualizer {
-            width : 96%;
-            margin-left: 2%;
+            width : 99%;
+            margin-left: 0.5%;
             height: 512px;
         }
 
@@ -75,6 +75,35 @@
             bottom:0px;
             right:0px;
         }
+        /* Table Styles */
+        table {
+            border-collapse: separate;
+            border: 0px solid #808080;/*grayBackground*/
+            border-spacing: 0px 5px;
+            margin: 0px 15px 15px 15px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #E2E2ED;/**/
+        }
+        tr:nth-child(odd) {
+            background-color:#F2F2FD;/*lightBackground*/
+        }
+        th {
+            color:#F2F2FD;/*lightBackground*/
+            background-color:#505050;
+            border-radius: 5px;
+            box-shadow: 0px 3px 3px 0px #303030;
+            padding: 2px 10px 0px 10px;
+        }
+        td {
+            padding: 2px 10px 0px 10px;
+            width:10em;
+        }
+        td:nth-child(odd) {
+            text-align: right;
+            width:6em;
+        }
 
 
     </style>
@@ -106,6 +135,17 @@ function warn(text) {
     warning.style.display = "block";
     warning.innerText = text;
 }
+function pararbInterpolate(index, prevValue, value, nextValue) {
+   //var prevValue = c[index - 1];
+   //var value = c[index];
+   //var nextValue = c[index + 1]
+    var a = (prevValue + nextValue - (2.0 * value)) / 2.0;
+    var b = (nextValue - prevValue) / 2.0;
+    if (a) {
+        index = index - b / (2.0 * a);
+    }
+    return index;
+}
 
 // data output elements
 var FFT_lin_peak = getElem("FFT_lin_peak");
@@ -115,7 +155,17 @@ var FFT_lin_freqValue = 0.0;
 var FFT_lin_note = getElem("FFT_lin_note");
 var FFT_lin_chevron = 0;
 var FFT_lin_mark = 440;
-
+var FFT_lin_text = getElem("FFT_lin_text");
+var FFT_lin_smoothValue = 0.2;
+onEvent("FFT_lin_smooth", "input", (event) => {
+    FFT_lin_smoothValue = (Number(event.target.value) / 100.0);
+    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
+} );
+var FFT_lin_squelchValue = 64;
+onEvent("FFT_lin_squelch", "input", (event) => {
+    FFT_lin_squelchValue = Number(event.target.value);
+    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
+} );
 var AC_lin_freq1 = getElem("AC_lin_freq1");
 var AC_lin_freq1Value = 0.0;
 var AC_lin_freq2 = getElem("AC_lin_freq2");
@@ -123,6 +173,17 @@ var AC_lin_freq2Value = 0.0;
 var AC_lin_note = getElem("AC_lin_note");
 var AC_lin_chevron = 0;
 var AC_lin_mark = 440;
+var AC_lin_text = getElem("AC_lin_text");
+var AC_lin_smoothValue = 0.2;
+onEvent("AC_lin_smooth", "input", (event) => {
+    AC_lin_smoothValue = Number(event.target.value) / 100.0;
+    AC_lin_text.innerText = "Sm:" + AC_lin_smoothValue.toFixed(3) + " Sq:" + AC_lin_squelchValue.toFixed(3);
+} );
+var AC_lin_squelchValue = 0.002;
+onEvent("AC_lin_squelch", "input", (event) => {
+    AC_lin_squelchValue = Number(event.target.value) / 10000.0;
+    AC_lin_text.innerText = "Sm:" + AC_lin_smoothValue.toFixed(3) + " Sq:" + AC_lin_squelchValue.toFixed(4);
+} );
 
 // events
 onClick("startButton", init);
@@ -296,7 +357,6 @@ function init_visualize() {
             var freq = getCentFreq2(cent);
             var sample = freq / fPerSample;
 
-            // TODO quadratic interpolation
             var baseIndex = Math.floor(sample);
             var ratio = sample - baseIndex;
             barHeight = ((1.0-ratio) * dataArrayAlt[baseIndex]) + (ratio*dataArrayAlt[baseIndex + 1]);
@@ -349,10 +409,10 @@ function init_visualize() {
         }
 
         // calculate frequency from FFT_lin
-        FFT_lin_peakValue = smooth(FFT_lin_peakValue, localPeakValue, 0.2);
+        FFT_lin_peakValue = smooth(FFT_lin_peakValue, localPeakValue, FFT_lin_smoothValue);
         FFT_lin_peak.innerText =  Math.round(FFT_lin_peakValue);
-        if (FFT_lin_peakValue > 64.0) {
-            FFT_lin_freqValue = smooth(FFT_lin_freqValue, localPeakFreq, 0.2);
+        if (FFT_lin_peakValue > FFT_lin_squelchValue) {
+            FFT_lin_freqValue = smooth(FFT_lin_freqValue, localPeakFreq, FFT_lin_smoothValue);
             FFT_lin_freq.innerText = FFT_lin_freqValue.toFixed(1);
 
 
@@ -371,6 +431,7 @@ function init_visualize() {
 
             barWidth = WIDTH / sums.length;
             var crossings = [];
+            var peaks = [];
 
             canvasContext.fillStyle = "cyan";
             for (var x = 0; x < sums.length-1; ++x) {
@@ -385,39 +446,50 @@ function init_visualize() {
                     canvasContext.stroke();
                     crossings.push(x);
                 }
+                if ((x > 0) && (x < sums.length - 2) && (sums[x]>0.0) && (sums[x-1] < sums[x]) && (sums[x] > sums[x+1])) {
+                    peaks.push([x,  sums[x-1], sums[x], sums[x-1]]);
+                    // peaks
+                    canvasContext.strokeStyle = "yellow";
+                    canvasContext.beginPath();
+                    canvasContext.moveTo(WIDTH * x / sums.length, HEIGHT - barHeight - 256.0 - 120.0);
+                    canvasContext.lineTo(WIDTH * x / sums.length, HEIGHT - barHeight - 256.0 - 132.0);
+                    canvasContext.stroke();
+                }
             }
 
             // calculate freq from AC_lin
-            var dc12 = crossings[1]-crossings[0];
-            var dc23 = crossings[2]-crossings[1];
-            var dc34 = crossings[3]-crossings[2];
-            var dc45 = crossings[4]-crossings[3];
-            if ( (Math.abs(dc45 - dc34) / dc45) < 0.25) {
-                var stack = 0;
-                var numSpans = 0;
-                for (var i = 1; i < crossings.length/2; ++i) {stack += (crossings[i+1] - crossings[i]); numSpans++; }
-                var localFreq1 = sampleRate / (stack*2.0/numSpans);
+            if (crossings.length >= 5) {
+                var dc12 = crossings[1]-crossings[0];
+                var dc23 = crossings[2]-crossings[1];
+                var dc34 = crossings[3]-crossings[2];
+                var dc45 = crossings[4]-crossings[3];
+                if ( (Math.abs(dc45 - dc34) / dc45) < 0.25) {
+                    var stack = 0;
+                    var numSpans = 0;
+                    for (var i = 1; i < crossings.length/2; ++i) {stack += (crossings[i+1] - crossings[i]); numSpans++; }
+                    var localFreq1 = sampleRate / (stack*2.0/numSpans);
 
-                AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, 0.2);
-                AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
-                AC_lin_freq2.innerText = "";
+                    AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, AC_lin_smoothValue);
+                    AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
+                    AC_lin_freq2.innerText = "";
 
-            } else {
-                var localFreq1 = sampleRate / (dc12 + dc23 + dc34 + dc45);
-                var localFreq2 = sampleRate / (dc12 + dc23);
+                } else {
+                    var localFreq1 = sampleRate / (dc12 + dc23 + dc34 + dc45);
+                    var localFreq2 = sampleRate / (dc12 + dc23);
 
-                AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, 0.2);
-                AC_lin_freq2Value = smooth(AC_lin_freq2Value, localFreq2, 0.2);
-                AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
-                AC_lin_freq2.innerText = AC_lin_freq2Value.toFixed(1);
-            }
-            AC_lin_mark = Math.round(getCent(localFreq1));
-            let fcent = Math.round(getCent(AC_lin_freq1Value));
-            AC_lin_chevron = fcent;
-            let error = Math.round(100*((fcent/100) - Math.round(fcent/100)));
-            error = (error > 0) ? "+" + error : "" + error;
-            AC_lin_note.innerText = noteStringFromPitch(AC_lin_freq1Value) + " (" + error + " cents)";
-        }
+                    AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, AC_lin_smoothValue);
+                    AC_lin_freq2Value = smooth(AC_lin_freq2Value, localFreq2, AC_lin_smoothValue);
+                    AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
+                    AC_lin_freq2.innerText = AC_lin_freq2Value.toFixed(1);
+                }
+                AC_lin_mark = Math.round(getCent(localFreq1));
+                let fcent = Math.round(getCent(AC_lin_freq1Value));
+                AC_lin_chevron = fcent;
+                let error = Math.round(100*((fcent/100) - Math.round(fcent/100)));
+                error = (error > 0) ? "+" + error : "" + error;
+                AC_lin_note.innerText = noteStringFromPitch(AC_lin_freq1Value) + " (" + error + " cents)";
+            } // 5 crossings
+        } // sums over squelch
 
 
         // draw graph labels
@@ -500,7 +572,7 @@ function get_AC_lin(offsetSize)  {
         }
     }
 
-    if (maxValue < 0.002) return false;
+    if (maxValue < AC_lin_squelchValue) return false;
     // normalize
     for (let offset = 0; offset < bufferLength; offset++) offsetSums[offset] /= maxValue;
 
@@ -527,18 +599,33 @@ Base A: <input type="number" min="0" max="24000" value="440" id="baseFreq" /><br
 Sample Rate: <span id="rate">0</span>, FFT Size: <span id="size">0</span><br />
 <hr />
 <canvas class="visualizer" width="1024" height="512"></canvas><br />
-<span id="f0"></span><span id="f1"></span><span id="f2"></span><span id="f3"></span><span id="f4"></span><span id="f5"></span><span id="f6"></span><span id="f7"></span>
-Autocorrellation (Linear):<br />
-Freq1: <span id="AC_lin_freq1">0</span>Hz<br />
-Freq2: <span id="AC_lin_freq2">0</span>Hz<br />
-Note: <span id="AC_lin_note">A</span><br />
-FFT (Linear):<br />
-Peak: <span id="FFT_lin_peak">0</span><br />
-Freq: <span id="FFT_lin_freq">0</span>Hz<br />
-Note: <span id="FFT_lin_note">A</span><br />
+<table>
+    <tr>
+        <th colspan="4">Autocorrellation (Linear)</th>
+        <th colspan="4">FFT (Linear)</th>
+    </tr>
+    <tr>
+        <td>Smoothing:</td><td><input type="range" id="AC_lin_smooth" min="1" max="100" value="20" /></td>
+        <td>Freq(0C):</td><td><span id="AC_lin_freq1">0</span>Hz</td>
+        <td>Smoothing:</td><td><input type="range" id="FFT_lin_smooth" min="1" max="100" value="20" /></td>
+        <td>Freq:</td><td><span id="FFT_lin_freq">0</span>Hz</td>
+    </tr>
+    <tr>
+        <td>Squelch:</td><td><input type="range" id="AC_lin_squelch" min="0" max="100" value="20" /></td>
+        <td>Freq(P2P):</td><td><span id="AC_lin_freq2">0</span>Hz</td>
+        <td>Squelch:</td><td><input type="range" id="FFT_lin_squelch" min="0" max="256" value="64" /></td>
+        <td>Peak:</td><td><span id="FFT_lin_peak">0</span></td>
+    </tr>
+    <tr>
+        <td>&nbsp;</td><td><span id="AC_lin_text"></span></td>
+        <td>Note:</td><td><span id="AC_lin_note">A</span></td>
+        <td>&nbsp;</td><td><span id="FFT_lin_text"></span></td>
+        <td>Note:</td><td><span id="FFT_lin_note">A</span></td>
+    </tr>
+</table>
 <hr />
 Standard frequencies<br />
-Piano:
+Piano:<br />
 note 1 is A0 at 27.5Hz<br />
 note 41 is C4 at 261.6256Hz (Middle C)<br />
 note 49 is A4 at 440.0Hz<br />
