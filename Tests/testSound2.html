@@ -136,15 +136,16 @@ function warn(text) {
     warning.innerText = text;
 }
 function pararbInterpolate(index, prevValue, value, nextValue) {
-   //var prevValue = c[index - 1];
-   //var value = c[index];
-   //var nextValue = c[index + 1]
+    var newIndex = index;
     var a = (prevValue + nextValue - (2.0 * value)) / 2.0;
     var b = (nextValue - prevValue) / 2.0;
     if (a) {
-        index = index - b / (2.0 * a);
+        newIndex = index - b / (2.0 * a);
     }
-    return index;
+    if (isNaN(newIndex)) return index;
+    if (newIndex == Infinity) return index;
+    if (newIndex == -Infinity) return index;
+    return newIndex;
 }
 
 // data output elements
@@ -156,7 +157,7 @@ var FFT_lin_note = getElem("FFT_lin_note");
 var FFT_lin_chevron = 0;
 var FFT_lin_mark = 440;
 var FFT_lin_text = getElem("FFT_lin_text");
-var FFT_lin_smoothValue = 0.2;
+var FFT_lin_smoothValue = 0.5;
 onEvent("FFT_lin_smooth", "input", (event) => {
     FFT_lin_smoothValue = (Number(event.target.value) / 100.0);
     FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
@@ -174,7 +175,7 @@ var AC_lin_note = getElem("AC_lin_note");
 var AC_lin_chevron = 0;
 var AC_lin_mark = 440;
 var AC_lin_text = getElem("AC_lin_text");
-var AC_lin_smoothValue = 0.2;
+var AC_lin_smoothValue = 0.9;
 onEvent("AC_lin_smooth", "input", (event) => {
     AC_lin_smoothValue = Number(event.target.value) / 100.0;
     AC_lin_text.innerText = "Sm:" + AC_lin_smoothValue.toFixed(3) + " Sq:" + AC_lin_squelchValue.toFixed(3);
@@ -352,8 +353,13 @@ function init_visualize() {
         var localPeakFreq = 0;
         var fPerSample = (sampleRate / 2.0) / bufferLengthAlt;
 
+        var prevCentFreq=getCentFreq2(graphNoteMin * 100);
+        var currentCentFreq=getCentFreq2(graphNoteMin * 100 + 1);
+        var nextCentFreq=0;
+
         // draw FFT_lin
-        for (var cent = graphNoteMin * 100; cent <= graphNoteMax * 100; ++cent) {
+        for (var cent = graphNoteMin * 100 + 1; cent <= graphNoteMax * 100 - 1; ++cent) {
+
             var freq = getCentFreq2(cent);
             var sample = freq / fPerSample;
 
@@ -366,9 +372,13 @@ function init_visualize() {
             x = x * WIDTH;
             canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
 
-            if (barHeight > localPeakValue) {
+            if ((barHeight > localPeakValue) && (baseIndex > 0) && (baseIndex < dataArrayAlt.length - 2)) {
+                let prev = dataArrayAlt[baseIndex - 1];
+                let curr = dataArrayAlt[baseIndex];
+                let next = dataArrayAlt[baseIndex + 1];
+                var newIndex = pararbInterpolate(baseIndex, prev, curr, next);
                 localPeakValue = barHeight;
-                localPeakFreq = freq;
+                localPeakFreq = newIndex * fPerSample;
             }
 
             if (FFT_lin_chevron == cent) {
@@ -432,7 +442,7 @@ function init_visualize() {
             barWidth = WIDTH / sums.length;
             var crossings = [];
             var peaks = [];
-
+            var wasDown = false;
             canvasContext.fillStyle = "cyan";
             for (var x = 0; x < sums.length-1; ++x) {
                 barHeight = sums[x] * 100.0;
@@ -446,12 +456,21 @@ function init_visualize() {
                     canvasContext.stroke();
                     crossings.push(x);
                 }
-                if ((x > 0) && (x < sums.length - 2) && (sums[x]>0.0) && (sums[x-1] < sums[x]) && (sums[x] > sums[x+1])) {
-                    peaks.push([x,  sums[x-1], sums[x], sums[x-1]]);
+                // trough
+                if ((x > 0) && (x < sums.length - 2) && (sums[x] < 0.0) && (sums[x-1] > sums[x]) && (sums[x] < sums[x+1])) {
+                    wasDown = true;
+                }
+                if ((x > 0) && (x < sums.length - 2) && (sums[x] > 0.0) && (sums[x-1] < sums[x]) && (sums[x] > sums[x+1])) {
+                    if (wasDown) { // new peak
+                        peaks.push([x,  sums[x-1], sums[x], sums[x-1]]); // add to list
+                        wasDown = false;
+                    } else if ( (peaks.length > 0) && (peaks[peaks.length-1][2] < sums[x]) ) {
+                        peaks[peaks.length-1] = [x,  sums[x-1], sums[x], sums[x-1]];// override if higher
+                    }
                     // peaks
                     canvasContext.strokeStyle = "yellow";
                     canvasContext.beginPath();
-                    canvasContext.moveTo(WIDTH * x / sums.length, HEIGHT - barHeight - 256.0 - 120.0);
+                    canvasContext.moveTo(WIDTH * x / sums.length, HEIGHT - barHeight - 256.0 - 128.0);
                     canvasContext.lineTo(WIDTH * x / sums.length, HEIGHT - barHeight - 256.0 - 132.0);
                     canvasContext.stroke();
                 }
@@ -471,23 +490,45 @@ function init_visualize() {
 
                     AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, AC_lin_smoothValue);
                     AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
-                    AC_lin_freq2.innerText = "";
 
-                } else {
-                    var localFreq1 = sampleRate / (dc12 + dc23 + dc34 + dc45);
+                    AC_lin_mark = Math.round(getCent(localFreq1));
+                    let fcent = Math.round(getCent(AC_lin_freq1Value));
+                    AC_lin_chevron = fcent;
+                    let error = Math.round(100*((fcent/100) - Math.round(fcent/100)));
+                    error = (error > 0) ? "+" + error : "" + error;
+                    AC_lin_note.innerText = noteStringFromPitch(AC_lin_freq1Value) + " (" + error + " cents)";
+                }  // crossings
+                if (peaks.length > 10) {
+                    // clean sub peaks
+                    let hadSub = true;
+                    while (hadSub) {
+                        hadSub = false;
+                        for (var i = peaks.length-1; i >=1; --i) {
+                            if (peaks[i-1][2] < peaks[i][2]) {
+                                peaks.splice(i-1, 1);
+                                hadSub = true;
+                            }
+                        }
+                    }
+                    // get intervals
+                    if (peaks.length > 5) {
+                        var localFreq2 = sampleRate / (peaks[2][0] - peaks[1][0]);
+                        AC_lin_freq2Value = smooth(AC_lin_freq2Value, localFreq2, AC_lin_smoothValue);
+                        AC_lin_freq2.innerText = AC_lin_freq2Value.toFixed(1);
+
+
+                    }
+
+                    /*var localFreq1 = sampleRate / (dc12 + dc23 + dc34 + dc45);
                     var localFreq2 = sampleRate / (dc12 + dc23);
 
                     AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, AC_lin_smoothValue);
-                    AC_lin_freq2Value = smooth(AC_lin_freq2Value, localFreq2, AC_lin_smoothValue);
+
                     AC_lin_freq1.innerText = AC_lin_freq1Value.toFixed(1);
-                    AC_lin_freq2.innerText = AC_lin_freq2Value.toFixed(1);
-                }
-                AC_lin_mark = Math.round(getCent(localFreq1));
-                let fcent = Math.round(getCent(AC_lin_freq1Value));
-                AC_lin_chevron = fcent;
-                let error = Math.round(100*((fcent/100) - Math.round(fcent/100)));
-                error = (error > 0) ? "+" + error : "" + error;
-                AC_lin_note.innerText = noteStringFromPitch(AC_lin_freq1Value) + " (" + error + " cents)";
+                    */
+                } // peaks
+
+
             } // 5 crossings
         } // sums over squelch
 
@@ -605,13 +646,13 @@ Sample Rate: <span id="rate">0</span>, FFT Size: <span id="size">0</span><br />
         <th colspan="4">FFT (Linear)</th>
     </tr>
     <tr>
-        <td>Smoothing:</td><td><input type="range" id="AC_lin_smooth" min="1" max="100" value="20" /></td>
+        <td>Smoothing:</td><td><input type="range" id="AC_lin_smooth" min="1" max="100" value="90" /></td>
         <td>Freq(0C):</td><td><span id="AC_lin_freq1">0</span>Hz</td>
         <td>Smoothing:</td><td><input type="range" id="FFT_lin_smooth" min="1" max="100" value="20" /></td>
         <td>Freq:</td><td><span id="FFT_lin_freq">0</span>Hz</td>
     </tr>
     <tr>
-        <td>Squelch:</td><td><input type="range" id="AC_lin_squelch" min="0" max="100" value="20" /></td>
+        <td>Squelch:</td><td><input type="range" id="AC_lin_squelch" min="0" max="100" value="50" /></td>
         <td>Freq(P2P):</td><td><span id="AC_lin_freq2">0</span>Hz</td>
         <td>Squelch:</td><td><input type="range" id="FFT_lin_squelch" min="0" max="256" value="64" /></td>
         <td>Peak:</td><td><span id="FFT_lin_peak">0</span></td>
