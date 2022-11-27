@@ -12,7 +12,7 @@ E3D_InitAll();
 //CAMERA = new E3D_camera_model("cam2")
 E3D_onResize();
 SCENE.setClearColor(_v3_darkgray);
-
+E3D_DEBUG_RENDER_TIME = true;
 // Move the camera back and up a little
 CAMERA.moveBy(0, 0, 0, 0.2,-0.2, 0.0);
 CAMERA.moveBy(0, 0, 200);
@@ -61,7 +61,7 @@ obj1.addCapsule([100.0, 0.0, 50.0], _v3_null, 50.0, 10.0, _v3_white, 32, 12, 4);
 obj1.isVisible = true;
 E3D_addEntity(obj1);
 
-CB_tick = function() {
+TIMER.onSlowTick = function() {
    /* if (INPUTS.checkCommand("action1", true)) {
         n = v3_addnoise_new(_v3_origin, 1.0);
         v = v3_addnoise_new(_v3_origin, 256.0);
@@ -76,6 +76,9 @@ CB_tick = function() {
     $("data").innerText += CAMERA.zDist.toFixed(3);*/
     $("spanSFPS").innerText = TIMER.fpsSmoothed.toFixed(1);
     $("spanSPCT").innerText = TIMER.usageSmoothed.toFixed(1);
-
     $("spanLINES").innerText = E3D_DEBUG_RENDER_NB_ELEMENTS;
+    $("spanENT").innerText = E3D_DEBUG_RENDER_NB_ENTITIES + "/" + ENTITIES.length;
+    $("spanDELTA").innerText = TIMER.delta.toFixed(3);
+    $("spanINDELTA").innerText = TIMER.innerDelta.toFixed(3);
+    $("spanGPU").innerText = E3D_DEBUG_RENDER_USAGE.toFixed(1);
 }
