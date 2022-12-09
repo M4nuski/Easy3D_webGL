@@ -167,7 +167,7 @@ var FFT_lin_mark = 440;
 var FFT_lin_text = getElem("FFT_lin_text");
 var FFT_lin_smoothValue = 0.5;
 onEvent("FFT_lin_smooth", "input", (event) => {
-    FFT_lin_smoothValue = (Number(event.target.value) / 100.0);
+    FFT_lin_smoothValue = (100.0 + Number(event.target.value)) / 100.0;
     FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
 } );
 var FFT_lin_squelchValue = 64;
@@ -197,7 +197,7 @@ var AC_lin_mark2 = 440;
 var AC_lin_text = getElem("AC_lin_text");
 var AC_lin_smoothValue = 0.9;
 onEvent("AC_lin_smooth", "input", (event) => {
-    AC_lin_smoothValue = Number(event.target.value) / 100.0;
+    AC_lin_smoothValue = (100.0 + Number(event.target.value)) / 100.0;
     AC_lin_text.innerText = "Sm:" + AC_lin_smoothValue.toFixed(3) + " Sq:" + AC_lin_squelchValue.toFixed(3);
 } );
 var AC_lin_squelchValue = 0.015;
@@ -223,6 +223,9 @@ onClick("pauseButton", (event) => {
     }
 });
 
+var squelchValue = 32;
+onEvent("squelchVol", "input", (event) => squelchValue = Number(event.target.value) );
+
 onEvent("injectVol", "input", setToneParams);
 onEvent("toneVol", "input", setToneParams);
 onEvent("toneFreq", "input", setToneParams);
@@ -234,7 +237,7 @@ function setToneParams() {
 }
 onEvent("baseFreq", "change", (event) => {
     baseFreq = Number(event.target.value);
-    GenNoteStrings();
+    GenNoteFreqsAndStrings();
     GenCentFreqs();
 });
 
@@ -244,12 +247,15 @@ onEvent("baseFreq", "change", (event) => {
 // global
 var source;
 var audioContext;
-var analyser;
 var sampleRate;
-var analyserSize;
-
 var gainNodeInject, gainNodeTone;
 var oscillatorNode;
+
+var analyser;
+var analyserTimeData;
+var analyserTimeSize;
+var analyserFreqData;
+var analyserFreqSize;
 
 var baseFreq = 440.0;
 const log_baseFactor = Math.pow(2.0, 1.0/12.0);
@@ -275,10 +281,10 @@ var graphNoteMax = 100; // B8 + 1
 // -900 to 10000
 var graphFreqhMin = getLogFreq(graphNoteMin); // 16.351
 var graphFreqhMax = getLogFreq(graphNoteMax); // 7902.133
-var graphNumNotes = graphFreqhMax - graphFreqhMin + 1;
+var graphNumNotes = graphNoteMax - graphNoteMin + 1;
 var graphNoteStrings = [];
 var graphNoteFreqs = [];
-function GenNoteStrings() {
+function GenNoteFreqsAndStrings() {
     graphNoteStrings = [];
     for (var i = graphNoteMin; i <= graphNoteMax; ++i) {
         var f = getLogFreq(i);
@@ -298,19 +304,20 @@ function GenCentFreqs() {
 
 function init() {
     if (audioContext) return;
-    GenNoteStrings();
+    GenNoteFreqsAndStrings();
     GenCentFreqs();
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         sampleRate = audioContext.sampleRate;
         getElem("rate").innerText = sampleRate;
         analyser = audioContext.createAnalyser();
-        analyser.minDecibels = -100;
+        analyser.minDecibels = -80;
         analyser.maxDecibels = -10;
         analyser.smoothingTimeConstant = 0.0;
         analyser.fftSize = 4096;
-        analyserSize = analyser.fftSize;
-        getElem("size").innerText = analyserSize;
+        analyserTimeSize = analyser.fftSize;
+        analyserFreqSize = analyser.frequencyBinCount;
+        getElem("size").innerText = analyserTimeSize;
     } catch (err) {
         warn(err);
         return;
@@ -353,14 +360,16 @@ function init_visualize() {
     WIDTH = canvas.width;
     HEIGHT = canvas.height;
 
-    var bufferLengthAlt = analyser.frequencyBinCount;
-    var dataArrayAlt = new Uint8Array(bufferLengthAlt);
+    analyserFreqData = new Uint8Array(analyserFreqSize);
+    analyserTimeData = new Uint8Array(analyserTimeSize);
+
     canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
     init_AC_lin();
     init_FFT_log();
 
     var drawGraph = function() {
-        analyser.getByteFrequencyData(dataArrayAlt);
+        analyser.getByteFrequencyData(analyserFreqData);
+        analyser.getByteTimeDomainData(analyserTimeData);
 
         canvasContext.fillStyle = 'rgb(0, 0, 0)';
         canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
@@ -369,66 +378,63 @@ function init_visualize() {
         canvasContext.strokeStyle = "white";
         canvasContext.textAlign = 'center';
 
+        var barWidth = WIDTH / graphNumCent;
+        var barHeight;
+        var x = 0;
+
         // draw scale
-        for (var i = graphNoteMin; i <= graphNoteMax; ++i) {
-            var x = (i - graphNoteMin) / (graphNoteMax - graphNoteMin);
+        for (var point = graphNoteMin; point <= graphNoteMax; ++point) {
+            x = (point - graphNoteMin) / (graphNoteMax - graphNoteMin);
             x = x * WIDTH;
-            if ((i % 12) == 1) { // Ai
+            if ((point % 12) == 1) { // Ai
                 canvasContext.beginPath();
                 canvasContext.moveTo(x, 0);
                 canvasContext.lineTo(x, 512);
                 canvasContext.stroke();
                 canvasContext.font = "bold 12px Arial";
-                canvasContext.fillText("A" + Math.floor(i / 12), x, 256+16);
-                canvasContext.fillText(graphNoteStrings[i - graphNoteMin], x, 256-20);
+                canvasContext.fillText("A" + Math.floor(point / 12), x, 256+16);
+                canvasContext.fillText(graphNoteStrings[point - graphNoteMin], x, 256-20);
             } else {
                 canvasContext.beginPath();
                 canvasContext.moveTo(x, 256-16);
                 canvasContext.lineTo(x, 256+16);
                 canvasContext.stroke();
                 canvasContext.font = "10px Arial";
-                var str = noteStringFromIndex(i+20);
+                var str = noteStringFromIndex(point+20);
                 canvasContext.fillText(str, x, 260 + ((str.length > 2) ? -4 : 4) );
             }
         }
 
         canvasContext.textAlign = 'left';
 
-        var barWidth = WIDTH / graphNumCent;
-        var barHeight;
-        var x = 0;
         var localPeakValue = 0;
         var localPeakFreq = 0;
-        var fPerSample = (sampleRate / 2.0) / bufferLengthAlt;
-
-        /*var prevCentFreq=getCentFreq(graphNoteMin * 100);
-        var currentCentFreq=getCentFreq(graphNoteMin * 100 + 1);
-        var nextCentFreq=0;*/
+        var fPerSample = (sampleRate / 2.0) / analyserFreqSize;
 
         var bassBoostM = -FFT_lin_bassValue / (graphNumCent / 1.5); // cutoff at 2/3 scale
         var bassBoostB = FFT_lin_bassValue - (bassBoostM * graphNoteMin * 100 * 1.5);
 
         // draw FFT_lin
-        for (var point = graphCentMin; point <= graphCentMax; ++point) {
+        for (let point = graphCentMin; point <= graphCentMax; ++point) {
 
             var freq = graphCentFreqs[point - graphCentMin];
             var sample = freq / fPerSample;
 
             var baseIndex = Math.floor(sample);
             var ratio = sample - baseIndex;
-            barHeight = ((1.0-ratio) * dataArrayAlt[baseIndex]) + (ratio*dataArrayAlt[baseIndex + 1]);
+            barHeight = ((1.0-ratio) * analyserFreqData[baseIndex]) + (ratio*analyserFreqData[baseIndex + 1]);
 
             barHeight = barHeight + (bassBoostM * point) + bassBoostB;
 
             canvasContext.fillStyle = 'rgb(' + (64 + (3*barHeight/4)) + ',50,50)';
-            var x = (point - (graphNoteMin * 100)) / ((graphNoteMax - graphNoteMin) * 100);
+            x = (point - graphCentMin) / (graphCentMax - graphCentMin);
             x = x * WIDTH;
             canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
 
-            if ((barHeight > localPeakValue) && (baseIndex > 0) && (baseIndex < dataArrayAlt.length - 2)) {
-                let prev = dataArrayAlt[baseIndex - 1];
-                let curr = dataArrayAlt[baseIndex];
-                let next = dataArrayAlt[baseIndex + 1];
+            if ((barHeight > localPeakValue) && (baseIndex > 0) && (baseIndex < analyserFreqData.length - 2)) {
+                let prev = analyserFreqData[baseIndex - 1];
+                let curr = analyserFreqData[baseIndex];
+                let next = analyserFreqData[baseIndex + 1];
                 var newIndex = pararbInterpolate(baseIndex, prev, curr, next);
                 if (newIndex < 0) newIndex = 0;
                 localPeakValue = barHeight;
@@ -518,34 +524,40 @@ function init_visualize() {
             var peaks = [];
             var wasDown = false;
             canvasContext.fillStyle = "cyan";
-            for (var x = 0; x < AC_lin_sums.length-1; ++x) {
-                barHeight = AC_lin_sums[x] * 100.0;
-                canvasContext.fillRect(WIDTH * x / AC_lin_sums.length, HEIGHT - barHeight - 256.0 - 128.0, barWidth, barHeight);
-                if ( ((AC_lin_sums[x] < 0.0) && (AC_lin_sums[x+1] > 0.0)) || ((AC_lin_sums[x] > 0.0) && (AC_lin_sums[x+1] < 0.0))) {
+
+            for (let point = 1; point < AC_lin_sums.length-1; ++point) {
+                let sumCurr = AC_lin_sums[point];
+                let sumPrev = AC_lin_sums[point-1];
+                let sumNext = AC_lin_sums[point+1];
+                barHeight = sumCurr * 100.0;
+                x = WIDTH * point / AC_lin_sums.length;
+                canvasContext.fillRect(x, HEIGHT - barHeight - 256.0 - 128.0, barWidth, barHeight);
+
+                if ( ((sumCurr < 0.0) && (sumNext > 0.0)) || ((sumCurr > 0.0) && (sumNext < 0.0))) {
                     // zero crossing
                     canvasContext.strokeStyle = "yellow";
                     canvasContext.beginPath();
-                    canvasContext.moveTo(WIDTH * x / AC_lin_sums.length, 128.0-8.0);
-                    canvasContext.lineTo(WIDTH * x / AC_lin_sums.length, 128.0+8.0);
+                    canvasContext.moveTo(x, 128.0-8.0);
+                    canvasContext.lineTo(x, 128.0+8.0);
                     canvasContext.stroke();
-                    crossings.push(x);
+                    crossings.push(point);
                 }
                 // trough
-                if ((x > 0) && (x < AC_lin_sums.length - 2) && (AC_lin_sums[x] < 0.0) && (AC_lin_sums[x-1] > AC_lin_sums[x]) && (AC_lin_sums[x] < AC_lin_sums[x+1])) {
+                if ((sumCurr < 0.0) && (sumPrev > sumCurr) && (sumCurr < sumNext)) {
                     wasDown = true;
                 }
-                if ((x > 0) && (x < AC_lin_sums.length - 2) && (AC_lin_sums[x] > 0.0) && (AC_lin_sums[x-1] < AC_lin_sums[x]) && (AC_lin_sums[x] > AC_lin_sums[x+1])) {
+                if ((sumCurr > 0.0) && (sumPrev < sumCurr) && (sumCurr > sumNext)) {
                     if (wasDown) { // new peak
-                        peaks.push([x,  AC_lin_sums[x-1], AC_lin_sums[x], AC_lin_sums[x-1]]); // add to list
+                        peaks.push([x,  sumPrev, sumCurr, sumPrev]); // add to list
                         wasDown = false;
-                    } else if ( (peaks.length > 0) && (peaks[peaks.length-1][2] < AC_lin_sums[x]) ) {
-                        peaks[peaks.length-1] = [x,  AC_lin_sums[x-1], AC_lin_sums[x], AC_lin_sums[x-1]];// override if higher
+                    } else if ( (peaks.length > 0) && (peaks[peaks.length-1][2] < sumCurr) ) {
+                        peaks[peaks.length-1] = [x,  sumPrev, sumCurr, sumPrev];// override if higher
                     }
                     // peaks
                     canvasContext.strokeStyle = "yellow";
                     canvasContext.beginPath();
-                    canvasContext.moveTo(WIDTH * x / AC_lin_sums.length, HEIGHT - barHeight - 256.0 - 128.0);
-                    canvasContext.lineTo(WIDTH * x / AC_lin_sums.length, HEIGHT - barHeight - 256.0 - 132.0);
+                    canvasContext.moveTo(x, HEIGHT - barHeight - 256.0 - 128.0);
+                    canvasContext.lineTo(x, HEIGHT - barHeight - 256.0 - 132.0);
                     canvasContext.stroke();
                 }
             }
@@ -559,7 +571,7 @@ function init_visualize() {
                 if ( (Math.abs(dc45 - dc34) / dc45) < 0.25) {
                     var stack = 0;
                     var numSpans = 0;
-                    for (var i = 1; i < crossings.length/2; ++i) {stack += (crossings[i+1] - crossings[i]); numSpans++; }
+                    for (var point = 1; point < crossings.length/2; ++point) {stack += (crossings[point+1] - crossings[point]); numSpans++; }
                     var localFreq1 = sampleRate / (stack*2.0/numSpans);
 
                     AC_lin_freq1Value = smooth(AC_lin_freq1Value, localFreq1, AC_lin_smoothValue);
@@ -577,16 +589,16 @@ function init_visualize() {
                     let hadSub = true;
                     while (hadSub) {
                         hadSub = false;
-                        for (var i = peaks.length-1; i >=1; --i) {
-                            if (peaks[i-1][2] < peaks[i][2]) {
-                                peaks.splice(i-1, 1);
+                        for (var point = peaks.length-1; point >=1; --point) {
+                            if (peaks[point-1][2] < peaks[point][2]) {
+                                peaks.splice(point-1, 1);
                                 hadSub = true;
                             }
                         }
                     }
                     // get intervals
                     if (peaks.length > 5) {
-                        for (var i = 0; i < 6; ++i) peaks[i][0] = pararbInterpolate(peaks[i][0], peaks[i][1], peaks[i][2], peaks[i][3]);
+                        for (var point = 0; point < 6; ++point) peaks[point][0] = pararbInterpolate(peaks[point][0], peaks[point][1], peaks[point][2], peaks[point][3]);
 
                         var localFreq2 = sampleRate / (peaks[2][0] - peaks[1][0]);
                         AC_lin_freq2Value = smooth(AC_lin_freq2Value, localFreq2, AC_lin_smoothValue);
@@ -613,25 +625,20 @@ function init_visualize() {
         canvasContext.fillText("Autocorrelation:", 4, 16);
 
         get_FFT_log();
+        var lx = 0;
+        var ly = 0;
         // draw FFT log
-        canvasContext.beginPath();
-        canvasContext.moveTo(0, HEIGHT);
         for (let point = 0; point < _FFT_log_numPoints; ++point) {
-
-            //var freq = centFreqs[cent - graphCentMin];
-            //var sample = freq / fPerSample;
-
-            //var baseIndex = Math.floor(sample);
-            //var ratio = sample - baseIndex;
-
-           /// var barHeight = FFT_log_data[note - graphNoteMin] + (bassBoostM * note *100) + bassBoostB;
-            barHeight = FFT_log_data[point] * 250.0;
-            canvasContext.strokeStyle = 'rgb(50,' + (64 + (3*barHeight/4)) + ',50)';
-            var x = WIDTH * point / _FFT_log_numPoints;
-
+            barHeight = FFT_log_data[point] * 240.0;
+            canvasContext.strokeStyle = "rgb(" + barHeight + "," + (128 + (barHeight/2)) + "," + barHeight + ")";
+            x = WIDTH * point / _FFT_log_numPoints;
+            canvasContext.beginPath();
+            canvasContext.moveTo(lx, ly);
             canvasContext.lineTo(x, HEIGHT - barHeight);
+            canvasContext.stroke();
+            lx = x;
+            ly = HEIGHT - barHeight;
         }
-        canvasContext.stroke();
         FFT_log_text1.innerText = "F: " + FFT_log_maxFreq.toFixed(1);
         FFT_log_text2.innerText = "P: " + FFT_log_maxValue.toFixed(3);
 
@@ -690,8 +697,8 @@ let _AC_lin_buffer;
 let AC_lin_sums;
 
 function init_AC_lin(){
-    _AC_lin_buffer = new Float32Array(analyserSize);
-    AC_lin_sums = new Array(analyserSize);
+    _AC_lin_buffer = new Float32Array(analyserTimeSize);
+    AC_lin_sums = new Array(analyserTimeSize);
 }
 
 function get_AC_lin(offsetSize)  {
@@ -702,7 +709,7 @@ function get_AC_lin(offsetSize)  {
     AC_lin_sums.fill(0.0);
 
     // For each potential offset, calculate the sum of each buffer value times its offset value
-    for (let offset = 0; offset < analyserSize; offset++) {
+    for (let offset = 0; offset < analyserTimeSize; offset++) {
         for (let j = 0; j < offsetSize - offset; j++) {
             AC_lin_sums[offset] += _AC_lin_buffer[j] * _AC_lin_buffer[j+offset]
         }
@@ -711,7 +718,7 @@ function get_AC_lin(offsetSize)  {
     // Calculate the offset with the highest value
     var maxValue = -1.0;
     var bestOffset = -1.0;
-    for (var i = 0; i < analyserSize; i++) {
+    for (var i = 0; i < analyserTimeSize; i++) {
         if (AC_lin_sums[i] > maxValue) {
             maxValue = AC_lin_sums[i];
             bestOffset = i;
@@ -721,7 +728,7 @@ function get_AC_lin(offsetSize)  {
     AC_lin_peak.innerText = maxValue.toFixed(3);
     if (maxValue < AC_lin_squelchValue) return false;
     // normalize
-    for (let offset = 0; offset < analyserSize; offset++) AC_lin_sums[offset] /= maxValue;
+    for (let offset = 0; offset < analyserTimeSize; offset++) AC_lin_sums[offset] /= maxValue;
     return true;
 }
 
@@ -765,7 +772,7 @@ function init_FFT_log() {
         _FFT_log_sums[point] *= 0.7853981;
     }
 
-    _FFT_log_buffer = new Float32Array(analyserSize);
+    _FFT_log_buffer = new Float32Array(analyserTimeSize);
 }
 
 
@@ -790,7 +797,7 @@ function get_FFT_log() {
     for (let point = 0; point <= _FFT_log_numPoints; ++point) {
         freq = _FFT_log_freqArray[point];
         maxSamples = (sampleRate / freq) * _FFT_log_numCycles;
-        if (maxSamples > analyserSize) maxSamples = analyserSize;
+        if (maxSamples > analyserTimeSize) maxSamples = analyserTimeSize;
         //maxCount = maxSamples / (sampleRate / freq);
         //maxAmp = 0.0;
         sum0  = 0.0;
@@ -816,6 +823,12 @@ function get_FFT_log() {
       //  FFT_log_maxCent = pararbInterpolate(FFT_log_maxCent, FFT_log_data[FFT_log_maxCent-1], FFT_log_data[FFT_log_maxCent], FFT_log_data[FFT_log_maxCent+1]);
       //  FFT_log_maxFreq = getLogFreq(FFT_log_maxCent + 0);
     }
+    // normalize
+    for (let point = 0; point <= _FFT_log_numPoints; ++point) {
+        FFT_log_data[point] = Math.pow(FFT_log_data[point]/FFT_log_maxValue, 0.5);
+        //FFT_log_data[point] /= FFT_log_maxValue;
+    }
+
 }
 
 function init_AC_log() {
@@ -852,8 +865,8 @@ function get_AC_log() {
 <hr />
     Tone generator<br />
     Frequency: <input id="toneFreq" type="number" min="20" max="24000" value="440" />Hz<br />
-    Speaker Volume: <input id="toneVol" type="range" min="0.0" max="0.5" value="0.0" step="0.05" /><br />
-    Direct Injection Volume: <input id="injectVol" type="range" min="0.0" max="0.5" value="0.0" step="0.05" /><br />
+    Speaker Volume: <input id="toneVol" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><br />
+    Direct Injection Volume: <input id="injectVol" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><br />
 <hr />
 <canvas class="visualizer" width="2048" height="512"></canvas><br />
 <table>
@@ -862,9 +875,9 @@ function get_AC_log() {
         <th colspan="4">FFT (Linear, parabolic interpolation, highest peak)</th>
     </tr>
     <tr>
-        <td>Smoothing:</td><td><input type="range" id="AC_lin_smooth" min="1" max="100" value="90" /></td>
+        <td>Smoothing:</td><td><input type="range" id="AC_lin_smooth" min="-100" max="0" value="10" /></td>
         <td>Freq(ZC):</td><td><span id="AC_lin_freq1">0</span>Hz</td>
-        <td>Smoothing:</td><td><input type="range" id="FFT_lin_smooth" min="1" max="100" value="20" /></td>
+        <td>Smoothing:</td><td><input type="range" id="FFT_lin_smooth" min="-100" max="0" value="80" /></td>
         <td>Freq:</td><td><span id="FFT_lin_freq">0</span>Hz</td>
     </tr>
     <tr>
