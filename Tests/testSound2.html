@@ -111,6 +111,13 @@
             width:6em;
         }
 
+        .scrollContainer {
+            overflow-x: scroll;
+            width: 100%;
+            height:fit-content;
+            overflow-y: hidden;
+        }
+
 
     </style>
     <script type="text/javascript">
@@ -168,17 +175,12 @@ var FFT_lin_text = getElem("FFT_lin_text");
 var FFT_lin_smoothValue = 0.5;
 onEvent("FFT_lin_smooth", "input", (event) => {
     FFT_lin_smoothValue = (100.0 + Number(event.target.value)) / 100.0;
-    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
-} );
-var FFT_lin_squelchValue = 64;
-onEvent("FFT_lin_squelch", "input", (event) => {
-    FFT_lin_squelchValue = Number(event.target.value);
-    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
+    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) ;
 } );
 var FFT_lin_bassValue = 8;
 onEvent("FFT_lin_bass", "input", (event) => {
     FFT_lin_bassValue = Number(event.target.value);
-    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) + " Sq:" + FFT_lin_squelchValue;
+    FFT_lin_text.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3);
 } );
 
 var AC_lin_peak = getElem("AC_lin_peak");
@@ -200,12 +202,9 @@ onEvent("AC_lin_smooth", "input", (event) => {
     AC_lin_smoothValue = (100.0 + Number(event.target.value)) / 100.0;
     AC_lin_text.innerText = "Sm:" + AC_lin_smoothValue.toFixed(3) + " Sq:" + AC_lin_squelchValue.toFixed(3);
 } );
-var AC_lin_squelchValue = 0.015;
-onEvent("AC_lin_squelch", "input", (event) => {
-    AC_lin_squelchValue = Number(event.target.value) / 1000.0;
-    AC_lin_text.innerText = "Sm:" + AC_lin_smoothValue.toFixed(3) + " Sq:" + AC_lin_squelchValue.toFixed(3);
-} );
 
+
+var FFT_log_freq  = 0.0;
 var FFT_log_text1 = getElem("FFT_log_text1");
 var FFT_log_text2 = getElem("FFT_log_text2");
 
@@ -229,19 +228,75 @@ onEvent("squelchVol", "input", (event) => squelchValue = Number(event.target.val
 onEvent("injectVol", "input", setToneParams);
 onEvent("toneVol", "input", setToneParams);
 onEvent("toneFreq", "input", setToneParams);
+
+var toneFreq = 440.0;
 function setToneParams() {
     if (!gainNodeTone) return;
     gainNodeTone.gain.value = Number(getElem("toneVol").value);
     gainNodeInject.gain.value = Number(getElem("injectVol").value);
-    oscillatorNode.frequency.value = Number(getElem("toneFreq").value);
+    toneFreq = Number(getElem("toneFreq").value)
+    oscillatorNode.frequency.value = toneFreq;
+
+    switch (document.querySelector('input[name="tone"]:checked').value) {
+        case "tone":
+            toneSwitch.gain.value = 1.0;
+            whiteSwitch.gain.value = 0.0;
+            pinkSwitch.gain.value = 0.0;
+        break;
+        case "white":
+            toneSwitch.gain.value = 0.0;
+            whiteSwitch.gain.value = 1.0;
+            pinkSwitch.gain.value = 0.0;
+        break;
+        case "pink":
+            toneSwitch.gain.value = 0.0;
+            whiteSwitch.gain.value = 0.0;
+            pinkSwitch.gain.value = 1.0;
+        break;
+    }
+
 }
+for (let btn of document.querySelectorAll('input[name="tone"]')) btn.addEventListener("change", setToneParams);
+
 onEvent("baseFreq", "change", (event) => {
     baseFreq = Number(event.target.value);
     GenNoteFreqsAndStrings();
     GenCentFreqs();
 });
-
-
+onClick("prevButton", (event) => {
+    if (!oscillatorNode) return;
+    let n = noteIndexFromPitch(toneFreq)-20;
+    n = n - 1;
+    if (n < -9) n = -9;
+    toneFreq = getLogFreq(n);
+    getElem("toneFreq").value = toneFreq.toFixed(3);
+    oscillatorNode.frequency.value = toneFreq;
+});
+onClick("nextButton", (event) => {
+    if (!oscillatorNode) return;
+    let n = noteIndexFromPitch(toneFreq)-20;
+    n = n + 1;
+    toneFreq = getLogFreq(n);
+    getElem("toneFreq").value = toneFreq;
+    oscillatorNode.frequency.value = toneFreq;
+});
+onClick("prevOctButton", (event) => {
+    if (!oscillatorNode) return;
+    let n = noteIndexFromPitch(toneFreq)-20;
+    n = n - 12;
+    if (n < -9) n = -9;
+    toneFreq = getLogFreq(n);
+    getElem("toneFreq").value = toneFreq;
+    oscillatorNode.frequency.value = toneFreq;
+});
+onClick("nextOctButton", (event) => {
+    if (!oscillatorNode) return;
+    let n = noteIndexFromPitch(toneFreq)-20;
+    n = n + 12;
+    toneFreq = getLogFreq(n);
+    getElem("toneFreq").value = toneFreq;
+    oscillatorNode.frequency.value = toneFreq;
+});
 
 
 // global
@@ -249,7 +304,14 @@ var source;
 var audioContext;
 var sampleRate;
 var gainNodeInject, gainNodeTone;
+var toneSwitch, whiteSwitch, pinkSwitch;
 var oscillatorNode;
+var lowpassNode, highpassNode;
+
+var whitenoiseBuffer, pinknoiseBuffer;
+var whitenoiseSourceNode, pinknoiseSourceNode;
+
+
 
 var analyser;
 var analyserTimeData;
@@ -314,10 +376,14 @@ function init() {
         analyser.minDecibels = -80;
         analyser.maxDecibels = -10;
         analyser.smoothingTimeConstant = 0.0;
-        analyser.fftSize = 4096;
+        analyser.fftSize = 1024*8;
         analyserTimeSize = analyser.fftSize;
         analyserFreqSize = analyser.frequencyBinCount;
         getElem("size").innerText = analyserTimeSize;
+
+        whitenoiseBuffer = audioContext.createBuffer(1, sampleRate * 1, sampleRate);
+        pinknoiseBuffer = audioContext.createBuffer(1, sampleRate * 1, sampleRate);
+
     } catch (err) {
         warn(err);
         return;
@@ -332,21 +398,61 @@ function init() {
             function(stream) {
                 // Initialize the SourceNode
                 source = audioContext.createMediaStreamSource(stream);
+                lowpassNode = audioContext.createBiquadFilter();
+                lowpassNode.type = "lowpass";
+                lowpassNode.frequency.value = 11000.0;
+
                 // Connect the source node to the analyzer
-                source.connect(analyser);
+                source.connect(lowpassNode);
+                lowpassNode.connect(analyser);
 
                 gainNodeTone = audioContext.createGain();
                 gainNodeTone.connect(audioContext.destination);
                 gainNodeTone.gain.value = 0;
 
                 gainNodeInject = audioContext.createGain();
-                gainNodeInject.connect(analyser);
+                gainNodeInject.connect(lowpassNode);
                 gainNodeInject.gain.value = 0;
 
+                toneSwitch = audioContext.createGain();
+                toneSwitch.connect(gainNodeTone);
+                toneSwitch.connect(gainNodeInject);
+                toneSwitch.gain.value = 1.0;
+                whiteSwitch = audioContext.createGain();
+                whiteSwitch.connect(gainNodeTone);
+                whiteSwitch.connect(gainNodeInject);
+                whiteSwitch.gain.value = 0.0;
+                pinkSwitch = audioContext.createGain();
+                pinkSwitch.connect(gainNodeTone);
+                pinkSwitch.connect(gainNodeInject);
+                pinkSwitch.gain.value = 0.0;
+
                 oscillatorNode = audioContext.createOscillator();
-                oscillatorNode.connect(gainNodeTone);
-                oscillatorNode.connect(gainNodeInject);
+                oscillatorNode.connect(toneSwitch);
                 oscillatorNode.start();
+
+                const wbuffer = whitenoiseBuffer.getChannelData(0);
+                for (let i = 0; i < sampleRate; ++i) wbuffer[i] = (Math.random() * 2.0) - 1.0;
+                whitenoiseSourceNode = audioContext.createBufferSource();
+                whitenoiseSourceNode.buffer = whitenoiseBuffer;
+                whitenoiseSourceNode.loop = true;
+                whitenoiseSourceNode.connect(whiteSwitch);
+                whitenoiseSourceNode.start();
+
+                const abuffer = pinknoiseBuffer.getChannelData(0);
+                abuffer.fill(0.0);
+                const dbuffer = new Float32Array(sampleRate);
+                for (let d = 0; d < 16; ++d) {
+                    for (let i = 0; i < sampleRate; ++i) abuffer[i] += (Math.random() * 2.0) - 1.0;
+                    for (let i = 1; i < sampleRate; ++i) dbuffer[i] = (abuffer[i] - abuffer[i-1]) / 2.0;
+                    for (let i = 1; i < sampleRate; ++i) abuffer[i] = abuffer[i-1] + dbuffer[i];
+                }
+                pinknoiseSourceNode = audioContext.createBufferSource();
+                pinknoiseSourceNode.buffer = pinknoiseBuffer;
+                pinknoiseSourceNode.loop = true;
+                pinknoiseSourceNode.connect(pinkSwitch);
+                pinknoiseSourceNode.start();
+
 
                 init_visualize();
             }
@@ -364,12 +470,19 @@ function init_visualize() {
     analyserTimeData = new Uint8Array(analyserTimeSize);
 
     canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
+
     init_AC_lin();
     init_FFT_log();
 
     var drawGraph = function() {
         analyser.getByteFrequencyData(analyserFreqData);
         analyser.getByteTimeDomainData(analyserTimeData);
+
+        var dc = 0.0;
+        for (let val of analyserTimeData) dc += val;
+        dc /= analyserTimeSize;
+        dc = Math.round(dc - 127.5);
+        for (let i = 0; i < analyserTimeSize; ++i) analyserTimeData[i] -= dc;
 
         canvasContext.fillStyle = 'rgb(0, 0, 0)';
         canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
@@ -414,6 +527,7 @@ function init_visualize() {
         var bassBoostM = -FFT_lin_bassValue / (graphNumCent / 1.5); // cutoff at 2/3 scale
         var bassBoostB = FFT_lin_bassValue - (bassBoostM * graphNoteMin * 100 * 1.5);
 
+        var toneCent = Math.floor(getCent(toneFreq));
         // draw FFT_lin
         for (let point = graphCentMin; point <= graphCentMax; ++point) {
 
@@ -495,6 +609,19 @@ function init_visualize() {
                 canvasContext.lineTo(x, 256-16);
                 canvasContext.stroke();
             }
+            if (toneCent == point) {
+                canvasContext.strokeStyle = "lime";
+                canvasContext.beginPath();
+                canvasContext.moveTo(x, 256-16);
+                canvasContext.lineTo(x-3, 256-16+6);
+                canvasContext.lineTo(x+3, 256-16+6);
+                canvasContext.lineTo(x, 256-16);
+                canvasContext.moveTo(x, 256+16);
+                canvasContext.lineTo(x-3, 256+16-6);
+                canvasContext.lineTo(x+3, 256+16-6);
+                canvasContext.lineTo(x, 256+16);
+                canvasContext.stroke();
+            }
             canvasContext.globalCompositeOperation = "source-over";
         }
 
@@ -502,7 +629,7 @@ function init_visualize() {
         FFT_lin_peakValue = smooth(FFT_lin_peakValue, localPeakValue, FFT_lin_smoothValue);
         FFT_lin_peak.innerText =  Math.round(FFT_lin_peakValue);
 
-        if ( !isNaN(localPeakFreq) && (FFT_lin_peakValue > FFT_lin_squelchValue) ) {
+        if ( !isNaN(localPeakFreq)) {
             FFT_lin_freqValue = smooth(FFT_lin_freqValue, localPeakFreq, FFT_lin_smoothValue);
             FFT_lin_freq.innerText = FFT_lin_freqValue.toFixed(1);
 
@@ -621,7 +748,7 @@ function init_visualize() {
         // draw graph labels
         canvasContext.font = "bold 16px Arial";
         canvasContext.fillStyle = "white";
-        canvasContext.fillText("FFT:", 4, 256+32);
+        canvasContext.fillText("FFT:", 4, 512-8);
         canvasContext.fillText("Autocorrelation:", 4, 16);
 
         get_FFT_log();
@@ -631,7 +758,7 @@ function init_visualize() {
         for (let point = 0; point < _FFT_log_numPoints; ++point) {
             barHeight = FFT_log_data[point] * 240.0;
             canvasContext.strokeStyle = "rgb(" + barHeight + "," + (128 + (barHeight/2)) + "," + barHeight + ")";
-            x = WIDTH * point / _FFT_log_numPoints;
+            x = WIDTH * point / (_FFT_log_numPoints-1);
             canvasContext.beginPath();
             canvasContext.moveTo(lx, ly);
             canvasContext.lineTo(x, HEIGHT - barHeight);
@@ -639,8 +766,19 @@ function init_visualize() {
             lx = x;
             ly = HEIGHT - barHeight;
         }
-        FFT_log_text1.innerText = "F: " + FFT_log_maxFreq.toFixed(1);
-        FFT_log_text2.innerText = "P: " + FFT_log_maxValue.toFixed(3);
+
+        FFT_log_freq = smooth(FFT_log_freq, FFT_log_maxFreq, 0.2);
+        FFT_log_text1.innerText = FFT_log_freq.toFixed(1);
+        x = 0.0;
+        var dc = 0;
+        for (let val of analyserTimeData) {
+            dc += val;
+            x += (val-127)*(val-128);
+        }
+        dc /= analyserTimeSize;
+        x /= analyserTimeSize;
+        x = Math.sqrt(x) / 0.7071;
+        FFT_log_text2.innerText = "rms: " +x.toFixed(1) + " DC: " + dc.toFixed(1);// FFT_log_maxValue.toFixed(3);
 
 
         requestAnimationFrame(drawGraph);
@@ -726,14 +864,14 @@ function get_AC_lin(offsetSize)  {
     }
 
     AC_lin_peak.innerText = maxValue.toFixed(3);
-    if (maxValue < AC_lin_squelchValue) return false;
+  //  if (maxValue < AC_lin_squelchValue) return false;
     // normalize
     for (let offset = 0; offset < analyserTimeSize; offset++) AC_lin_sums[offset] /= maxValue;
     return true;
 }
 
 // settings
-const _FFT_log_baseFreq = 16.0;
+const _FFT_log_baseFreq = 16.35160/2.0;
 const _FFT_log_numCycles = 10;
 let _FFT_log_numPoints;
 let _FFT_log_minPoints;
@@ -803,7 +941,7 @@ function get_FFT_log() {
         sum0  = 0.0;
         sum90 = 0.0;
         for (let i = 0; i < maxSamples; ++i) {
-            sample = _FFT_log_buffer[i];
+            sample = _FFT_log_buffer[i]; //analyserTimeData[i];
             //if (Math.abs(sample) > maxAmp) maxAmp = Math.abs(sample);
             sineIndex = Math.floor( (i * freq / _FFT_log_baseFreq) % _FFT_log_hLength );
             sum0  += sample * _FFT_log_sine[sineIndex];
@@ -812,20 +950,21 @@ function get_FFT_log() {
         //sum0  /= ;
         //sum90 /= _FFT_sums[cent];
         value = Math.sqrt((sum0 * sum0) + (sum90 * sum90)) / _FFT_log_sums[point];// / maxAmp;
-        FFT_log_data[point] = value;
-        if (value > FFT_log_maxValue) {
-            FFT_log_maxValue = value;
-            FFT_log_maxPoint = point + _FFT_log_minPoints;
+        FFT_log_data[point] = smooth(FFT_log_data[point], value, 0.99);
+        if (FFT_log_data[point] > FFT_log_maxValue) {
+            FFT_log_maxValue = FFT_log_data[point];
+            FFT_log_maxPoint = point;
             FFT_log_maxFreq = freq;
         }
     }
     if ((FFT_log_maxPoint > 0) && (FFT_log_maxPoint < FFT_log_data.length-2)) {
-      //  FFT_log_maxCent = pararbInterpolate(FFT_log_maxCent, FFT_log_data[FFT_log_maxCent-1], FFT_log_data[FFT_log_maxCent], FFT_log_data[FFT_log_maxCent+1]);
-      //  FFT_log_maxFreq = getLogFreq(FFT_log_maxCent + 0);
+        FFT_log_maxPoint = pararbInterpolate(FFT_log_maxPoint, FFT_log_data[FFT_log_maxPoint-1], FFT_log_data[FFT_log_maxPoint], FFT_log_data[FFT_log_maxPoint+1]);
+        FFT_log_maxFreq = getLogFreq(FFT_log_maxPoint + _FFT_log_minPoints);
     }
+    FFT_log_maxPoint +=  _FFT_log_minPoints;
     // normalize
     for (let point = 0; point <= _FFT_log_numPoints; ++point) {
-        FFT_log_data[point] = Math.pow(FFT_log_data[point]/FFT_log_maxValue, 0.5);
+        FFT_log_data[point] = Math.pow(FFT_log_data[point]/FFT_log_maxValue, 1.2);
         //FFT_log_data[point] /= FFT_log_maxValue;
     }
 
@@ -861,14 +1000,16 @@ function get_AC_log() {
     <div id="startButton" class="E3D_fakeButton">Enable</div><div id="pauseButton" class="E3D_fakeButton">Pause</div><br />
     Sample Rate: <span id="rate">0</span>, FFT Size: <span id="size">0</span><br />
     Reference A4 frequency: <input type="number" min="0" max="24000" value="440" id="baseFreq" />Hz<br />
-    Squelch (min level):<input id="squelchVol" type="range" min="0" max="255" value="32" step="1" /><br />
+    Squelch (min level):<input id="squelchVol" type="range" min="0" max="127" value="1" step="1" /><br />
 <hr />
-    Tone generator<br />
-    Frequency: <input id="toneFreq" type="number" min="20" max="24000" value="440" />Hz<br />
+    <input type="radio" name="tone" value="white">White noise</input><input type="radio" name="tone" value="pink">Pink noise</input><input type="radio" name="tone" value="tone" checked="true">Tone</input> generator<br />
+    Frequency: <input id="toneFreq" type="number" min="10" max="24000" value="440" />Hz <div id="prevOctButton" class="E3D_fakeButton">Prev. Octave</div><div id="prevButton" class="E3D_fakeButton">Prev. Note</div> <div id="nextButton" class="E3D_fakeButton">Next Note</div><div id="nextOctButton" class="E3D_fakeButton">Next Octave</div><br />
     Speaker Volume: <input id="toneVol" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><br />
     Direct Injection Volume: <input id="injectVol" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><br />
 <hr />
-<canvas class="visualizer" width="2048" height="512"></canvas><br />
+<div class="scrollContainer">
+    <canvas class="visualizer" width="2048" height="512"></canvas>
+</div>
 <table>
     <tr>
         <th colspan="4">Autocorrellation (Linear, first interval)</th>
@@ -881,9 +1022,9 @@ function get_AC_log() {
         <td>Freq:</td><td><span id="FFT_lin_freq">0</span>Hz</td>
     </tr>
     <tr>
-        <td>Squelch:</td><td><input type="range" id="AC_lin_squelch" min="0" max="100" value="15" /></td>
+        <td>&nbsp;</td><td>&nbsp;</td>
         <td>Freq(P2P):</td><td><span id="AC_lin_freq2">0</span>Hz</td>
-        <td>Squelch:</td><td><input type="range" id="FFT_lin_squelch" min="0" max="256" value="64" /></td>
+        <td>&nbsp;</td><td>&nbsp;</td>
         <td>Peak:</td><td><span id="FFT_lin_peak">0</span></td>
     </tr>
     <tr>
