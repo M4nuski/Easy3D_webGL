@@ -30,8 +30,8 @@ profileEntity.isVisible = true;
 
 
 // tweak engine params for large models
-//E3D_NEAR = 1.0;
-//E3D_FAR = 4096.0;
+E3D_NEAR = 0.1;
+E3D_FAR = 256.0;
 CAMERA = new E3D_camera_model("camera0m");
 E3D_onResize();
 
@@ -54,12 +54,21 @@ E3D_addEntity(entity);
 
 // Mesh parameters
 
-var pitch = 14;
-var outerDia = 13 / 16;
+var majorDia = 13 / 16;
+var pitch = 14; // TPI
 var angle = 60;
-var rootCut = 0.020;
-var tipCut = 0.020;
+
+var fitCut = 0.003;
+var rootCut = 0.250;
+var tipCut = 0.125;
+
 var nTurns = 10;
+var internal = false;
+
+profileEntity.clear();
+
+
+// var starter thread ?
 
 /*
 function getAngle(dist) {    
@@ -83,11 +92,90 @@ function getColor(i, j = 0) {
     if (colorModel == 1) return ((i % 2) == 0) ? _v3_white : _v3_black;
     if (colorModel == 2) return (((i + j) % 2) == 0) ? _v3_white : _v3_black;
 }
-
-function genProp(){
+*/
+function genMesh(){
 
     meshLoader.reset();
-    var p0 = v3_new();    
+// generate thread profile
+// revolve over spiral
+// close mesh
+    // close thread profiles
+    // close cylinder
+    var points = [];
+    points.push(v3_new()); // bottom mid root
+    points.push(v3_new()); // bottom
+
+    points.push(v3_new()); // bottom tip
+    points.push(v3_new()); // top tip
+
+    points.push(v3_new()); // top 
+    points.push(v3_new()); // top mid root
+
+    const majorRadius = majorDia / 2;
+    const decimalPitch = (1 / pitch);
+    const halfDecPitch = decimalPitch / 2;
+    const threadH = decimalPitch / (2 * Math.tan(angle * DegToRad /2) );
+    const angleRatio =  Math.tan(angle * DegToRad /2);
+
+    const tipRadius = majorRadius + ( threadH / 8 );
+    const minorRadius = majorRadius - ( 5 * threadH / 8 );
+    const rootRadius = majorRadius - ( 7 * threadH / 8 );
+
+    paramDiv3.innerText  = "10% fit: " + (0.1 / pitch).toFixed(4) + "\n";
+    paramDiv3.innerText += "Pitch: " + decimalPitch.toFixed(4) + "\n";
+    paramDiv3.innerText += "H: " + threadH.toFixed(4) + "\n";
+
+    points[0][0] = rootRadius;    
+
+    points[1][0] = tipRadius;
+    points[1][1] = halfDecPitch;
+
+    points[2][0] = rootRadius;
+    points[2][1] = decimalPitch;
+
+    points[3] = v3_val_new(minorRadius, 0, 0.001);
+    points[4] = v3_val_new(minorRadius, angleRatio * (minorRadius - rootRadius),  0.001);
+    points[5] = v3_val_new(majorRadius, halfDecPitch - (angleRatio * (tipRadius - majorRadius)),  0.001);
+
+    points[6] = v3_val_new(majorRadius, halfDecPitch + (angleRatio * (tipRadius - majorRadius)),  0.001);
+    points[7] = v3_val_new(minorRadius, decimalPitch - (angleRatio * (minorRadius - rootRadius)),  0.001);
+    points[8] = v3_val_new(minorRadius, decimalPitch, 0.001);
+
+angleRatio
+
+    profileEntity.clear();
+    profileEntity.addLine([majorRadius, 0, 0], [majorRadius, nTurns * decimalPitch], _v3_darkgreen);
+    profileEntity.addLine([minorRadius, 0, 0], [minorRadius, nTurns * decimalPitch], _v3_darkgreen);
+    profileEntity.addLine([tipRadius, 0, 0], [tipRadius, nTurns * decimalPitch], _v3_red);
+    profileEntity.addLine([rootRadius, 0, 0], [rootRadius, nTurns * decimalPitch], _v3_red);
+
+    for (var i = 0; i < nTurns; ++i) {
+        profileEntity.addLine(points[0], points[1], _v3_red);
+        profileEntity.addLine(points[1], points[2], _v3_red);
+
+        profileEntity.addLine(points[3], points[4], _v3_blue);
+        profileEntity.addLine(points[4], points[5], _v3_blue);
+        profileEntity.addLine(points[5], points[6], _v3_blue);
+        profileEntity.addLine(points[6], points[7], _v3_blue);
+        profileEntity.addLine(points[7], points[8], _v3_blue);
+
+        v3_add_mod(points[0], [0, decimalPitch, 0]);
+        v3_add_mod(points[1], [0, decimalPitch, 0]);
+        v3_add_mod(points[2], [0, decimalPitch, 0]);
+
+        v3_add_mod(points[3], [0, decimalPitch, 0]);
+        v3_add_mod(points[4], [0, decimalPitch, 0]);
+        v3_add_mod(points[5], [0, decimalPitch, 0]);
+        v3_add_mod(points[6], [0, decimalPitch, 0]);
+        v3_add_mod(points[7], [0, decimalPitch, 0]);
+        v3_add_mod(points[8], [0, decimalPitch, 0]);
+
+    }
+
+  //  profileEntity.addLine(points[2], points[1]);
+/*
+
+    var p0 = v3_new();
     var stepLen = (maxL - minL) / (numSegments-1);
 
     segments = [];
@@ -291,8 +379,9 @@ function genProp(){
 
     // Calc aero data
     calcAero();
+    */
 }
-*/
+
 /*
 function getCoef(ang) {
     var lastIndex = profileAeroData.length-1;
@@ -471,7 +560,7 @@ function CopyRotateEntity(angleList) {
 var paramDiv1 = document.getElementById("paramDiv1");
 var paramDiv2 = document.getElementById("paramDiv2");
 var paramDiv3 = document.getElementById("paramDiv3");
-var paramDiv4 = document.getElementById("paramDiv4");
+//var paramDiv4 = document.getElementById("paramDiv4");
 // TODO add to DOM helper class
 function E3D_addInput_range(element, name, caption, min, max, value, callback, step = 1, scale = 1, formatter = null) {
     // <span class="E3D_input_caption">$caption</span>
@@ -556,68 +645,48 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
 }
 // TODO add E3D_addInput_select
 
-E3D_addInput_range(paramDiv1, "dia", "Diameter", 3, 120, 60, paramDiv1CB, 0.125);
-E3D_addInput_range(paramDiv1, "pitch", "Pitch*", 0, 40, 11, paramDiv1CB, 0.5);
-E3D_addInput_range(paramDiv1, "helix", "Helix Angle*", 0, 45, 3.33, paramDiv1CB, 0.01);
-E3D_addInput_range(paramDiv1, "p", "Thrust Point height*", 0, 24, 1.73, paramDiv1CB, 0.01);
-E3D_addInput_range(paramDiv1, "alpha", "Base Angle Of Attack", -10, 45, 7.0, paramDiv1CB, 0.25);
-E3D_addInput_range(paramDiv1, "width", "Width", 0.125, 36, 6.25, paramDiv1CB, 0.125);
-E3D_addInput_range(paramDiv1, "height", "Height", 0.125, 12, 3.0, paramDiv1CB, 0.125);
+E3D_addInput_range(paramDiv1, "dia", "Maj. Diameter", 0.125, 2, 1.0, paramDiv1CB, 0.005);
+E3D_addInput_range(paramDiv1, "pitch", "TPI", 1, 80, 14, paramDiv1CB, 0.5);
+E3D_addInput_range(paramDiv1, "angle", "P. Angle", 30, 90, 60, paramDiv1CB, 1);
+E3D_addInput_range(paramDiv1, "fit", "Fit", -0.050, 0.050, 0.003, paramDiv1CB, 0.001);
+E3D_addInput_range(paramDiv1, "tip", "Tip cut ratio", 0, 0.5, 0.125, paramDiv1CB, 0.005);
+E3D_addInput_range(paramDiv1, "root", "Root cut ratio", 0, 0.5, 0.25, paramDiv1CB, 0.005);
+//E3D_addInput_range(paramDiv1, "width", "Width", 0.125, 36, 6.25, paramDiv1CB, 0.125);
+//E3D_addInput_range(paramDiv1, "height", "Height", 0.125, 12, 3.0, paramDiv1CB, 0.125);
 var paramLock = false;
 function paramDiv1CB(event, type, id, value) {
     switch (id) {
         case "dia":
-            maxL = value * 25.4 / 2.0;
+            majorDia = value;
             break;
         case "pitch":
-            var helix = Math.atan( (value * 25.4) / (maxL * 2.0 * Math.PI) ) * RadToDeg;
-            document.getElementById("range_helix").value = Math.round(helix * 100) / 100;
-            document.getElementById("range_helix_value").innerText = Math.round(helix * 100) / 100;
-            helixP = value / ( 2.0 * Math.PI );
-            document.getElementById("range_p").value = Math.round(helixP * 100) / 100;
-            document.getElementById("range_p_value").innerText = Math.round(helixP * 100) / 100;
-            helixP = helixP * 25.4; 
+            pitch = value;
             break;
-        case "helix":
-            var pitch = Math.tan(value * DegToRad) * (maxL * 2.0 * Math.PI / 25.4);
-            document.getElementById("range_pitch").value = Math.round(pitch * 100) / 100;
-            document.getElementById("range_pitch_value").innerText = Math.round(pitch * 100) / 100;
-            helixP = value / ( 2.0 * Math.PI );
-            document.getElementById("range_p").value = Math.round(helixP * 100) / 100;
-            document.getElementById("range_p_value").innerText = Math.round(helixP * 100) / 100;
-            helixP = helixP * 25.4; 
+        case "angle":
+            angle = value;
             break;
-        case "p":
-            var pitch = (2.0 * Math.PI) * value;
-            document.getElementById("range_pitch").value = Math.round(pitch * 2) / 2;
-            document.getElementById("range_pitch_value").innerText = Math.round(pitch * 2) / 2;
-            var helix = Math.atan( (value * 25.4) / (maxL * 2.0 * Math.PI) )
-            document.getElementById("range_helix").value = Math.round(helixP * 100) / 100;
-            document.getElementById("range_helix_value").innerText = Math.round(helixP * 100) / 100;
-            helixP = value * 25.4; 
+        case "fit":
+            fitCut = value;
             break;
-        case "alpha":
-            baseAng = value * DegToRad;
+        case "tip":
+            tipCut = value;
             break;
-        case "width":
-            maxWidth = value * 25.4;
-            minL = maxWidth * 0.4;
-            break;
-        case "height":
-            maxHeight = value * 25.4;
+        case "root":
+            rootCut = value;
             break;
     }
     entity.clear();
-    genProp();
+    genMesh();
 }
 
 
-E3D_addInput_range(paramDiv2, "numSections", "Number of Sections", 2, 256, 42, paramDiv2CB);
-E3D_addInput_range(paramDiv2, "puffExp", "Root Puff Exponent", 1, 5, 2.9, paramDiv2CB, 0.1);
-E3D_addInput_range(paramDiv2, "puffCoef", "Root Puff Coefficient", 0, 15, 6.4, paramDiv2CB, 0.1);
-E3D_addInput_range(paramDiv2, "puffCosExp", "Root Puff Cosine Exp", 0, 5, 1.5, paramDiv2CB, 0.1);
-E3D_addInput_range(paramDiv2, "hubDia", "Hub hole diameter", 0, 6, 1, paramDiv2CB, 0.125);
-E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);
+E3D_addInput_range(paramDiv2, "numSections", "Nb of Sections", 6, 256, 32, paramDiv2CB, 1);
+E3D_addInput_range(paramDiv2, "numTurns", "Nb of turns", 1, 128, 4, paramDiv2CB, 1);
+E3D_addInput_checkbox(paramDiv2, "internal", "Internal Thread", false, paramDiv2CB);
+//E3D_addInput_range(paramDiv2, "puffCoef", "Root Puff Coefficient", 0, 15, 6.4, paramDiv2CB, 0.1);
+//E3D_addInput_range(paramDiv2, "puffCosExp", "Root Puff Cosine Exp", 0, 5, 1.5, paramDiv2CB, 0.1);
+//E3D_addInput_range(paramDiv2, "hubDia", "Hub hole diameter", 0, 6, 1, paramDiv2CB, 0.125);
+//E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);
 
 function paramDiv2CB(event, type, id, value) {
     switch (id) {
@@ -640,9 +709,9 @@ function paramDiv2CB(event, type, id, value) {
             break;
     }
     entity.clear();
-    genProp();
+    genMesh();
 }
-
+/*
 E3D_addInput_range(paramDiv3, "nBlades", "Number of Blades", 2, 6, 2, paramDiv3CB);
 E3D_addInput_range(paramDiv3, "taperL", "Taper Length %", 0, 100, 50, paramDiv3CB);
 E3D_addInput_range(paramDiv3, "taperW", "Taper Width %", 0, 100, 50, paramDiv3CB);
@@ -704,7 +773,7 @@ function paramDiv4CB(event, type, id, value) {
         genProp();
     }
 }
-
+*/
 var bottomBar = document.getElementById("bottomBar");
 CB_tick = function() {
     var t = meshLoader.positions.length/9 + " poly, ";
@@ -760,4 +829,4 @@ function cleanMesh() {
     console.log("t add stroke data: " + (et - st));
 }
 
-//genProp();
+genMesh();
