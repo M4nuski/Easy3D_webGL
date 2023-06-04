@@ -404,9 +404,10 @@ class E3D_mesh {
         for (var i = 0; i < this.positions.length / 9; ++i) {
             data += "\tfacet normal " + this.normals[i * 9 + 0].toExponential(6) +" "+ this.normals[i * 9 + 1].toExponential(6) +" "+ this.normals[i * 9 + 2].toExponential(6) +"\n";
             data += "\t\touter loop\n";
-            data += "\t\t\tvertex " + this.positions[i * 9 + 0].toExponential(6) +" "+ this.positions[i * 9 + 1].toExponential(6) +" "+ this.positions[i * 9 + 2].toExponential(6) +"\n";
-            data += "\t\t\tvertex " + this.positions[i * 9 + 3].toExponential(6) +" "+ this.positions[i * 9 + 4].toExponential(6) +" "+ this.positions[i * 9 + 5].toExponential(6) +"\n";
-            data += "\t\t\tvertex " + this.positions[i * 9 + 6].toExponential(6) +" "+ this.positions[i * 9 + 7].toExponential(6) +" "+ this.positions[i * 9 + 8].toExponential(6) +"\n";
+            // Y and Z inverted from OpenGL to STL coordinate systems
+            data += "\t\t\tvertex " + this.positions[i * 9 + 0].toExponential(6) +" "+ this.positions[i * 9 + 2].toExponential(6) +" "+ -this.positions[i * 9 + 1].toExponential(6) +"\n";
+            data += "\t\t\tvertex " + this.positions[i * 9 + 3].toExponential(6) +" "+ this.positions[i * 9 + 5].toExponential(6) +" "+ -this.positions[i * 9 + 4].toExponential(6) +"\n";
+            data += "\t\t\tvertex " + this.positions[i * 9 + 6].toExponential(6) +" "+ this.positions[i * 9 + 8].toExponential(6) +" "+ -this.positions[i * 9 + 7].toExponential(6) +"\n";
             data += "\t\tendloop\n";
             data += "\tendfacet\n";
         }
