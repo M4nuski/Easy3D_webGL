@@ -38,10 +38,10 @@ E3D_onResize();
 CONTEXT.disable(CONTEXT.CULL_FACE); 
 
 // Move the camera back and up a little, add some nod 
-CAMERA.moveBy(0, 1, 6, 0.3, -0.3, 0.0);
+CAMERA.moveBy(0.5, 0.5, 1, 0.3, 0, 0.0);
 SCENE.setClearColor([ 0.85,  0.85,  0.85]);
 SCENE.lightA_color = _v3_darkgray; 
-INPUTS._posSpeed *= 0.1;
+INPUTS._posSpeed *= 0.025;
 INPUTS._rotSpeed *= 0.5;
 
 // mesh creating utility
@@ -54,7 +54,7 @@ E3D_addEntity(entity);
 
 // Mesh parameters
 
-var majorDia = 13 / 16;
+var majorDia = 1;
 var pitch = 14; // TPI
 var angle = 60;
 
@@ -63,7 +63,7 @@ var rootCut = 0.250;
 var tipCut = 0.125;
 
 var nTurns = 10;
-var internal = false;
+var meshType = "ext"; // ext | int | spec
 
 profileEntity.clear();
 
@@ -114,18 +114,31 @@ function genMesh(){
     const majorRadius = majorDia / 2;
     const decimalPitch = (1 / pitch);
     const halfDecPitch = decimalPitch / 2;
-    const threadH = decimalPitch / (2 * Math.tan(angle * DegToRad /2) );
-    const angleRatio =  Math.tan(angle * DegToRad /2);
+    const threadH = decimalPitch / (2 * Math.tan(angle * DegToRad / 2) );
+    const angleRatio =  Math.tan(angle * DegToRad / 2);
 
+    // as per standard
     const tipRadius = majorRadius + ( threadH / 8 );
     const minorRadius = majorRadius - ( 5 * threadH / 8 );
     const rootRadius = majorRadius - ( 7 * threadH / 8 );
+
+    // compensated 
+    let EffMajorRadius = tipRadius - (tipCut * threadH);
+    if (meshType == "int") EffMajorRadius = tipRadius;
+    let EffMinorRadius = rootRadius + (rootCut * threadH);
+    if (meshType == "ext") EffMinorRadius = rootRadius;
 
     paramDiv3.innerText  = "10% fit: " + (0.1 / pitch).toFixed(4) + "\n";
     paramDiv3.innerText += "Pitch: " + decimalPitch.toFixed(4) + "\n";
     paramDiv3.innerText += "H: " + threadH.toFixed(4) + "\n";
 
-    points[0][0] = rootRadius;    
+    let fitVertOffset = 0.5 * fitCut / Math.sin((90-(angle/2)) * DegToRad);
+    //if (meshType == "spec") fitVertOffset = 0.0000;
+    if (meshType == "int") fitVertOffset = -fitVertOffset;
+    if (fitVertOffset > (angleRatio * (tipRadius - EffMajorRadius))) fitVertOffset = (angleRatio * (tipRadius - EffMajorRadius));
+    if (fitVertOffset < (-angleRatio * (EffMinorRadius - rootRadius))) fitVertOffset = (-angleRatio * (EffMinorRadius - rootRadius));
+
+    points[0][0] = rootRadius;
 
     points[1][0] = tipRadius;
     points[1][1] = halfDecPitch;
@@ -133,15 +146,13 @@ function genMesh(){
     points[2][0] = rootRadius;
     points[2][1] = decimalPitch;
 
-    points[3] = v3_val_new(minorRadius, 0, 0.001);
-    points[4] = v3_val_new(minorRadius, angleRatio * (minorRadius - rootRadius),  0.001);
-    points[5] = v3_val_new(majorRadius, halfDecPitch - (angleRatio * (tipRadius - majorRadius)),  0.001);
+    points[3] = v3_val_new(EffMinorRadius, 0, 0.0001);
+    points[4] = v3_val_new(EffMinorRadius, (angleRatio * (EffMinorRadius - rootRadius)) + fitVertOffset,  0.0001);
+    points[5] = v3_val_new(EffMajorRadius, (halfDecPitch - (angleRatio * (tipRadius - EffMajorRadius))) + fitVertOffset,  0.0001);
 
-    points[6] = v3_val_new(majorRadius, halfDecPitch + (angleRatio * (tipRadius - majorRadius)),  0.001);
-    points[7] = v3_val_new(minorRadius, decimalPitch - (angleRatio * (minorRadius - rootRadius)),  0.001);
-    points[8] = v3_val_new(minorRadius, decimalPitch, 0.001);
-
-angleRatio
+    points[6] = v3_val_new(EffMajorRadius, halfDecPitch + (angleRatio * (tipRadius - EffMajorRadius)) - fitVertOffset,  0.0001);
+    points[7] = v3_val_new(EffMinorRadius, decimalPitch - (angleRatio * (EffMinorRadius - rootRadius)) - fitVertOffset,  0.0001);
+    points[8] = v3_val_new(EffMinorRadius, decimalPitch, 0.0001);
 
     profileEntity.clear();
     profileEntity.addLine([majorRadius, 0, 0], [majorRadius, nTurns * decimalPitch], _v3_darkgreen);
@@ -169,7 +180,6 @@ angleRatio
         v3_add_mod(points[6], [0, decimalPitch, 0]);
         v3_add_mod(points[7], [0, decimalPitch, 0]);
         v3_add_mod(points[8], [0, decimalPitch, 0]);
-
     }
 
   //  profileEntity.addLine(points[2], points[1]);
@@ -647,12 +657,11 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
 
 E3D_addInput_range(paramDiv1, "dia", "Maj. Diameter", 0.125, 2, 1.0, paramDiv1CB, 0.005);
 E3D_addInput_range(paramDiv1, "pitch", "TPI", 1, 80, 14, paramDiv1CB, 0.5);
-E3D_addInput_range(paramDiv1, "angle", "P. Angle", 30, 90, 60, paramDiv1CB, 1);
-E3D_addInput_range(paramDiv1, "fit", "Fit", -0.050, 0.050, 0.003, paramDiv1CB, 0.001);
-E3D_addInput_range(paramDiv1, "tip", "Tip cut ratio", 0, 0.5, 0.125, paramDiv1CB, 0.005);
-E3D_addInput_range(paramDiv1, "root", "Root cut ratio", 0, 0.5, 0.25, paramDiv1CB, 0.005);
-//E3D_addInput_range(paramDiv1, "width", "Width", 0.125, 36, 6.25, paramDiv1CB, 0.125);
-//E3D_addInput_range(paramDiv1, "height", "Height", 0.125, 12, 3.0, paramDiv1CB, 0.125);
+E3D_addInput_range(paramDiv1, "angle", "P. Angle", 2, 120, 60, paramDiv1CB, 1);
+E3D_addInput_range(paramDiv1, "fit", "Fit", -0.050, 0.050, 0.003, paramDiv1CB, 0.0005);
+E3D_addInput_range(paramDiv1, "tip", "Tip cut ratio", 0.005, 0.495, 0.125, paramDiv1CB, 0.005);
+E3D_addInput_range(paramDiv1, "root", "Root cut ratio", 0.005, 0.495, 0.25, paramDiv1CB, 0.005);
+
 var paramLock = false;
 function paramDiv1CB(event, type, id, value) {
     switch (id) {
@@ -682,10 +691,9 @@ function paramDiv1CB(event, type, id, value) {
 
 E3D_addInput_range(paramDiv2, "numSections", "Nb of Sections", 6, 256, 32, paramDiv2CB, 1);
 E3D_addInput_range(paramDiv2, "numTurns", "Nb of turns", 1, 128, 4, paramDiv2CB, 1);
-E3D_addInput_checkbox(paramDiv2, "internal", "Internal Thread", false, paramDiv2CB);
-//E3D_addInput_range(paramDiv2, "puffCoef", "Root Puff Coefficient", 0, 15, 6.4, paramDiv2CB, 0.1);
-//E3D_addInput_range(paramDiv2, "puffCosExp", "Root Puff Cosine Exp", 0, 5, 1.5, paramDiv2CB, 0.1);
-//E3D_addInput_range(paramDiv2, "hubDia", "Hub hole diameter", 0, 6, 1, paramDiv2CB, 0.125);
+E3D_addInput_radio(paramDiv2, "ext", "External Thread", "style", true, paramDiv2CB);
+E3D_addInput_radio(paramDiv2, "int", "Internal Thread", "style", false, paramDiv2CB);
+E3D_addInput_radio(paramDiv2, "spec", "Spec Profile", "style", false, paramDiv2CB);
 //E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);
 
 function paramDiv2CB(event, type, id, value) {
@@ -707,6 +715,9 @@ function paramDiv2CB(event, type, id, value) {
         case "clipTop":
             clipTop = value;
             break;
+    }
+    if (type == "radio") {
+        meshType = id;
     }
     entity.clear();
     genMesh();
