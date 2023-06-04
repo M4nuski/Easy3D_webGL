@@ -63,6 +63,7 @@ var rootCut = 0.250;
 var tipCut = 0.125;
 
 var nTurns = 10;
+var nSections = 16;
 var meshType = "ext"; // ext | int | spec
 
 profileEntity.clear();
@@ -154,6 +155,13 @@ function genMesh(){
     points[7] = v3_val_new(EffMinorRadius, decimalPitch - (angleRatio * (EffMinorRadius - rootRadius)) - fitVertOffset,  0.0001);
     points[8] = v3_val_new(EffMinorRadius, decimalPitch, 0.0001);
 
+    const p0_bottom_midroot = v3_clone(points[3]);
+    const p1_bottom = v3_clone(points[4]);
+    const p2_bottom_tip = v3_clone(points[5]);
+    const p3_top_tip = v3_clone(points[6]);
+    const p4_top = v3_clone(points[7]);
+    const p5_top_midroot = v3_clone(points[8]);
+
     profileEntity.clear();
     profileEntity.addLine([majorRadius, 0, 0], [majorRadius, nTurns * decimalPitch], _v3_darkgreen);
     profileEntity.addLine([minorRadius, 0, 0], [minorRadius, nTurns * decimalPitch], _v3_darkgreen);
@@ -181,6 +189,59 @@ function genMesh(){
         v3_add_mod(points[7], [0, decimalPitch, 0]);
         v3_add_mod(points[8], [0, decimalPitch, 0]);
     }
+
+
+
+    // generate mesh
+    //const p0_bottom_midroot = v3_clone(points[3]);
+    //const p1_bottom = v3_clone(points[4]);
+    //const p2_bottom_tip = v3_clone(points[5]);
+    //const p3_top_tip = v3_clone(points[6]);
+    //const p4_top = v3_clone(points[7]);
+    //const p5_top_midroot = v3_clone(points[8]);
+    const sectionAngle = Math.PI * 2 / nSections;
+    const turnOffset = v3_val_new(0, decimalPitch, 0);
+    const sectionOffset = v3_val_new(0, decimalPitch / nSections, 0);
+
+    for (var t = 0; t < nTurns; ++t) {
+        points[0] = v3_addscaled_new(p0_bottom_midroot, turnOffset, t);
+        points[1] = v3_addscaled_new(p1_bottom, turnOffset, t);
+        points[2] = v3_addscaled_new(p2_bottom_tip, turnOffset, t);
+        points[3] = v3_addscaled_new(p3_top_tip, turnOffset, t);
+        points[4] = v3_addscaled_new(p4_top, turnOffset, t);
+        points[5] = v3_addscaled_new(p5_top_midroot, turnOffset, t);
+
+        for (var s = 0; s < nSections; ++s) {
+            points[6]  = v3_rotateY_new(points[0], sectionAngle);
+            points[7]  = v3_rotateY_new(points[1], sectionAngle);
+            points[8]  = v3_rotateY_new(points[2], sectionAngle);
+            points[9]  = v3_rotateY_new(points[3], sectionAngle);
+            points[10] = v3_rotateY_new(points[4], sectionAngle);
+            points[11] = v3_rotateY_new(points[5], sectionAngle);
+
+            v3_add_mod(points[6], sectionOffset);
+            v3_add_mod(points[7], sectionOffset);
+            v3_add_mod(points[8], sectionOffset);
+            v3_add_mod(points[9], sectionOffset);
+            v3_add_mod(points[10], sectionOffset);
+            v3_add_mod(points[11], sectionOffset);
+
+            meshLoader.pushQuad4p(points[0], points[6], points[7], points[1]);
+            meshLoader.pushQuad4p(points[1], points[7], points[8], points[2]);
+            meshLoader.pushQuad4p(points[2], points[8], points[9], points[3]);
+            meshLoader.pushQuad4p(points[3], points[9], points[10], points[4]);
+            meshLoader.pushQuad4p(points[4], points[10], points[11], points[5]);
+
+            v3_copy(points[0], points[6]);
+            v3_copy(points[1], points[7]);
+            v3_copy(points[2], points[8]);
+            v3_copy(points[3], points[9]);
+            v3_copy(points[4], points[10]);
+            v3_copy(points[5], points[11]);
+        }
+    }
+    meshLoader.addModelData(entity);
+
 
   //  profileEntity.addLine(points[2], points[1]);
 /*
@@ -689,8 +750,8 @@ function paramDiv1CB(event, type, id, value) {
 }
 
 
-E3D_addInput_range(paramDiv2, "numSections", "Nb of Sections", 6, 256, 32, paramDiv2CB, 1);
-E3D_addInput_range(paramDiv2, "numTurns", "Nb of turns", 1, 128, 4, paramDiv2CB, 1);
+E3D_addInput_range(paramDiv2, "nSections", "Nb of Sections", 6, 256, 16, paramDiv2CB, 1);
+E3D_addInput_range(paramDiv2, "nTurns", "Nb of turns", 1, 128, 10, paramDiv2CB, 1);
 E3D_addInput_radio(paramDiv2, "ext", "External Thread", "style", true, paramDiv2CB);
 E3D_addInput_radio(paramDiv2, "int", "Internal Thread", "style", false, paramDiv2CB);
 E3D_addInput_radio(paramDiv2, "spec", "Spec Profile", "style", false, paramDiv2CB);
@@ -698,22 +759,11 @@ E3D_addInput_radio(paramDiv2, "spec", "Spec Profile", "style", false, paramDiv2C
 
 function paramDiv2CB(event, type, id, value) {
     switch (id) {
-        case "numSections":
-            numSegments = value;
+        case "nSections":
+            nSections = value;
             break;
-        case "puffExp":
-            puffExp = value;
-            break;
-        case "puffCoef":
-            puffCoef = value;
-            break;
-        case "puffCosExp":
-            cosExp = value;
-            break;
-        case "hubDia":
-            hubBoreRadius = value * 25.4 / 2.0;
-        case "clipTop":
-            clipTop = value;
+        case "nTurns":
+            nTurns = value;
             break;
     }
     if (type == "radio") {
