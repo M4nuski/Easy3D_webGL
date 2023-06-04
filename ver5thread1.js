@@ -240,6 +240,53 @@ function genMesh(){
             v3_copy(points[5], points[11]);
         }
     }
+
+    // bottom cap
+    let middle = v3_val_new(0, halfDecPitch, 0);
+    for (var s = 0; s < nSections; ++s) {
+        points[0]  = v3_rotateY_new(p0_bottom_midroot, sectionAngle * s);
+        points[1]  = v3_rotateY_new(p0_bottom_midroot, sectionAngle * (s + 1));
+
+        v3_addscaled_mod(points[0], sectionOffset, s);
+        v3_addscaled_mod(points[1], sectionOffset, s + 1);
+
+        meshLoader.pushTriangle3p(points[0], points[1], middle);
+    }
+
+    // bottom thread end
+    meshLoader.pushTriangle3p(middle, p0_bottom_midroot, p1_bottom);
+    meshLoader.pushTriangle3p(middle, p1_bottom, p2_bottom_tip);
+    meshLoader.pushTriangle3p(middle, p2_bottom_tip, p3_top_tip);
+    meshLoader.pushTriangle3p(middle, p3_top_tip, p4_top);
+    meshLoader.pushTriangle3p(middle, p4_top, p5_top_midroot);
+
+    // top cap
+    middle = v3_val_new(0, (nTurns * decimalPitch) + halfDecPitch, 0);
+    for (var s = 0; s < nSections; ++s) {
+        points[0]  = v3_rotateY_new(p5_top_midroot, sectionAngle * s);
+        points[1]  = v3_rotateY_new(p5_top_midroot, sectionAngle * (s + 1));
+
+        v3_addscaled_mod(points[0], sectionOffset, ((nTurns - 1) * nSections) + s);
+        v3_addscaled_mod(points[1], sectionOffset, ((nTurns - 1) * nSections) + s + 1);
+
+        meshLoader.pushTriangle3p(points[0], points[1], middle);
+    }
+
+    // top thread end
+    v3_addscaled_mod(p0_bottom_midroot, turnOffset, nTurns);
+    v3_addscaled_mod(p1_bottom, turnOffset, nTurns);
+    v3_addscaled_mod(p2_bottom_tip, turnOffset, nTurns);
+    v3_addscaled_mod(p3_top_tip, turnOffset, nTurns);
+    v3_addscaled_mod(p4_top, turnOffset, nTurns);
+    v3_addscaled_mod(p5_top_midroot, turnOffset, nTurns);
+
+    meshLoader.pushTriangle3p(middle, p1_bottom, p0_bottom_midroot);
+    meshLoader.pushTriangle3p(middle, p2_bottom_tip, p1_bottom);
+    meshLoader.pushTriangle3p(middle, p3_top_tip, p2_bottom_tip);
+    meshLoader.pushTriangle3p(middle, p4_top, p3_top_tip);
+    meshLoader.pushTriangle3p(middle, p5_top_midroot, p4_top);
+
+
     meshLoader.addModelData(entity);
 
 
