@@ -138,7 +138,7 @@ class E3D_camera {
         return res;
     }
 
-    getworldCoordinates(x, y, distFromViewport = 0.0) {
+    getWorldCoordinates(x, y, distFromViewport = 0.0) {
         // clamp to front of viewport
         if (distFromViewport < 0.0) distFromViewport = 0.0;
 
@@ -228,7 +228,7 @@ class E3D_camera_persp extends E3D_camera {
         return res;
     }
 
-    getworldCoordinates(x, y, distFromViewport = 0.0) {
+    getWorldCoordinates(x, y, distFromViewport = 0.0) {
         // clamp to front of viewport
         if (distFromViewport < 0.0) distFromViewport = 0.0;
 
@@ -369,7 +369,7 @@ class E3D_camera_model extends E3D_camera_persp {
         return true;
     }
 
-    getworldCoordinates(x, y, distFromViewport = 0.0) {
+    getWorldCoordinates(x, y, distFromViewport = 0.0) {
         // clamp to front of viewport
         if (distFromViewport < 0.0) distFromViewport = 0.0;
 

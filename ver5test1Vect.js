@@ -221,9 +221,9 @@ TIMER.onSlowTick = function () {
     setDataV3("p3", p3);
     setDataV3("p4", p4);
 
-    point1.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
+    point1.moveTo(CAMERA.getWorldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam));
     point1.updateMatrix();
-    point2.moveTo(CAMERA.getworldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0));
+    point2.moveTo(CAMERA.getWorldCoordinates(INPUTS.pageX, INPUTS.pageY, distFromCam + 100.0));
     point2.updateMatrix();
 
     $("data").innerText = formatDataMap();
