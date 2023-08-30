@@ -18,7 +18,7 @@ var groundEntity = new E3D_entity_wireframe_canvas("entity0");
 
 // Ground plane
 groundEntity.addPlane(_v3_origin, _v3_null, 12, 12, _v3_black, 120);
-groundEntity.addPlane([0.0, 0.001, 0.0], _v3_null, 12, 12, _v3_red, 10);
+groundEntity.addPlane([0.0, 0.001, 0.0], _v3_null, 12, 12, _v3_red, 12);
 groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 
@@ -35,10 +35,10 @@ E3D_onResize();
 
 //CONTEXT.disable(CONTEXT.CULL_FACE);
 
-// Move the camera back and up a little, add some nod 
-CAMERA.moveBy(0.5, 0.5, 1, 0.3, 0, 0.0);
+// Move the camera back and up a little, add some nod
+CAMERA.moveBy(0.5, 0.05, 0.5, 0.1, 0, 0.0);
 SCENE.setClearColor([ 0.85,  0.85,  0.85]);
-SCENE.lightA_color = _v3_darkgray; 
+SCENE.lightA_color = _v3_darkgray;
 INPUTS._posSpeed *= 0.025;
 INPUTS._rotSpeed *= 0.75;
 
@@ -63,10 +63,14 @@ var tipCut = 0.125;
 var nTurns = 10;
 var nSections = 16;
 var meshType = "ext"; // ext | int | spec
+var threadType = "UNC"; // UNC | ACME // TODO metric?
+
+var genInhibit = false;
 
 profileEntity.clear();
 
 function genMesh(){
+    if (genInhibit) return;
 
     meshLoader.reset();
 
@@ -77,7 +81,7 @@ function genMesh(){
     points.push(v3_new()); // bottom tip
     points.push(v3_new()); // top tip
 
-    points.push(v3_new()); // top 
+    points.push(v3_new()); // top
     points.push(v3_new()); // top mid root
 
     const majorRadius = majorDia / 2;
@@ -86,20 +90,40 @@ function genMesh(){
     const threadH = decimalPitch / (2 * Math.tan(angle * DegToRad / 2) );
     const angleRatio =  Math.tan(angle * DegToRad / 2);
 
-    // as per standard
-    const tipRadius = majorRadius + ( threadH / 8 );
-    const minorRadius = majorRadius - ( 5 * threadH / 8 );
-    const rootRadius = majorRadius - ( 7 * threadH / 8 );
+    // as per UNC standard
+    let tipRadius = majorRadius + ( threadH / 8 );
+    let minorRadius = majorRadius - ( 5 * threadH / 8 );
+    let rootRadius = majorRadius - ( 7 * threadH / 8 );
 
-    // compensated 
+    // 2023-08-29 late night tweak
+    const tipWidth = 0.5 - (angleRatio / 2); // 0.3707 for 29deg
+    if (threadType == "ACME") {
+        tipRadius = majorRadius + ( threadH * tipWidth );
+        minorRadius = majorRadius - halfDecPitch;
+        rootRadius = minorRadius - ( threadH * tipWidth );
+    }
+    // compensated
     let EffMajorRadius = tipRadius - (tipCut * threadH);
-    if (meshType == "int") EffMajorRadius = tipRadius;
     let EffMinorRadius = rootRadius + (rootCut * threadH);
-    if (meshType == "ext") EffMinorRadius = rootRadius;
+    if (threadType == "UNC") {
+        if (meshType == "int") EffMajorRadius = tipRadius;
+        if (meshType == "ext") EffMinorRadius = rootRadius;
+    }
 
-    paramDiv3.innerText  = "10% fit: " + (0.1 / pitch).toFixed(4) + "\n";
-    paramDiv3.innerText += "Pitch: " + decimalPitch.toFixed(4) + "\n";
-    paramDiv3.innerText += "H: " + threadH.toFixed(4) + "\n";
+    if (threadType == "ACME") {
+        if (tipCut > tipWidth) tipCut = tipWidth;
+        EffMajorRadius = majorRadius - (tipCut * threadH);
+        EffMinorRadius = minorRadius + (rootCut * threadH);
+        if (meshType == "int") EffMajorRadius = majorRadius + (tipCut * threadH);
+        if (meshType == "ext") EffMinorRadius = minorRadius - (rootCut * threadH);
+    }
+
+    //paramDiv3.innerText  = "10% fit: " + (0.1 / pitch).toFixed(4) + "\n";
+    //paramDiv3.innerText += "Pitch: " + decimalPitch.toFixed(4) + "\n";
+    //paramDiv3.innerText += "H: " + threadH.toFixed(4) + "\n";
+    E3D_setOutput_text(paramDiv3, "fit", (0.1 / pitch).toFixed(4));
+    E3D_setOutput_text(paramDiv3, "pitch", decimalPitch.toFixed(4));
+    E3D_setOutput_text(paramDiv3, "threadH", threadH.toFixed(4));
 
     let fitVertOffset = 0.5 * fitCut / Math.sin((90-(angle/2)) * DegToRad);
     //if (meshType == "spec") fitVertOffset = 0.0000;
@@ -290,6 +314,17 @@ function E3D_addInput_range(element, name, caption, min, max, value, callback, s
         callback(event, "range", name, newValue);
     });
 }
+function E3D_setInput_range(element, name, value) {
+    var newInputValue = element.querySelector("#range_"+name+"_value");
+    var newInputElem = element.querySelector("#range_"+name);
+    if ((newInputValue) && (newInputElem)) {
+
+        newInputValue.innerText = value;
+        newInputElem.value = value;
+        newInputElem.dispatchEvent(new Event('input', { bubbles: true, target:newInputElem, value: value }));
+    }
+
+}
 
 function E3D_addInput_radio(element, name, caption, group, checked, callback) {
     // <span class="E3D_input_caption">$caption</span>
@@ -313,7 +348,7 @@ function E3D_addInput_radio(element, name, caption, group, checked, callback) {
     if (checked) newElem.setAttribute("checked", true);
     element.appendChild(newElem);
 
-    newElem.addEventListener("input", function(event) { callback(event, "radio", name, event.target.checked); });
+    newElem.addEventListener("input", function(event) { callback(event, "radio", name, event.target.checked, event.target.name); });
 }
 
 function E3D_addInput_checkbox(element, name, caption, checked, callback) {
@@ -338,16 +373,77 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
 
     newElem.addEventListener("input", function(event) { callback(event, "checkbox", name, event.target.checked); });
 }
-// TODO add E3D_addInput_select
+function E3D_addSeparator(element) {
+    var newElem = document.createElement("span");
+    newElem.className = "E3D_input_separator";
+    newElem.innerHTML = "&nbsp;";
+    element.appendChild(newElem);
 
+    newElem = document.createElement("span");
+    newElem.className = "E3D_input_separator";
+    newElem.innerHTML = "&nbsp;";
+    element.appendChild(newElem);
+
+    newElem = document.createElement("span");
+    newElem.className = "E3D_input_separator";
+    newElem.innerHTML = "&nbsp;";
+    element.appendChild(newElem);
+}
+function E3D_addHeader(element, text) {
+    var newElem = document.createElement("span");
+    newElem.className = "E3D_input_header";
+    newElem.innerText = text;
+    element.appendChild(newElem);
+
+    newElem = document.createElement("span");
+    newElem.className = "E3D_input_header";
+    newElem.innerHTML = "&nbsp;";
+    element.appendChild(newElem);
+
+    newElem = document.createElement("span");
+    newElem.className = "E3D_input_header";
+    newElem.innerHTML = "&nbsp;";
+    element.appendChild(newElem);
+}
+
+function E3D_addOutput_text(element, name, caption, value) {
+    var newElem = document.createElement("span");
+    newElem.className = "E3D_input_caption";
+    newElem.innerText = caption;
+    element.appendChild(newElem);
+
+    newElem = document.createElement("span");
+    newElem.className = "E3D_input_value";
+    newElem.id = "outputText_" + name;
+    newElem.innerText = value;
+    element.appendChild(newElem);
+
+    newElem = document.createElement("span");
+    newElem.innerHTML = "&nbsp;";
+    element.appendChild(newElem);
+}
+
+function E3D_setOutput_text(element, name, value) {
+    var outputElem = element.querySelector("#outputText_"+name);
+    if (outputElem) {
+        outputElem.innerText = value;
+    }
+}
+
+
+// TODO add E3D_addInput_select
+E3D_addHeader(paramDiv1, "Type");
+E3D_addInput_radio(paramDiv1, "UNC", "Unified Standard", "type", true, paramDiv2CB);
+E3D_addInput_radio(paramDiv1, "ACME", "ACME", "type", false, paramDiv2CB);
+E3D_addInput_radio(paramDiv1, "Metric", "Metric", "type", false, paramDiv2CB);
+
+E3D_addHeader(paramDiv1, "Parameters");
 E3D_addInput_range(paramDiv1, "dia", "Maj. Diameter", 0.125, 2, 1.0, paramDiv1CB, 0.005);
 E3D_addInput_range(paramDiv1, "pitch", "TPI", 1, 80, 14, paramDiv1CB, 0.5);
 E3D_addInput_range(paramDiv1, "angle", "P. Angle", 2, 120, 60, paramDiv1CB, 1);
 E3D_addInput_range(paramDiv1, "fit", "Fit", -0.050, 0.050, 0.003, paramDiv1CB, 0.0005);
-E3D_addInput_range(paramDiv1, "tip", "Tip cut ratio", 0.005, 0.495, 0.125, paramDiv1CB, 0.005);
-E3D_addInput_range(paramDiv1, "root", "Root cut ratio", 0.005, 0.495, 0.25, paramDiv1CB, 0.005);
 
-function paramDiv1CB(event, type, id, value) {
+function paramDiv1CB(event, type, id, value, group) {
     switch (id) {
         case "dia":
             majorDia = value;
@@ -372,15 +468,24 @@ function paramDiv1CB(event, type, id, value) {
     genMesh();
 }
 
+E3D_addHeader(paramDiv2, "Adjustments");
+E3D_addInput_range(paramDiv2, "tip", "Tip cut ratio / allowance", 0.000, 0.495, 0.125, paramDiv1CB, 0.005);
+E3D_addInput_range(paramDiv2, "root", "Root cut ratio / allowance", 0.000, 0.495, 0.25, paramDiv1CB, 0.005);
 
+E3D_addHeader(paramDiv2, "Mesh");
 E3D_addInput_range(paramDiv2, "nSections", "Nb of Sections", 6, 256, 16, paramDiv2CB, 1);
 E3D_addInput_range(paramDiv2, "nTurns", "Nb of turns", 1, 128, 10, paramDiv2CB, 1);
+E3D_addSeparator(paramDiv2);
 E3D_addInput_radio(paramDiv2, "ext", "External Thread", "style", true, paramDiv2CB);
 E3D_addInput_radio(paramDiv2, "int", "Internal Thread", "style", false, paramDiv2CB);
 E3D_addInput_radio(paramDiv2, "spec", "Spec Profile", "style", false, paramDiv2CB);
 //E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);
+//E3D_addSeparator(paramDiv2);
+//E3D_addOutput_text
+//E3D_addHeader()
+//E3D_addSeparator(paramDiv1);
 
-function paramDiv2CB(event, type, id, value) {
+function paramDiv2CB(event, type, id, value, group) {
     switch (id) {
         case "nSections":
             nSections = value;
@@ -390,11 +495,31 @@ function paramDiv2CB(event, type, id, value) {
             break;
     }
     if (type == "radio") {
-        meshType = id;
+        if (group == "style") {
+            meshType = id;
+        } else if (group == "type") {
+            threadType = id;
+            genInhibit = true;
+            if (id == "UNC") {
+                E3D_setInput_range(paramDiv1, "angle", 60);
+                E3D_setInput_range(paramDiv2, "tip", 0.125);
+                E3D_setInput_range(paramDiv2, "root", 0.25);
+            } else if (id == "ACME") {
+                E3D_setInput_range(paramDiv1, "angle", 29);
+                E3D_setInput_range(paramDiv2, "tip", 0.0);
+                E3D_setInput_range(paramDiv2, "root", 0.0);
+            }
+
+        } else console.log("Unkown radio callback group");
     }
+    genInhibit = false;
     entity.clear();
     genMesh();
 }
+
+E3D_addOutput_text(paramDiv3, "fit", "10% Fit", "0.0000");
+E3D_addOutput_text(paramDiv3, "pitch", "Pitch (dec)", "0.0000");
+E3D_addOutput_text(paramDiv3, "threadH", "Form Height", "0.0000");
 
 var bottomBar = document.getElementById("bottomBar");
 CB_tick = function() {
@@ -432,7 +557,7 @@ function cleanMesh() {
     st = performance.now();
     meshLoader.smoothNormals(0.71);
     et = performance.now();
-    console.log("t smooth : " + (et - st)); 
+    console.log("t smooth : " + (et - st));
 
     st = performance.now();
     meshLoader.genEdges();

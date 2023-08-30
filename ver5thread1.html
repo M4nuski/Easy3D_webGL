@@ -13,12 +13,28 @@
         <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5thread1.js" data-fail="ver5demoFail.js" defer="true"></script>
         <style>
 
+            input[type="radio"] {
+                float:left;
+            }
             .E3D_input_caption {
                 text-align: left;
             }
             .E3D_input_value {
                 text-align: right;
-            } 
+            }
+            .E3D_input_radio {
+                width: 1em;
+            }
+            .E3D_input_separator {
+                border-bottom: 1px solid black;
+                height: 1px;
+                margin-top: 0.5em;
+            }
+            .E3D_input_header {
+                font-weight: bold;
+                border-top: 1px solid black;
+                margin-top: 1px;
+            }
             .paramDiv {
                 padding-left: 0.25em;
                 padding-right: 0.25em;
@@ -33,7 +49,7 @@
 
             }
             .floater {
-                position: relative;                
+                position: relative;
                 z-index: 10;
                 display: inline-block;
             }
@@ -42,17 +58,18 @@
 
 
     <body>
-        <div class="E3D_fullscreenContainer E3D_flexVertical" style="overflow-x:scroll;">
-
+        <div class="E3D_fullscreenContainer E3D_flexVertical">
             <div class="E3D_flexVerticalContentFit E3D_margin" style="display:flex; width: fit-content;">
-                <div class="paramDiv"><div id="paramDiv1" class="paramSubGrid"></div></div>
-                <div class="paramDiv"><div id="paramDiv2" class="paramSubGrid"></div></div>
-                <div class="paramDiv"><div id="paramDiv3" class="paramSubGrid"></div></div>
-                <div class="paramDiv"><div id="paramDiv4" class="paramSubGrid">      
-                    <div id="button_clean" class="E3D_fakeButton" style="display: inline-block;">Clean Mesh</div><div id="button_save" class="E3D_fakeButton" style="display: inline-block;">Save</div><span></span>
-                </div></div>
+
+                    <div class="paramDiv"><div id="paramDiv1" class="paramSubGrid"></div></div>
+                    <div class="paramDiv"><div id="paramDiv2" class="paramSubGrid"></div></div>
+                    <div class="paramDiv"><div id="paramDiv3" class="paramSubGrid"></div></div>
+                    <div class="paramDiv"><div id="paramDiv4" class="paramSubGrid">
+                        <div id="button_clean" class="E3D_fakeButton" style="display: inline-block;">Clean Mesh</div><div>&nbsp;</div><div>&nbsp;</div><div id="button_save" class="E3D_fakeButton" style="display: inline-block;">Save to STL (ASCII)</div><span></span>
+                    </div></div>
 
             </div>
+
             <div id="E3D_mainDiv" class="E3D_flexContent"></div>
             <div class="E3D_margin">
                 <div class="E3D_monospaceText"><span id="bottomBar" style="font-size:smaller;"></span></div>
