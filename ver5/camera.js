@@ -115,6 +115,13 @@ class E3D_camera {
     }
 
     getScreenCoordinates(vect) {
+        var v = v3_applym4_new(vect, this.matrix);
+
+        var res = {  x: ( v[0] * E3D_WIDTH  * 0.5) + (E3D_WIDTH  * 0.5),
+                     y: (-v[1] * E3D_HEIGHT * 0.5) + (E3D_HEIGHT * 0.5),
+                     zVisible: v[2] < 1.0 };
+        return res;
+/*
         var r = [vect[0], vect[1], vect[2], 1.0];
         v4_applym4_mod(r, this.matrix);
 
@@ -136,6 +143,7 @@ class E3D_camera {
         res.z = r[2] * this.zRatio;
         res.visible = (res.z <= E3D_FAR);
         return res;
+*/
     }
 
     getWorldCoordinates(x, y, distFromViewport = 0.0) {
@@ -205,6 +213,14 @@ class E3D_camera_persp extends E3D_camera {
     }
 
     getScreenCoordinates(vect) {
+
+        var v = v3_applym4_new(vect, this.matrix);
+
+        var res = {  x: ( v[0] * E3D_WIDTH  * 0.5) + (E3D_WIDTH  * 0.5),
+                     y: (-v[1] * E3D_HEIGHT * 0.5) + (E3D_HEIGHT * 0.5),
+                     zVisible: v[2] < 1.0 };
+        return res;
+/*
         var r = [vect[0], vect[1], vect[2], 1.0];
         v4_applym4_mod(r, this.matrix);
 
@@ -226,6 +242,7 @@ class E3D_camera_persp extends E3D_camera {
         res.z = r[2] * this.zRatio;
         res.visible = (res.z <= E3D_FAR);
         return res;
+*/
     }
 
     getWorldCoordinates(x, y, distFromViewport = 0.0) {

@@ -18,7 +18,8 @@ var groundEntity = new E3D_entity_wireframe_canvas("entity0");
 
 // Ground plane
 groundEntity.addPlane(_v3_origin, _v3_null, 12, 12, _v3_black, 120);
-groundEntity.addPlane([0.0, 0.001, 0.0], _v3_null, 12, 12, _v3_red, 12);
+groundEntity.addPlane([0.0, -0.0001, 0.0], _v3_null, 0.6, 0.6, _v3_lightgray, 60);
+groundEntity.addPlane([0.0, 0.0001, 0.0], _v3_null, 12, 12, _v3_red, 12);
 groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 
@@ -334,19 +335,23 @@ function E3D_addInput_radio(element, name, caption, group, checked, callback) {
     element.appendChild(newElem);
 
     // <span id="range_$name_value" class="E3D_input_value">$value</span>
+    var newDiv = document.createElement("div");
+    newDiv.className = "E3D_input_value";
+    element.appendChild(newDiv);
+
+        newElem = document.createElement("input");
+        newElem.type = "radio";
+        newElem.id = "radio_"+name;
+        //newElem.className = "E3D_input_radio";
+        newElem.setAttribute("name", group);
+        if (checked) newElem.setAttribute("checked", true);
+        newDiv.appendChild(newElem);
+
     var newElem2 = document.createElement("span");
-    newElem2.className = "E3D_input_value";
     newElem2.innerHTML = "&nbsp;";
     element.appendChild(newElem2);
 
     //<input type="radio" id="radio_$name" name="$group" class="E3D_input_radio" $checked />
-    newElem = document.createElement("input");
-    newElem.type = "radio";
-    newElem.id = "radio_"+name;
-    newElem.className = "E3D_input_radio";
-    newElem.setAttribute("name", group);
-    if (checked) newElem.setAttribute("checked", true);
-    element.appendChild(newElem);
 
     newElem.addEventListener("input", function(event) { callback(event, "radio", name, event.target.checked, event.target.name); });
 }
@@ -359,16 +364,20 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
     element.appendChild(newElem);
 
     // <span id="range_$name_value" class="E3D_input_value">$value</span>
-    var newElem2 = document.createElement("span");
-    newElem2.className = "E3D_input_value";
-    newElem2.innerHTML = "&nbsp;";
-    element.appendChild(newElem2);
+    var newDiv = document.createElement("div");
+    newDiv.className = "E3D_input_value";
+    element.appendChild(newDiv);
 
-    newElem = document.createElement("input");
-    newElem.type = "checkbox";
-    newElem.id = "checkbox_"+name;
-    newElem.className = "E3D_input_checkbox";
-    if (checked) newElem.setAttribute("checked", true);
+        newElem = document.createElement("input");
+        newElem.type = "checkbox";
+        //ewElem.className = "E3D_input_checkbox";
+        newElem.id = "checkbox_"+name;
+        if (checked) newElem.setAttribute("checked", true);
+        newDiv.appendChild(newElem);
+
+
+    newElem = document.createElement("span");
+    newElem.innerHTML = "&nbsp;";
     element.appendChild(newElem);
 
     newElem.addEventListener("input", function(event) { callback(event, "checkbox", name, event.target.checked); });
@@ -479,11 +488,6 @@ E3D_addSeparator(paramDiv2);
 E3D_addInput_radio(paramDiv2, "ext", "External Thread", "style", true, paramDiv2CB);
 E3D_addInput_radio(paramDiv2, "int", "Internal Thread", "style", false, paramDiv2CB);
 E3D_addInput_radio(paramDiv2, "spec", "Spec Profile", "style", false, paramDiv2CB);
-//E3D_addInput_checkbox(paramDiv2, "clipTop", "Clip to top of hub", true, paramDiv2CB);
-//E3D_addSeparator(paramDiv2);
-//E3D_addOutput_text
-//E3D_addHeader()
-//E3D_addSeparator(paramDiv1);
 
 function paramDiv2CB(event, type, id, value, group) {
     switch (id) {
@@ -520,6 +524,9 @@ function paramDiv2CB(event, type, id, value, group) {
 E3D_addOutput_text(paramDiv3, "fit", "10% Fit", "0.0000");
 E3D_addOutput_text(paramDiv3, "pitch", "Pitch (dec)", "0.0000");
 E3D_addOutput_text(paramDiv3, "threadH", "Form Height", "0.0000");
+E3D_addInput_checkbox(paramDiv3, "testCB", "Checkbox Test", true, paramDiv2CB);
+E3D_addInput_radio(paramDiv3, "testRB1", "RadioButton Test1", "testgrp", true, paramDiv2CB);
+E3D_addInput_radio(paramDiv3, "testRB2", "RadioButton Test2", "testgrp", false, paramDiv2CB);
 
 var bottomBar = document.getElementById("bottomBar");
 CB_tick = function() {

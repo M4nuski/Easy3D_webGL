@@ -39,6 +39,9 @@ function setDataFloat(item, data, dec = 3) {
 function setDataV3(item, data) {
     dataMap.set(item, v3_string(data));
 }
+function setDataXYZ(item, data) {
+    dataMap.set(item, v3_string([data.x, data.y, data.z]));
+}
 
 // Create a new entity
 var entity = new E3D_entity_wireframe_canvas("entity0");
@@ -197,16 +200,16 @@ TIMER.onSlowTick = function () {
     let p4 = [0.0, 0.0, 100.0];
 
     let sc = CAMERA.getScreenCoordinates(p1);
-    p1element.style.visibility = sc.visible ? "visible" : "hidden";
+    p1element.style.visibility = sc.zVisible ? "visible" : "hidden";
     p1element.style.left = sc.x + "px"; p1element.style.top = sc.y + "px";
     sc = CAMERA.getScreenCoordinates(p2);
-    p2element.style.visibility = sc.visible ? "visible" : "hidden";
+    p2element.style.visibility = sc.zVisible ? "visible" : "hidden";
     p2element.style.left = sc.x + "px"; p2element.style.top = sc.y + "px";
     sc = CAMERA.getScreenCoordinates(p3);
-    p3element.style.visibility = sc.visible ? "visible" : "hidden";
+    p3element.style.visibility = sc.zVisible ? "visible" : "hidden";
     p3element.style.left = sc.x + "px"; p3element.style.top = sc.y + "px";
     sc = CAMERA.getScreenCoordinates(p4);
-    p4element.style.visibility = sc.visible ? "visible" : "hidden";
+    p4element.style.visibility = sc.zVisible ? "visible" : "hidden";
     p4element.style.left = sc.x + "px"; p4element.style.top = sc.y + "px";
 
     entity2.isVisible = CAMERA.zDist > -100.0;
