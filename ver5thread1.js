@@ -106,7 +106,7 @@ function genMesh(){
     // compensated
     let EffMajorRadius = tipRadius - (tipCut * threadH);
     let EffMinorRadius = rootRadius + (rootCut * threadH);
-    if (threadType == "UNC") {
+    if ((threadType == "UNC") || (threadType == "Metric")) {
         if (meshType == "int") EffMajorRadius = tipRadius;
         if (meshType == "ext") EffMinorRadius = rootRadius;
     }
@@ -371,7 +371,7 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
         newElem = document.createElement("input");
         newElem.type = "checkbox";
         //ewElem.className = "E3D_input_checkbox";
-        newElem.id = "checkbox_"+name;
+        newElem.id = "checkbox_" + name;
         if (checked) newElem.setAttribute("checked", true);
         newDiv.appendChild(newElem);
 
@@ -439,12 +439,45 @@ function E3D_setOutput_text(element, name, value) {
     }
 }
 
+function E3D_addInput_select(element, name, caption, options, values, callback) {
+    if ((!values) || (values.length == 0)) values = options;
 
-// TODO add E3D_addInput_select
-E3D_addHeader(paramDiv1, "Type");
+    var newElem = document.createElement("span");
+    newElem.className = "E3D_input_caption";
+    newElem.innerText = caption;
+    element.appendChild(newElem);
+
+    newElem = document.createElement("span");
+    newElem.className = "E3D_input_value";
+    newElem.innerHTML = "&nbsp;";
+    element.appendChild(newElem);
+
+    newElem = document.createElement("select");
+    newElem.className = "E3D_input_select";
+    newElem.id = "select_" + name;
+    element.appendChild(newElem);
+
+    for (var i = 0; i < options.length; ++i) {
+        var newOpt = document.createElement("option");
+        newOpt.innerText = options[i];
+        newOpt.value = values[i];
+        newElem.appendChild(newOpt);
+    }
+
+    newElem.addEventListener("input", function(event) { callback(event, "select", name, event.target.value); });
+
+}
+
+// TODO E3D_setInput_select
+// TODO E3D_setInput_radio
+
+
+//E3D_addHeader(paramDiv1, "Type");
 E3D_addInput_radio(paramDiv1, "UNC", "Unified Standard", "type", true, paramDiv2CB);
 E3D_addInput_radio(paramDiv1, "ACME", "ACME", "type", false, paramDiv2CB);
 E3D_addInput_radio(paramDiv1, "Metric", "Metric", "type", false, paramDiv2CB);
+E3D_addInput_radio(paramDiv1, "G", "Whitworth/G/PF", "type", false, paramDiv2CB);
+E3D_addInput_radio(paramDiv1, "NPT", "NPT", "type", false, paramDiv2CB);
 
 E3D_addHeader(paramDiv1, "Parameters");
 E3D_addInput_range(paramDiv1, "dia", "Maj. Diameter", 0.125, 2, 1.0, paramDiv1CB, 0.005);
@@ -504,7 +537,7 @@ function paramDiv2CB(event, type, id, value, group) {
         } else if (group == "type") {
             threadType = id;
             genInhibit = true;
-            if (id == "UNC") {
+            if ((id == "UNC") || (id == "Metric")) {
                 E3D_setInput_range(paramDiv1, "angle", 60);
                 E3D_setInput_range(paramDiv2, "tip", 0.125);
                 E3D_setInput_range(paramDiv2, "root", 0.25);
@@ -512,6 +545,10 @@ function paramDiv2CB(event, type, id, value, group) {
                 E3D_setInput_range(paramDiv1, "angle", 29);
                 E3D_setInput_range(paramDiv2, "tip", 0.0);
                 E3D_setInput_range(paramDiv2, "root", 0.0);
+            } else if ((id == "G") || (id == "NPT")) {
+                E3D_setInput_range(paramDiv1, "angle", 55);
+                E3D_setInput_range(paramDiv2, "tip", 0.1);
+                E3D_setInput_range(paramDiv2, "root", 0.1);
             }
 
         } else console.log("Unkown radio callback group");
@@ -524,9 +561,16 @@ function paramDiv2CB(event, type, id, value, group) {
 E3D_addOutput_text(paramDiv3, "fit", "10% Fit", "0.0000");
 E3D_addOutput_text(paramDiv3, "pitch", "Pitch (dec)", "0.0000");
 E3D_addOutput_text(paramDiv3, "threadH", "Form Height", "0.0000");
-E3D_addInput_checkbox(paramDiv3, "testCB", "Checkbox Test", true, paramDiv2CB);
-E3D_addInput_radio(paramDiv3, "testRB1", "RadioButton Test1", "testgrp", true, paramDiv2CB);
-E3D_addInput_radio(paramDiv3, "testRB2", "RadioButton Test2", "testgrp", false, paramDiv2CB);
+E3D_addInput_checkbox(paramDiv3, "testCB", "Checkbox Test", true, paramDiv3CB);
+E3D_addInput_radio(paramDiv3, "testRB1", "RadioButton Test1", "testgrp", true, paramDiv3CB);
+E3D_addInput_radio(paramDiv3, "testRB2", "RadioButton Test2", "testgrp", false, paramDiv3CB);
+
+E3D_addInput_select(paramDiv3, "testSelect1", "Select Test1", ["a", "b", "c", "d"], null, paramDiv3CB);
+E3D_addInput_select(paramDiv3, "testSelect2", "Select Test2", ["aaaaaaa", "bb bb", "cc", "dd dd dd dd d"], [1, 2, 3, 4], paramDiv3CB);
+
+function paramDiv3CB(event, type, id, value, group) {
+    console.log("event " + type + " " + id + " " + value + " " + group);
+}
 
 var bottomBar = document.getElementById("bottomBar");
 CB_tick = function() {
@@ -581,3 +625,19 @@ function cleanMesh() {
 }
 
 genMesh();
+
+/*
+Whitworth / G / PF
+p = 1.0 / TPI
+d = 0.640327 * p (clipped thread form height)
+r = 0.137329 * p (thread tip radius)
+H = d * 1.3333 (H = d + H/6 + H/6, H = d / 0.6667)
+a = 55.0
+*/
+/*
+NPT
+taper angle
+3/4 per foot. (3/8 per foot on radius)
+
+
+*/
