@@ -341,19 +341,26 @@ function E3D_addInput_radio(element, name, caption, group, checked, callback) {
 
         newElem = document.createElement("input");
         newElem.type = "radio";
-        newElem.id = "radio_"+name;
+        newElem.id = "radio_"+group+"_"+name;
+        newElem.value = name;
         //newElem.className = "E3D_input_radio";
         newElem.setAttribute("name", group);
         if (checked) newElem.setAttribute("checked", true);
         newDiv.appendChild(newElem);
+        newElem.addEventListener("input", function(event) { callback(event, "radio", name, event.target.checked, event.target.name); });
 
     var newElem2 = document.createElement("span");
     newElem2.innerHTML = "&nbsp;";
     element.appendChild(newElem2);
 
     //<input type="radio" id="radio_$name" name="$group" class="E3D_input_radio" $checked />
-
-    newElem.addEventListener("input", function(event) { callback(event, "radio", name, event.target.checked, event.target.name); });
+}
+function E3D_setInput_radio(element, name, group, checked) {
+    const newInputElem = element.querySelector("#radio_"+group+"_"+name);
+    if (newInputElem) newInputElem.checked = checked;
+    if (checked) {
+        newInputElem.dispatchEvent(new Event('input', { bubbles: true, target:newInputElem, value: checked }));
+    }
 }
 
 function E3D_addInput_checkbox(element, name, caption, checked, callback) {
@@ -467,9 +474,15 @@ function E3D_addInput_select(element, name, caption, options, values, callback) 
 
 }
 
-// TODO E3D_setInput_select
-// TODO E3D_setInput_radio
+function E3D_setInput_select(element, name, selectonOption) {
 
+    var newInputElem = element.querySelector("#select_"+name);
+    if (newInputElem) {
+        var oldVal = newInputElem.value;
+        newInputElem.value = selectonOption;
+        if (oldVal != selectonOption) newInputElem.dispatchEvent(new Event('input', { bubbles: true, target:newInputElem, value: selectonOption }));
+    }
+}
 
 //E3D_addHeader(paramDiv1, "Type");
 E3D_addInput_radio(paramDiv1, "UNC", "Unified Standard", "type", true, paramDiv2CB);
@@ -565,10 +578,27 @@ E3D_addInput_radio(paramDiv3, "testRB1", "RadioButton Test1", "testgrp", true, p
 E3D_addInput_radio(paramDiv3, "testRB2", "RadioButton Test2", "testgrp", false, paramDiv3CB);
 
 E3D_addInput_select(paramDiv3, "testSelect1", "Select Test1", ["a", "b", "c", "d"], null, paramDiv3CB);
-E3D_addInput_select(paramDiv3, "testSelect2", "Select Test2", ["aaaaaaa", "bb bb", "cc", "dd dd dd dd d"], [1, 2, 3, 4], paramDiv3CB);
+E3D_addInput_select(paramDiv3, "testSelect2", "Select Test2", ["aaa1aaaa", "bb2 bb", "cc", "dd dd dd dd d"], [1, 2, 3, 4], paramDiv3CB);
 
 function paramDiv3CB(event, type, id, value, group) {
-    console.log("event " + type + " " + id + " " + value + " " + group);
+    console.log("event t:" + type + " i:" + id + " v:" + value + " g:" + group);
+    if (id == "testSelect1") {
+        if (value == "a") {
+            E3D_setInput_select(paramDiv3, "testSelect2", 1);
+        }2
+        if (value == "b") {
+            E3D_setInput_select(paramDiv3, "testSelect2", 2);
+        }
+    }
+
+    if (id == "testSelect2") {
+        if (value == 1) {
+            E3D_setInput_radio(paramDiv3, "testRB1", "testgrp", true);
+        }
+        if (value == 2) {
+            E3D_setInput_radio(paramDiv3, "testRB2", "testgrp", true);
+        }
+    }
 }
 
 var bottomBar = document.getElementById("bottomBar");
