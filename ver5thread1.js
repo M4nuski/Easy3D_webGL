@@ -374,13 +374,12 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
         newElem.id = "checkbox_" + name;
         if (checked) newElem.setAttribute("checked", true);
         newDiv.appendChild(newElem);
-
+        newElem.addEventListener("input", function(event) { callback(event, "checkbox", name, event.target.checked); });
 
     newElem = document.createElement("span");
     newElem.innerHTML = "&nbsp;";
     element.appendChild(newElem);
 
-    newElem.addEventListener("input", function(event) { callback(event, "checkbox", name, event.target.checked); });
 }
 function E3D_addSeparator(element) {
     var newElem = document.createElement("span");
