@@ -167,6 +167,18 @@ function v3_reset(res) {
     res[2] = 0.0;
 }
 
+function v3_swap(a, b) {
+    var v = a[0];
+    a[0] = b[0];
+    b[0] = v;
+    v = a[1];
+    a[1] = b[1];
+    b[1] = v;
+    v = a[2];
+    a[2] = b[2];
+    b[2] = v;
+}
+
 function v3_equals(a, b, epsilon = _v3_epsilon) {
     return (Math.abs(a[0] - b[0]) < epsilon) && (Math.abs(a[1] - b[1]) < epsilon) && (Math.abs(a[2] - b[2]) < epsilon);
 }

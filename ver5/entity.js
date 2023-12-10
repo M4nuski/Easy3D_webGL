@@ -652,21 +652,21 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
 
     addCube(location, rotation, size, color = [1.0,1.0,1.0], centerCross = false, sideCross = false, bottom = true, addCD = false) {
         if (!Array.isArray(size)) size = [size, size, size];
-        size[0] = Math.abs(size[0]) / 2;
-        size[1] = Math.abs(size[1]) / 2;
-        size[2] = Math.abs(size[2]) / 2;
+        let size0 = Math.abs(size[0]) / 2;
+        let size1 = Math.abs(size[1]) / 2;
+        let size2 = Math.abs(size[2]) / 2;
 
         let m = m4_transform_new(location, rotation);
 
-        let tfr = [size[0], size[1], size[2]];
-        let tfl = [-size[0], size[1], size[2]];
-        let trr = [size[0], size[1], -size[2]];
-        let trl = [-size[0], size[1], -size[2]];
+        let tfr = [size0, size1, size2];
+        let tfl = [-size0, size1, size2];
+        let trr = [size0, size1, -size2];
+        let trl = [-size0, size1, -size2];
 
-        let bfr = [size[0], -size[1], size[2]];
-        let bfl = [-size[0], -size[1], size[2]];
-        let brr = [size[0], -size[1], -size[2]];
-        let brl = [-size[0], -size[1], -size[2]];
+        let bfr = [size0, -size1, size2];
+        let bfl = [-size0, -size1, size2];
+        let brr = [size0, -size1, -size2];
+        let brl = [-size0, -size1, -size2];
 
         v3_applym4_mod(tfr, m);
         v3_applym4_mod(tfl, m);
@@ -734,7 +734,7 @@ class E3D_entity_wireframe_canvas extends E3D_entity {
             v3_applym4_mod(y, m);
             v3_applym4_mod(z, m);
 
-            BODIES[this.index].pushCD_box(location, x, y, z, size[0], size[1], size[2], bottom);
+            BODIES[this.index].pushCD_box(location, x, y, z, size0, size1, size2, bottom);
         }
     }
 

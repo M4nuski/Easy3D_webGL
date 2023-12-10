@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // Main demo program for version 0.5
-// Load default engine 
+// Load default engine
 // Emmanuel Charette 2020
 
 "use strict"
@@ -14,16 +14,16 @@ console.log("User Main Script Start");
 E3D_InitAll();
 
 // Create a new entity
-var entity = new E3D_entity_wireframe_canvas("entity0");
+var cubeEntity = new E3D_entity_wireframe_canvas("entity0");
 // Large ground plane
-entity.addPlane(_v3_origin, _v3_null, 2048, 2048, _v3_lightgray, 128);
+cubeEntity.addPlane(_v3_origin, _v3_null, 2048, 2048, _v3_lightgray, 128);
 // Cube in the middle, on top of ground
-entity.addCube([0, 24, 0], _v3_null, 48);
+cubeEntity.addCube([0, 24, 0], _v3_null, 48);
 //for (var x = -10; x < 11; ++x) for (var y = -10; y < 11; ++y) if ((x != 0) || (y != 0)) entity.addCube([x * 64, 16, y * 64], _v3_null, 32, _v3_white);
 
-entity.isVisible = true;
+cubeEntity.isVisible = true;
 
-E3D_addEntity(entity);
+E3D_addEntity(cubeEntity);
 
 // Move the camera back and up a little
 CAMERA.moveTo(0, 24, 100);
