@@ -125,6 +125,9 @@ function checkBoundaries() {
     //var ppX2 = v3_addscaled_new(p, n, dX2);
     //boundEntity.addCross(ppX2, 5, _v3_red);
 
+    if (isNaN(dX1)) dX1 = 0.0;
+    if (isNaN(dX2)) dX2 = 0.0;
+
     if (dX2 < dX1) {
         var v = dX1;
         dX1 = dX2;
@@ -140,6 +143,9 @@ function checkBoundaries() {
     //var ppY2 = v3_addscaled_new(p, n, dY2);
     //boundEntity.addCross(ppY2, 5, _v3_green);
 
+    if (isNaN(dY1)) dY1 = 0.0;
+    if (isNaN(dY2)) dY2 = 0.0;
+
     if (dY2 < dY1) {
         var v = dY1;
         dY1 = dY2;
@@ -154,6 +160,9 @@ function checkBoundaries() {
     var dZ2 = (minZ - p[2]) / n[2];
     //var ppZ2 = v3_addscaled_new(p, n, dZ2);
     //boundEntity.addCross(ppZ2, 5, _v3_blue);
+
+    if (isNaN(dZ1)) dZ1 = 0.0;
+    if (isNaN(dZ2)) dZ2 = 0.0;
 
     if (dZ2 < dZ1) {
         var v = dZ1;
