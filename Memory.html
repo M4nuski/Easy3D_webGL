@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Memory Game 2.4</title>
+    <title>Memory Game 2.45</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="media/memory.ico">
@@ -11,7 +11,7 @@
             margin: 0px;
             font-size: 18px;
             font-family: Arial, Helvetica, sans-serif;
-        }        
+        }
         canvas {
             width: 100%;
             height: 100%;
@@ -26,7 +26,7 @@
             background-color: rgba(255, 255, 255, 0.25);
 
             transition: all 0.1s linear;
-        }      
+        }
         .hoverSize:hover{
             max-width: 525px;
             max-height: 525px; /* should be equal to max-width to avoid transition overshoot */
@@ -59,12 +59,12 @@
         }
         .E3D_fakeButton {
             cursor: pointer;
-            background-color: #d0d0d0;   
+            background-color: #d0d0d0;
             padding-right: 0.2em;
-            padding-left: 0.2em;   
-            user-select: none;   
-            box-shadow: 0.1em 0.1em black;      
-            border-radius: 0.2em; 
+            padding-left: 0.2em;
+            user-select: none;
+            box-shadow: 0.1em 0.1em black;
+            border-radius: 0.2em;
             margin: 0.1em 0.2em 0.2em 0.2em;
             text-align: center;
             display: inline;
@@ -94,10 +94,10 @@
         .E3D_tabButton {
             cursor: pointer;
             border: solid 1px black;
-            background-color: #d0d0d0;   
+            background-color: #d0d0d0;
             padding: 0.3em 0.2em 0.2em 0.2em;
-            user-select: none;   
-            box-shadow: 0.1em 0.1em black;      
+            user-select: none;
+            box-shadow: 0.1em 0.1em black;
             border-radius: 0.5em 0.5em 0em 0em;
             margin: 0.1em 0.0em 0.2em 0.1em;
             text-align: center;
@@ -172,9 +172,9 @@
         #scoreCloseButton:hover {
             background-color:#f83620;
         }
-        
+
         #scoreDiv {
-            /* Score Div is a "modal" panel hiding the game and inhibiting the game loop */ 
+            /* Score Div is a "modal" panel hiding the game and inhibiting the game loop */
             position: fixed;
             visibility: hidden;
             z-index: 50;
@@ -200,25 +200,31 @@
             margin-left: 0.2em;
             display: none;
         }
-        #playernameDiv {
+        #playernameDivContent {
             background-color: lightgreen;
-            position: fixed;
             padding: 0.25em;
-            height: 2.25em;
-            width: 48em;
-            margin-top: 0.275em;
-            margin-left:-24em;
-            top: 50vh;
-            left: 50vw;
+            align-content: center;
+            text-align: center;
             z-index: 10;
             border-radius: 5px;
             border: 2px solid black;
         }
+        #playernameDiv {
+            text-align: center;
+            position: fixed;
+            padding: 0px;
+            margin-top: 0.275em;
+            left: 0px;
+            top:50vh;
+            align-content: center;
+            text-align: center;
+            width:100vw;
+        }
 
-        /* Table Styles */ 
+        /* Table Styles */
         table {
             border-collapse: separate;
-            border: 0px solid #808080;/*grayBackground*/		
+            border: 0px solid #808080;/*grayBackground*/
             border-spacing: 0px 5px;
             margin: 0px 15px 15px 15px;
             width:98%;
@@ -267,7 +273,7 @@
     </style>
 
     <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", function() { 
+        document.addEventListener("DOMContentLoaded", function() {
             // Version 4 2022-09
 
 
@@ -280,7 +286,7 @@
             var width = 1920;
             var height = 1080;
 
-            const DegToRad = (Math.PI / 180.0);            
+            const DegToRad = (Math.PI / 180.0);
 
 
             // Render
@@ -305,7 +311,7 @@
             c.addEventListener("mouseup", canvasMouseUp);
             c.addEventListener("wheel", canvasMouseWheel);
             c.addEventListener("mouseleave", canvasMouseLeave);
-            
+
 
             // Inputs
 
@@ -318,7 +324,7 @@
 
             var lastX = 0;
             var lastY = 0;
-          
+
             var cX = 0;
             var cY = 0;
             var lX = 0;
@@ -349,7 +355,7 @@
                 if (!audioContext) setAudio();
                 var touch = event.changedTouches[0];
                 currentX = (((touch.pageX - c.offsetLeft) / canvasZoom) - viewportOffsetX) / viewportScale;
-                currentY = (((touch.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / viewportScale;  
+                currentY = (((touch.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / viewportScale;
                 cX = touch.pageX;
                 cY = touch.pageY;
                 canvasMouseDown({button: 0});
@@ -357,7 +363,7 @@
 
             function canvasMouseMove(event) {
                 currentX = (((event.pageX - c.offsetLeft) / canvasZoom) - viewportOffsetX) / viewportScale;
-                currentY = (((event.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / viewportScale;  
+                currentY = (((event.pageY - c.offsetTop) / canvasZoom) - viewportOffsetY) / viewportScale;
                 cX = event.pageX;
                 cY = event.pageY;
             }
@@ -370,7 +376,7 @@
                 if (event.preventDefault) { event.preventDefault(); };
                 return false;
             }
-            function canvasMouseWheel(event) {   
+            function canvasMouseWheel(event) {
                 mouseW = (event.deltaY > 0) ? 1 : -1;
             }
             function canvasMouseLeave() {
@@ -427,7 +433,7 @@
                 c.style.width =  (canvasZoom * 100) + "%";
                 c.style.height = (canvasZoom * 100) + "%";
 
-                c.style.top  = (canvasOffsetY - (c.parentElement.offsetHeight - c.height) / 2 ) + "px"; 
+                c.style.top  = (canvasOffsetY - (c.parentElement.offsetHeight - c.height) / 2 ) + "px";
                 c.style.left = (canvasOffsetX - (c.parentElement.offsetWidth  - c.width)  / 2 ) + "px";
             }
 
@@ -446,7 +452,7 @@
                     return this._seed = this._seed * 16807 % 2147483647;
                 }
                 // Returns a pseudo-random floating point number in range [0.0, 1.0-epsilon].
-                nextFloat() {        
+                nextFloat() {
                     return (this.next() - 1) / 2147483646; // We know that result of next() will be 1 to 2147483646 (inclusive).
                 }
                 // Returns a pseudo-random integer in range [0, maxInt-1].
@@ -465,7 +471,7 @@
                 textContext.textAlign = "center";
                 textContext.textBaseline = "middle";
                 textContext.fillStyle = color;
-                var textSize = textContext.measureText(text); 
+                var textSize = textContext.measureText(text);
 
                 textCanvas.width = textSize.width*1.1;
 
@@ -527,7 +533,7 @@
             // Colors
 
 
-            var fillStyles = [ 
+            var fillStyles = [
                 // red        yellow     green      blue
                 ["#FF0000", "#FFFF00", "#00FC00", "#0017FF"], // off
                 ["#FFF3DD", "#FFFFD2", "#E8FFE4", "#DEFFFF"]  // on
@@ -591,9 +597,9 @@
             const GS_Teach = 1;
             const GS_Recall = 2;
             const GS_Failed = 3;
-            const GS_Success = 4;    
-            const GS_Max = 4;   
-            const GS_Strings = ["Idle", "Teach", "Recall", "Failed", "Success"];     
+            const GS_Success = 4;
+            const GS_Max = 4;
+            const GS_Strings = ["Idle", "Teach", "Recall", "Failed", "Success"];
             var state = GS_Idle;
 
             function isGameActive() { return ((state == GS_Teach) || (state == GS_Recall)); }
@@ -608,7 +614,7 @@
             const name_regex = /^[\w#!\$%\?&\*\(\)@\-=_+,.~\{\}\[\]]{3,32}$/;
             // a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
 
-            
+
             // Score data
 
 
@@ -709,8 +715,8 @@
                     volSlider.value = v;
                 }
             }
-            volSlider.addEventListener("input", function (event) { 
-                if (gainNode) gainNode.gain.value = this.value; 
+            volSlider.addEventListener("input", function (event) {
+                if (gainNode) gainNode.gain.value = this.value;
                 if (localStorage) localStorage.setItem("m1.vol", this.value);
             });
 
@@ -726,7 +732,7 @@
                 if (m != undefined) {
                     colorShuffleMode = m;
                 }
-            }  
+            }
 
             // shuffle qty button
             onClick("shuffleQtyButton", function (event) {
@@ -734,7 +740,7 @@
                 shuffleQty++;
                 if (shuffleQty > 4) shuffleQty = 2;
                 if (localStorage) localStorage.setItem("m2.itt", shuffleQty);
-            });   
+            });
             if (localStorage) {
                 var i = localStorage.getItem("m2.itt");
                 if (i != undefined) {
@@ -750,7 +756,7 @@
                 soundSuffleMode++;
                 if (soundSuffleMode > SSM_Max) soundSuffleMode = 0;
                 if (localStorage) localStorage.setItem("m2.ssm", soundSuffleMode);
-            });   
+            });
             if (localStorage) {
                 var s = localStorage.getItem("m2.ssm");
                 if (s != undefined) {
@@ -764,7 +770,7 @@
             onClick("toggleLangButton", function () {
                 // toggle
                 let oldLanguage = language.slice();
-                language = (language == language_default) ? language_other : language_default;  
+                language = (language == language_default) ? language_other : language_default;
 
                 // update style
                 for (var rule of document.styleSheets[0].cssRules) {
@@ -796,9 +802,9 @@
 
 
             function startLoop() {
-                window.requestAnimationFrame((startTime) => { 
-                    timeLast = startTime; 
-                    window.requestAnimationFrame(gameLoop); 
+                window.requestAnimationFrame((startTime) => {
+                    timeLast = startTime;
+                    window.requestAnimationFrame(gameLoop);
                 } );
             }
 
@@ -852,11 +858,11 @@
                 if (mouseUp0) {
                     mouseUp0 = false;
                     mouseDg0 = false;
-                }                
+                }
                 if (mouseUp1) {
                     mouseUp1 = false;
                     mouseDg1 = false;
-                }                
+                }
                 if (mouseUp2) {
                     mouseUp2 = false;
                     mouseDg2 = false;
@@ -865,14 +871,14 @@
                 // handle mouse drag
                 if (mouseDg0) {
                     //
-                }                
+                }
                 if (mouseDg1) {
                   //  canvasOffsetX += cX - lX;
                    // canvasOffsetY += cY - lY;
                    // lX = cX;
                    // lY = cY;
                    // resizeCanvas();
-                }                
+                }
                 if (mouseDg2) {
                     //
                 }
@@ -905,13 +911,13 @@
 
             // Game Methods
 
-            
+
             // Audio
 
             function setAudio() {
                 audioContext = new window.AudioContext();
                 gainNode = audioContext.createGain();
-                gainNode.gain.value = volSlider.value; 
+                gainNode.gain.value = volSlider.value;
 
                 b0 = getElem("b0");
                 var t0 = audioContext.createMediaElementSource(b0);
@@ -973,8 +979,8 @@
             function performShuffle() {
                 // prep array
                 var newPos = [];
-                var possiblePos = [0, 1, 2, 3];                
-                for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1)); 
+                var possiblePos = [0, 1, 2, 3];
+                for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1));
 
                 // variable length swap
                 var b = shuffle[newPos[0]];
@@ -985,8 +991,8 @@
             function performSoundShuffle() {
                 // prep array
                 var newPos = [];
-                var possiblePos = [0, 1, 2, 3];                
-                for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1)); 
+                var possiblePos = [0, 1, 2, 3];
+                for (var i = 0; i < shuffleQty; ++i) newPos.push(possiblePos.splice(RNG_ColorShuffle.nextInt(possiblePos.length), 1));
 
                 // variable length swap
                 var b = soundShuffle[newPos[0]];
@@ -1034,7 +1040,7 @@
                         localHighScore = hs;
                     }
                     getPlayerHighScore();
-                } 
+                }
             }
 
             function getPlayerHighScore() {
@@ -1048,7 +1054,7 @@
             // Scene
 
 
-            function updateScene() {            
+            function updateScene() {
 
                 // inputs
                 if ((newUserInput > 0) && (newUserInput < 5)) {
@@ -1061,7 +1067,7 @@
                 }
 
 
-                // Game Logic 
+                // Game Logic
                 if (state == GS_Recall) {
                     if (timeSinceLastHit > maxTimeBetweenHit) {
                         fail();
@@ -1079,7 +1085,7 @@
                             if (colorShuffleMode == CSM_Always) performShuffle();
                         } else fail();
                     }
- 
+
                 }
                 if ((state == GS_Idle) || (state == GS_Failed)) {
                     if (newUserInput == 5) {
@@ -1092,7 +1098,7 @@
                         currentScore = 0;
                         newHS = false;
                         stepDelayRemaining = teachDelayBase;
-                    } 
+                    }
                 }
                 if (state == GS_Teach) {
                     stepDelayRemaining -= timeDelta;
@@ -1105,14 +1111,14 @@
                             state = GS_Recall;
                             timeSinceLastHit = 0;
                             currentStep = 0;
-                        } else {                            
+                        } else {
                             userInput = seq[currentStep];
                             userInputDelay = flashDelay;
                             //console.log("teach: " + newUserInput);
                             playColor(userInput);
                             currentStep++;
                             CSM_AfterEachTeach_Done = false;
-                        } 
+                        }
 
                         //reset delay
                         stepDelayRemaining = teachDelayBase - (teachDelayDecrements * currentLevel);
@@ -1141,7 +1147,7 @@
                 }
             }
 
-            function drawScene(){                
+            function drawScene(){
                 // clear
                 ctx.clearRect(-2, -2, 4, 4);
                 clear = false;
@@ -1209,10 +1215,10 @@
                     ctx.strokeStyle = "white";
                     ctx.strokeRect(-0.3, -0.04, 0.6, 0.08);
                     drawImageScaledCentered(startImage, 0.0, 0.0, 2.0);
-                
+
                 } else if (state == GS_Teach) {
                     drawImageScaledCentered(eyeImage, 0.0, 0.0, 0.6);
-                    
+
                 } else if (state == GS_Recall) {
                     var t = (maxTimeBetweenHit - timeSinceLastHit) / maxTimeBetweenHit;
                     var baseColor = 255 - (255 * t * t);
@@ -1273,8 +1279,8 @@
                 ctx.moveTo(x, y);
                 ctx.arc(x,
                         y,
-                        r, 
-                        startAngle * DegToRad, 
+                        r,
+                        startAngle * DegToRad,
                         endAngle * DegToRad);
                 ctx.lineTo(x, y);
                 ctx.fill();
@@ -1331,10 +1337,10 @@
 
                     playerName = playernameInput.value;
                     playernameOutput.innerText = playerName;
-                    
+
                     if (localStorage) localStorage.setItem("m4.pn", playerName);
                     getPlayerHighScore();
-                    
+
                     playernameWarning.style.display = "none";
                     playernameDiv.style.display = "none";
 
@@ -1354,7 +1360,7 @@
                 console.log("uploading new HS");
                 newHS = false;
 
-                var httpRequest = new XMLHttpRequest();  
+                var httpRequest = new XMLHttpRequest();
 
                 httpRequest.onerror = function(event) {
                     console.log("upload error " + event.target.status + "\n" + event.target.responseText);
@@ -1385,7 +1391,7 @@
             var _LastGlobalList = [];
             var _LastGlobalFetch = 0;
 
-            function genLocalScores() {                
+            function genLocalScores() {
                 var list = getHSlist();
                 localContentTab.innerHTML = genScoreTable(list, byScore);
             }
@@ -1393,9 +1399,9 @@
             function genGlobalScores() {
                 if ((Date.now() - _LastGlobalFetch) < 1000 * 60) { // throttle to 1 per minute
                     globalContentTab.innerHTML = genScoreTable(_LastGlobalList, byScore);
-                    return; 
+                    return;
                 }
-                
+
                 globalContentTab.innerText = "Fetching global score list...";
                 var httpRequest = new XMLHttpRequest();
 
@@ -1408,9 +1414,9 @@
                 httpRequest.onloadend = function(event) {
                     console.log("Status: " + event.target.status);
                     if (event.target.status != 200) {
-                        globalContentTab.innerText = "Error getting global score list"; 
+                        globalContentTab.innerText = "Error getting global score list";
                         console.log(event.target.responseText);
-                        return; 
+                        return;
                     }
                     var list = event.target.responseText;
                     try {
@@ -1537,10 +1543,10 @@
 
         <div class="E3D_flexContent">
             <canvas id="canvas" width="192" height="108">Canvas</canvas>
-            <div id="playernameDiv">
+            <div id="playernameDiv"><div id="playernameDivContent">
                 <span class="lang_EN">Player Name: </span><span class="lang_FR">Nom du Joueur: </span><input type="text" id="playernameInput" value="&lt;Player&gt;" /><span id="playernameSetButton" class="E3D_fakeButton"><span class="lang_EN">Save</span><span class="lang_FR">Enregistrer</span></span><span id="playernameWarning"><span class="lang_EN">Invalid Name</span><span class="lang_FR">Nom Invalide</span></span><br/>
                 <span class="lang_EN">Name must be 3 to 32 of the following characters:</span><span class="lang_FR">Le nom doit être de 3 à 32 des caractères suivants:</span> a-z A-Z 0-9 # ! $ % ? & * ( ) @ - = _ + , . ~ { } [ ]
-            </div>
+            </div></div>
             <div id="volDiv">
                 <b><span class="volSpan">Volume:</span></b><br />
                 <input id="vol" type="range" min="0" max="2" value="1" step="0.1" /><br />
@@ -1570,7 +1576,7 @@
             <b><span class="lang_EN">Quantity:</span><span class="lang_FR">Quantité:</span></b><br />
             <span class="lang_EN">Number of colors that get shuffled</span><span class="lang_FR">Nombre couleurs mélangées</span><hr />
             <b><span class="lang_EN">Sound Suffle:</span><span class="lang_FR">Mélange des sons:</span></b><br />
-            <span class="lang_EN">Association of sounds with a color</span><span class="lang_FR">Association des sons à une couleur</span><br />    
+            <span class="lang_EN">Association of sounds with a color</span><span class="lang_FR">Association des sons à une couleur</span><br />
             <span class="E3D_monospaceText">None: </span><span class="lang_EN">Stays the same</span><span class="lang_FR">Toujours la même</span><br />
             <span class="E3D_monospaceText">Level: </span><span class="lang_EN">Shuffle at the begining of the level</span><span class="lang_FR">Mélange au début du niveau</span> <br />
             <span class="E3D_monospaceText">Recall: </span><span class="lang_EN">Shuffle before the recall stage</span><span class="lang_FR">Mélange avant la phase du rappel</span> <br />
@@ -1591,7 +1597,7 @@
         <img id="eye" src="media/Eye.svg"></img>
         <img id="score" src="media/Score.svg"></img>
     </div>
-    
+
 </body>
 
 </html>
