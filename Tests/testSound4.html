@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Epson HX-20 cassette data decoder</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 5px;
+            font-size: large;
+        }
+
+        input {
+            font-size: initial;
+        }
+        .visualizer {
+            width : 1900px;
+            margin-left: 5px;
+            margin-right: 5px;
+            height: 512px;
+        }
+
+        #warning {
+            display: none;
+            color: red;
+            font-weight: bolder;
+        }
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+        .E3D_flexVertical {
+            display: flex;
+            flex-direction: column;
+        }
+        .E3D_flexHorizontal {
+            display: flex;
+            flex-direction: row;
+        }
+        .E3D_flexContent {
+            overflow: hidden;
+            flex: 1 1 auto;
+        }
+        .E3D_flexVerticalContentFixed {
+            width: 100%;
+            height: fit-content;
+        }
+        .E3D_flexHorizontalContentFixed {
+            width: fit-content;
+            height: 100%;
+        }
+
+        .E3D_fakeButton {
+            cursor: pointer;
+            background-color: #d0d0d0;
+            padding-right: 0.2em;
+            padding-left: 0.2em;
+            user-select: none;
+            box-shadow: 0.1em 0.1em black;
+            border-radius: 0.2em;
+            margin: 0.1em 0.2em 0.2em 0.2em;
+            display: inline-block;
+        }
+        .E3D_fakeButton:hover {
+            background-color: #a0a0a0;
+        }
+        .E3D_monospaceText {
+            white-space: pre;
+            font-family: 'Courier New', Courier, monospace;
+
+        }
+
+        #footer {
+            position: fixed;
+            bottom:0px;
+            right:0px;
+        }
+        /* Table Styles */
+        table {
+            border-collapse: separate;
+            border: 0px solid #808080;/*grayBackground*/
+            border-spacing: 0px 5px;
+            margin: 0px 15px 15px 15px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #E2E2ED;/**/
+        }
+        tr:nth-child(odd) {
+            background-color:#F2F2FD;/*lightBackground*/
+        }
+        th {
+            color:#F2F2FD;/*lightBackground*/
+            background-color:#505050;
+            border-radius: 5px;
+            box-shadow: 0px 3px 3px 0px #303030;
+            padding: 2px 10px 0px 10px;
+        }
+        td {
+            padding: 2px 10px 0px 10px;
+            width:10em;
+        }
+        td:nth-child(odd) {
+            text-align: right;
+            width:6em;
+        }
+
+        .scrollContainer {
+            overflow-x: scroll;
+            width: 100%;
+            height:fit-content;
+            overflow-y: hidden;
+        }
+
+
+    </style>
+    <script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+"use strict"
+
+function getElem(id) {
+    var elem = document.getElementById(id);
+    if (elem) return elem;
+    return false;
+}
+
+function onClick(elemOrID, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener("click", callback);
+}
+
+function onEvent(elemOrID, event, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener(event, callback);
+}
+
+function smooth(val, target, factor) {
+    if (factor > 1.0) return target;
+    return val + ((target - val) * factor);
+}
+function warn(text) {
+    var warning = getElem("warning");
+    warning.style.display = "block";
+    warning.innerText = text;
+}
+function pararbInterpolate(index, prevValue, value, nextValue) {
+    var newIndex = index;
+    var a = (prevValue + nextValue - (2.0 * value)) / 2.0;
+    var b = (nextValue - prevValue) / 2.0;
+    if (a) {
+        newIndex = index - b / (2.0 * a);
+    }
+    if (isNaN(newIndex)) return index;
+    if (newIndex == Infinity) return index;
+    if (newIndex == -Infinity) return index;
+    return newIndex;
+}
+
+
+// data elements
+var FFT_lin_peakSpan = getElem("FFT_lin_peak");
+var FFT_lin_peakValue = 0.0;
+var FFT_lin_freqSpan = getElem("FFT_lin_freq");
+var FFT_lin_freqValue = 0.0;
+var FFT_lin_noteSpan = getElem("FFT_lin_note");
+var FFT_lin_chevron = 0;
+var FFT_lin_mark = 440;
+var FFT_lin_textSpan = getElem("FFT_lin_text");
+var FFT_lin_smoothValue = 0.5;
+onEvent("FFT_lin_smooth", "input", (event) => {
+    FFT_lin_smoothValue = (100.0 + Number(event.target.value)) / 100.0;
+    FFT_lin_textSpan.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3) ;
+} );
+var FFT_lin_bassValue = 8;
+onEvent("FFT_lin_bass", "input", (event) => {
+    FFT_lin_bassValue = Number(event.target.value);
+    FFT_lin_textSpan.innerText ="Sm:" + FFT_lin_smoothValue.toFixed(3);
+} );
+
+// events
+onClick("startButton", init);
+onClick("pauseButton", (event) => {
+    if (!audioContext) return;
+    if (audioContext.state == "running") {
+        audioContext.suspend();
+        event.target.innerText = "Resume";
+    } else {
+        audioContext.resume();
+        event.target.innerText = "Pause";
+    }
+});
+
+var squelchValue = 32;
+onEvent("squelchVol", "input", (event) => squelchValue = Number(event.target.value) );
+
+onEvent("injectVol", "input", setToneParams);
+onEvent("toneVol", "input", setToneParams);
+onEvent("toneFreq", "input", setToneParams);
+
+var toneFreq = 440.0;
+function setToneParams() {
+    if (!gainNodeTone) return;
+    gainNodeTone.gain.value = Number(getElem("toneVol").value);
+}
+for (let btn of document.querySelectorAll('input[name="tone"]')) btn.addEventListener("change", setToneParams);
+
+onEvent("baseFreq", "change", (event) => {
+    baseFreq = Number(event.target.value);
+    GenNoteFreqsAndStrings();
+    GenCentFreqs();
+});
+
+
+// global
+var source;
+var audioContext;
+var sampleRate;
+var gainNodeInject, gainNodeTone;
+var toneSwitch, whiteSwitch, pinkSwitch;
+var oscillatorNode;
+var lowpassNode, highpassNode;
+
+var whitenoiseBuffer, pinknoiseBuffer;
+var whitenoiseSourceNode, pinknoiseSourceNode;
+
+
+
+var analyser;
+var analyserTimeData;
+var analyserTimeSize;
+var analyserFreqData;
+var analyserFreqSize;
+
+var baseFreq = 440.0;
+const log_baseFactor = Math.pow(2.0, 1.0/12.0);
+const log_unison = 49;
+const cent_baseFactor = Math.pow(2.0, 1.0/1200.0);
+const cent_unison = 4900;
+
+// Visualizing, copied from voice change o matic
+var canvas = document.querySelector('.visualizer');
+canvas.width = canvas.offsetWidth;
+var canvasContext = canvas.getContext("2d");
+var WIDTH;
+var HEIGHT;
+
+// Config and frequencies
+var graphNoteMin = -9; // C0 - 1
+var graphNoteMax = 100; // B8 + 1
+var graphNumNotes = graphNoteMax - graphNoteMin + 1;
+// 99 + 0 -1 -2 -3 -4 -5 -6 -7 -8
+// 108 notes
+// 110 notes
+// split in 100 log cent
+// 11000 slices
+// -900 to 10000
+var graphFreqhMin = getLogFreq(graphNoteMin); // 16.351
+var graphFreqhMax = getLogFreq(graphNoteMax); // 7902.133
+
+var graphCentMin = graphNoteMin * 100 + 1;
+var graphCentMax = graphNoteMax * 100 - 1;
+var graphNumCent = graphCentMax - graphCentMin + 1;
+var graphCentFreqs = [];
+function GenCentFreqs() {
+    graphCentFreqs = [];
+    for (var cent = graphCentMin; cent <= graphCentMax; ++cent) graphCentFreqs.push(getCentFreq(cent));
+}
+function getCentFreq(offset) {
+    return baseFreq * Math.pow(cent_baseFactor, (offset - cent_unison));
+}
+function getCent(frequency) {
+    var noteNum = 1200.0 * (Math.log( frequency / baseFreq ) / Math.log(2.0) );
+    return noteNum + 4900.0;
+}
+// note 1 is A0 at 27.5Hz
+// note 49 is A4 at 440.0Hz
+// note 88 is C8 at 4186.0hz
+function getLogFreq(offset) {
+    return baseFreq * Math.pow(log_baseFactor, (offset - log_unison));
+}
+
+function init() {
+    if (audioContext) return;
+   // GenNoteFreqsAndStrings();
+   // GenCentFreqs();
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        sampleRate = audioContext.sampleRate;
+        getElem("rate").innerText = sampleRate;
+        analyser = audioContext.createAnalyser();
+        analyser.minDecibels = -100;
+        analyser.maxDecibels = -10;
+        analyser.smoothingTimeConstant = 0.5;
+        analyser.fftSize = 256*8;
+        analyserTimeSize = analyser.fftSize;
+        analyserFreqSize = analyser.frequencyBinCount;
+        getElem("size").innerText = analyserTimeSize;
+
+    } catch (err) {
+        warn(err);
+        return;
+    }
+
+    if (!navigator?.mediaDevices?.getUserMedia) {
+        // No audio allowed
+        warn('Sorry, getUserMedia is required for the app.')
+        return;
+    } else {
+        navigator.mediaDevices.getUserMedia({audio: true}).then(
+            function(stream) {
+                // Initialize the SourceNode
+                source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                init_visualize();
+            }
+        ).catch(function(err) {
+            warn(err);
+        }
+    );}
+}// init
+
+function init_visualize() {
+    WIDTH = canvas.width;
+    HEIGHT = canvas.height;
+
+    var topGradient = canvasContext.createLinearGradient(0, 320, 0, 100);
+    topGradient.addColorStop(0, "rgb(32, 32, 32)");
+    topGradient.addColorStop(1, "rgb(255, 255, 255)");
+
+    var bottomGradient = canvasContext.createLinearGradient(0, 320, 0, 500);
+    bottomGradient.addColorStop(0, "rgb(32, 32, 64)");
+    bottomGradient.addColorStop(1, "rgb(192, 192, 255)");
+
+    analyserFreqData = new Float32Array(analyserFreqSize);
+  //  analyserTimeData = new Float32Array(analyserTimeSize);
+
+    canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
+
+    var drawGraph = function() {
+        analyser.getFloatFrequencyData(analyserFreqData);
+       // analyser.getFloatTimeDomainData(analyserTimeData);
+
+        // set average to 0
+      /*  var dc = 0.0;
+        for (let val of analyserTimeData) dc += val;
+        dc /= analyserTimeSize;
+        for (let i = 0; i < analyserTimeSize; ++i) analyserTimeData[i] -= dc;
+*/
+        // calculate levels
+     /*   var rms = 0.0;
+       // dc = 0.0;
+        for (let val of analyserTimeData) {
+          //  dc += val;
+            rms += (val * val);
+        }
+        //dc /= analyserTimeSize;
+        rms = Math.sqrt(rms / analyserTimeSize) / 0.7071;
+        let db = 20.0 * Math.log(rms / 2.0);
+*/
+        // display levels
+     //   FFT_log_text2span.innerText = "rms: " +rms.toFixed(3) + " \ndb: " + db.toFixed(1);// FFT_log_maxValue.toFixed(3);
+
+
+        // setup canvas
+        canvasContext.globalCompositeOperation = "source-over";
+
+        canvasContext.fillStyle = 'rgb(0, 0, 0)';
+        canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
+
+        canvasContext.fillStyle = "white";
+        canvasContext.strokeStyle = "white";
+
+        // graph globals
+        var barWidth = WIDTH / graphNumCent;
+        var barHeight;
+        var x = 0;
+
+        // FF_lin values
+        var localPeakValue = 0;
+        var localPeakFreq = 0;
+        var fPerSample = (sampleRate / 2.0) / analyserFreqSize;
+
+        var bassBoostM = -FFT_lin_bassValue / (graphNumCent / 1.5); // cutoff at 2/3 scale
+        var bassBoostB = FFT_lin_bassValue - (bassBoostM * graphNoteMin * 100 * 1.5);
+
+
+
+        // draw FFT_lin
+      /*  for (let point = graphCentMin; point <= graphCentMax; ++point) {
+
+            var freq = graphCentFreqs[point - graphCentMin];
+            var sample = freq / fPerSample;
+
+            var baseIndex = Math.floor(sample);
+            var ratio = sample - baseIndex;
+            barHeight = ((1.0-ratio) * analyserFreqData[baseIndex]) + (ratio*analyserFreqData[baseIndex + 1]);
+            if (barHeight < -100.0) barHeight = -100.0;
+            if (barHeight > -10.0) barHeight = -10.0;
+            barHeight = 256.0 * (100.0 + barHeight) / 90.0;
+
+            barHeight = barHeight + (bassBoostM * point) + bassBoostB;
+
+            canvasContext.fillStyle = 'rgb(' + (255 * (0.75*barHeight + 0.25)) + ',50,50)';
+            x = (point - graphCentMin) / (graphCentMax - graphCentMin);
+            x = x * WIDTH;
+            canvasContext.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+        }
+*/
+
+   /*     for (var x = 0; x < 256; ++x) { // data is -10 to -110 db
+          //  var y = Math.log(120+analyserFreqData[x]);// log of 10 to 110, 1 to 2.05
+            var y =120+analyserFreqData[x*2];
+            var bh = -(y-10) * 8;
+            if (y > 10) {
+                canvasContext.fillStyle = topGradient;
+                canvasContext.fillRect(4+x*8, 320+(bh/2), 1, -bh/2);
+                canvasContext.fillStyle = bottomGradient;
+                canvasContext.fillRect(4+x*8, 320-(bh/4), 1, bh/4);
+            }
+        }
+*/
+        for (var x = 1; x <= 75; ++x) { // 100Hz to 5000Hz
+            //analyserFreqData [-1] is at freq = sampleRate / 2
+            var freq1 = (x * 66) - 32;
+            var sample1 = freq1 / fPerSample;
+            sample1 = Math.floor(sample1);
+
+            var freq2 = (x * 66) + 32;
+            var sample2 = freq2 / fPerSample;
+            sample2 = Math.ceil(sample2);
+
+            var y = 0;
+            var sampleCount = 0;
+            for (var sample = sample1; sample <= sample2; sample += 1) {
+                y += 120+analyserFreqData[sample];
+                sampleCount++;
+            }
+            y = y / sampleCount;
+            y = y*y*y / 1000000;
+
+            const lineStride = 24;
+
+            //  var y = Math.log(120+analyserFreqData[x]);// log of 10 to 110, 1 to 2.05
+            // var y = (y1 + y2 + y3) / 3;
+            var bh = y * 256;
+            if (bh < 0) bh = 0;
+           // if (y > 10) {
+                canvasContext.strokeStyle = "red";
+                canvasContext.lineWidth = 12;
+                canvasContext.lineCap = "round";
+                canvasContext.beginPath();
+                var bx = lineStride * (x+1);
+                canvasContext.moveTo(bx, 256-bh);
+                canvasContext.lineTo(bx, 256+bh);
+                canvasContext.stroke();
+
+                canvasContext.strokeStyle = "salmon";
+                canvasContext.lineWidth = 4;
+                canvasContext.lineCap = "round";
+                canvasContext.beginPath();
+                canvasContext.moveTo(bx, 256-bh);
+                canvasContext.lineTo(bx, 256+bh);
+                canvasContext.stroke();
+
+            //}
+        }
+
+
+        requestAnimationFrame(drawGraph);
+      };
+
+    drawGraph();
+}
+
+
+
+
+        } );
+    </script>
+</head>
+
+<body>
+    <div id="warning"></div>
+    Epson HX-20 cassette data decoder<br />
+    <div id="startButton" class="E3D_fakeButton">Enable</div><div id="pauseButton" class="E3D_fakeButton">Pause</div><div id="loadButton" class="E3D_fakeButton">Load</div><br />
+    Sample Rate: <span id="rate">16000</span>, bitwidth: <span id="size">8</span>, sign: <span id="sign">signed</span><br />
+
+   <!-- Squelch (min level):<input id="squelchVol" type="range" min="0" max="127" value="1" step="1" /><br />-->
+<hr />
+<div class="scrollContainer">
+    <canvas class="visualizer" width="1900" height="512"></canvas>
+</div>
+
+
+    <div id="footer">Emmanuel Charette Jul-2024</div>
+</body>
+
+</html>

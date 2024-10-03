@@ -222,6 +222,10 @@ class E3D_entity {
         this.drawStrokes = false;
 
         this.arrayIndex = 0;
+
+        this.vertexArray = new Float32Array();
+        this.colorArray  = new Float32Array();
+        this.normalArray = new Float32Array();
     }
 
     getColor(elem) {

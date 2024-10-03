@@ -66,7 +66,7 @@ const _v3_n90z = [ 0.0, 0.0,-PIdiv2];
 
 const _v3_epsilon = 0.00001;
 
-const _m4_identity = m4_new();
+const _v3a_applym4_new_identity = m4_new();
 
 // Colors
 const _v3_white      = [ 1.0,  1.0,  1.0];
@@ -469,6 +469,14 @@ function v3_mult_res(res, a, b) {
     res[0] = a[0] * b[0];
     res[1] = a[1] * b[1];
     res[2] = a[2] * b[2];
+}
+
+function v3a_mult_mod(a, b) {
+    for (var i = 0; i < a.length; ++i) {
+        a[i][0] = a[i][0] * b[0];
+        a[i][1] = a[i][1] * b[1];
+        a[i][2] = a[i][2] * b[2];
+    }
 }
 
 
@@ -1516,6 +1524,39 @@ function v4_applym4_mod(a, m) {
 }
 
 
+
+function applym4_new(a, m) {
+    var res = [];
+    for (var i = 0; i < a.length; i +=3) {
+        var a0 = a[i];
+        var a1 = a[i+1];
+        var a2 = a[i+2];
+
+        var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+        w = w || 1.0;
+
+        res.push( (m[0] * a0 + m[4] * a1 + m[8]  * a2 + m[12]) / w);
+        res.push( (m[1] * a0 + m[5] * a1 + m[9]  * a2 + m[13]) / w);
+        res.push( (m[2] * a0 + m[6] * a1 + m[10] * a2 + m[14]) / w);
+    }
+    return res;
+}
+function applym4n_new(a, m) {
+    var res = [];
+    for (var i = 0; i < a.length; i +=3) {
+        var a0 = a[i];
+        var a1 = a[i+1];
+        var a2 = a[i+2];
+
+        var w = m[3] * a0 + m[7] * a1 + m[11] * a2 + m[15];
+        w = w || 1.0;
+
+        res.push( (m[0] * a0 + m[4] * a1 + m[8]  * a2) / w);
+        res.push( (m[1] * a0 + m[5] * a1 + m[9]  * a2) / w);
+        res.push( (m[2] * a0 + m[6] * a1 + m[10] * a2) / w);
+    }
+    return res;
+}
 
 // v3 Array and m4
 

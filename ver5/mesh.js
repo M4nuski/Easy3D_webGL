@@ -44,6 +44,16 @@ class E3D_mesh {
             strings: ["Icosahedron", "Octahedron", "Bi-Tetrahedron", "Tetrahedron", "Cube"],
             qty: 5
           };
+
+        // TODO implement
+        this.originType = {
+            Center: 0,
+            Bottom: 1,
+            Back: 2,
+            Front: 3,
+            Top: 4
+        }
+        // TODO colors to be either array of 3/4 float or array of array of 3/4 floats
     }
 
     reset() {
@@ -58,7 +68,7 @@ class E3D_mesh {
         this.indices = [];
 
         this.boundTriangles = [];
-        this.boundIndices = []; 
+        this.boundIndices = [];
 
         this.edgesDone = false;
         this.edges = [];
@@ -71,7 +81,7 @@ class E3D_mesh {
 
 // Entity Data Writers
 
-    addModelData(entity){
+    addModelData(entity){ // TODO rename to SET model data
         entity.vertexArray = new Float32Array(this.positions);
         entity.colorArray = new Float32Array(this.colors);
         entity.normalArray = new Float32Array(this.normals);
@@ -82,29 +92,62 @@ class E3D_mesh {
         entity.dataSizeChanged = true;
     }
 
-    addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8) {
+    appendModelData(entity){
+        entity.vertexArray = this.append2Float32Array(entity.vertexArray, this.positions);
+        entity.colorArray = this.append2Float32Array(entity.colorArray, this.colors);
+        entity.normalArray = this.append2Float32Array(entity.normalArray, this.normals);
+
+        entity.numElements += (this.positions.length / 3);
+
+        entity.dataContentChanged = true;
+        entity.dataSizeChanged = true;
+    }
+
+    append2Float32Array(orig, addition) {
+        var newFloat32Array = new Float32Array(orig.length + addition.length);
+        newFloat32Array.set(orig, 0);
+        newFloat32Array.set(addition, orig.length);
+        return newFloat32Array;
+    }
+
+    appendTransformedModelData(entity, position, rotation) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+        var p = applym4_new(this.positions, _mesh_prim_mat);
+        var n = applym4n_new(this.normals, _mesh_prim_mat);
+
+        entity.vertexArray = this.append2Float32Array(entity.vertexArray, p);
+        entity.colorArray = this.append2Float32Array(entity.colorArray, this.colors);
+        entity.normalArray = this.append2Float32Array(entity.normalArray, n);
+
+        entity.numElements += (this.positions.length / 3);
+
+        entity.dataContentChanged = true;
+        entity.dataSizeChanged = true;
+    }
+
+    addStrokeData(entity, addOrphanEdges = false, cosineLimit = 0.8) { // TODO rename to SET
         entity.numStrokeElements = 0;
         entity.drawStrokes = false;
-        
+
         if (!this.edgesDone) this.genEdges();
-        
+
         var strokeList = [];
         for (var i = 0; i < this.edges.length; ++i) if ( (addOrphanEdges && !this.edges[i].done) ||
             (this.edges[i].done && (v3_dot(this.edges[i].normal1, this.edges[i].normal2)) < cosineLimit) ) {
             strokeList.push(this.boundIndices[this.edges[i].index1][0]);
             strokeList.push(this.boundIndices[this.edges[i].index2][0]);
         }
-        
+
         if (strokeList.length > 0) {
             entity.strokeIndexArray = new Uint32Array(strokeList);
             entity.numStrokeElements = strokeList.length;
             entity.drawStrokes = true;
         }
 
-        log((strokeList.length / 2) + " strokes");  
+        log((strokeList.length / 2) + " strokes");
     }
 
-    addCDFromData(entity, addOrphanEdges = true) {
+    addCDFromData(entity, addOrphanEdges = true) { // TODO rename to append
         if (!hasCollisionDetection()) {
             log("Entity dosen't have collision data object");
             return;
@@ -117,7 +160,7 @@ class E3D_mesh {
 
             v3_val_res(v1, this.positions[i + 0], this.positions[i + 1], this.positions[i + 2]);
             v3_val_res(v2, this.positions[i + 3], this.positions[i + 4], this.positions[i + 5]);
-            v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8]);     
+            v3_val_res(v3, this.positions[i + 6], this.positions[i + 7], this.positions[i + 8]);
 
             BODIES[entity.index].pushCD_triangle(v1, v2, v3, false);
         }
@@ -141,9 +184,17 @@ class E3D_mesh {
         }
 
         log(entity.CD_edge + " CD edges");
-
     }
 
+    loadModel_fromEntity(entity) {
+        this.reset();
+
+        this.positions = Array.from(entity.vertexArray);
+        this.colors = Array.from(entity.colorArray);
+        this.normals = Array.from(entity.normalArray);
+
+        this.genBoundingBox();
+    }
 
 
 
@@ -159,7 +210,7 @@ class E3D_mesh {
  * @param {vec3} color the entity color, if === "sweep" per vertex r/g/b sweep applied
  * @param {vec3} scale scale modifier of the entity data
  */
-    loadModel_RAW(dataSourcePath, rawModelData, color = _v3_white, scale = _v3_unit) {  
+    loadModel_RAW(dataSourcePath, rawModelData, color = _v3_white, scale = _v3_unit) {
 
         log("Parsing RAW data (Milkshape3D)");
 
@@ -180,7 +231,7 @@ class E3D_mesh {
                 color[0], color[1], color[2],
                 color[0], color[1], color[2],
                 color[0], color[1], color[2]
-            ];   
+            ];
         }
 
         // remove empty and text lines
@@ -206,7 +257,7 @@ class E3D_mesh {
 
         // apply scale
         if (scale != _v3_unit) {
-            for (var i = 0; i < this.positions.length; i += 3) { // for each vertex                
+            for (var i = 0; i < this.positions.length; i += 3) { // for each vertex
                this.positions[i + 0] = this.positions[i + 0] * scale[0];
                this.positions[i + 1] = this.positions[i + 1] * scale[1];
                this.positions[i + 2] = this.positions[i + 2] * scale[2];
@@ -227,24 +278,24 @@ class E3D_mesh {
             v3_normal_res(newNormal, v1, v2, v3);
 
             this.normals[i + 0] = newNormal[0]; // flat shading
-            this.normals[i + 1] = newNormal[1]; 
-            this.normals[i + 2] = newNormal[2]; 
+            this.normals[i + 1] = newNormal[1];
+            this.normals[i + 2] = newNormal[2];
 
             this.normals[i + 3] = newNormal[0]; // flat shading
-            this.normals[i + 4] = newNormal[1]; 
-            this.normals[i + 5] = newNormal[2]; 
+            this.normals[i + 4] = newNormal[1];
+            this.normals[i + 5] = newNormal[2];
 
             this.normals[i + 6] = newNormal[0]; // flat shading
-            this.normals[i + 7] = newNormal[1]; 
-            this.normals[i + 8] = newNormal[2]; 
+            this.normals[i + 7] = newNormal[1];
+            this.normals[i + 8] = newNormal[2];
         }
 
         log("Loaded " + this.positions.length + " float locations");
         log((this.positions.length / 3) + " vertices");
-        log((this.positions.length / 9) + " triangles"); 
+        log((this.positions.length / 9) + " triangles");
     }
 
-   
+
  /**
  * Load entity from BINARY STL file
  *
@@ -284,7 +335,7 @@ class E3D_mesh {
             // each triangle is
             // 3 points X 3 axis X 32 bit float (48 bytes)
             // 16 bit packed color data (2 bytes)
-            idx = 84 + (i * 50); // base offset + triangle * stride 
+            idx = 84 + (i * 50); // base offset + triangle * stride
             var vIndex = i * 9;
 
             let normal = [0, 0, 0];
@@ -307,7 +358,7 @@ class E3D_mesh {
 
             p2[0] =  mData.getFloat32(idx+36, true) * scale[0];//x
             p2[2] = -mData.getFloat32(idx+40, true) * scale[1];//y
-            p2[1] =  mData.getFloat32(idx+44, true) * scale[2];//z 
+            p2[1] =  mData.getFloat32(idx+44, true) * scale[2];//z
 
             // color data
             if (color === "source") {
@@ -327,7 +378,7 @@ class E3D_mesh {
                 thiscolor[0] = colorSweep[0];
                 thiscolor[1] = colorSweep[1];
                 thiscolor[2] = colorSweep[2];
-                
+
                 thiscolor[3] = colorSweep[3];
                 thiscolor[4] = colorSweep[4];
                 thiscolor[5] = colorSweep[5];
@@ -339,7 +390,7 @@ class E3D_mesh {
                 thiscolor[0] = color[0];
                 thiscolor[1] = color[1];
                 thiscolor[2] = color[2];
-                
+
                 thiscolor[3] = color[0];
                 thiscolor[4] = color[1];
                 thiscolor[5] = color[2];
@@ -394,7 +445,7 @@ class E3D_mesh {
 
         }
 
-        log(NumTriangle + " triangles"); 
+        log(NumTriangle + " triangles");
     }
 
 
@@ -470,11 +521,11 @@ class E3D_mesh {
                     break;
                 }
             }
-            if (unique) { 
+            if (unique) {
                 this.uniques.push(v3_clone(curVert));
                 this.boundIndices.push([idx]);
                 this.indices[idx] = this.uniques.length-1;
-            } 
+            }
         }
 
         this.uniquesDone = true;
@@ -488,10 +539,10 @@ class E3D_mesh {
         this.boundTriangles = [];
 
         //pack
-        var data = [];        
+        var data = [];
         for (var i = 0; i < this.positions.length; i += 3) data.push( [
             this.positions[i + 0],  //0
-            this.positions[i + 1], 
+            this.positions[i + 1],
             this.positions[i + 2],
             0,                          //3 dot(pos,n)
             Math.floor(i/3),            //4 original vertex index
@@ -499,8 +550,8 @@ class E3D_mesh {
             0,                          //6 index to sorted unique
             0                           //7 index to extracted unique
         ]);
-        
-        if (!this.boundingboxDone) this.genBoundingBox();        
+
+        if (!this.boundingboxDone) this.genBoundingBox();
         var n = v3_normalize_new([this.boundingboxMax[0] - this.boundingboxMin[0], this.boundingboxMax[1] - this.boundingboxMin[1], this.boundingboxMax[2] - this.boundingboxMin[2]]);
         if (v3_lengthsquared(n) < _v3_epsilon) n = [0.57735, 0.57735, 0.57735];
 
@@ -566,18 +617,18 @@ class E3D_mesh {
 
         if (!this.uniquesDone) this.genUniqueVertices();
 
-        var avgNorms = [];        
-        
+        var avgNorms = [];
+
         // for all unique, average normals
-        for (var i = 0; i < this.uniques.length; ++i) { 
+        for (var i = 0; i < this.uniques.length; ++i) {
             avgNorms[i] = v3_new();
             for (var j = 0; j < this.boundIndices[i].length; ++j) v3_add_mod(avgNorms[i], this.getNormal(this.boundIndices[i][j]));
             v3_normalize_mod(avgNorms[i]);
         }
 
         // Smoothing
-        for (var i = 0; i < this.boundIndices.length; ++i) 
-            for (var j = 0; j < this.boundIndices[i].length; ++j) 
+        for (var i = 0; i < this.boundIndices.length; ++i)
+            for (var j = 0; j < this.boundIndices[i].length; ++j)
                 if (v3_dot(avgNorms[i], this.getNormal(this.boundIndices[i][j])) >= cosineLimit) this.setNormal(this.boundIndices[i][j], avgNorms[i]);
 
     }
@@ -587,14 +638,14 @@ class E3D_mesh {
         if (!this.uniquesDone) this.genUniqueVertices();
 
         var avgNorms = [];
-        
+
         // for all unique, average normals
         let curNorm = [0, 0, 0];
-        for (var i = 0; i < this.uniques.length; ++i) { 
+        for (var i = 0; i < this.uniques.length; ++i) {
 
             avgNorms[i] = v3_new();
 
-            for (var j = 0; j < this.indices.length; ++j) { 
+            for (var j = 0; j < this.indices.length; ++j) {
                 if (this.indices[j] == i) {
                     v3_val_res(curNorm, this.normals[j * 3], this.normals[(j * 3) + 1], this.normals[(j * 3) + 2] );
                     v3_add_mod(avgNorms[i], curNorm);
@@ -605,7 +656,7 @@ class E3D_mesh {
         }
 
         // Smoothing
-        for (var i = 0; i <  this.uniques.length; ++i) { 
+        for (var i = 0; i <  this.uniques.length; ++i) {
 
             for (var j = 0; j < this.indices.length; ++j) {
                 if (this.indices[j] == i) {
@@ -626,10 +677,10 @@ class E3D_mesh {
     genEdges_OLD() {
         if (!this.uniquesDone) this.genUniqueVertices();
 
-        this.edges = []; // of { done, index1, index2, normal1, normal2 } 
-        
+        this.edges = []; // of { done, index1, index2, normal1, normal2 }
+
         // foreach face
-        for (var i = 0; i < this.indices.length / 3; ++i) { 
+        for (var i = 0; i < this.indices.length / 3; ++i) {
 
             // edge 1
             var unique = true;
@@ -716,7 +767,7 @@ class E3D_mesh {
     genEdges() {
         if (!this.uniquesDone) this.genUniqueVertices();
 
-        this.edges = []; // of { done, index1, index2, normal1, normal2, index31, index32 } 
+        this.edges = []; // of { done, index1, index2, normal1, normal2, index31, index32 }
         // for a closed hull theres is (numFaces * 3 / 2 edges), each face has 3 edges, each edges is shared by 2 faces
 
         // each triangle has its flat normal, and the index of the 3 other adjascent triangles
@@ -726,7 +777,7 @@ class E3D_mesh {
             var nv2 = this.getPosition(i + 1);
             var nv3 = this.getPosition(i + 2);
             var uia =  [ this.indices[i + 0], this.indices[i + 1], this.indices[i + 2] ];
-            triangles.push( { 
+            triangles.push( {
                 ui : uia.slice(),
                 n : v3_normal_new(nv1, nv2, nv3),
                 t1i : findIn2ArrayExcept(this.boundTriangles[uia[0]], this.boundTriangles[uia[1]], Math.floor(i/3)), //neighbour triangles indices
@@ -827,7 +878,7 @@ class E3D_mesh {
                                     index2: summit,
                                     index31: -1,
                                     index32: -1
-                                    } );   
+                                    } );
                 this.edges.push( {  done: false,
                                     normal1: triangles[i].n,
                                     normal2: [0, 0, 0],
@@ -835,7 +886,7 @@ class E3D_mesh {
                                     index2: oIndices[1],
                                     index31: -1,
                                     index32: -1
-                                    } );  
+                                    } );
             } else if (numOrphan == 3) {
                 this.edges.push( {  done: false,
                                     normal1: triangles[i].n,
@@ -844,7 +895,7 @@ class E3D_mesh {
                                     index2: triangles[i].ui[1],
                                     index31: -1,
                                     index32: -1
-                                    } );   
+                                    } );
                 this.edges.push( {  done: false,
                                     normal1: triangles[i].n,
                                     normal2: [0, 0, 0],
@@ -852,7 +903,7 @@ class E3D_mesh {
                                     index2: triangles[i].ui[2],
                                     index31: -1,
                                     index32: -1
-                                    } );  
+                                    } );
                 this.edges.push( {  done: false,
                                     normal1: triangles[i].n,
                                     normal2: [0, 0, 0],
@@ -860,7 +911,7 @@ class E3D_mesh {
                                     index2: triangles[i].ui[0],
                                     index31: -1,
                                     index32: -1
-                                    } );  
+                                    } );
             }
         }
 
@@ -900,9 +951,9 @@ class E3D_mesh {
 
 
 // Vertex, positions, normals, colors
-    pushVertex(p, n, c) {        
-        this.positions.push(p[0]);      this.positions.push(p[1]);      this.positions.push(p[2]);  
-        this.normals.push(n[0]);        this.normals.push(n[1]);        this.normals.push(n[2]);   
+    pushVertex(p, n, c) {
+        this.positions.push(p[0]);      this.positions.push(p[1]);      this.positions.push(p[2]);
+        this.normals.push(n[0]);        this.normals.push(n[1]);        this.normals.push(n[2]);
         this.colors.push(c[0]);         this.colors.push(c[1]);         this.colors.push(c[2]);
     }
 
@@ -981,14 +1032,20 @@ class E3D_mesh {
             p3: this.getVertex(triangle_index * 3 + 2)
         }
     }
-    
-    pushTriangle3p(p1, p2, p3, color = _v3_white, c2 = null, c3 = null) {
-        if (c2 == null) {
+
+    pushTriangle3p(p1, p2, p3, color = _v3_white) {
+        var c1, c2, c3;
+        if (Array.isArray(color[0])) {
+            c1 = color[0];
+            c2 = color[1];
+            c3 = color[2];
+        } else {
+            c1 = color;
             c2 = color;
             c3 = color;
         }
         var n = v3_normal_new(p1, p2, p3);
-        this.pushTriangle(p1, p2, p3, n, n, n, color, c2, c3);
+        this.pushTriangle(p1, p2, p3, n, n, n, c1, c2, c3);
     }
 
 // Quads
@@ -1002,27 +1059,41 @@ class E3D_mesh {
         this.pushVertex(p1, n1, c1);
     }
 
-    pushQuad4p(p1, p2, p3, p4, color = _v3_white, c2 = null, c3 = null, c4 = null) {
-        if (c2 == null) {
+    pushQuad4p(p1, p2, p3, p4, color = _v3_white) {
+        var c1, c2, c3, c4;
+        if (Array.isArray(color[0])) {
+            c1 = color[0];
+            c2 = color[1];
+            c3 = color[2];
+            c4 = color[3];
+        } else {
+            c1 = color;
             c2 = color;
             c3 = color;
             c4 = color;
         }
         var n = v3_normal_new(p1, p2, p3);
-        this.pushQuad(p1, p2, p3, p4, n, n, n, n, color, c2, c3, c4);
+        this.pushQuad(p1, p2, p3, p4, n, n, n, n, c1, c2, c3, c4);
     }
 
-    
-    pushDoubleSidedQuad4p(p1, p2, p3, p4, color = _v3_white, c2 = null, c3 = null, c4 = null) {
-        if (c2 == null) {
+
+    pushDoubleSidedQuad4p(p1, p2, p3, p4, color = _v3_white) {
+        var c1, c2, c3, c4;
+        if (Array.isArray(color[0])) {
+            c1 = color[0];
+            c2 = color[1];
+            c3 = color[2];
+            c4 = color[3];
+        } else {
+            c1 = color;
             c2 = color;
             c3 = color;
             c4 = color;
         }
         var n = v3_normal_new(p1, p2, p3);
-        this.pushQuad(p1, p2, p3, p4, n, n, n, n, color, c2, c3, c4);
+        this.pushQuad(p1, p2, p3, p4, n, n, n, n, c1, c2, c3, c4);
         v3_negate_mod(n);
-        this.pushQuad(p4, p3, p2, p1, n, n, n, n, c4, c3, c2, color);
+        this.pushQuad(p4, p3, p2, p1, n, n, n, n, c4, c3, c2, c1);
     }
 
 
@@ -1041,34 +1112,34 @@ class E3D_mesh {
         m4_transform_res(_mesh_prim_mat, position, rotation);
         width /= 2;
         height /= 2;
-        this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([-width,  height, depthOffset], _mesh_prim_mat), 
+        this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([-width,  height, depthOffset], _mesh_prim_mat),
                         color, c2, c3, c4);
     }
-  
+
     pushDoubleSidedPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, c2 = null, c3 = null, c4 = null) {
         m4_transform_res(_mesh_prim_mat, position, rotation);
         width /= 2;
         height /= 2;
         depthOffset /= 2;
         if (c4 == null) c4 = color;
-        this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([-width,  height, depthOffset], _mesh_prim_mat), 
+        this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([-width,  height, depthOffset], _mesh_prim_mat),
                         color, c2, c3, c4);
-        this.pushQuad4p(v3_applym4_new([-width,  height, -depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([ width,  height, -depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([ width, -height, -depthOffset], _mesh_prim_mat), 
-                        v3_applym4_new([-width, -height, -depthOffset], _mesh_prim_mat), 
+        this.pushQuad4p(v3_applym4_new([-width,  height, -depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([ width,  height, -depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([ width, -height, -depthOffset], _mesh_prim_mat),
+                        v3_applym4_new([-width, -height, -depthOffset], _mesh_prim_mat),
                         c4, c3, c2, color);
     }
 
 
 
-    
+
 // Primitives
     pushBox(position, rotation, width, height, depth, color = _v3_white, cback = null, ctop = null, cbottom = null, cright = null, cleft = null) {
         if (cback == null) {
@@ -1100,7 +1171,33 @@ class E3D_mesh {
         this.pushQuad4p(lbb, ltb, rtb, rbb, cback); /// back
         this.pushQuad4p(lbf, rbf, rtf, ltf, color); /// front
     }
-    
+
+    // box with open bottom
+    pushOpenBox(position, rotation, width, height, depth, color = _v3_white, bFront = true, bBack = true, bTop = true, bBottom = true, bRight = true, bLeft = true) {
+
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+        width /= 2;
+       // height /= 2;
+        depth /= 2;
+        var lbb = v3_applym4_new([-width, 0.0, -depth], _mesh_prim_mat);
+        var rbb = v3_applym4_new([ width, 0.0, -depth], _mesh_prim_mat);
+        var rbf = v3_applym4_new([ width, 0.0,  depth], _mesh_prim_mat);
+        var lbf = v3_applym4_new([-width, 0.0,  depth], _mesh_prim_mat);
+        var ltb = v3_applym4_new([-width,  height, -depth], _mesh_prim_mat);
+        var rtb = v3_applym4_new([ width,  height, -depth], _mesh_prim_mat);
+        var rtf = v3_applym4_new([ width,  height,  depth], _mesh_prim_mat);
+        var ltf = v3_applym4_new([-width,  height,  depth], _mesh_prim_mat);
+
+        if (bBottom) this.pushQuad4p(lbb, rbb, rbf, lbf, color); /// bottom
+        if (bTop) this.pushQuad4p(ltb, ltf, rtf, rtb, color); /// top
+
+        if (bLeft) this.pushQuad4p(lbb, lbf, ltf, ltb, color); /// left
+        if (bRight) this.pushQuad4p(rbf, rbb, rtb, rtf, color); /// right
+
+        if (bBack) this.pushQuad4p(lbb, ltb, rtb, rbb, color); /// back
+        if (bFront) this.pushQuad4p(lbf, rbf, rtf, ltf, color); /// front
+    }
+
     pushPyramid(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true) {
         m4_transform_res(_mesh_prim_mat, position, rotation);
 
@@ -1148,21 +1245,107 @@ class E3D_mesh {
         var pb = [0, 0, 0];
         var ptst = [];
         var ptsb = [];
-        ptsb[0] = [radius, 0, 0]; 
+        ptsb[0] = [radius, 0, 0];
         for (var i = 1; i < nbSides; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides) * i));
         for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
 
         // adjust for position and rotation
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
-        
+
         // faces
         for (var i = 0; i < nbSides; ++i) {
-            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides 
-            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base  
-            if (closedTop) this.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top   
+            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides
+            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base
+            if (closedTop) this.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top
         }
+    }
 
+    pushAsymetricPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        // points
+        var pt = [0, height, 0];
+        var pb = [0, 0, 0];
+        var ptst = [];
+        var ptsb = [];
+        ptsb[0] = [1.0, 0, 0];
+        for (var i = 1; i < nbSides; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides) * i));
+        for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
+
+        v3a_mult_mod(ptst, [Xradius, 1.0, Zradius]);
+        v3a_mult_mod(ptsb, [Xradius, 1.0, Zradius]);
+
+        // adjust for position and rotation
+        v3a_applym4_mod(ptsb, _mesh_prim_mat);
+        v3a_applym4_mod(ptst, _mesh_prim_mat);
+
+        // faces
+        for (var i = 0; i < nbSides; ++i) {
+            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides
+            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base
+            if (closedTop) this.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top
+        }
+    }
+
+    pushHalfPrism(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true, closedBottom = true) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        // points
+        var pt = [0, height, 0];
+        var pb = [0, 0, 0];
+        var ptst = [];
+        var ptsb = [];
+        ptsb[0] = [radius, 0, 0];
+        for (var i = 1; i < nbSides; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides / 2) * i));
+        for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
+
+        // adjust for position and rotation
+        v3a_applym4_mod(ptsb, _mesh_prim_mat);
+        v3a_applym4_mod(ptst, _mesh_prim_mat);
+        v3_add_mod(pt, position);
+        v3_add_mod(pb, position);
+
+        // faces
+        for (var i = 0; i < nbSides; ++i) {
+            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides
+            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base
+            if (closedTop) this.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top
+        }
+        if (closedBottom) {
+            this.pushQuad4p(ptst[0], ptst[ptst.length-1], ptsb[ptsb.length-1], ptsb[0], color);
+        }
+    }
+    pushAsymetricHalfPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true, closedBottom = true) {
+        m4_transform_res(_mesh_prim_mat, position, rotation);
+
+        // points
+        var pt = [0, height, 0];
+        var pb = [0, 0, 0];
+        var ptst = [];
+        var ptsb = [];
+        ptsb[0] = [1.0, 0, 0];
+        for (var i = 1; i < nbSides+1; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (-PIx2 / nbSides / 2) * i));
+        for (var i = 0; i < nbSides+1; ++i) ptst.push(v3_add_new(ptsb[i], pt));
+
+        v3a_mult_mod(ptst, [Xradius, 1.0, Zradius]);
+        v3a_mult_mod(ptsb, [Xradius, 1.0, Zradius]);
+
+        // adjust for position and rotation
+        v3a_applym4_mod(ptsb, _mesh_prim_mat);
+        v3a_applym4_mod(ptst, _mesh_prim_mat);
+        v3_add_mod(pt, position);
+        v3_add_mod(pb, position);
+
+        // faces
+        for (var i = 0; i < nbSides; ++i) {
+            this.pushQuad4p(ptsb[i + 1], ptst[i + 1], ptst[i] , ptsb[i], color); //sides
+            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1)  ], color); //base
+            if (closedTop) this.pushTriangle3p(ptst[(i + 1) ], pt, ptst[i], color); //top
+        }
+        if (closedBottom) {
+          //  this.pushQuad4p(ptst[0], ptst[ptst.length-1], ptsb[ptsb.length-1], ptsb[0], color);
+        }
     }
 
     pushTorus(position, rotation, radius, sectionRadius, nbSections, nbSides, color = _v3_white) {
@@ -1187,10 +1370,10 @@ class E3D_mesh {
         for (var j = 0; j < nbSections; ++j) for (var i = 0; i < nbSides; ++i) {
             var nextI = (i + 1) % nbSides;
             var nextJ = (j + 1) % nbSections;
-            this.pushQuad4p( pts[i     + (j     * nbSides) ], 
-                                pts[i     + (nextJ * nbSides) ], 
-                                pts[nextI + (nextJ * nbSides) ], 
-                                pts[nextI + (j     * nbSides) ], color);   
+            this.pushQuad4p( pts[i     + (j     * nbSides) ],
+                                pts[i     + (nextJ * nbSides) ],
+                                pts[nextI + (nextJ * nbSides) ],
+                                pts[nextI + (j     * nbSides) ], color);
         }
     }
 
@@ -1206,30 +1389,30 @@ class E3D_mesh {
                 pts[1] = [ 0.5,  0.5, -0.5]; //tbr
                 pts[2] = [-0.5,  0.5, -0.5]; //tbl
                 pts[3] = [-0.5,  0.5,  0.5]; //tfl
-        
+
                 pts[4] = [ 0.5, -0.5,  0.5]; //bfr
                 pts[5] = [ 0.5, -0.5, -0.5]; //bbr
                 pts[6] = [-0.5, -0.5, -0.5]; //bbl
                 pts[7] = [-0.5, -0.5,  0.5]; //bfl
-        
-         
+
+
                 faces.push([0, 1, 2]);
                 faces.push([0, 2, 3]);
-        
+
                 faces.push([4, 6, 5]);
                 faces.push([4, 7, 6]);
-        
-        
+
+
                 faces.push([0, 3, 7]);
                 faces.push([0, 7, 4]);
-                 
+
                 faces.push([2, 1, 5]);
                 faces.push([2, 5, 6]);
-        
-        
+
+
                 faces.push([0, 4, 5]);
                 faces.push([0, 5, 1]);
-                
+
                 faces.push([2, 6, 7]);
                 faces.push([2, 7, 3]);
             break;
@@ -1237,8 +1420,8 @@ class E3D_mesh {
             case this.sphereBaseType.TETRA:
                 pts[0] = [ 0.0000,  1.0000,  0.0000];
                 pts[1] = [ 0.9428, -0.3333,  0.0000];
-                pts[2] = [-0.4714, -0.3333,  0.8165];     
-                pts[3] = [-0.4714, -0.3333, -0.8165];  
+                pts[2] = [-0.4714, -0.3333,  0.8165];
+                pts[3] = [-0.4714, -0.3333, -0.8165];
 
                 faces.push([0, 1, 3]);
                 faces.push([0, 3, 2]);
@@ -1249,9 +1432,9 @@ class E3D_mesh {
             case this.sphereBaseType.BITETRA:
                 pts[0] = [0,  1, 0];
                 pts[1] = [0, -1, 0];
-                pts[2] = [1,  0, 0];        
+                pts[2] = [1,  0, 0];
                 for (var i = 1; i < 3; ++i) pts.push(v3_rotateY_new(pts[2], (PIx2 / 3) * i)); // 2 3 4 are the middle points
-        
+
                 faces.push([0, 2, 3]);
                 faces.push([0, 3, 4]);
                 faces.push([0, 4, 2]);
@@ -1267,14 +1450,14 @@ class E3D_mesh {
                 pts[3] = [-1,  0,  0]; // left
                 pts[4] = [ 0,  0,  1]; // front
                 pts[5] = [ 0,  0, -1]; // back
-                         
+
                 faces.push([0, 4, 2]);
-                faces.push([0, 3, 4]);        
+                faces.push([0, 3, 4]);
                 faces.push([0, 5, 3]);
-                faces.push([0, 2, 5]);        
-        
+                faces.push([0, 2, 5]);
+
                 faces.push([1, 2, 4]);
-                faces.push([1, 4, 3]);                 
+                faces.push([1, 4, 3]);
                 faces.push([1, 3, 5]);
                 faces.push([1, 5, 2]);
             break;
@@ -1284,44 +1467,44 @@ class E3D_mesh {
                 //https://wiki.unity3d.com/index.php/ProceduralPrimitives
 
                 var t = 1.618;
-        
+
                 pts.push([-1,  t,  0]);
                 pts.push([ 1,  t,  0]);
                 pts.push([-1, -t,  0]);
                 pts.push([ 1, -t,  0]);
-        
+
                 pts.push([ 0, -1,  t]);
                 pts.push([ 0,  1,  t]);
                 pts.push([ 0, -1, -t]);
                 pts.push([ 0,  1, -t]);
-        
+
                 pts.push([ t,  0, -1]);
                 pts.push([ t,  0,  1]);
                 pts.push([-t,  0, -1]);
                 pts.push([-t,  0,  1]);
-    
+
                 // 5 faces around point 0
                 faces.push([0, 11, 5]);
                 faces.push([0, 5, 1]);
                 faces.push([0, 1, 7]);
                 faces.push([0, 7, 10]);
                 faces.push([0, 10, 11]);
-        
-                // 5 adjacent faces 
+
+                // 5 adjacent faces
                 faces.push([1, 5, 9]);
                 faces.push([5, 11, 4]);
                 faces.push([11, 10, 2]);
                 faces.push([10, 7, 6]);
                 faces.push([7, 1, 8]);
-        
+
                 // 5 faces around point 3
                 faces.push([3, 9, 4]);
                 faces.push([3, 4, 2]);
                 faces.push([3, 2, 6]);
                 faces.push([3, 6, 8]);
                 faces.push([3, 8, 9]);
-    
-                // 5 adjacent faces 
+
+                // 5 adjacent faces
                 faces.push([4, 9, 5]);
                 faces.push([2, 4, 11]);
                 faces.push([6, 2, 10]);
@@ -1332,7 +1515,7 @@ class E3D_mesh {
 
         for (var i = 0; i < pts.length; ++i) v3_normalize_mod(pts[i]);
 
-        // subdivide faces 
+        // subdivide faces
         for (var d = 0; d < depth; ++d) {
             var newFaces = [];
             for (var i = 0; i < faces.length; ++i) {
@@ -1370,8 +1553,8 @@ class E3D_mesh {
 
 
     }
-    
-    
+
+
     pushTube(position, rotation, innerRadius, outerRadius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
         m4_transform_res(_mesh_prim_mat, position, rotation);
 
@@ -1379,10 +1562,10 @@ class E3D_mesh {
         var pt = [0, height, 0];
         var ptst = []; // side top
         var ptsb = []; // side base
-        ptsb[0] = [outerRadius, 0, 0]; 
+        ptsb[0] = [outerRadius, 0, 0];
         var ptbt = []; // bore top
         var ptbb = []; // bore base
-        ptbb[0] = [innerRadius, 0, 0]; 
+        ptbb[0] = [innerRadius, 0, 0];
 
         for (var i = 1; i < nbSides; ++i) {
             ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides) * i));
@@ -1394,17 +1577,17 @@ class E3D_mesh {
         }
 
         // adjust for position and rotation
-        v3a_applym4_mod(ptsb, _mesh_prim_mat);       
+        v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
-        
+
         // faces
         for (var i = 0; i < nbSides; ++i) {
 
-            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //outer sides 
+            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //outer sides
             this.pushQuad4p(ptbb[i], ptbt[i], ptbt[(i + 1) % nbSides] , ptbb[(i + 1) % nbSides], color); //inner sides (bore)
 
-            if (closedBase) this.pushQuad4p(ptsb[i], ptbb[i], ptbb[(i + 1) % nbSides], ptsb[(i + 1) % nbSides], color); //base  
-            if (closedTop) this.pushQuad4p(ptst[i], ptst[(i + 1) % nbSides], ptbt[(i + 1) % nbSides], ptbt[i] , color); //top   
+            if (closedBase) this.pushQuad4p(ptsb[i], ptbb[i], ptbb[(i + 1) % nbSides], ptsb[(i + 1) % nbSides], color); //base
+            if (closedTop) this.pushQuad4p(ptst[i], ptst[(i + 1) % nbSides], ptbt[(i + 1) % nbSides], ptbt[i] , color); //top
 
         }
 
