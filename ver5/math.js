@@ -2093,6 +2093,12 @@ function m4_translate_res(res, a, v){
     res[15] = a[3] * v[0] + a[7] * v[1] + a[11] * v[2] + a[15];
 }
 
+function m4_translateY_mod(a, offset){
+    a[12] = a[4] * offset + a[12];
+    a[13] = a[5] * offset + a[13];
+    a[14] = a[6] * offset + a[14];
+    a[15] = a[7] * offset + a[15];
+}
 
 // Create mew rotation matrix around vector
 function m4_rotation_new(ang, v) {

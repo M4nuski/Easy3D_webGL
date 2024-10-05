@@ -1285,6 +1285,8 @@ class E3D_mesh {
         // adjust for position and rotation
         m4_translateY_mod(_mesh_prim_mat, -height / 2);
         v3a_applym4_mod(pts, _mesh_prim_mat);
+        v3_applym4_mod(ps, _mesh_prim_mat);
+        v3_applym4_mod(pb, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1304,6 +1306,8 @@ class E3D_mesh {
 
         // adjust for position and rotation
         v3a_applym4_mod(pts, _mesh_prim_mat);
+        v3_applym4_mod(ps, _mesh_prim_mat);
+        v3_applym4_mod(pb, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1328,6 +1332,8 @@ class E3D_mesh {
         m4_translateY_mod(_mesh_prim_mat, -height / 2);
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
+        v3_applym4_mod(pt, _mesh_prim_mat);
+        v3_applym4_mod(pb, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1356,6 +1362,8 @@ class E3D_mesh {
         m4_translateY_mod(_mesh_prim_mat, -height / 2);
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
+        v3_applym4_mod(pt, _mesh_prim_mat);
+        v3_applym4_mod(pb, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
