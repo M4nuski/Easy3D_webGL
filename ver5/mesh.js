@@ -45,13 +45,16 @@ class E3D_mesh {
             qty: 5
           };
 
-        // TODO implement
+          // TODO implement in all pushX
         this.originType = {
-            Center: 0,
-            Bottom: 1,
-            Back: 2,
-            Front: 3,
-            Top: 4
+            CENTER: 0,
+            BOTTOM: 1,
+            BACK: 2,
+            FRONT: 3,
+            TOP: 4,
+            BOTTOMBACK: 5,
+            strings: ["`Center`", "Bottom", "Back", "Front", "Top", "BottomBack"],
+            qty: 6
         }
         // TODO colors to be either array of 3/4 float or array of array of 3/4 floats
     }
@@ -1096,63 +1099,116 @@ class E3D_mesh {
         this.pushQuad(p4, p3, p2, p1, n, n, n, n, c4, c3, c2, c1);
     }
 
+    //Default origin for mesh with originType is center of solid
+    adjustOrigin(originType, pos, w, h, d) {
+        switch (originType) {
+            case (this.originType.CENTER): return pos;
+            case (this.originType.BOTTOM): return v3_translateY_new(pos, h/2);
+            case (this.originType.TOP): return v3_translateY_new(pos, -h/2);
+            case (this.originType.BACK): return v3_translateZ_new(pos, d/2);
+            case (this.originType.FRONT): return v3_translateZ_new(pos, -d/2);
+            case (this.originType.BOTTOMBACK): return v3_add_new(pos, [0.0, h/2, d/2]);
+        }
+        return pos;
+    }
 
 
 // Wall
     // Add quad, vertical, facing viewer
-    pushWall(pleft, pright, height, color = _v3_white) {
-        var pleftTop = v3_val_new(pleft[0], pleft[1] + height, pleft[2]);
-        var prightTop = v3_val_new(pright[0], pright[1] + height, pright[2]);
+    pushWall(bottomLeft, bottomRight, height, color = _v3_white) {
+        var pleftTop = v3_val_new(bottomLeft[0], bottomLeft[1] + height, bottomLeft[2]);
+        var prightTop = v3_val_new(bottomRight[0], bottomRight[1] + height, bottomRight[2]);
 
-        this.pushQuad4p(prightTop, pleftTop, pleft, pright, color);
+        this.pushQuad4p(prightTop, pleftTop, bottomLeft, bottomRight, color);
     }
 
 // Plane
-    pushPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, c2 = null, c3 = null, c4 = null) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, origin = this.originType.CENTER) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, 0.0), rotation);
+
+        var c1, c2, c3, c4;
+        if (Array.isArray(color[0])) {
+            c1 = color[0];
+            c2 = color[1];
+            c3 = color[2];
+            c4 = color[3];
+        } else {
+            c1 = color;
+            c2 = color;
+            c3 = color;
+            c4 = color;
+        }
+
         width /= 2;
         height /= 2;
+
         this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat),
                         v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat),
                         v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat),
                         v3_applym4_new([-width,  height, depthOffset], _mesh_prim_mat),
-                        color, c2, c3, c4);
+                        c1, c2, c3, c4);
     }
 
-    pushDoubleSidedPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, c2 = null, c3 = null, c4 = null) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushDoubleSidedPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, origin = this.originType.CENTER) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, 0.0), rotation);
+
+        var c1, c2, c3, c4;
+        if (Array.isArray(color[0])) {
+            c1 = color[0];
+            c2 = color[1];
+            c3 = color[2];
+            c4 = color[3];
+        } else {
+            c1 = color;
+            c2 = color;
+            c3 = color;
+            c4 = color;
+        }
+
         width /= 2;
         height /= 2;
         depthOffset /= 2;
-        if (c4 == null) c4 = color;
+
         this.pushQuad4p(v3_applym4_new([-width, -height, depthOffset], _mesh_prim_mat),
                         v3_applym4_new([ width, -height, depthOffset], _mesh_prim_mat),
                         v3_applym4_new([ width,  height, depthOffset], _mesh_prim_mat),
                         v3_applym4_new([-width,  height, depthOffset], _mesh_prim_mat),
-                        color, c2, c3, c4);
+                        c1, c2, c3, c4);
         this.pushQuad4p(v3_applym4_new([-width,  height, -depthOffset], _mesh_prim_mat),
                         v3_applym4_new([ width,  height, -depthOffset], _mesh_prim_mat),
                         v3_applym4_new([ width, -height, -depthOffset], _mesh_prim_mat),
                         v3_applym4_new([-width, -height, -depthOffset], _mesh_prim_mat),
-                        c4, c3, c2, color);
+                        c4, c3, c2, c1);
     }
 
 
 
 
 // Primitives
-    pushBox(position, rotation, width, height, depth, color = _v3_white, cback = null, ctop = null, cbottom = null, cright = null, cleft = null) {
-        if (cback == null) {
+    pushBox(position, rotation, width, height, depth, color = _v3_white, origin = this.originType.CENTER) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, depth), rotation);
+
+        var cfront, cback, ctop, cbottom, cright, cleft;
+        if (Array.isArray(color[0])) {
+            cfront = color[0];
+            cback = color[1];
+            ctop = color[2];
+            cbottom = color[3];
+            cleft = color[4];
+            cright = color[5];
+        } else {
+            cfront = color;
             cback = color;
             ctop = color;
             cbottom = color;
-            cright = color;
             cleft = color;
+            cright = color;
         }
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+
         width /= 2;
         height /= 2;
         depth /= 2;
+
         var lbb = v3_applym4_new([-width, -height, -depth], _mesh_prim_mat);
         var rbb = v3_applym4_new([ width, -height, -depth], _mesh_prim_mat);
         var rbf = v3_applym4_new([ width, -height,  depth], _mesh_prim_mat);
@@ -1169,37 +1225,55 @@ class E3D_mesh {
         this.pushQuad4p(rbf, rbb, rtb, rtf, cright); /// right
 
         this.pushQuad4p(lbb, ltb, rtb, rbb, cback); /// back
-        this.pushQuad4p(lbf, rbf, rtf, ltf, color); /// front
+        this.pushQuad4p(lbf, rbf, rtf, ltf, cfront); /// front
     }
 
-    // box with open bottom
-    pushOpenBox(position, rotation, width, height, depth, color = _v3_white, bFront = true, bBack = true, bTop = true, bBottom = true, bRight = true, bLeft = true) {
+    // box with open sides
+    pushOpenBox(position, rotation, width, height, depth, color = _v3_white, origin = this.originType.CENTER, bFront = true, bBack = true, bTop = true, bBottom = true, bRight = true, bLeft = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, depth), rotation);
 
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+        var cfront, cback, ctop, cbottom, cright, cleft;
+        if (Array.isArray(color[0])) {
+            cfront = color[0];
+            cback = color[1];
+            ctop = color[2];
+            cbottom = color[3];
+            cleft = color[4];
+            cright = color[5];
+        } else {
+            cfront = color;
+            cback = color;
+            ctop = color;
+            cbottom = color;
+            cleft = color;
+            cright = color;
+        }
+
         width /= 2;
-       // height /= 2;
+        height /= 2;
         depth /= 2;
-        var lbb = v3_applym4_new([-width, 0.0, -depth], _mesh_prim_mat);
-        var rbb = v3_applym4_new([ width, 0.0, -depth], _mesh_prim_mat);
-        var rbf = v3_applym4_new([ width, 0.0,  depth], _mesh_prim_mat);
-        var lbf = v3_applym4_new([-width, 0.0,  depth], _mesh_prim_mat);
+
+        var lbb = v3_applym4_new([-width, -height, -depth], _mesh_prim_mat);
+        var rbb = v3_applym4_new([ width, -height, -depth], _mesh_prim_mat);
+        var rbf = v3_applym4_new([ width, -height,  depth], _mesh_prim_mat);
+        var lbf = v3_applym4_new([-width, -height,  depth], _mesh_prim_mat);
         var ltb = v3_applym4_new([-width,  height, -depth], _mesh_prim_mat);
         var rtb = v3_applym4_new([ width,  height, -depth], _mesh_prim_mat);
         var rtf = v3_applym4_new([ width,  height,  depth], _mesh_prim_mat);
         var ltf = v3_applym4_new([-width,  height,  depth], _mesh_prim_mat);
 
-        if (bBottom) this.pushQuad4p(lbb, rbb, rbf, lbf, color); /// bottom
-        if (bTop) this.pushQuad4p(ltb, ltf, rtf, rtb, color); /// top
+        if (bBottom) this.pushQuad4p(lbb, rbb, rbf, lbf, cbottom); /// bottom
+        if (bTop) this.pushQuad4p(ltb, ltf, rtf, rtb, ctop); /// top
 
-        if (bLeft) this.pushQuad4p(lbb, lbf, ltf, ltb, color); /// left
-        if (bRight) this.pushQuad4p(rbf, rbb, rtb, rtf, color); /// right
+        if (bLeft) this.pushQuad4p(lbb, lbf, ltf, ltb, cleft); /// left
+        if (bRight) this.pushQuad4p(rbf, rbb, rtb, rtf, cright); /// right
 
-        if (bBack) this.pushQuad4p(lbb, ltb, rtb, rbb, color); /// back
-        if (bFront) this.pushQuad4p(lbf, rbf, rtf, ltf, color); /// front
+        if (bBack) this.pushQuad4p(lbb, ltb, rtb, rbb, cback); /// back
+        if (bFront) this.pushQuad4p(lbf, rbf, rtf, ltf, cfront); /// front
     }
 
-    pushPyramid(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushPyramid(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
 
         // points
         var ps = [0, height, 0];
@@ -1209,6 +1283,7 @@ class E3D_mesh {
         for (var i = 1; i < nbSides; ++i) pts.push(v3_rotateY_new(pts[0], (PIx2 / nbSides) * i));
 
         // adjust for position and rotation
+        m4_translateY_mod(_mesh_prim_mat, -height / 2);
         v3a_applym4_mod(pts, _mesh_prim_mat);
 
         // faces
@@ -1217,8 +1292,8 @@ class E3D_mesh {
             if (closedBase) this.pushTriangle3p( pts[i], pb, pts[(i + 1) % nbSides], color); //base
         }
     }
-    pushBiPyramid(position, rotation, radius, height, nbSides, color = _v3_white) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushBiPyramid(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
 
         // points
         var ps = [0,  height / 2, 0];
@@ -1237,8 +1312,8 @@ class E3D_mesh {
         }
     }
 
-    pushPrism(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushPrism(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
 
         // points
         var pt = [0, height, 0];
@@ -1250,6 +1325,7 @@ class E3D_mesh {
         for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
 
         // adjust for position and rotation
+        m4_translateY_mod(_mesh_prim_mat, -height / 2);
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
 
@@ -1261,8 +1337,8 @@ class E3D_mesh {
         }
     }
 
-    pushAsymetricPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushAsymetricPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, Xradius * 2, height, Zradius * 2), rotation);
 
         // points
         var pt = [0, height, 0];
@@ -1277,6 +1353,7 @@ class E3D_mesh {
         v3a_mult_mod(ptsb, [Xradius, 1.0, Zradius]);
 
         // adjust for position and rotation
+        m4_translateY_mod(_mesh_prim_mat, -height / 2);
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
 
@@ -1288,8 +1365,8 @@ class E3D_mesh {
         }
     }
 
-    pushHalfPrism(position, rotation, radius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true, closedBottom = true) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushHalfPrism(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBottom = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
 
         // points
         var pt = [0, height, 0];
@@ -1301,10 +1378,11 @@ class E3D_mesh {
         for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
 
         // adjust for position and rotation
+        m4_translateY_mod(_mesh_prim_mat, -height / 2);
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
-        v3_add_mod(pt, position);
-        v3_add_mod(pb, position);
+        v3_applym4_mod(pt, _mesh_prim_mat);
+        v3_applym4_mod(pb, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1316,17 +1394,17 @@ class E3D_mesh {
             this.pushQuad4p(ptst[0], ptst[ptst.length-1], ptsb[ptsb.length-1], ptsb[0], color);
         }
     }
-    pushAsymetricHalfPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true, closedBottom = true) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushAsymetricHalfPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBack = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, Xradius * 2, height, Zradius * 2), rotation);
 
         // points
-        var pt = [0, height, 0];
-        var pb = [0, 0, 0];
+        var pt = [0,  height/2, 0];
+        var pb = [0, -height/2, 0];
         var ptst = [];
         var ptsb = [];
-        ptsb[0] = [1.0, 0, 0];
+        ptsb[0] = [1.0, -height/2, 0];
         for (var i = 1; i < nbSides+1; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (-PIx2 / nbSides / 2) * i));
-        for (var i = 0; i < nbSides+1; ++i) ptst.push(v3_add_new(ptsb[i], pt));
+        for (var i = 0; i < nbSides+1; ++i) ptst.push(v3_addscaled_new(ptsb[i], pt, 2.0));
 
         v3a_mult_mod(ptst, [Xradius, 1.0, Zradius]);
         v3a_mult_mod(ptsb, [Xradius, 1.0, Zradius]);
@@ -1334,8 +1412,8 @@ class E3D_mesh {
         // adjust for position and rotation
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
-        v3_add_mod(pt, position);
-        v3_add_mod(pb, position);
+        v3_applym4_mod(pt, _mesh_prim_mat);
+        v3_applym4_mod(pb, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
@@ -1343,13 +1421,13 @@ class E3D_mesh {
             if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1)  ], color); //base
             if (closedTop) this.pushTriangle3p(ptst[(i + 1) ], pt, ptst[i], color); //top
         }
-        if (closedBottom) {
-          //  this.pushQuad4p(ptst[0], ptst[ptst.length-1], ptsb[ptsb.length-1], ptsb[0], color);
+        if (closedBack) {
+            this.pushQuad4p(ptst[0], ptst[ptst.length-1], ptsb[ptsb.length-1], ptsb[0], color);
         }
     }
 
-    pushTorus(position, rotation, radius, sectionRadius, nbSections, nbSides, color = _v3_white) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushTorus(position, rotation, radius, sectionRadius, nbSections, nbSides, color = _v3_white, origin = this.originType.CENTER) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, (radius + sectionRadius) * 2 , sectionRadius * 2, (radius + sectionRadius) * 2), rotation);
 
         var pts = [];
         // create section circle around Z
@@ -1377,8 +1455,8 @@ class E3D_mesh {
         }
     }
 
-    pushSphere(position, rotation, radius, depth = 3, color = _v3_white, baseType = this.sphereBaseType.ICO) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushSphere(position, rotation, radius, depth = 3, color = _v3_white, origin = this.originType.CENTER, baseType = this.sphereBaseType.ICO) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, radius * 2, radius * 2), rotation);
 
         var pts = [];
         var faces = [];
@@ -1555,8 +1633,8 @@ class E3D_mesh {
     }
 
 
-    pushTube(position, rotation, innerRadius, outerRadius, height, nbSides, color = _v3_white, closedBase = true, closedTop = true) {
-        m4_transform_res(_mesh_prim_mat, position, rotation);
+    pushTube(position, rotation, innerRadius, outerRadius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, outerRadius * 2, height, outerRadius * 2), rotation);
 
         // points
         var pt = [0, height, 0];

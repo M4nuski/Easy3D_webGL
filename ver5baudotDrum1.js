@@ -287,12 +287,12 @@ function genMesh(){
                 v3_rotateY_mod(hOffset, apr);
                 var poVect = v3_add_new(pVect, hOffset);
                 if (data[b] == 0) {
-                    if (bumpType == "S") meshLoader.pushOpenBox(poVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, bumpHeight, _v3_white, true, false, true, true, true, true);
+                    if (bumpType == "S") meshLoader.pushOpenBox(poVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, bumpHeight, _v3_white, meshLoader.originType.BOTTOMBACK ,true, false, true, true, true, true);
                     if (bumpType == "B") {
                         meshLoader.pushBoxOpen(pVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, 0.1, _v3_white);
                         bunnyLoader.appendTransformedModelData(entity, poVect, [0.0, (apr * (b+1)) + Math.PI, 0.0]);
                     }
-                    if (bumpType == "L") meshLoader.pushAsymetricHalfPrism(poVect, [0.0, apr * (b+1), 0.0], w/2, bumpHeight, sliceHeight, 8, _v3_white, true, true, false);
+                    if (bumpType == "L") meshLoader.pushAsymetricHalfPrism(poVect, [0.0, apr * (b+1), 0.0], w/2, bumpHeight, sliceHeight, 8, _v3_white, meshLoader.originType.BOTTOMBACK, _v3_white, true, true, false);
                 } else {
                     meshLoader.pushPlane(pVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, 0.0, _v3_gray);
                 }

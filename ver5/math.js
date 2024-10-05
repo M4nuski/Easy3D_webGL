@@ -1290,6 +1290,49 @@ function v3_addnoise_res(res, a, range) {
     res[2] = a[2] + randomFloatPlusMinus(range);
 }
 
+// Translations in 1 axis
+function v3_translateX_new(a, offset) {
+    return [ a[0] + offset,
+             a[1],
+             a[2] ];
+}
+function v3_translateX_mod(a, offset) {
+    a[0] = a[0] + offset;
+}
+function v3_translateX_res(res, a, offset) {
+    res[0] = a[0] + offset;
+    res[1] = a[1];
+    res[2] = a[2];
+}
+
+function v3_translateY_new(a, offset) {
+    return [ a[0],
+             a[1] + offset,
+             a[2] ];
+}
+function v3_translateY_mod(a, offset) {
+    a[1] = a[1] + offset;
+}
+function v3_translateY_res(res, a, offset) {
+    res[0] = a[0];
+    res[1] = a[1] + offset;
+    res[2] = a[2];
+}
+
+function v3_translateZ_new(a, offset) {
+    return [ a[0],
+             a[1],
+             a[2] + offset];
+}
+function v3_translateZ_mod(a, offset) {
+    a[2] = a[2] + offset;
+}
+function v3_translateZ_res(res, a, offset) {
+    res[0] = a[0];
+    res[1] = a[1];
+    res[2] = a[2] + offset;
+}
+
 
 // Color sweeps
 const _v3_sweep_RGB = [ _v3_red, _v3_green, _v3_blue ];
