@@ -45,7 +45,6 @@ class E3D_mesh {
             qty: 5
           };
 
-          // TODO implement in all pushX
         this.originType = {
             CENTER: 0,
             BOTTOM: 1,
@@ -53,10 +52,11 @@ class E3D_mesh {
             FRONT: 3,
             TOP: 4,
             BOTTOMBACK: 5,
-            strings: ["`Center`", "Bottom", "Back", "Front", "Top", "BottomBack"],
+            strings: ["Center", "Bottom", "Back", "Front", "Top", "BottomBack"],
             qty: 6
+            // TODO all of the 27 positions ...
         }
-        // TODO colors to be either array of 3/4 float or array of array of 3/4 floats
+
     }
 
     reset() {
@@ -147,7 +147,7 @@ class E3D_mesh {
             entity.drawStrokes = true;
         }
 
-        log((strokeList.length / 2) + " strokes");
+        if (E3D_DEBUG_LOG_MESH_STATS) log((strokeList.length / 2) + " strokes");
     }
 
     addCDFromData(entity, addOrphanEdges = true) { // TODO rename to append
@@ -167,7 +167,7 @@ class E3D_mesh {
 
             BODIES[entity.index].pushCD_triangle(v1, v2, v3, false);
         }
-        log(entity.CD_triangle + " CD triangles");
+        if (E3D_DEBUG_LOG_MESH_STATS) log(entity.CD_triangle + " CD triangles");
 
         if (!this.edgesDone) this.genEdges();
 
@@ -186,7 +186,7 @@ class E3D_mesh {
             }
         }
 
-        log(entity.CD_edge + " CD edges");
+        if (E3D_DEBUG_LOG_MESH_STATS) log(entity.CD_edge + " CD edges");
     }
 
     loadModel_fromEntity(entity) {
@@ -293,9 +293,11 @@ class E3D_mesh {
             this.normals[i + 8] = newNormal[2];
         }
 
-        log("Loaded " + this.positions.length + " float locations");
-        log((this.positions.length / 3) + " vertices");
-        log((this.positions.length / 9) + " triangles");
+        if (E3D_DEBUG_LOG_MESH_STATS) {
+            log("Loaded " + this.positions.length + " float locations");
+            log((this.positions.length / 3) + " vertices");
+            log((this.positions.length / 9) + " triangles");
+        }
     }
 
 
@@ -330,8 +332,8 @@ class E3D_mesh {
         let header = "";
         for (var i = 0; i < 80; ++i) header += String.fromCharCode(mData.getUint8(i));
 
-        log("Header " + header);
-        log("num triangles 0x" + NumTriangle.toString(16) + " dec " + NumTriangle);
+        if (E3D_DEBUG_LOG_MESH_STATS) log("Header " + header);
+        if (E3D_DEBUG_LOG_MESH_STATS) log("num triangles 0x" + NumTriangle.toString(16) + " dec " + NumTriangle);
 
         let idx = 0;
         if (NumTriangle > 0) for (let i = 0 ; i < NumTriangle; ++i) {
@@ -448,7 +450,7 @@ class E3D_mesh {
 
         }
 
-        log(NumTriangle + " triangles");
+        if (E3D_DEBUG_LOG_MESH_STATS) log(NumTriangle + " triangles");
     }
 
 
@@ -532,7 +534,7 @@ class E3D_mesh {
         }
 
         this.uniquesDone = true;
-        log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
+        if (E3D_DEBUG_LOG_MESH_STATS) log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
     }
 
     genUniqueVertices(epsilon = _v3_epsilon) {
@@ -591,7 +593,7 @@ class E3D_mesh {
         }
 
         this.uniquesDone = true;
-        log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
+        if (E3D_DEBUG_LOG_MESH_STATS) log(this.uniques.length + " uniques out of " + (this.positions.length/3) + " raw vertices. ");
     }
 
     removeArealessTriangles(epsilon = _v3_epsilon) {
@@ -613,7 +615,7 @@ class E3D_mesh {
             }
         }
 
-        console.log("Discarded " + count + " triangles out of " + this.positions.length / 9);
+        if (E3D_DEBUG_LOG_MESH_STATS) log("Discarded " + count + " triangles out of " + this.positions.length / 9);
     }
 
     smoothNormals(cosineLimit = 0.8) {
@@ -764,7 +766,7 @@ class E3D_mesh {
         }
 
         this.edgesDone = true;
-        log("edges: " + this.edges.length);
+        if (E3D_DEBUG_LOG_MESH_STATS) log("edges: " + this.edges.length);
     }
 
     genEdges() {
@@ -919,7 +921,7 @@ class E3D_mesh {
         }
 
         this.edgesDone = true;
-        log("edges: " + this.edges.length);
+        if (E3D_DEBUG_LOG_MESH_STATS) log("edges: " + this.edges.length);
     }
 
     genBoundingBox() {
@@ -1373,20 +1375,20 @@ class E3D_mesh {
         }
     }
 
-    pushHalfPrism(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBottom = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
+    pushHalfPrism(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBack = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius), rotation);
 
         // points
         var pt = [0, height, 0];
         var pb = [0, 0, 0];
         var ptst = [];
         var ptsb = [];
-        ptsb[0] = [radius, 0, 0];
-        for (var i = 1; i < nbSides; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides / 2) * i));
-        for (var i = 0; i < nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
+        ptsb[0] = [-radius, 0, 0];
+        for (var i = 1; i <= nbSides; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides / 2) * i));
+        for (var i = 0; i <= nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
 
         // adjust for position and rotation
-        m4_translateY_mod(_mesh_prim_mat, -height / 2);
+        m4_translate_mod(_mesh_prim_mat,[0.0, -height / 2, -radius / 2]);
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
         v3_applym4_mod(pt, _mesh_prim_mat);
@@ -1394,30 +1396,31 @@ class E3D_mesh {
 
         // faces
         for (var i = 0; i < nbSides; ++i) {
-            this.pushQuad4p(ptsb[(i + 1) % nbSides], ptst[(i + 1) % nbSides], ptst[i] , ptsb[i], color); //sides
-            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[(i + 1) % nbSides ], color); //base
-            if (closedTop) this.pushTriangle3p(ptst[(i + 1) % nbSides], pt, ptst[i], color); //top
+            this.pushQuad4p(ptsb[i + 1], ptst[i + 1], ptst[i] , ptsb[i], color); //sides
+            if (closedBase) this.pushTriangle3p(ptsb[i], pb, ptsb[i + 1], color); //base
+            if (closedTop) this.pushTriangle3p(ptst[i + 1], pt, ptst[i], color); //top
         }
-        if (closedBottom) {
+        if (closedBack) {
             this.pushQuad4p(ptst[0], ptst[ptst.length-1], ptsb[ptsb.length-1], ptsb[0], color);
         }
     }
-    pushAsymetricHalfPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBack = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, Xradius * 2, height, Zradius * 2), rotation);
+    pushHalfAsymetricPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBack = true) {
+        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, Xradius * 2, height, Zradius), rotation);
 
         // points
-        var pt = [0,  height/2, 0];
-        var pb = [0, -height/2, 0];
+        var pt = [0, height, 0];
+        var pb = [0, 0.0, 0];
         var ptst = [];
         var ptsb = [];
-        ptsb[0] = [1.0, -height/2, 0];
-        for (var i = 1; i < nbSides+1; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (-PIx2 / nbSides / 2) * i));
-        for (var i = 0; i < nbSides+1; ++i) ptst.push(v3_addscaled_new(ptsb[i], pt, 2.0));
+        ptsb[0] = [-1.0, 0.0, 0];
+        for (var i = 1; i <= nbSides; ++i) ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides / 2) * i));
+        for (var i = 0; i <= nbSides; ++i) ptst.push(v3_add_new(ptsb[i], pt));
 
         v3a_mult_mod(ptst, [Xradius, 1.0, Zradius]);
         v3a_mult_mod(ptsb, [Xradius, 1.0, Zradius]);
 
         // adjust for position and rotation
+        m4_translate_mod(_mesh_prim_mat,[0.0, -height / 2, -Zradius / 2]);
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
         v3_applym4_mod(pt, _mesh_prim_mat);
@@ -1641,17 +1644,22 @@ class E3D_mesh {
     }
 
 
-    pushTube(position, rotation, innerRadius, outerRadius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true) {
+    pushTube(position, rotation, outerRadius, innerRadius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true) {
+        if (outerRadius < innerRadius) {
+            var b = outerRadius;
+            outerRadius = innerRadius;
+            innerRadius = b;
+        }
         m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, outerRadius * 2, height, outerRadius * 2), rotation);
 
         // points
         var pt = [0, height, 0];
         var ptst = []; // side top
         var ptsb = []; // side base
-        ptsb[0] = [outerRadius, 0, 0];
+        ptsb[0] = [outerRadius, -height/2, 0];
         var ptbt = []; // bore top
         var ptbb = []; // bore base
-        ptbb[0] = [innerRadius, 0, 0];
+        ptbb[0] = [innerRadius, -height/2, 0];
 
         for (var i = 1; i < nbSides; ++i) {
             ptsb.push(v3_rotateY_new(ptsb[0], (PIx2 / nbSides) * i));
@@ -1665,6 +1673,8 @@ class E3D_mesh {
         // adjust for position and rotation
         v3a_applym4_mod(ptsb, _mesh_prim_mat);
         v3a_applym4_mod(ptst, _mesh_prim_mat);
+        v3a_applym4_mod(ptbb, _mesh_prim_mat);
+        v3a_applym4_mod(ptbt, _mesh_prim_mat);
 
         // faces
         for (var i = 0; i < nbSides; ++i) {

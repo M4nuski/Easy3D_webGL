@@ -1,6 +1,6 @@
 // Easy3D_WebGL
 // ASCII to Baudot drum mesh generator 1
-// Emmanuel Charette 2023
+// Emmanuel Charette 2024
 
 "use strict"
 
@@ -12,7 +12,6 @@ log("E3D_userInit");
 E3D_InitAll();
 SCENE.strokeColor = _v3_black;
 
-
 // Create the entities
 var groundEntity = new E3D_entity_wireframe_canvas("entity0");
 
@@ -23,19 +22,12 @@ groundEntity.addPlane([0.0, 0.01, 0.0], _v3_null, 12*25.4, 12*25.4, _v3_red, 12)
 groundEntity.isVisible = true;
 E3D_addEntity(groundEntity);
 
-// Profile wireframe
-// var profileEntity = new E3D_entity_wireframe_canvas("entity1");
-// E3D_addEntity(profileEntity);
-// profileEntity.isVisible = true;
-
-// tweak engine params
+// Tweak engine params
 E3D_NEAR = 1.0;
 E3D_FAR = 1024.0*4;
 CAMERA = new E3D_camera_model("camera0m");
 E3D_onResize();
 CONTEXT.disable(CONTEXT.CULL_FACE);
-
-//CONTEXT.disable(CONTEXT.CULL_FACE);
 
 // Move the camera back and up a little, add some nod
 CAMERA.moveBy(0, 100, 0, 0.1, 0.0, 0.0);
@@ -45,15 +37,17 @@ SCENE.lightA_color = _v3_darkgray;
 //INPUTS._rotSpeed *= 0.75;
 
 // mesh creating utility
-var meshLoader = new E3D_mesh();
 var bunnyLoader = new E3D_mesh();
 load_bunny();
+
+var meshLoader = new E3D_mesh();
 var entity = new E3D_entity("entity1", true); // dynamic entity, GPU data will be updated when changed
 // Setup entity
 entity.isVisible = true;
-entity.position = [0.0, 100.0, -20.0];
+//entity.position = [0.0, 100.0, -20.0];
 //entity.rotation = [Math.PI / 2.0, 0.0, 0.0];
 E3D_addEntity(entity);
+
 var genInhibit = false;
 
 // Mesh parameters
@@ -97,7 +91,7 @@ const _SPACE = [0, 0, 1, 0, 0];
 const _BLANK = [0, 0, 0, 0, 0];
 
 const _NA_PRE = _FIGURES;
-const _NA_CHR = _B; // print "?" on not implemented characters
+const _NA_CHR = _B; // default print "?" on not implemented characters
 
 const ASCII_BAUDOT_ITA2STD = { // TODO ASCII_BAUDOT_ITA2USTTY
     0: [_BLANK , _BLANK ], // NULL
@@ -250,8 +244,6 @@ var syncType = "S";
 
 var skipMode = "S";
 
-//profileEntity.clear();
-
 function genMesh(){
     if (genInhibit) return;
 
@@ -324,9 +316,6 @@ function load_bunny() {
 }
 
 var paramDiv1 = document.getElementById("paramDiv1");
-var paramDiv2 = document.getElementById("paramDiv2");
-var paramDiv3 = document.getElementById("paramDiv3");
-
 E3D_addHeader(paramDiv1, "Parameters");
 E3D_addInput_range(paramDiv1, "dia", "Ext Diameter", 2, 120, 50, paramDiv1CB, 0.5);
 E3D_addInput_range(paramDiv1, "hole", "Int Diameter", 1, 100, 12.6, paramDiv1CB, 0.1);
@@ -355,6 +344,7 @@ function paramDiv1CB(event, type, id, value, group) {
     genMesh();
 }
 
+var paramDiv2 = document.getElementById("paramDiv2");
 E3D_addHeader(paramDiv2, "Sync ring");
 E3D_addInput_checkbox(paramDiv2, "sync", "Sync Ring", true, paramDiv2CB);
 E3D_addInput_range(paramDiv2, "syncPos", "Sync Position", 0, 128, 128, paramDiv2CB, 1);
@@ -380,6 +370,7 @@ function paramDiv2CB(event, type, id, value, group) {
     genMesh();
 }
 
+var paramDiv3 = document.getElementById("paramDiv3");
 E3D_addHeader(paramDiv3, "Code");
 E3D_addInput_select(paramDiv3, "codeType", "Type", ["ITA2", "USTTY"], null, paramDiv3CB);
 E3D_addInput_radio(paramDiv3, "noEmpty", "Skip Unimplemented", "empty", true, paramDiv3CB);

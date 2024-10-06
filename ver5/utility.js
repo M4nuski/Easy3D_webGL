@@ -339,11 +339,11 @@ E3D_addInput_range(paramDiv1, "bh", "Bump Height", 0, 10, 4, paramDiv1CB, 0.05);
 E3D_addInput_select(paramDiv1, "bt", "Bump Type", ["Square", "Lobe", "Pyra", "Bunny"], ["S", "L", "P", "B"], paramDiv1CB);
 
 function paramDiv1CB(event, type, id, value, group) {
-//event is the raw JS event
-//type is the input type (checkbox, range, radio, select etc)
-//id is the parameter ID
-//value is the parameter value
-//group is the group ID for radio input
+    //event is the raw JS event
+    //type is the input type (checkbox, range, radio, select etc)
+    //id is the parameter ID
+    //value is the parameter value
+    //group is the group ID for radio input
 
     switch (id) {
         case "dia":

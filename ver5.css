@@ -8,7 +8,7 @@ body {
 canvas {
     width: 100%;
     height: 100%;
-}        
+}
 input {
     font-size: initial;
 }
@@ -22,7 +22,7 @@ input {
 }
 
 /*
-    Flex area to have either header or footer or both with space in middle filled with canvas  
+    Flex area to have either header or footer or both with space in middle filled with canvas
 */
 .E3D_flexVertical {
     display: flex;
@@ -54,12 +54,12 @@ input {
 
 .E3D_fakeButton {
     cursor: pointer;
-    background-color: #d0d0d0;   
+    background-color: #d0d0d0;
     padding-right: 0.2em;
-    padding-left: 0.2em;   
-    user-select: none;   
-    box-shadow: 0.1em 0.1em black;      
-    border-radius: 0.2em; 
+    padding-left: 0.2em;
+    user-select: none;
+    box-shadow: 0.1em 0.1em black;
+    border-radius: 0.2em;
     margin: 0.1em 0.2em 0.2em 0.2em;
 }
 .E3D_fakeButton:hover {
@@ -73,11 +73,40 @@ input {
 
 .E3D_label {
     font-family: 'Courier New', Courier, monospace;
-    background-color: #F0F0F0;   
+    background-color: #F0F0F0;
     padding-right: 0.2em;
-    padding-left: 0.2em;   
-    box-shadow: 0.1em 0.1em black;      
-    border-radius: 0.2em; 
+    padding-left: 0.2em;
+    box-shadow: 0.1em 0.1em black;
+    border-radius: 0.2em;
     margin: 0.1em 0.2em 0.2em 0.2em;
     white-space: pre-wrap;
+}
+
+.E3D_input_caption {
+    text-align: left;
+}
+.E3D_input_value {
+    text-align: right;
+}
+.E3D_input_separator {
+    border-bottom: 1px solid black;
+    height: 1px;
+    margin-top: 0.5em;
+}
+.E3D_input_header {
+    font-weight: bold;
+    border-bottom: 1px solid black;
+    margin-top: 1px;
+}
+.E3D_paramContainer {
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+    border-right: 1px solid black;
+    display: inline-block;
+    overflow: hidden;
+}
+.E3D_paramDiv {
+    display: grid;
+    grid-template-columns: 200px 60px auto;
+    grid-auto-rows: 1.2em;
 }

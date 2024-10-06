@@ -14,24 +14,17 @@
     </head>
 
     <body>
-        <div class="E3D_fullscreenContainer E3D_flexVertical"> 
+        <div class="E3D_fullscreenContainer E3D_flexVertical">
 
-            <div class="E3D_flexVerticalContentFit E3D_margin">
-                Easy3D ver 5 Primitive generation (random parameters)
-                <span id="btn_s1" class="E3D_fakeButton">Plane</span>
-                <span id="btn_s2" class="E3D_fakeButton">Box</span>
-                <span id="btn_s3" class="E3D_fakeButton">Pyramid</span>
-                <span id="btn_s4" class="E3D_fakeButton">Prism</span>
-                <span id="btn_s5" class="E3D_fakeButton">Sphere</span>
-                <span id="btn_s6" class="E3D_fakeButton">Torus</span>
-                <span>Flat/Smooth</span><input type="checkbox" id="chk_smooth" />
-                <span>White/Colors</span><input type="checkbox" id="chk_colored" />
-                <span>Outline</span><input type="checkbox" id="chk_outline" /><br />
-                <div id="params"></div>
+            <div class="E3D_flexVerticalContentFit E3D_margin" style="display:flex; width: fit-content;">
+                <div class="E3D_paramContainer"><div id="paramDiv1" class="E3D_paramDiv"></div></div>
+                <div class="E3D_paramContainer"><div id="paramDiv2" class="E3D_paramDiv"></div></div>
+                <div class="E3D_paramContainer"><div id="paramDiv3" class="E3D_paramDiv"></div></div>
+                <div class="E3D_paramContainer"><div id="paramDiv4" class="E3D_paramDiv"></div></div>
+                <div>Easy3D ver 5 Primitive generation</br > (random parameters)</div>
             </div>
+            <div id="E3D_mainDiv" class="E3D_flexContent"></div>
 
-            <div id="E3D_mainDiv" class="E3D_flexContent"></div>      
-                  
         </div>
     </body>
 

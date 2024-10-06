@@ -80,6 +80,7 @@ var E3D_DEBUG_LOG_TIMESTAMPS = false;
 var E3D_DEBUG_LOG_INPUT_STATES = false; // log mouse/touch enter/leave/click etc
 var E3D_DEBUG_LOG_INPUT_MOVES = false; // log mouse/touch moves
 var E3D_DEBUG_LOG_INPUT_MODE = false; // log fullscreen, mouse lock
+var E3D_DEBUG_LOG_MESH_STATS = false; // log mesh creating and modification stats
 
 
 // Stats
