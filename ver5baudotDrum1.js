@@ -30,7 +30,7 @@ E3D_onResize();
 CONTEXT.disable(CONTEXT.CULL_FACE);
 
 // Move the camera back and up a little, add some nod
-CAMERA.moveBy(0, 100, 0, 0.1, 0.0, 0.0);
+CAMERA.moveBy(0, 192, 384, 0.0, 0, 0.0);
 SCENE.setClearColor([ 0.85,  0.85,  0.85]);
 SCENE.lightA_color = _v3_darkgray;
 //INPUTS._posSpeed *= 0.025;
@@ -45,7 +45,7 @@ var entity = new E3D_entity("entity1", true); // dynamic entity, GPU data will b
 // Setup entity
 entity.isVisible = true;
 //entity.position = [0.0, 100.0, -20.0];
-//entity.rotation = [Math.PI / 2.0, 0.0, 0.0];
+entity.rotation = [0.0, PIdiv2, 0.0];
 E3D_addEntity(entity);
 
 var genInhibit = false;
@@ -246,17 +246,16 @@ var skipMode = "S";
 
 function genMesh(){
     if (genInhibit) return;
-
     meshLoader.reset();
-
+    //document.activeElement.blur();
     // mode pre + char
     // 1 start bit, 5 pre bit, 2 stop bits, 1 start bit, 5 char bits, 2 stop bits
     // 16 bits per revolutions
     var bpr = 16;
     var apr = 2 * Math.PI / bpr;
     var pVect = v3_val_new(0.0, 0.0, majorDia / 2.0);
-    var w = Math.PI * majorDia / bpr;
-    var hOffset = v3_val_new(0.0, 0.0, bumpHeight / 2.0);
+    var npVect = v3_rotateY_new(pVect, apr);
+    var w = v3_distance(pVect, npVect)*1.02;
 
     for (var s = 0; s < 128; ++s) {
         var empty = (ASCII_BAUDOT_ITA2STD[s][0] == _NA_PRE) && (ASCII_BAUDOT_ITA2STD[s][1] == _NA_CHR);
@@ -276,17 +275,16 @@ function genMesh(){
 
             for (var b = 0; b < bpr; ++b) {
                 v3_rotateY_mod(pVect, apr);
-                v3_rotateY_mod(hOffset, apr);
-                var poVect = v3_add_new(pVect, hOffset);
                 if (data[b] == 0) {
-                    if (bumpType == "S") meshLoader.pushOpenBox(poVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, bumpHeight, _v3_white, meshLoader.originType.BOTTOMBACK ,true, false, true, true, true, true);
+                    if (bumpType == "S") meshLoader.pushOpenBox(pVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, bumpHeight, _v3_white, meshLoader.originType.BOTTOMBACK ,true, false, true, true, true, true);
                     if (bumpType == "B") {
-                        meshLoader.pushBoxOpen(pVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, 0.1, _v3_white);
-                        bunnyLoader.appendTransformedModelData(entity, poVect, [0.0, (apr * (b+1)) + Math.PI, 0.0]);
+                        meshLoader.pushOpenBox(pVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, bumpHeight, _v3_white, meshLoader.originType.BOTTOMBACK ,true, false, true, true, true, true);
+                        bunnyLoader.appendTransformedModelData(entity, pVect, [0.0, (apr * (b+1)) + Math.PI, 0.0]);
                     }
-                    if (bumpType == "L") meshLoader.pushAsymetricHalfPrism(poVect, [0.0, apr * (b+1), 0.0], w/2, bumpHeight, sliceHeight, 8, _v3_white, meshLoader.originType.BOTTOMBACK, _v3_white, true, true, false);
+                    if (bumpType == "L") meshLoader.pushHalfAsymetricPrism(pVect, [0.0, apr * (b+1), 0.0], w/2, bumpHeight, sliceHeight, 8, _v3_white, meshLoader.originType.BOTTOMBACK, _v3_white, true, true, false);
+                    if (bumpType == "P") meshLoader.pushHalfAsymetricPrism(pVect, [0.0, apr * (b+1), 0.0], w/2, bumpHeight, sliceHeight, 2, _v3_white, meshLoader.originType.BOTTOMBACK, _v3_white, true, true, false);
                 } else {
-                    meshLoader.pushPlane(pVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, 0.0, _v3_gray);
+                    meshLoader.pushPlane(pVect, [0.0, apr * (b+1), 0.0], w, sliceHeight, 0, _v3_gray, meshLoader.originType.BOTTOMBACK);
                 }
 
             } // each bit
@@ -400,7 +398,7 @@ function paramDiv3CB(event, type, id, value, group) {
 
 var bottomBar = document.getElementById("bottomBar");
 CB_tick = function() {
-    var t = meshLoader.positions.length/9 + " poly, ";
+    var t = entity.numElements/3 + " poly, ";
     bottomBar.innerText = t;
 }
 
@@ -451,4 +449,5 @@ function cleanMesh() {
 }
 
 E3D_onResize(); // UI addition changes the viewport size
+entity.clear();
 genMesh();

@@ -1102,14 +1102,14 @@ class E3D_mesh {
     }
 
     //Default origin for mesh with originType is center of solid
-    adjustOrigin(originType, pos, w, h, d) {
+    getOriginOffset(originType, w, h, d) {
         switch (originType) {
-            case (this.originType.CENTER): return pos;
-            case (this.originType.BOTTOM): return v3_translateY_new(pos, h/2);
-            case (this.originType.TOP): return v3_translateY_new(pos, -h/2);
-            case (this.originType.BACK): return v3_translateZ_new(pos, d/2);
-            case (this.originType.FRONT): return v3_translateZ_new(pos, -d/2);
-            case (this.originType.BOTTOMBACK): return v3_add_new(pos, [0.0, h/2, d/2]);
+            case (this.originType.CENTER): return [0, 0, 0];
+            case (this.originType.BOTTOM): return [0, h/2, 0];
+            case (this.originType.TOP): return [0, -h/2, 0];
+            case (this.originType.BACK): return [0, 0, d/2];
+            case (this.originType.FRONT): return [0, 0, -d/2];
+            case (this.originType.BOTTOMBACK): return [0.0, h/2, d/2];
         }
         return pos;
     }
@@ -1126,7 +1126,7 @@ class E3D_mesh {
 
 // Plane
     pushPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, origin = this.originType.CENTER) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, 0.0), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, width, height, 0));
 
         var c1, c2, c3, c4;
         if (Array.isArray(color[0])) {
@@ -1152,7 +1152,7 @@ class E3D_mesh {
     }
 
     pushDoubleSidedPlane(position, rotation, width, height, depthOffset = 0.0, color = _v3_white, origin = this.originType.CENTER) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, 0.0), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, width, height, 0));
 
         var c1, c2, c3, c4;
         if (Array.isArray(color[0])) {
@@ -1188,7 +1188,7 @@ class E3D_mesh {
 
 // Primitives
     pushBox(position, rotation, width, height, depth, color = _v3_white, origin = this.originType.CENTER) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, depth), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, width, height, depth));
 
         var cfront, cback, ctop, cbottom, cright, cleft;
         if (Array.isArray(color[0])) {
@@ -1232,7 +1232,7 @@ class E3D_mesh {
 
     // box with open sides
     pushOpenBox(position, rotation, width, height, depth, color = _v3_white, origin = this.originType.CENTER, bFront = true, bBack = true, bTop = true, bBottom = true, bRight = true, bLeft = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, width, height, depth), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, width, height, depth));
 
         var cfront, cback, ctop, cbottom, cright, cleft;
         if (Array.isArray(color[0])) {
@@ -1275,7 +1275,7 @@ class E3D_mesh {
     }
 
     pushPyramid(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, radius * 2, height, radius * 2));
 
         // points
         var ps = [0, height, 0];
@@ -1297,7 +1297,7 @@ class E3D_mesh {
         }
     }
     pushBiPyramid(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, radius * 2, height, radius * 2));
 
         // points
         var ps = [0,  height / 2, 0];
@@ -1319,7 +1319,7 @@ class E3D_mesh {
     }
 
     pushPrism(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius * 2), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, radius * 2, height, radius * 2));
 
         // points
         var pt = [0, height, 0];
@@ -1346,7 +1346,7 @@ class E3D_mesh {
     }
 
     pushAsymetricPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, Xradius * 2, height, Zradius * 2), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, Xradius * 2, height, Zradius * 2));
 
         // points
         var pt = [0, height, 0];
@@ -1376,7 +1376,7 @@ class E3D_mesh {
     }
 
     pushHalfPrism(position, rotation, radius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBack = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, height, radius), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, radius * 2, height, radius));
 
         // points
         var pt = [0, height, 0];
@@ -1405,7 +1405,7 @@ class E3D_mesh {
         }
     }
     pushHalfAsymetricPrism(position, rotation, Xradius, Zradius, height, nbSides, color = _v3_white, origin = this.originType.CENTER, closedBase = true, closedTop = true, closedBack = true) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, Xradius * 2, height, Zradius), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, Xradius * 2, height, Zradius));
 
         // points
         var pt = [0, height, 0];
@@ -1438,7 +1438,7 @@ class E3D_mesh {
     }
 
     pushTorus(position, rotation, radius, sectionRadius, nbSections, nbSides, color = _v3_white, origin = this.originType.CENTER) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, (radius + sectionRadius) * 2 , sectionRadius * 2, (radius + sectionRadius) * 2), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, (radius + sectionRadius) * 2 , sectionRadius * 2, (radius + sectionRadius) * 2));
 
         var pts = [];
         // create section circle around Z
@@ -1467,7 +1467,7 @@ class E3D_mesh {
     }
 
     pushSphere(position, rotation, radius, depth = 3, color = _v3_white, origin = this.originType.CENTER, baseType = this.sphereBaseType.ICO) {
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, radius * 2, radius * 2, radius * 2), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, radius * 2, radius * 2, radius * 2));
 
         var pts = [];
         var faces = [];
@@ -1650,7 +1650,7 @@ class E3D_mesh {
             outerRadius = innerRadius;
             innerRadius = b;
         }
-        m4_transform_res(_mesh_prim_mat, this.adjustOrigin(origin, position, outerRadius * 2, height, outerRadius * 2), rotation);
+        m4_transformWithOffset_res(_mesh_prim_mat, position, rotation, this.getOriginOffset(origin, outerRadius * 2, height, outerRadius * 2));
 
         // points
         var pt = [0, height, 0];

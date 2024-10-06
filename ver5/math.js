@@ -2960,6 +2960,15 @@ function m4_transform_res(res, position, rotation){
     res[13] = position[1];
     res[14] = position[2];
 }
+function m4_transformWithOffset_res(res, position, rotation, offset){
+    m4_rotationZ_res(res, rotation[2]);
+    m4_rotateX_mod(res, rotation[0]);
+    m4_rotateY_mod(res, rotation[1]);
+    var np = v3_applym4_new(offset, res);
+    res[12] = position[0] + np[0];
+    res[13] = position[1] + np[1];
+    res[14] = position[2] + np[2];
+}
 
 function m4_transform_mod(m, position, rotation){
     m4_rotateZ_mod(m, rotation[2]);
