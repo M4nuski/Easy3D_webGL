@@ -42,96 +42,58 @@ entity.isVisible = true;
 entity.position = [0, 24, 0];
 E3D_addEntity(entity);
 
-
-// Parameters
-
-var type = "plane";
-var w = 24;
-var h = 24;
-var d = 24;
-var r = 24;
-var r2 = 12;
-var si = 8;
-var se = 8;
-var root = 0;
-var depth = 3;
-var origin = 0;
-var smooth = false;
-var color = false;
-var outline = false;
-
-genMesh();
-
+const dataDiv = getElem("dataDiv");
 
 // Parameters inputs
-var paramDiv1 = document.getElementById("paramDiv1");
-var paramDiv2 = document.getElementById("paramDiv2");
-var paramDiv3 = document.getElementById("paramDiv3");
-var paramDiv4 = document.getElementById("paramDiv4");
+var paramDiv1 = getElem("paramDiv1");
+var paramDiv2 = getElem("paramDiv2");
+var paramDiv3 = getElem("paramDiv3");
+var paramDiv4 = getElem("paramDiv4");
 
 E3D_addHeader(paramDiv1, "Type");
-E3D_addInput_radio(paramDiv1, "plane", "Plane", "type", true, paramDiv1CB);
-E3D_addInput_radio(paramDiv1, "dsplane", "Double Sided Plane", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv1, "box", "Box", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv1, "obox", "Open Box", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv1, "pyramid", "Pyramid", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv1, "bpyramid", "Bi Pyramid", "type", false, paramDiv1CB);
+E3D_addInput_radio(paramDiv1, "plane", "Plane", "type", true, paramDivCallback);
+E3D_addInput_radio(paramDiv1, "dsplane", "Double Sided Plane", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv1, "box", "Box", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv1, "obox", "Open Box", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv1, "pyramid", "Pyramid", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv1, "bpyramid", "Bi Pyramid", "type", false, paramDivCallback);
 
-E3D_addInput_radio(paramDiv2, "prism", "Prism", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv2, "aprism", "Asymetric Prism", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv2, "hprism", "Half Prism", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv2, "haprism", "Half Asymetric Prism", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv2, "torus", "Torus", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv2, "sphere", "Sphere", "type", false, paramDiv1CB);
-E3D_addInput_radio(paramDiv2, "tube", "Tube", "type", false, paramDiv1CB);
-function paramDiv1CB(event, t, id, v, g) {
-    type = id;
-    genMesh();
-}
+E3D_addInput_radio(paramDiv2, "prism", "Prism", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv2, "aprism", "Asymetric Prism", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv2, "hprism", "Half Prism", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv2, "haprism", "Half Asymetric Prism", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv2, "torus", "Torus", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv2, "sphere", "Sphere", "type", false, paramDivCallback);
+E3D_addInput_radio(paramDiv2, "tube", "Tube", "type", false, paramDivCallback);
 
 E3D_addHeader(paramDiv3, "Parameters");
-E3D_addInput_range(paramDiv3, "w", "Width", 2, 120, w, paramDiv3CB, 1.0);
-E3D_addInput_range(paramDiv3, "h", "Height", 2, 120, h, paramDiv3CB, 1.0);
-E3D_addInput_range(paramDiv3, "d", "Depth", 2, 120, d, paramDiv3CB, 1.0);
+E3D_addInput_range(paramDiv3, "w", "Width", 2, 120, 24, paramDivCallback, 1.0);
+E3D_addInput_range(paramDiv3, "h", "Height", 2, 120, 24, paramDivCallback, 1.0);
+E3D_addInput_range(paramDiv3, "d", "Depth", 2, 120, 24, paramDivCallback, 1.0);
 
-E3D_addInput_range(paramDiv3, "r", "Radius", 2, 60, r, paramDiv3CB, 1.0);
-E3D_addInput_range(paramDiv3, "r2", "Radius2 (sect, asym, inner)", 2, 60, r2, paramDiv3CB, 1.0);
-E3D_addInput_range(paramDiv3, "si", "Sides", 2, 128, si, paramDiv3CB, 1.0);
-E3D_addInput_range(paramDiv3, "se", "Sections", 2, 128, se, paramDiv3CB, 1.0);
+E3D_addInput_range(paramDiv3, "r", "Radius", 2, 60, 24, paramDivCallback, 1.0);
+E3D_addInput_range(paramDiv3, "r2", "Radius2 (sect, asym, inner)", 2, 60, 12, paramDivCallback, 1.0);
+E3D_addInput_range(paramDiv3, "si", "Sides", 2, 128, 8, paramDivCallback, 1.0);
+E3D_addInput_range(paramDiv3, "se", "Sections", 2, 128, 8, paramDivCallback, 1.0);
 
 E3D_addHeader(paramDiv4, "Options");
 var a = []; forN(meshLoader.sphereBaseType.qty, (i) => a.push(i));
-E3D_addInput_select(paramDiv4, "root", "Sphere Base Type", meshLoader.sphereBaseType.strings, a, paramDiv3CB);
-E3D_addInput_range(paramDiv4, "depth", "Sphere Subdiv Depth", 0, 16, depth, paramDiv3CB, 1);
+E3D_addInput_select(paramDiv4, "root", "Sphere Base Type", meshLoader.sphereBaseType.strings, a, paramDivCallback);
+E3D_addInput_range(paramDiv4, "depth", "Sphere Subdiv Depth", 0, 7, 3, paramDivCallback, 1);
 a = []; forN(meshLoader.originType.qty, (i) => a.push(i));
-E3D_addInput_select(paramDiv4, "origin", "Mesh Origin", meshLoader.originType.strings, a, paramDiv3CB);
-E3D_addInput_checkbox(paramDiv4, "smooth", "Smooth Shading", smooth, paramDiv3CB);
-E3D_addInput_checkbox(paramDiv4, "color", "Colored", color, paramDiv3CB);
-E3D_addInput_checkbox(paramDiv4, "outline", "Edge Outline", outline, paramDiv3CB);
-function paramDiv3CB(event, t, id, value, g) {
-    switch (id) {
-        case "w":
-            w = Number(value);
-        break;
-        case "h":
-            h = Number(value);
-        break;
-        case "d":
-            d = Number(value);
-        break;
-        case "r":
-            r = Number(value);
-        break;
-        case "r2":
-            r2 = Number(value);
-        break;
-        case "si":
-            si = Number(value);
-        break;
-        case "se":
-            se = Number(value);
-        break;
+E3D_addInput_select(paramDiv4, "origin", "Mesh Origin", meshLoader.originType.strings, a, paramDivCallback);
+E3D_addInput_checkbox(paramDiv4, "smooth", "Smooth Normals", false, paramDivCallback);
+E3D_addInput_checkbox(paramDiv4, "color", "Colored", false, paramDivCallback);
+E3D_addInput_checkbox(paramDiv4, "outline", "Edge Outline", false, paramDivCallback);
 
+function paramDivCallback(event, type, name, value, group) {
+    genMesh();
+
+    //console.log("Type: " + type + " Name: " + name + " Value: " + value + " Group: " + group);
+
+/*
+    // Example when not using the E3D_UIParam("parameter name") function :
+    switch (id) {
         case "root":
             root = Number(value);
         break;
@@ -141,92 +103,63 @@ function paramDiv3CB(event, t, id, value, g) {
         case "origin":
             origin = Number(value);
         break;
-        case "smooth":
-            smooth = ((value == true) || (value == "true"));
-        break;
-        case "color":
-            color = ((value == true) || (value == "true"));
-        break;
-        case "outline":
-            outline = ((value == true) || (value == "true"));
-        break;
-     } // TODO parameters object, first letter is (i, f, s, b) for int, float, string, bool auto convertion
-
-
-
-    genMesh();
+     }
+*/
 }
 
-E3D_onResize(); // UI addition changes the viewport size
-
 function genMesh() {
-    /*
-    var type = "plane";
-    var w = 24;
-    var h = 24;
-    var d = 24;
-    var r = 24;
-    var r2 = 12;
-    var si = 8;
-    var se = 8;
-    var root = 0;
-    var origin = 0;
-    var smooth = false;
-    var color = false;
-    var outline = false;*/
+    genDataText();
+
     entity.clear();
     meshLoader.reset();
 
-    switch (type) {
+    switch (E3D_UIParam("type")) {
         case "plane":
-            meshLoader.pushPlane(_v3_origin, _v3_null, w, h, 0, _v3_white, origin);
+            meshLoader.pushPlane(_v3_origin, _v3_null, E3D_UIParam("w"), E3D_UIParam("h"), 0, _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "dsplane":
-            meshLoader.pushDoubleSidedPlane(_v3_origin, _v3_null, w, h, 0.001, _v3_white, origin);
+            meshLoader.pushDoubleSidedPlane(_v3_origin, _v3_null, E3D_UIParam("w"), E3D_UIParam("h"), 0.001, _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "box":
-            meshLoader.pushBox(_v3_origin, _v3_null, w, h, d, _v3_white, origin);
+            meshLoader.pushBox(_v3_origin, _v3_null, E3D_UIParam("w"), E3D_UIParam("h"), E3D_UIParam("d"), _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "obox":
-            meshLoader.pushOpenBox(_v3_origin, _v3_null, w, h, d, _v3_white, origin, true, true, false);
+            meshLoader.pushOpenBox(_v3_origin, _v3_null, E3D_UIParam("w"), E3D_UIParam("h"), E3D_UIParam("d"), _v3_white, Number(E3D_UIParam("origin")), true, true, false);
         break;
         case "pyramid":
-            meshLoader.pushPyramid(_v3_origin, _v3_null, r, h, si, _v3_white, origin);
+            meshLoader.pushPyramid(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("h"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "bpyramid":
-            meshLoader.pushBiPyramid(_v3_origin, _v3_null, r, h, si, _v3_white, origin);
+            meshLoader.pushBiPyramid(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("h"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
 
         case "prism":
-            meshLoader.pushPrism(_v3_origin, _v3_null, r, h, si, _v3_white, origin);
+            meshLoader.pushPrism(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("h"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "hprism":
-            meshLoader.pushHalfPrism(_v3_origin, _v3_null, r, h, si, _v3_white, origin);
+            meshLoader.pushHalfPrism(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("h"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "aprism":
-            meshLoader.pushAsymetricPrism(_v3_origin, _v3_null, r, r2, h, si, _v3_white, origin);
+            meshLoader.pushAsymetricPrism(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("r2"), E3D_UIParam("h"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "haprism":
-            meshLoader.pushHalfAsymetricPrism(_v3_origin, _v3_null, r, r2, h, si, _v3_white, origin);
+            meshLoader.pushHalfAsymetricPrism(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("r2"), E3D_UIParam("h"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "sphere":
-            meshLoader.pushSphere(_v3_origin, _v3_null, r, depth, _v3_white, origin, root);
+            meshLoader.pushSphere(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("depth"), _v3_white, Number(E3D_UIParam("origin")), Number(E3D_UIParam("root")));
         break;
         case "torus":
-            meshLoader.pushTorus(_v3_origin, _v3_null, r, r2, se, si, _v3_white, origin);
+            meshLoader.pushTorus(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("r2"), E3D_UIParam("se"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
         case "tube":
-            meshLoader.pushTube(_v3_origin, _v3_null, r, r2, h, si, _v3_white, origin);
+            meshLoader.pushTube(_v3_origin, _v3_null, E3D_UIParam("r"), E3D_UIParam("r2"), E3D_UIParam("h"), E3D_UIParam("si"), _v3_white, Number(E3D_UIParam("origin")));
         break;
-
     }
 
-
-
     meshLoader.genUniqueVertices(0.01);
-    if (color) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
-    if (smooth) meshLoader.smoothNormals(0.7);
-    if (outline) meshLoader.addStrokeData(entity, false, 0.999999); else entity.drawStrokes = false;
+    if (E3D_UIParam("color")) for (var i = 0; i < meshLoader.colors.length; ++i) meshLoader.colors[i] = float_colorsweep_RGBCMY(i);
+    if (E3D_UIParam("smooth")) meshLoader.smoothNormals(0.707);
+    if (E3D_UIParam("outline")) meshLoader.addStrokeData(entity, false, 0.999999); else entity.drawStrokes = false;
     meshLoader.addModelData(entity);
     E3D_updateEntityData(entity);
     CANVAS.focus();
@@ -234,9 +167,25 @@ function genMesh() {
 
 // use the engine OnTick event callback to change the rotation of the entity
 CB_tick = function() {
-    // rotate around Y
-  //  entity.rotation[1] += TIMER.delta * 0.4;
-  //  entity.updateMatrix();
+    //
 }
+
+function genDataText() {
+    // Some index-to-string formatting
+    var o = E3D_UIPARAM.get("origin");
+    if (!isNaN(o)) E3D_UIPARAM.set("origin", meshLoader.originType.strings[o]);
+    var r = E3D_UIPARAM.get("root");
+    if (!isNaN(r)) E3D_UIPARAM.set("root", meshLoader.sphereBaseType.strings[r]);
+
+    // Parameter map to text
+    dataDiv.innerText = E3D_MapToText(E3D_UIPARAM);
+
+    // Revert strings to indices
+    E3D_UIPARAM.set("origin", o);
+    E3D_UIPARAM.set("root", r);
+}
+
+E3D_onResize(); // UI addition changes the viewport size
+genMesh(); // Generate mesh at startup
 
 

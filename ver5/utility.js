@@ -116,6 +116,16 @@ function forXY(nx, ny, lambda) {
     for (let x = 0; x < nx; ++x) for (let y = 0; y < ny; ++y) lambda(x, y, nx, ny);
 }
 
+// UI Parameter handling
+const E3D_UIPARAM = new Map();
+function E3D_UIParam(param) { return E3D_UIPARAM.get(param); }
+
+function E3D_MapToText(mapObject, keyWidth = 8, valueWidth = 16, toList = null) {
+    var s = "";
+    if (!Array.isArray(toList)) toList = mapObject.keys().toArray();
+    for (var k of toList) s += k.padStart(keyWidth) + ": " + (""+mapObject.get(k)).padStart(valueWidth) + "\n";
+    return s;
+}
 
 // Parameter DIV creation
 function E3D_addHeader(element, text) {
@@ -178,11 +188,14 @@ function E3D_addInput_range(element, name, caption, min, max, value, callback, s
     element.appendChild(newElem);
 
     newElem.addEventListener("input", function(event) {
-        var newValue = event.target.value * scale;
+        var newValue = Number(event.target.value) * scale;
+        E3D_UIPARAM.set(name, newValue);
         if (formatter != null) newValue = formatter(newValue);
         newElem2.innerText = newValue;
         callback(event, "range", name, newValue);
     });
+
+    E3D_UIPARAM.set(name, value);
 }
 function E3D_setInput_range(element, name, value) {
     var newInputValue = element.querySelector("#range_"+name+"_value");
@@ -216,13 +229,18 @@ function E3D_addInput_radio(element, name, caption, group, checked, callback) {
         newElem.setAttribute("name", group);
         if (checked) newElem.setAttribute("checked", true);
         newDiv.appendChild(newElem);
-        newElem.addEventListener("input", function(event) { callback(event, "radio", name, event.target.checked, event.target.name); });
+        newElem.addEventListener("input", function(event) {
+            if (event.target.checked) E3D_UIPARAM.set(event.target.name, name);
+            callback(event, "radio", name, event.target.checked, event.target.name);
+         });
 
     var newElem2 = document.createElement("span");
     newElem2.innerHTML = "&nbsp;";
     element.appendChild(newElem2);
 
     //<input type="radio" id="radio_$name" name="$group" class="E3D_input_radio" $checked />
+    if (!E3D_UIPARAM.has(group)) E3D_UIPARAM.set(group, "");
+    if (checked) E3D_UIPARAM.set(group, name);
 }
 function E3D_setInput_radio(element, name, group, checked) {
     const newInputElem = element.querySelector("#radio_"+group+"_"+name);
@@ -250,12 +268,17 @@ function E3D_addInput_checkbox(element, name, caption, checked, callback) {
         newElem.id = "checkbox_" + name;
         if (checked) newElem.setAttribute("checked", true);
         newDiv.appendChild(newElem);
-        newElem.addEventListener("input", function(event) { callback(event, "checkbox", name, event.target.checked); });
+        newElem.addEventListener("input", function(event) {
+            E3D_UIPARAM.set(name, event.target.checked);
+            callback(event, "checkbox", name, event.target.checked);
+        });
 
     newElem = document.createElement("span");
     newElem.innerHTML = "&nbsp;";
     element.appendChild(newElem);
 
+    if (!E3D_UIPARAM.has(name)) E3D_UIPARAM.set(name, false);
+    if (checked) E3D_UIPARAM.set(name, true);
 }
 function E3D_setInput_checkbox(element, name, checked) {
     const newInputElem = element.querySelector("#checkbox_"+name);
@@ -314,8 +337,11 @@ function E3D_addInput_select(element, name, caption, options, values, callback) 
         newElem.appendChild(newOpt);
     }
 
-    newElem.addEventListener("input", function(event) { callback(event, "select", name, event.target.value); });
-
+    newElem.addEventListener("input", function(event) {
+        E3D_UIPARAM.set(name, event.target.value);
+        callback(event, "select", name, event.target.value);
+    });
+    if (!E3D_UIPARAM.has(name)) E3D_UIPARAM.set(name, values[0]);
 }
 function E3D_setInput_select(element, name, selectonOption) {
 
@@ -326,6 +352,8 @@ function E3D_setInput_select(element, name, selectonOption) {
         if (oldVal != selectonOption) newInputElem.dispatchEvent(new Event('input', { bubbles: true, target:newInputElem, value: selectonOption }));
     }
 }
+
+
 /*
 Example:
 

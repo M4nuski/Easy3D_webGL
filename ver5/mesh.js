@@ -1111,7 +1111,7 @@ class E3D_mesh {
             case (this.originType.FRONT): return [0, 0, -d/2];
             case (this.originType.BOTTOMBACK): return [0.0, h/2, d/2];
         }
-        return pos;
+        return [0, 0, 0];
     }
 
 
