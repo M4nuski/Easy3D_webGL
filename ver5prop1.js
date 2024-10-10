@@ -132,7 +132,7 @@ var profile = [
     [0.0020000, -.0078113, 0.0],
     [0.0010000, -.0059418, 0.0],
     [0.0005000, -.0046700, 0.0],
-    [0.0000000, 0.0000000, 0.0]    
+    [0.0000000, 0.0000000, 0.0]
 ];
 
 var profileAeroData = [
@@ -288,12 +288,12 @@ E3D_FAR = 4096.0;
 CAMERA = new E3D_camera_model("camera0m");
 E3D_onResize();
 
-CONTEXT.disable(CONTEXT.CULL_FACE); 
+CONTEXT.disable(CONTEXT.CULL_FACE);
 
-// Move the camera back and up a little, add some nod 
+// Move the camera back and up a little, add some nod
 CAMERA.moveBy(0, 100, 1500, 0.15);
 SCENE.setClearColor([ 0.85,  0.85,  0.85]);
-SCENE.lightA_color = _v3_darkgray; 
+SCENE.lightA_color = _v3_darkgray;
 INPUTS._posSpeed *= 10;
 
 
@@ -343,7 +343,7 @@ class segment {
 }
 var segments = [];
 
-function getAngle(dist) {    
+function getAngle(dist) {
     return Math.atan(helixP / dist) + baseAng;
 }
 function getBox(pArray) {
@@ -368,7 +368,7 @@ function getColor(i, j = 0) {
 function genProp(){
 
     meshLoader.reset();
-    var p0 = v3_new();    
+    var p0 = v3_new();
     var stepLen = (maxL - minL) / (numSegments-1);
 
     segments = [];
@@ -394,7 +394,7 @@ function genProp(){
                 if (puff > maxPuff) maxPuff = puff;
                 p0[1] = p0[1] * puff;
             }
-            v3_rotateZ_mod(p0, -twistAngle);  
+            v3_rotateZ_mod(p0, -twistAngle);
             segments[j].profile.push( v3_clone(p0) );
         }
         segments[j].scale = maxPuff;
@@ -423,7 +423,7 @@ function genProp(){
         for (var i = 0; i < profile.length; ++i) {
             // scale
             v3_scale_mod(segments[j].profile[i], x_scale);
-            // translate along 
+            // translate along
             segments[j].profile[i][2] += d;
         }
 
@@ -434,7 +434,7 @@ function genProp(){
 
         // top 0 - 55
         var limitX = -1;
-        for (var i = 0; i < 56; ++i) { 
+        for (var i = 0; i < 56; ++i) {
             v3_sub_mod(segments[j].profile[i], offset);
             if (segments[j].profile[i][1] < minEdgeT) {
                 segments[j].profile[i][1] = minEdgeT;
@@ -472,11 +472,11 @@ function genProp(){
                 }
                 var nextI = i+1;
                 if (nextI == 112) nextI = 1; // skip index 0 as it is a duplicate of index 111
-                if (clipTop && 
+                if (clipTop &&
                     (segments[j].profile[i][1] < segments[j].profile[nextI][1])  &&
                     (segments[j].profile[i][0] < segments[j].profile[nextI][0])) {
                      segments[j].profile[i][1] = maxHeight;
-                }  
+                }
             }
         }
 
@@ -489,48 +489,48 @@ function genProp(){
 
             if (v3_equals(segments[j+1].profile[i], segments[j+1].profile[i+1], 0.01)) {
                 meshLoader.pushTriangle3p(
-                    segments[j].profile[i], 
-                    segments[j+1].profile[i], 
-                    segments[j].profile[i+1], 
+                    segments[j].profile[i],
+                    segments[j+1].profile[i],
+                    segments[j].profile[i+1],
                     _v3_green// getColor(i, j)
                     );
             } else if (v3_equals(segments[j].profile[i], segments[j].profile[i+1], 0.01)) {
                 meshLoader.pushTriangle3p(
-                    segments[j].profile[i], 
-                    segments[j+1].profile[i], 
-                    segments[j+1].profile[i+1], 
+                    segments[j].profile[i],
+                    segments[j+1].profile[i],
+                    segments[j+1].profile[i+1],
                     _v3_red// getColor(i, j)
                     );
                  } else {
             // j1i ji jidx j1idx
                     if (i < 56) {
                         meshLoader.pushQuad4p(
-                            segments[j+1].profile[i+1], 
-                            segments[j].profile[i+1], 
-                            segments[j].profile[i], 
-                            segments[j+1].profile[i], 
+                            segments[j+1].profile[i+1],
+                            segments[j].profile[i+1],
+                            segments[j].profile[i],
+                            segments[j+1].profile[i],
                             getColor(i, j)
                         );
                     } else {
                         meshLoader.pushQuad4p(
                             segments[j+1].profile[i],
-                            segments[j+1].profile[i+1], 
-                            segments[j].profile[i+1], 
-                            segments[j].profile[i],                              
+                            segments[j+1].profile[i+1],
+                            segments[j].profile[i+1],
+                            segments[j].profile[i],
                             getColor(i, j)
                         );
                     }
             }
             //meshLoader.pushQuad4p(segments[j+1].profile[i], segments[j+1].profile[idx], segments[j].profile[idx], segments[j].profile[i]);
-        }        
+        }
     }
 
     // tip cap
     for (var i = 0; i < 55; ++i) {
         meshLoader.pushQuad4p(
-            segments[numSegments-1].profile[i+1], 
-            segments[numSegments-1].profile[i], 
-            segments[numSegments-1].profile[111-i], 
+            segments[numSegments-1].profile[i+1],
+            segments[numSegments-1].profile[i],
+            segments[numSegments-1].profile[111-i],
             segments[numSegments-1].profile[110-i],
             getColor(i)
         );
@@ -538,9 +538,9 @@ function genProp(){
     // root cap
     for (var i = 0; i < 55; ++i) {
         meshLoader.pushQuad4p(
-            segments[0].profile[110-i], 
-            segments[0].profile[111-i], 
-            segments[0].profile[i], 
+            segments[0].profile[110-i],
+            segments[0].profile[111-i],
+            segments[0].profile[i],
             segments[0].profile[i+1],
             getColor(i)
         );
@@ -554,7 +554,7 @@ function genProp(){
     if (nBlades == 5) CopyRotateEntity([72*1, 72*2, 72*3, 72*4]);
     if (nBlades == 6) { CopyRotateEntity([120, 240]); CopyMirrorEntity(); };
 
-    if (showHub) meshLoader.pushTube(_v3_null, _v3_null, hubBoreRadius, maxWidth / 2, maxHeight, 64, _v3_darkgray, true, true);
+    if (showHub) meshLoader.pushTube(_v3_null, _v3_null, hubBoreRadius, maxWidth / 2, maxHeight, 64, _v3_darkgray, meshLoader.originType.BOTTOM);
 
     // Load data from mesh to entity
     entity.clear();
@@ -633,13 +633,13 @@ function calcAero() {
 
     // N = 1Kg * 9.80665m/s^2
     //0.224337
-    // 1 W = 1 Nm/s 
+    // 1 W = 1 Nm/s
     // 0.73756
     // 1 N = 1 Kg / s^2
     // 1Nm = 1 Kgm / s^2
 
     //static
-    var aeroData = calcThrustAndTorque(0); 
+    var aeroData = calcThrustAndTorque(0);
     var thrust = (aeroData[0] * 0.224337);
     var hp = (number_rpm.value * aeroData[1] * 0.73756 / 5252);
     //console.log("L: " + totalLift + " N, T: " + totalTorque + " Nm, P: " + (number_rpm.value * totalTorque * 0.73756 / 5252) + " hp");
@@ -653,7 +653,7 @@ function calcAero() {
     var helixAngle = Math.atan( pitch / (maxL * 2.0 * Math.PI) ) * RadToDeg;
     var pSpeed = (pitch / 25.4 * number_rpm.value * 60 / 63360);
     text_output.innerText += "MaxSpeed: " + pSpeed.toFixed(1) + " mph / " + (pSpeed * 1.60934).toFixed(1) + " km/h\n";
-    var aeroData = calcThrustAndTorque(helixAngle); 
+    var aeroData = calcThrustAndTorque(helixAngle);
     thrust = (aeroData[0] * 0.224337);
     hp = (number_rpm.value * aeroData[1] * 0.73756 / 5252);
     //console.log("L: " + totalLift + " N, T: " + totalTorque + " Nm, P: " + (number_rpm.value * totalTorque * 0.73756 / 5252) + " hp");
@@ -697,7 +697,7 @@ function calcThrustAndTorque(angle) {
         t = t * (segments[j+1].radius + segments[j].radius) / 2000.0; // N * m = Nm
         totalTorque += t;
     }
-    totalLift *= nBlades; // N 
+    totalLift *= nBlades; // N
     totalTorque *= nBlades; //Nm
     return [totalLift, totalTorque];
 }
@@ -857,7 +857,7 @@ function paramDiv1CB(event, type, id, value) {
             helixP = value / ( 2.0 * Math.PI );
             document.getElementById("range_p").value = Math.round(helixP * 100) / 100;
             document.getElementById("range_p_value").innerText = Math.round(helixP * 100) / 100;
-            helixP = helixP * 25.4; 
+            helixP = helixP * 25.4;
             break;
         case "helix":
             var pitch = Math.tan(value * DegToRad) * (maxL * 2.0 * Math.PI / 25.4);
@@ -866,7 +866,7 @@ function paramDiv1CB(event, type, id, value) {
             helixP = value / ( 2.0 * Math.PI );
             document.getElementById("range_p").value = Math.round(helixP * 100) / 100;
             document.getElementById("range_p_value").innerText = Math.round(helixP * 100) / 100;
-            helixP = helixP * 25.4; 
+            helixP = helixP * 25.4;
             break;
         case "p":
             var pitch = (2.0 * Math.PI) * value;
@@ -875,7 +875,7 @@ function paramDiv1CB(event, type, id, value) {
             var helix = Math.atan( (value * 25.4) / (maxL * 2.0 * Math.PI) )
             document.getElementById("range_helix").value = Math.round(helixP * 100) / 100;
             document.getElementById("range_helix_value").innerText = Math.round(helixP * 100) / 100;
-            helixP = value * 25.4; 
+            helixP = value * 25.4;
             break;
         case "alpha":
             baseAng = value * DegToRad;
@@ -1025,7 +1025,7 @@ function cleanMesh() {
     st = performance.now();
     meshLoader.smoothNormals(0.71); //was 3.0sec for 2blades 11.2 for 4blades 27 for 6blades, .03 for 2blades, .06 for 4blades, .06 for 6blades
     et = performance.now();
-    console.log("t smooth : " + (et - st)); 
+    console.log("t smooth : " + (et - st));
 
     st = performance.now();
     meshLoader.genEdges(); //was 4.1sec for 2blades 19.8 for 4blades 35 for 6blades, now .121 for 2blades, .218 for 4blades, .240 for 6blades

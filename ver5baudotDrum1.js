@@ -246,6 +246,7 @@ var skipMode = "S";
 
 function genMesh(){
     if (genInhibit) return;
+    entity.clear();
     meshLoader.reset();
     //document.activeElement.blur();
     // mode pre + char

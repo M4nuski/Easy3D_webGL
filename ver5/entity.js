@@ -223,9 +223,9 @@ class E3D_entity {
 
         this.arrayIndex = 0;
 
-        this.vertexArray = new Float32Array();
-        this.colorArray  = new Float32Array();
-        this.normalArray = new Float32Array();
+        this.vertexArray = new Float32Array(this.arraySize * 3);
+        this.colorArray  = new Float32Array(this.arraySize * 3);
+        this.normalArray = new Float32Array(this.arraySize * 3);
     }
 
     getColor(elem) {

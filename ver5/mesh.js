@@ -96,9 +96,9 @@ class E3D_mesh {
     }
 
     appendModelData(entity){
-        entity.vertexArray = this.append2Float32Array(entity.vertexArray, this.positions);
-        entity.colorArray = this.append2Float32Array(entity.colorArray, this.colors);
-        entity.normalArray = this.append2Float32Array(entity.normalArray, this.normals);
+        entity.vertexArray = this.append2Float32Array(entity.vertexArray, entity.numElements * 3, this.positions);
+        entity.colorArray = this.append2Float32Array(entity.colorArray, entity.numElements * 3, this.colors);
+        entity.normalArray = this.append2Float32Array(entity.normalArray, entity.numElements * 3, this.normals);
 
         entity.numElements += (this.positions.length / 3);
 
@@ -106,10 +106,10 @@ class E3D_mesh {
         entity.dataSizeChanged = true;
     }
 
-    append2Float32Array(orig, addition) {
-        var newFloat32Array = new Float32Array(orig.length + addition.length);
+    append2Float32Array(orig, origLength, addition) {
+        var newFloat32Array = new Float32Array(origLength + addition.length);
         newFloat32Array.set(orig, 0);
-        newFloat32Array.set(addition, orig.length);
+        newFloat32Array.set(addition, origLength);
         return newFloat32Array;
     }
 
@@ -118,9 +118,9 @@ class E3D_mesh {
         var p = applym4_new(this.positions, _mesh_prim_mat);
         var n = applym4n_new(this.normals, _mesh_prim_mat);
 
-        entity.vertexArray = this.append2Float32Array(entity.vertexArray, p);
-        entity.colorArray = this.append2Float32Array(entity.colorArray, this.colors);
-        entity.normalArray = this.append2Float32Array(entity.normalArray, n);
+        entity.vertexArray = this.append2Float32Array(entity.vertexArray, entity.numElements * 3, p);
+        entity.colorArray = this.append2Float32Array(entity.colorArray, entity.numElements * 3, this.colors);
+        entity.normalArray = this.append2Float32Array(entity.normalArray, entity.numElements * 3, n);
 
         entity.numElements += (this.positions.length / 3);
 
