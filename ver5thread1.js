@@ -493,8 +493,8 @@ E3D_addInput_radio(paramDiv1, "NPT", "NPT", "type", false, paramDiv2CB);
 
 E3D_addHeader(paramDiv1, "Parameters");
 E3D_addInput_range(paramDiv1, "dia", "Maj. Diameter", 0.125, 2, 1.0, paramDiv1CB, 0.005);
-E3D_addInput_range(paramDiv1, "pitch", "TPI", 1, 80, 14, paramDiv1CB, 0.5);
-E3D_addInput_range(paramDiv1, "angle", "P. Angle", 2, 120, 60, paramDiv1CB, 1);
+E3D_addInput_range(paramDiv1, "pitch", "TPI", 1, 80, 14, paramDiv1CB, 0.1);
+E3D_addInput_range(paramDiv1, "angle", "P. Angle", 2, 120, 60, paramDiv1CB, 0.5);
 E3D_addInput_range(paramDiv1, "fit", "Fit", -0.050, 0.050, 0.003, paramDiv1CB, 0.0005);
 
 function paramDiv1CB(event, type, id, value, group) {
