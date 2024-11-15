@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mandelbrot Set Test Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 5px;
+            font-size: large;
+        }
+
+        input {
+            font-size: initial;
+        }
+        .visualizer {
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        #warning {
+            display: none;
+            color: red;
+            font-weight: bolder;
+        }
+
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+        .E3D_flexVertical {
+            display: flex;
+            flex-direction: column;
+        }
+        .E3D_flexHorizontal {
+            display: flex;
+            flex-direction: row;
+        }
+        .E3D_flexContent {
+            overflow: hidden;
+            flex: 1 1 auto;
+        }
+        .E3D_flexVerticalContentFixed {
+            width: 100%;
+            height: fit-content;
+        }
+        .E3D_flexHorizontalContentFixed {
+            width: fit-content;
+            height: 100%;
+        }
+
+        .E3D_fakeButton {
+            cursor: pointer;
+            background-color: #d0d0d0;
+            padding-right: 0.2em;
+            padding-left: 0.2em;
+            user-select: none;
+            box-shadow: 0.1em 0.1em black;
+            border-radius: 0.2em;
+            margin: 0.1em 0.2em 0.2em 0.2em;
+            display: inline-block;
+        }
+        .E3D_fakeButton:hover {
+            background-color: #a0a0a0;
+        }
+        .E3D_monospaceText {
+            white-space: pre;
+            font-family: 'Courier New', Courier, monospace;
+
+        }
+
+        #footer {
+            position: fixed;
+            bottom:0px;
+            right:0px;
+        }
+        /* Table Styles */
+        table {
+            border-collapse: separate;
+            border: 0px solid #808080;/*grayBackground*/
+            border-spacing: 0px 5px;
+            margin: 0px 15px 15px 15px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #E2E2ED;/**/
+        }
+        tr:nth-child(odd) {
+            background-color:#F2F2FD;/*lightBackground*/
+        }
+        th {
+            color:#F2F2FD;/*lightBackground*/
+            background-color:#505050;
+            border-radius: 5px;
+            box-shadow: 0px 3px 3px 0px #303030;
+            padding: 2px 10px 0px 10px;
+        }
+        td {
+            padding: 2px 10px 0px 10px;
+            width:10em;
+        }
+        td:nth-child(odd) {
+            text-align: right;
+            width:6em;
+        }
+
+        .scrollContainer {
+            overflow-x: scroll;
+            width: 100%;
+            height:fit-content;
+            overflow-y: hidden;
+        }
+
+
+    </style>
+    <script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+"use strict"
+
+function getElem(id) {
+    var elem = document.getElementById(id);
+    if (elem) return elem;
+    return false;
+}
+
+function onClick(elemOrID, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener("click", callback);
+}
+
+function onEvent(elemOrID, event, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener(event, callback);
+}
+
+function smooth(val, target, factor) {
+    if (factor > 1.0) return target;
+    return val + ((target - val) * factor);
+}
+function warn(text) {
+    var warning = getElem("warning");
+    warning.style.display = "block";
+    warning.innerText = text;
+}
+
+const results = getElem("results");
+
+// data elements
+//var canvas = getElem("c");
+
+// events
+onClick("startButton", init);
+
+// global
+var context;
+var imdata;
+var imdatadata;
+
+var palette = [];
+// 0
+for (var i = 256*0; i < 256*1; i++) palette[i] = [0, 0, i];
+// blue
+for (var i = 256*1; i < 256*2; i++) palette[i] = [i-256, 0, 255-(i-256)];
+// red
+for (var i = 256*2; i < 256*3; i++) palette[i] = [255, i-(256*2), 0];
+// orange
+for (var i = 256*3; i < 256*4; i++) palette[i] = [255, 255, i-(256*3)];
+// white
+
+function setPixel(x, y, r, g, b) {
+    imdatadata[0]  = Math.round(r);
+    imdatadata[1]  = Math.round(g);
+    imdatadata[2]  = Math.round(b);
+    imdatadata[3]  = 255;
+    context.putImageData( imdata, x, y);
+}
+
+function init() {
+    var limit = Number(getElem("lim").value);
+    var iter = Number(getElem("iter").value);
+
+    var w = Math.round(Number(getElem("ww").value));
+    var h = Math.round(Number(getElem("hh").value));
+
+    var ORIGX = Number(getElem("ox").value);
+    var MAXX = Number(getElem("mx").value);
+    var ORIGY = Number(getElem("oy").value);
+    var MAXY = Number(getElem("my").value);
+
+    var SCALEX = (MAXX - ORIGX) / w
+    var SCALEY = (MAXY - ORIGY) / h
+
+    var newCanvas = document.createElement("CANVAS");
+    newCanvas.width = w;
+    newCanvas.height = h;
+    newCanvas.style.width = w + "px";
+    newCanvas.style.height = h + "px";
+    context = newCanvas.getContext("2d");
+
+    imdata = context.createImageData(1,1); // only do this once per page
+    imdatadata  = imdata.data;                        // only do this once per page
+    newCanvas.addEventListener("mousemove", (event) => {
+        document.title = "X: " + (ORIGX + (event.offsetX * SCALEX)).toFixed(2) + ", Y: " + (ORIGY + (event.offsetY * SCALEY)).toFixed(2);
+    })
+    results.appendChild(newCanvas);
+    var newText = document.createElement("DIV");
+    newText.innerText = "W: " + w + " H: " + h + " Lim: " + limit + " Iter: " + iter + " MinX: " + ORIGX + " MaxX: " + MAXX + " MinY: " + ORIGY + " MaxY: " + MAXY;
+    results.appendChild(newText);
+
+    var stts = Date.now();
+
+    for (var y = 0; y < h; ++y) for (var x = 0; x < w; ++x) {
+        var done = false;
+        let posx = ORIGX+SCALEX*x;
+        let posy = ORIGY+SCALEY*y;
+
+        let z1 = posx;
+        let z2 = posy;
+        let n = 0;
+        for (n = 0; ((n < iter) && !done); ++n) {
+            let a = z1*z1;
+            let b = z2*z2;
+            if ((a+b) > limit) done = true; else {
+                z2 = 2 * z1 * z2 + posy;
+                z1 = a - b + posx;
+            }
+        }
+        //print pixel
+        var col = 1023 * (iter - n) / iter;
+        col = 32 * Math.sqrt(col);
+        col = Math.round(col);
+        setPixel(x, y, palette[col][0], palette[col][1], palette[col][2]);
+    }
+
+    var edts = Date.now();
+    newText = document.createElement("DIV");
+    newText.innerText = (edts - stts) + " ms";
+    results.appendChild(newText);
+
+    var newHR = document.createElement("HR");
+    results.appendChild(newHR);
+
+}
+
+
+        } );
+    </script>
+</head>
+
+<body>
+    Mandelbrot Set Test Page<br />
+    Width: <input type="text" id="ww" value = "64" /><br />
+    Height: <input type="text" id="hh" value="48" /><br />
+
+    Limit: <input type="text" id="lim" value = "4.0" /><br />
+    Max Iterations: <input type="text" id="iter" value="30" /><br />
+
+    Min X: <input type="text" id="ox" value = "-2.25" /><br />
+    Max X: <input type="text" id="mx" value="0.75" /><br />
+
+    Min Y: <input type="text" id="oy" value = "-1.0" /><br />
+    Max Y: <input type="text" id="my" value="1.0" /><br />
+
+    <div id="startButton" class="E3D_fakeButton">Go</div>
+<hr />
+
+<div id="results"></div>
+
+<div id="footer">Emmanuel Charette Nov-2024</div>
+</body>
+
+</html>
