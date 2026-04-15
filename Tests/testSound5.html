@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>7.1 Test Tone Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 5px;
+           /* font-size: large;*/
+            white-space: pre;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        input {
+            font-size: initial;
+        }
+
+
+        #warning {
+            display: none;
+            color: red;
+            font-weight: bolder;
+        }
+
+        .E3D_fakeButton {
+            cursor: pointer;
+            background-color: #d0d0d0;
+            padding-right: 0.2em;
+            padding-left: 0.2em;
+            user-select: none;
+            box-shadow: 0.1em 0.1em black;
+            border-radius: 0.2em;
+            margin: 0.1em 0.2em 0.2em 0.2em;
+            display: inline-block;
+        }
+        .E3D_fakeButton:hover {
+            background-color: #a0a0a0;
+        }
+
+
+        #footer {
+            position: fixed;
+            bottom:0px;
+            right:0px;
+        }
+
+
+    </style>
+    <script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+"use strict"
+
+function getElem(id) {
+    var elem = document.getElementById(id);
+    if (elem) return elem;
+    return false;
+}
+
+function onClick(elemOrID, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener("click", callback);
+}
+
+function onEvent(elemOrID, event, callback) {
+    if (typeof(elemOrID) == "string") elemOrID = getElem(elemOrID);
+    if (elemOrID) elemOrID.addEventListener(event, callback);
+}
+
+function smooth(val, target, factor) {
+    if (factor > 1.0) return target;
+    return val + ((target - val) * factor);
+}
+function warn(text) {
+    var warning = getElem("warning");
+    warning.style.display = "block";
+    warning.innerText = text;
+}
+function pararbInterpolate(index, prevValue, value, nextValue) {
+    var newIndex = index;
+    var a = (prevValue + nextValue - (2.0 * value)) / 2.0;
+    var b = (nextValue - prevValue) / 2.0;
+    if (a) {
+        newIndex = index - b / (2.0 * a);
+    }
+    if (isNaN(newIndex)) return index;
+    if (newIndex == Infinity) return index;
+    if (newIndex == -Infinity) return index;
+    return newIndex;
+}
+
+
+// data elements
+
+// events
+onClick("startButton", init);
+onClick("pauseButton", (event) => {
+    if (!audioContext) return;
+    if (audioContext.state == "running") {
+        audioContext.suspend();
+        event.target.innerText = "Resume";
+    } else {
+        audioContext.resume();
+        event.target.innerText = "Pause";
+    }
+});
+
+onEvent("vol1", "input", setToneParams);
+onEvent("vol2", "input", setToneParams);
+onEvent("vol3", "input", setToneParams);
+onEvent("vol4", "input", setToneParams);
+onEvent("vol5", "input", setToneParams);
+onEvent("vol6", "input", setToneParams);
+onEvent("vol7", "input", setToneParams);
+onEvent("vol8", "input", setToneParams);
+
+onEvent("freq1", "input", setToneParams);
+onEvent("freq2", "input", setToneParams);
+onEvent("freq3", "input", setToneParams);
+onEvent("freq4", "input", setToneParams);
+onEvent("freq5", "input", setToneParams);
+onEvent("freq6", "input", setToneParams);
+onEvent("freq7", "input", setToneParams);
+onEvent("freq8", "input", setToneParams);
+
+var toneFreq = 440.0;
+var toneLowFreq = 27.5;
+function setToneParams() {
+    if (audioContext == null) return;
+    gainNode1.gain.value = Number(getElem("vol1").value);
+    gainNode2.gain.value = Number(getElem("vol2").value);
+    gainNode3.gain.value = Number(getElem("vol3").value);
+    gainNode4.gain.value = Number(getElem("vol4").value);
+    gainNode5.gain.value = Number(getElem("vol5").value);
+    gainNode6.gain.value = Number(getElem("vol6").value);
+    gainNode7.gain.value = Number(getElem("vol7").value);
+    gainNode8.gain.value = Number(getElem("vol8").value);
+
+    oscNode1.frequency.value = Number(getElem("freq1").value);
+    oscNode2.frequency.value = Number(getElem("freq2").value);
+    oscNode3.frequency.value = Number(getElem("freq3").value);
+    oscNode4.frequency.value = Number(getElem("freq4").value);
+    oscNode5.frequency.value = Number(getElem("freq5").value);
+    oscNode6.frequency.value = Number(getElem("freq6").value);
+    oscNode7.frequency.value = Number(getElem("freq7").value);
+    oscNode8.frequency.value = Number(getElem("freq8").value);
+
+}
+
+// global
+var source;
+var audioContext = null;
+var oscNode1, oscNode2, oscNode3, oscNode4, oscNode5, oscNode6, oscNode7, oscNode8;
+var gainNode1, gainNode2, gainNode3, gainNode4, gainNode5, gainNode6, gainNode7, gainNode8;
+var mixer;
+
+function init() {
+    if (audioContext) return;
+
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContext.destination.channelCount = audioContext.destination.maxChannelCount;
+
+        getElem("infoSpan").innerText = audioContext.destination.channelCount + " channels, ";
+        getElem("infoSpan").innerText += audioContext.sampleRate + " Hz";
+
+
+                mixer = audioContext.createChannelMerger(8);
+                mixer.connect(audioContext.destination);
+
+                gainNode1 = audioContext.createGain();
+                gainNode1.gain.value = 0;
+                gainNode1.connect(mixer, 0, 0); // Left
+
+                gainNode2 = audioContext.createGain();
+                gainNode2.gain.value = 0;
+                gainNode2.connect(mixer, 0, 1); // Right
+
+                gainNode3 = audioContext.createGain();
+                gainNode3.gain.value = 0;
+                gainNode3.connect(mixer, 0, 2); // Center
+
+                gainNode4 = audioContext.createGain();
+                gainNode4.gain.value = 0;
+                gainNode4.connect(mixer, 0, 4); // Left Suround
+
+                gainNode5 = audioContext.createGain();
+                gainNode5.gain.value = 0;
+                gainNode5.connect(mixer, 0, 5); // Right Suround
+
+                gainNode6 = audioContext.createGain();
+                gainNode6.gain.value = 0;
+                gainNode6.connect(mixer, 0, 3); // SubWoofer / LFE
+
+                gainNode7 = audioContext.createGain();
+                gainNode7.gain.value = 0;
+                gainNode7.connect(mixer, 0, 6); // Right Side Surround ?
+
+                gainNode8 = audioContext.createGain();
+                gainNode8.gain.value = 0;
+                gainNode8.connect(mixer, 0, 7); // Left Side Surround ?
+
+
+                oscNode1 = audioContext.createOscillator();
+                oscNode1.frequency.value = 440.0;
+                oscNode1.connect(gainNode1);
+                oscNode1.start();
+
+                oscNode6 = audioContext.createOscillator();
+                oscNode6.frequency.value = 27.5;
+                oscNode6.connect(gainNode6);
+                oscNode6.start();
+
+                oscNode2 = audioContext.createOscillator();
+                oscNode2.frequency.value = 440.0;
+                oscNode2.connect(gainNode2);
+                oscNode2.start();
+
+                oscNode3 = audioContext.createOscillator();
+                oscNode3.frequency.value = 440.0;
+                oscNode3.connect(gainNode3);
+                oscNode3.start();
+
+                oscNode4 = audioContext.createOscillator();
+                oscNode4.frequency.value = 440.0;
+                oscNode4.connect(gainNode4);
+                oscNode4.start();
+
+                oscNode5 = audioContext.createOscillator();
+                oscNode5.frequency.value = 440.0;
+                oscNode5.connect(gainNode5);
+                oscNode5.start();
+
+                oscNode7 = audioContext.createOscillator();
+                oscNode7.frequency.value = 440.0;
+                oscNode7.connect(gainNode7);
+                oscNode7.start();
+
+                oscNode8 = audioContext.createOscillator();
+                oscNode8.frequency.value = 440.0;
+                oscNode8.connect(gainNode8);
+                oscNode8.start();
+            }
+         catch(err) {
+            warn(err);
+        }
+
+}// init
+
+} );
+    </script>
+</head>
+
+<body>
+<div id="warning">Press "Enable" to allow sounds</div>
+7.1 Channels Tone Generator
+
+<div id="startButton" class="E3D_fakeButton">Enable</div><div id="pauseButton" class="E3D_fakeButton">Pause</div>
+
+<span id="infoSpan">Output</span>
+<hr />
+1 : L   :<input id="vol1" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq1" value="440" />
+2 : R   :<input id="vol2" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq2" value="440" />
+3 : C   :<input id="vol3" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq3" value="440" />
+4 : LRS :<input id="vol4" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq4" value="440" />
+5 : RRS :<input id="vol5" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq5" value="440" />
+6 : S   :<input id="vol6" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq6" value="27.5" />
+7 : LSS?:<input id="vol7" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq7" value="440" />
+8 : RSS?:<input id="vol8" type="range" min="0.0" max="1.0" value="0.0" step="0.05" /><input type="text" id="freq8" value="440" />
+
+<hr />
+Standard frequencies
+
+Piano: (https://en.wikipedia.org/wiki/Piano_key_frequencie)
+    key  1 is A0 at 27.5Hz
+    key 41 is C4 at 261.6256Hz (Middle C)
+    key 49 is A4 at 440.0Hz
+    key 88 is C8 at 4186.009Hz
+
+Extended piano:
+    Lowest key 89 is C0 at 16.35160Hz
+    Highest key 108 is B8 at 7902.133Hz
+
+Guitar:
+    E2  82.4069Hz
+    A2 110.0000Hz
+    D3 146.8324Hz
+    G3 195.9977Hz
+    B3 246.9417Hz
+    E4 329.6276Hz
+
+Violin:
+    G3 195.9977Hz
+    D4 293.6648Hz
+    A4 440.0000Hz
+    E5 659.2551Hz
+
+Phone dial tone:
+    350Hz + 440Hz
+    <div id="footer">Emmanuel Charette Apr-2026</div>
+</body>
+
+</html>

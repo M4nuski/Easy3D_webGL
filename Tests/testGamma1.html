@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gamma test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+            font-size: large;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        #canvas {
+            z-index: 100;
+        }
+        #ginput {
+            z-index: 10;
+        }
+        .E3D_fullscreenContainer {
+            position:fixed;
+            top:0px;
+            bottom:0px;
+            right:0px;
+            left:0px;
+        }
+
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() { 
+
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+
+            window.addEventListener("resize", resize);
+            c.addEventListener("click", resize);
+
+            var gi = document.getElementById("ginput");
+            var go = document.getElementById("goutput");
+            var gamma = 1.0;
+            gi.addEventListener("input", (event) => {
+                gamma = Number(gi.value) / 10.0;
+                go.innerText = gamma.toFixed(1);
+                genAll();
+            });
+
+            let fill_50 = [
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0
+            ];
+
+            let fill_33 = [
+                0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+                0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+                1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+
+                1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+                0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+                0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+
+                0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+                0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+                1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+
+                1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+                0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+                0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1
+            ];
+            
+            let fill_25 = [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
+            ];
+
+            let colSeq = [
+                [1.0 , 1.0 , 1.0 ],
+                [1.0 , 0.0 , 0.0 ],
+                [1.0 , 1.0 , 0.0 ],
+                [0.0 , 1.0 , 0.0 ],
+
+                [0.0 , 1.0 , 1.0 ],
+                [0.0 , 0.0 , 1.0 ],
+                [1.0 , 0.0 , 1.0 ],
+                [1.0 , 1.0 , 1.0 ]
+            ];
+
+            let paramSeq = [
+                { 
+                    fact: 0.25,
+                    pat: fill_25,
+                    inv: false
+                },
+                { 
+                    fact: 0.33,
+                    pat: fill_33,
+                    inv: false
+                },
+                { 
+                    fact: 0.50,
+                    pat: fill_50,
+                    inv: false
+                },
+                { 
+                    fact: 0.67,
+                    pat: fill_33,
+                    inv: true
+                },
+                { 
+                    fact: 0.75,
+                    pat: fill_25,
+                    inv: true
+                }
+            ];
+
+
+
+            function resize() {
+                var ww = window.innerWidth;
+                var wh = window.innerHeight;
+                var w = c.offsetWidth;
+                var h = c.offsetHeight;
+                var wt = "Resize window to " + ww + "x" + wh;
+                var t = "Resize canvas to " + w + "x" + h;
+                console.log(wt);
+                console.log(t);
+                c.width = w;
+                c.height = h;
+
+                genAll();
+            }
+
+            function genAll() {
+
+                ctx.reset();
+
+                for (var ii = 0; ii < 5; ++ii) {
+                    for (var i = 0; i < 8; ++i) {
+                        drawPatch(  genColor(colSeq[i][0], colSeq[i][1], colSeq[i][2]), 
+                        genColorGamma(colSeq[i][0]*paramSeq[ii].fact, colSeq[i][1]*paramSeq[ii].fact, colSeq[i][2]*paramSeq[ii].fact), 
+                        paramSeq[ii].pat, paramSeq[ii].inv);
+                        ctx.translate(96, 0);
+                    }
+                    ctx.translate(-96 * 8, 96);
+                }
+
+/*                
+                drawPatch( "rgba(255,000,000,255)", genColor(0.33, 0.0 , 0.0 ), fill_33, false);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,255,000,255)", genColor(0.0 , 0.33, 0.0 ), fill_33, false);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,000,255,255)", genColor(0.0 , 0.0 , 0.33), fill_33, false);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(255,255,255,255)", genColor(0.33, 0.33, 0.33), fill_33, false);
+                ctx.translate(-96 * 3, 96);
+
+
+
+                drawPatch( "rgba(255,000,000,255)", genColor(0.5, 0.0, 0.0), fill_50, false);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,255,000,255)", genColor(0.0, 0.5, 0.0), fill_50, false);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,000,255,255)", genColor(0.0, 0.0, 0.5), fill_50, false);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(255,255,255,255)", genColor(0.5, 0.5, 0.5), fill_50, false);
+                ctx.translate(-96 * 3, 96);
+
+
+                drawPatch( "rgba(255,000,000,255)", genColor(0.67, 0.0 , 0.0 ), fill_33, true);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,255,000,255)", genColor(0.0 , 0.67, 0.0 ), fill_33, true);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,000,255,255)", genColor(0.0 , 0.0 , 0.67), fill_33, true);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(255,255,255,255)", genColor(0.67, 0.67, 0.67), fill_33, true);
+                ctx.translate(-96 * 3, 96);
+
+                drawPatch( "rgba(255,000,000,255)", genColor(0.75, 0.0 , 0.0 ), fill_25, true);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,255,000,255)", genColor(0.0 , 0.75, 0.0 ), fill_25, true);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(000,000,255,255)", genColor(0.0 , 0.0 , 0.75), fill_25, true);
+                ctx.translate(96, 0);
+                drawPatch( "rgba(255,255,255,255)", genColor(0.75, 0.75, 0.75), fill_25, true);
+*/
+            }
+
+            function genColorGamma(rf, gf, bf) {
+                var rrr = 255 * Math.pow(rf, 1.0/gamma);
+                var ggg = 255 * Math.pow(gf, 1.0/gamma);
+                var bbb = 255 * Math.pow(bf, 1.0/gamma);
+                return "rgba(" + rrr.toFixed(0) + "," + ggg.toFixed(0) + "," + bbb.toFixed(0) + ",255)";
+            }
+            function genColor(rf, gf, bf) {
+                var rrr = 255 * Math.pow(rf, 1.0/gamma);
+                var ggg = 255 * Math.pow(gf, 1.0/gamma);
+                var bbb = 255 * Math.pow(bf, 1.0/gamma);
+                return "rgba(" + rrr.toFixed(0) + "," + ggg.toFixed(0) + "," + bbb.toFixed(0) + ",255)";
+            }
+
+            function drawPatch(fullColor, halfColor, pattern, inverted) {
+                ctx.fillStyle = "black";
+                ctx.beginPath();
+                ctx.rect(0, 0, 96, 96);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = halfColor;
+                drawCheckerFULL();
+                drawCheckerPATTERN(pattern, inverted, fullColor);
+            }
+
+            function drawCheckerFULL() {
+                ctx.beginPath();
+                for (var i = 0; i < 4; ++i) {
+                    ctx.rect( 0, 0, 12, 12);
+                    ctx.rect(24, 0, 12, 12);
+                    ctx.rect(48, 0, 12, 12);
+                    ctx.rect(72, 0, 12, 12);
+
+                    ctx.rect(12, 12, 12, 12);
+                    ctx.rect(36, 12, 12, 12);
+                    ctx.rect(60, 12, 12, 12);
+                    ctx.rect(84, 12, 12, 12);
+
+                    ctx.translate(0, 24);
+                }
+                ctx.translate(0, 24 * -4);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            function drawCheckerPATTERN(fillpattern, inverted = false, color)  {
+                for (var i = 0; i < 4; ++i) {
+                    ctx.translate(12, 0); drawPattern(fillpattern, inverted, color); 
+                    ctx.translate(24, 0); drawPattern(fillpattern, inverted, color); 
+                    ctx.translate(24, 0); drawPattern(fillpattern, inverted, color); 
+                    ctx.translate(24, 0); drawPattern(fillpattern, inverted, color);
+
+                    ctx.translate(-84, 12); drawPattern(fillpattern, inverted, color); 
+                    ctx.translate(24, 0); drawPattern(fillpattern, inverted, color); 
+                    ctx.translate(24, 0); drawPattern(fillpattern, inverted, color); 
+                    ctx.translate(24, 0); drawPattern(fillpattern, inverted, color);
+                    ctx.translate(-72, 12);
+                }
+                 ctx.translate(0, 24 * -4);
+            }
+
+            function drawPattern(fillpattern, inverted = false, color) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                for (var x = 0; x < 12; ++x)
+                for (var y = 0; y < 12; ++y) {
+                    if (fillpattern[(y*12) + x] == inverted? 0 : 1)
+                    ctx.rect( x, y, 1, 1);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+
+
+            resize();
+
+        } );
+    </script>
+</head>
+
+<body>
+    <div class="E3D_fullscreenContainer">    
+        <input id="ginput" type="range" min="1" max="22" value="10" /> <br />
+        <span id="goutput">1.0</span> <br />
+        <canvas id="canvas" width="320" height="240">Canvas</canvas>
+    </div>
+
+</body>
+
+</html>
