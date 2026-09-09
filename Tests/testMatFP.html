@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #mainDiv {
+            top: 0px;
+            width: 600px;
+        }
+        #dataDiv {
+            width: 600px;      
+        }
+        #logDiv {
+            width:600px;
+            height: 300px;
+            overflow-x: wrap;
+            overflow-y: scroll;
+        }
+        #controlDiv {
+            width:600px;
+        }
+        td {
+            width : 40px;
+            height : 20px;
+            text-align: center;
+            background-color: lightgray;
+        }
+        #glCanvas {
+            position: absolute;
+            bottom : 0px;
+        }
+    </style>
+    <script type="text/javascript" src="gl-matrix.js"></script>
+    <script type="text/javascript" src="testMatFP.js"></script>
+</head>
+
+<body>
+    <div id="mainDiv">
+        Click on test title below to start test : <br />
+        <div id="test1" class="test">1-Matrix Base</div>
+        <div id="test2" class="test">2-Matrix FP16 8.8</div>
+        <div id="test3" class="test">3-???</div>
+    </div>
+    <div id="dataDiv">
+        <div id="statusDiv">Status</div><br />
+        <div id="logDiv"></div>
+    </div>
+    <div>
+        <canvas id="glCanvas" width="320" height="240">Erreur - Canvas non supporté</canvas>
+    </div>
+
+</body>
+
+</html>

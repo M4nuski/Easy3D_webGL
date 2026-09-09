@@ -49,6 +49,7 @@ var paramDiv1 = getElem("paramDiv1");
 var paramDiv2 = getElem("paramDiv2");
 var paramDiv3 = getElem("paramDiv3");
 var paramDiv4 = getElem("paramDiv4");
+onClick("saveButton", saveButtonCallback)
 
 E3D_addHeader(paramDiv1, "Type");
 E3D_addInput_radio(paramDiv1, "plane", "Plane", "type", true, paramDivCallback);
@@ -85,6 +86,7 @@ E3D_addInput_select(paramDiv4, "origin", "Mesh Origin", meshLoader.originType.st
 E3D_addInput_checkbox(paramDiv4, "smooth", "Smooth Normals", false, paramDivCallback);
 E3D_addInput_checkbox(paramDiv4, "color", "Colored", false, paramDivCallback);
 E3D_addInput_checkbox(paramDiv4, "outline", "Edge Outline", false, paramDivCallback);
+E3D_addInput_select
 
 function paramDivCallback(event, type, name, value, group) {
     genMesh();
@@ -188,4 +190,6 @@ function genDataText() {
 E3D_onResize(); // UI addition changes the viewport size
 genMesh(); // Generate mesh at startup
 
-
+function saveButtonCallback(event) {
+    downloadBlob("model.stl", meshLoader.saveModel_ASCIISTL("model"))
+}
