@@ -1077,7 +1077,11 @@ class E3D_mesh {
             c3 = color;
             c4 = color;
         }
+
         var n = v3_normal_new(p1, p2, p3);
+        if ((n[0] == 0.0) && (n[1] == 0.0) && (n[2] == 0.0)) n = v3_normal_new(p2, p3, p4);
+        if ((n[0] == 0.0) && (n[1] == 0.0) && (n[2] == 0.0)) n = v3_normal_new(p3, p4, p1);
+
         this.pushQuad(p1, p2, p3, p4, n, n, n, n, c1, c2, c3, c4);
     }
 

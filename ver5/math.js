@@ -564,7 +564,7 @@ function v3_normalize_mod(a) {
         a[0] = a[0] / l;
         a[1] = a[1] / l;
         a[2] = a[2] / l;
-    }
+    }// else console.error("un-normal vector");
 }
 function v3_normalize_res(res, a) {
     var l = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];

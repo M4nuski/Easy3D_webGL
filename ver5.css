@@ -61,6 +61,7 @@ input {
     box-shadow: 0.1em 0.1em black;
     border-radius: 0.2em;
     margin: 0.1em 0.2em 0.2em 0.2em;
+    height: 1.05em;
 }
 .E3D_fakeButton:hover {
     background-color: #a0a0a0;

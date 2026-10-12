@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Easy3D Engine webGL version 0.5</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=0.5" />
+        <link rel="icon" href="media/e3d.ico">
+        <link rel="stylesheet" href="ver5.css">
+        <!-- bell mesh generator -->
+        <!-- Flex page for header and content, target div for engine output is tagged with id="E3D_mainDiv" -->
+        <!-- Default ver5.css style for buttons and flex -->
+        <!-- Specific script load -->
+        <script type="text/javascript" src="ver5/E3D_Engine.js" data-main="ver5bellGenerator.js" data-fail="ver5demoFail.js" defer="true"></script>
+    </head>
+
+
+    <body>
+        <div class="E3D_fullscreenContainer E3D_flexVertical">
+            <div class="E3D_flexVerticalContentFit E3D_margin" style="display:flex; width: fit-content;">
+
+                    <div class="E3D_paramContainer"><div id="paramDiv1" class="E3D_paramDiv"></div></div>
+                    <div class="E3D_paramContainer"><div id="paramDiv2" class="E3D_paramDiv"></div></div>
+                    <div class="E3D_paramContainer"><div id="paramDiv3" class="E3D_paramDiv"></div></div>
+                    <div class="E3D_paramContainer"><div id="paramDiv4" class="E3D_paramDiv">
+                        <div id="button_clean" class="E3D_fakeButton" style="display: inline-block;">Clean Mesh</div><div>&nbsp;</div><div>&nbsp;</div><div id="button_save" class="E3D_fakeButton" style="display: inline-block;">Save to STL (ASCII)</div><span></span>
+                    </div></div>
+
+            </div>
+
+            <div id="E3D_mainDiv" class="E3D_flexContent"></div>
+            <div class="E3D_margin">
+                <div class="E3D_monospaceText"><span id="bottomBar" style="font-size:smaller;"></span></div>
+            </div>
+        </div>
+    </body>
+
+</html>
